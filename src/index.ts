@@ -5,6 +5,18 @@ import './style.css';
 
 // IIFE to avoid errors
 (async () => {
+    const button = document.createElement("button");
+    button.textContent = "Open file";
+    let fileContent = null;
+
+    const input = document.createElement('input');
+    input.type = 'file';
+
+    button.onclick = () => {
+        input.click();
+    }
+    document.body.appendChild(button);
+
     // The application will create a renderer using WebGL, if possible,
     // with a fallback to a canvas render. It will also setup the ticker
     // and the root stage PIXI.Container
@@ -51,4 +63,20 @@ import './style.css';
     }
 
     window.addEventListener('resize', resize);
+
+    input.onchange = () => {
+        const file = input.files[0];
+
+        console.log(file);
+        // setting up the reader
+        const reader = new FileReader();
+        reader.readAsDataURL(file); // this is reading as data url
+
+        // here we tell the reader what to do when it's done reading...
+        reader.onload = async (readerEvent) => {
+            fileContent = readerEvent.target.result; // this is the content!
+            const txt = await Assets.load(fileContent);
+            bunny.texture = txt;
+        }
+    }
 })();
