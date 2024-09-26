@@ -34,10 +34,10 @@ import './style.css';
     const bunny = Sprite.from(Bunny);
 
     // Setup the position of the bunny
-    bunny.x = app.renderer.width / 2;
-    bunny.y = app.renderer.height / 2;
-    bunny.width = app.renderer.width / 2;
-    bunny.height = app.renderer.height / 2;
+    bunny.x = app.renderer.width / 5;
+    bunny.y = app.renderer.height / 5;
+    bunny.width = app.renderer.width / 5;
+    bunny.height = app.renderer.height / 5;
 
     // Rotate around the center
     bunny.anchor.x = 0.5;
@@ -49,7 +49,7 @@ import './style.css';
     // Listen for frame updates
     app.ticker.add(() => {
         // each frame we spin the bunny around a bit
-        bunny.rotation += 0.01;
+        bunny.rotation += 0.005;
     });
 
     function resize() {
