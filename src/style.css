@@ -17,3 +17,7 @@ body {
 canvas {
     height: 100%;
 }
+
+#bottom-screen {
+    display: flex;
+}

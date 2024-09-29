@@ -1,12 +1,15 @@
 import { Application, Sprite, Assets, Graphics, GraphicsContext, FederatedPointerEvent } from 'pixi.js';
 import Bunny from './bunny.png';
+import RouterSvg from './router.svg';
+import ConnectionSvg from './connection.svg';
 import './style.css';
 
 
 // IIFE to avoid errors
 (async () => {
-    const button = document.createElement("button");
-    button.textContent = "Open file";
+    const leftBarWidth = 100;
+    // const topBar = document.getElementById("top-bar");
+    const button = document.getElementById("open-file-button");
     let fileContent = null;
 
     const input = document.createElement('input');
@@ -15,7 +18,28 @@ import './style.css';
     button.onclick = () => {
         input.click();
     }
-    document.body.appendChild(button);
+
+    const bottomScreen = document.getElementById("bottom-screen");
+    const leftBar = document.getElementById("left-bar");
+    leftBar.style.width = `${leftBarWidth}px`;
+
+    const routerButton = document.createElement("button");
+    leftBar.appendChild(routerButton);
+
+    const routerImg = document.createElement("img");
+    routerImg.src = RouterSvg;
+    routerImg.style.width = "32px";
+    routerImg.style.height = "32px";
+    routerButton.appendChild(routerImg);
+
+    const connectionButton = document.createElement("button");
+    leftBar.appendChild(connectionButton);
+
+    const connectionImg = document.createElement("img");
+    connectionImg.src = ConnectionSvg;
+    connectionImg.style.width = "32px";
+    connectionImg.style.height = "32px";
+    connectionButton.appendChild(connectionImg);
 
     // The application will create a renderer using WebGL, if possible,
     // with a fallback to a canvas render. It will also setup the ticker
@@ -23,11 +47,13 @@ import './style.css';
     const app = new Application();
 
     // Wait for the Renderer to be available
-    await app.init({ width: window.innerWidth, height: window.innerHeight, resolution: devicePixelRatio });
+    await app.init({ width: window.innerWidth - leftBarWidth, height: window.innerHeight, resolution: devicePixelRatio });
 
     // The application will create a canvas element for you that you
     // can then insert into the DOM
-    document.body.appendChild(app.canvas);
+    // document.body.appendChild(app.canvas);
+    bottomScreen.appendChild(app.canvas);
+    app.canvas.style.float = "left";
 
     await Assets.load(Bunny);
 
@@ -104,7 +130,7 @@ import './style.css';
 
     function resize() {
         // Resize the renderer
-        app.renderer.resize(window.innerWidth, window.innerHeight);
+        app.renderer.resize(window.innerWidth - leftBarWidth, window.innerHeight);
 
         resizeBunny();
         resizeRect();
