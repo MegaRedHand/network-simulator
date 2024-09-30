@@ -1,4 +1,4 @@
-import { Application, Sprite, Assets, Graphics, GraphicsContext, FederatedPointerEvent } from 'pixi.js';
+import { Application, Sprite, Assets, Graphics, GraphicsContext, FederatedPointerEvent, Texture } from 'pixi.js';
 import Bunny from './bunny.png';
 import RouterSvg from './router.svg';
 import ConnectionSvg from './connection.svg';
@@ -8,6 +8,7 @@ import './style.css';
 // IIFE to avoid errors
 (async () => {
     const leftBarWidth = 50;
+    let mode = "router";
     // const topBar = document.getElementById("top-bar");
     const button = document.getElementById("open-file-button");
     let fileContent = null;
@@ -25,6 +26,9 @@ import './style.css';
     leftBar.style.width = `${leftBarWidth}px`;
 
     const routerButton = document.createElement("button");
+    routerButton.onclick = () => {
+        mode = "router";
+    }
     leftBar.appendChild(routerButton);
 
     const routerImg = document.createElement("img");
@@ -34,6 +38,9 @@ import './style.css';
     routerButton.appendChild(routerImg);
 
     const connectionButton = document.createElement("button");
+    connectionButton.onclick = () => {
+        mode = "connection";
+    }
     leftBar.appendChild(connectionButton);
 
     const connectionImg = document.createElement("img");
@@ -92,7 +99,7 @@ import './style.css';
 
     const circleOnClick = (e: FederatedPointerEvent, circle: Graphics) => {
         console.log("clicked on circle", e);
-        if (!e.altKey) {
+        if (mode != "connection") {
             return;
         }
         e.stopPropagation();
@@ -109,6 +116,9 @@ import './style.css';
     };
 
     rect.on('click', (e) => {
+        if (mode != "router") {
+            return;
+        }
         console.log("clicked on rect", e);
         if (!e.altKey) {
             const circle = new Graphics(circleContext);
