@@ -7,7 +7,7 @@ import './style.css';
 
 // IIFE to avoid errors
 (async () => {
-    const leftBarWidth = 100;
+    const leftBarWidth = 50;
     // const topBar = document.getElementById("top-bar");
     const button = document.getElementById("open-file-button");
     let fileContent = null;
@@ -21,6 +21,7 @@ import './style.css';
 
     const bottomScreen = document.getElementById("bottom-screen");
     const leftBar = document.getElementById("left-bar");
+    const canvas = document.getElementById("canvas");
     leftBar.style.width = `${leftBarWidth}px`;
 
     const routerButton = document.createElement("button");
@@ -28,7 +29,7 @@ import './style.css';
 
     const routerImg = document.createElement("img");
     routerImg.src = RouterSvg;
-    routerImg.style.width = "32px";
+    routerImg.style.minWidth = "32px";
     routerImg.style.height = "32px";
     routerButton.appendChild(routerImg);
 
@@ -37,7 +38,7 @@ import './style.css';
 
     const connectionImg = document.createElement("img");
     connectionImg.src = ConnectionSvg;
-    connectionImg.style.width = "32px";
+    connectionImg.style.minWidth = "32px";
     connectionImg.style.height = "32px";
     connectionButton.appendChild(connectionImg);
 
@@ -47,12 +48,11 @@ import './style.css';
     const app = new Application();
 
     // Wait for the Renderer to be available
-    await app.init({ width: window.innerWidth - leftBarWidth, height: window.innerHeight, resolution: devicePixelRatio });
+    await app.init();
 
     // The application will create a canvas element for you that you
     // can then insert into the DOM
-    // document.body.appendChild(app.canvas);
-    bottomScreen.appendChild(app.canvas);
+    canvas.replaceWith(app.canvas);
     app.canvas.style.float = "left";
 
     await Assets.load(Bunny);
@@ -129,9 +129,7 @@ import './style.css';
     });
 
     function resize() {
-        // Resize the renderer
-        app.renderer.resize(window.innerWidth - leftBarWidth, window.innerHeight);
-
+        app.renderer.resize(canvas.clientWidth, canvas.clientHeight);
         resizeBunny();
         resizeRect();
     }

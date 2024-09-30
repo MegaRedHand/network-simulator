@@ -16,8 +16,20 @@ body {
 
 canvas {
     height: 100%;
+    width: 100%;
 }
 
-#bottom-screen {
+.row {
     display: flex;
+    flex-direction: row;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar column {
+    width: 0px;
+    white-space: nowrap;
 }
