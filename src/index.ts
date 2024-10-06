@@ -1,130 +1,130 @@
-import { Application, Sprite, Assets, Graphics, GraphicsContext, FederatedPointerEvent } from 'pixi.js';
-import Bunny from './bunny.png';
+import { Application, Graphics, GraphicsContext, FederatedPointerEvent, Container, EventSystem, PointData } from 'pixi.js';
+import * as pixi_viewport from 'pixi-viewport';
 import './style.css';
 
 
-// IIFE to avoid errors
-(async () => {
-    const button = document.createElement("button");
-    button.textContent = "Open file";
-    let fileContent = null;
+const WORLD_WIDTH = 10000;
+const WORLD_HEIGHT = 10000;
 
-    const input = document.createElement('input');
-    input.type = 'file';
 
-    button.onclick = () => {
-        input.click();
-    }
-    document.body.appendChild(button);
+class GlobalContext {
+    selected: Circle = null;
+    viewport: Container = null;
 
-    // The application will create a renderer using WebGL, if possible,
-    // with a fallback to a canvas render. It will also setup the ticker
-    // and the root stage PIXI.Container
-    const app = new Application();
-
-    // Wait for the Renderer to be available
-    await app.init({ width: window.innerWidth, height: window.innerHeight, resolution: devicePixelRatio });
-
-    // The application will create a canvas element for you that you
-    // can then insert into the DOM
-    document.body.appendChild(app.canvas);
-
-    await Assets.load(Bunny);
-
-    const bunny = Sprite.from(Bunny);
-
-    const resizeBunny = () => {
-        // Setup the position of the bunny
-        bunny.x = app.renderer.width / 5;
-        bunny.y = app.renderer.height / 5;
-        bunny.width = app.renderer.width / 5;
-        bunny.height = app.renderer.height / 5;
+    popSelected() {
+        const selected = this.selected;
+        this.selected = null;
+        return selected;
     }
 
-    resizeBunny();
+    setViewport(viewport: Container) {
+        this.viewport = viewport;
+    }
+}
 
-    // Rotate around the center
-    bunny.anchor.x = 0.5;
-    bunny.anchor.y = 0.5;
+class Circle extends Graphics {
+    static graphicsContext = new GraphicsContext().circle(0, 0, 10).fill(0xff0000);
 
-    let rect = new Graphics()
-        .rect(0, 0, app.renderer.width, app.renderer.height)
-        .fill(0xe3e2e1);
-
-    const resizeRect = () => {
-        rect.width = app.renderer.width;
-        rect.height = app.renderer.height;
+    constructor(ctx: GlobalContext, position: PointData) {
+        super(Circle.graphicsContext);
+        this.position = position;
+        this.zIndex = 2;
+        this.on('click', (e) => this.onClick(ctx, e));
+        this.eventMode = 'static';
     }
 
-    // Add the objects to the scene we are building
-    app.stage.addChild(rect);
-    app.stage.addChild(bunny);
-
-    const circleContext = new GraphicsContext().circle(0, 0, 10).fill(0xff0000);
-
-    let lineStart: { x: number, y: number } = null;
-
-    const circleOnClick = (e: FederatedPointerEvent, circle: Graphics) => {
-        console.log("clicked on circle", e);
+    onClick(ctx: GlobalContext, e: FederatedPointerEvent) {
         if (!e.altKey) {
             return;
         }
         e.stopPropagation();
-        if (lineStart === null) {
-            lineStart = { x: circle.x, y: circle.y };
+        const selected = ctx.popSelected();
+
+        if (selected === null) {
+            ctx.selected = this;
         } else {
+            // TODO: this could be moved to a separate function/class
             const line = new Graphics()
-                .moveTo(lineStart.x, lineStart.y)
-                .lineTo(circle.x, circle.y)
+                .moveTo(selected.x, selected.y)
+                .lineTo(this.x, this.y)
                 .stroke({ width: 2, color: 0 });
-            rect.addChildAt(line, 0);
-            lineStart = null;
+            line.zIndex = 1;
+            ctx.viewport.addChild(line);
         }
-    };
-
-    rect.on('click', (e) => {
-        console.log("clicked on rect", e);
-        if (!e.altKey) {
-            const circle = new Graphics(circleContext);
-            circle.x = e.globalX;
-            circle.y = e.globalY;
-            rect.addChild(circle);
-            circle.on('click', (e) => circleOnClick(e, circle));
-            circle.eventMode = 'static';
-        }
-    });
-
-    rect.eventMode = 'static';
-
-    // Listen for frame updates
-    app.ticker.add(() => {
-        // each frame we spin the bunny around a bit
-        bunny.rotation += 0.005;
-    });
-
-    function resize() {
-        // Resize the renderer
-        app.renderer.resize(window.innerWidth, window.innerHeight);
-
-        resizeBunny();
-        resizeRect();
     }
+}
+
+class Background extends Graphics {
+    constructor() {
+        super();
+        this.rect(0, 0, WORLD_WIDTH, WORLD_HEIGHT).fill(0xe3e2e1);
+        this.zIndex = 0;
+    }
+
+    resize(width: number, height: number) {
+        this.width = width;
+        this.height = height;
+    }
+}
+
+class Viewport extends pixi_viewport.Viewport {
+    constructor(ctx: GlobalContext, events: EventSystem) {
+        super({
+            worldWidth: WORLD_WIDTH,
+            worldHeight: WORLD_HEIGHT,
+            events: events,
+        });
+        this.moveCenter(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+        this.sortableChildren = true;
+        ctx.setViewport(this);
+        this.drag().pinch().wheel()
+            .clamp({ direction: 'all' })
+            // TODO: revisit when all icons are finalized
+            .clampZoom({ minHeight: 200, minWidth: 200, maxWidth: WORLD_WIDTH / 5, maxHeight: WORLD_HEIGHT / 5 });
+
+        this.addChild(new Background());
+    }
+}
+
+// IIFE to avoid errors
+(async () => {
+    // Initialization
+    const app = new Application();
+
+    await app.init({ width: window.innerWidth, height: window.innerHeight, resolution: devicePixelRatio });
+
+    document.body.appendChild(app.canvas);
+
+    // Context initialization
+    const ctx = new GlobalContext();
+
+    // Background container initialization
+    const viewport = new Viewport(ctx, app.renderer.events);
+    app.stage.addChild(viewport);
+
+    // Circle and lines logic
+    viewport.on('click', (e) => {
+        if (!e.altKey) {
+            const position = viewport.toWorld(e.client);
+            const circle = new Circle(ctx, position);
+            viewport.addChild(circle);
+        }
+    });
+
+    // Ticker logic
+
+    app.ticker.add(() => { });
+
+    // Resize logic
+    function resize() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        app.renderer.resize(width, height);
+        viewport.resize(width, height);
+    }
+    resize();
 
     window.addEventListener('resize', resize);
 
-    input.onchange = () => {
-        const file = input.files[0];
-
-        console.log(file);
-        // setting up the reader
-        const reader = new FileReader();
-        reader.readAsDataURL(file); // this is reading as data url
-
-        // here we tell the reader what to do when it's done reading...
-        reader.onload = async (readerEvent) => {
-            fileContent = readerEvent.target.result; // this is the content!
-            const txt = await Assets.load(fileContent);
-            bunny.texture = txt;
-        }
-    }
+    console.log("initialized!");
 })();
