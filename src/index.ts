@@ -64,6 +64,19 @@ class Background extends Graphics {
     }
 }
 
+class Viewport extends Container {
+    constructor(ctx: GlobalContext) {
+        super();
+        this.sortableChildren = true;
+        ctx.setViewport(this);
+    }
+
+    resize(width: number, height: number) {
+        this.width = width;
+        this.height = height;
+    }
+}
+
 // IIFE to avoid errors
 (async () => {
     // Initialization
@@ -73,23 +86,19 @@ class Background extends Graphics {
 
     document.body.appendChild(app.canvas);
 
+    // Context initialization
+    const ctx = new GlobalContext();
 
     // Background container initialization
-    const viewport = new Container();
+    const viewport = new Viewport(ctx);
 
     const resizeViewport = () => {
         viewport.width = app.renderer.width;
         viewport.height = app.renderer.height;
     }
 
-    viewport.sortableChildren = true;
     app.stage.addChild(viewport);
     resizeViewport();
-
-
-    // Context initialization
-    const ctx = new GlobalContext();
-    ctx.setViewport(viewport);
 
 
     // Background initialization
@@ -130,8 +139,9 @@ class Background extends Graphics {
         const height = window.innerHeight;
         app.renderer.resize(width, height);
         rect.resize(width, height);
-        resizeViewport();
+        viewport.resize(width, height);
     }
+    resize();
 
     window.addEventListener('resize', resize);
 })();
