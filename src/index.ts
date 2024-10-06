@@ -75,9 +75,15 @@ class Viewport extends pixi_viewport.Viewport {
             worldHeight: WORLD_HEIGHT,
             events: events,
         });
+        this.moveCenter(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
         this.sortableChildren = true;
         ctx.setViewport(this);
-        this.drag().pinch().wheel();
+        this.drag().pinch().wheel()
+            .clamp({ direction: 'all' })
+            // TODO: revisit when all icons are finalized
+            .clampZoom({ minHeight: 200, minWidth: 200, maxWidth: WORLD_WIDTH / 5, maxHeight: WORLD_HEIGHT / 5 });
+
+        this.addChild(new Background());
     }
 }
 
@@ -96,12 +102,6 @@ class Viewport extends pixi_viewport.Viewport {
     // Background container initialization
     const viewport = new Viewport(ctx, app.renderer.events);
     app.stage.addChild(viewport);
-
-    // Background initialization
-    const background = new Background();
-
-    viewport.addChild(background);
-
 
     // Circle and lines logic
     viewport.on('click', (e) => {
