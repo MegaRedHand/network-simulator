@@ -4,16 +4,16 @@ import './style.css';
 
 class GlobalContext {
     selected: Circle = null;
-    viewport: Container;
-
-    constructor(viewport: Container) {
-        this.viewport = viewport;
-    }
+    viewport: Container = null;
 
     popSelected() {
         const selected = this.selected;
         this.selected = null;
         return selected;
+    }
+
+    setViewport(viewport: Container) {
+        this.viewport = viewport;
     }
 }
 
@@ -51,6 +51,19 @@ class Circle extends Graphics {
     }
 }
 
+class Background extends Graphics {
+    constructor() {
+        super();
+        this.rect(0, 0, 1, 1).fill(0xe3e2e1);
+        this.zIndex = 0;
+    }
+
+    resize(width: number, height: number) {
+        this.width = width;
+        this.height = height;
+    }
+}
+
 // IIFE to avoid errors
 (async () => {
     // Initialization
@@ -74,10 +87,13 @@ class Circle extends Graphics {
     resizeViewport();
 
 
+    // Context initialization
+    const ctx = new GlobalContext();
+    ctx.setViewport(viewport);
+
+
     // Background initialization
-    let rect = new Graphics()
-        .rect(0, 0, app.renderer.width, app.renderer.height)
-        .fill(0xe3e2e1);
+    const rect = new Background();
 
     const resizeRect = () => {
         rect.width = app.renderer.width;
@@ -88,10 +104,6 @@ class Circle extends Graphics {
 
     viewport.addChild(rect);
     resizeRect();
-
-
-    // Context initialization
-    const ctx = new GlobalContext(viewport);
 
 
     // Circle and lines logic
@@ -112,12 +124,12 @@ class Circle extends Graphics {
 
     app.ticker.add(() => { });
 
-
     // Resize logic
-
     function resize() {
-        app.renderer.resize(window.innerWidth, window.innerHeight);
-        resizeRect();
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        app.renderer.resize(width, height);
+        rect.resize(width, height);
         resizeViewport();
     }
 
