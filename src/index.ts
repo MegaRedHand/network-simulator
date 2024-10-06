@@ -1,4 +1,4 @@
-import { Application, Graphics, GraphicsContext, FederatedPointerEvent, Container, EventSystem } from 'pixi.js';
+import { Application, Graphics, GraphicsContext, FederatedPointerEvent, Container, EventSystem, PointData } from 'pixi.js';
 import * as pixi_viewport from 'pixi-viewport';
 import './style.css';
 
@@ -25,10 +25,9 @@ class GlobalContext {
 class Circle extends Graphics {
     static graphicsContext = new GraphicsContext().circle(0, 0, 10).fill(0xff0000);
 
-    constructor(ctx: GlobalContext, x: number, y: number) {
+    constructor(ctx: GlobalContext, position: PointData) {
         super(Circle.graphicsContext);
-        this.x = x;
-        this.y = y;
+        this.position = position;
         this.zIndex = 2;
         this.on('click', (e) => this.onClick(ctx, e));
         this.eventMode = 'static';
@@ -78,12 +77,7 @@ class Viewport extends pixi_viewport.Viewport {
         });
         this.sortableChildren = true;
         ctx.setViewport(this);
-
-        // TODO: enable these features
-        // viewport
-        //     .drag()
-        //     .pinch()
-        //     .wheel();
+        this.drag().pinch().wheel();
     }
 }
 
@@ -113,12 +107,10 @@ class Viewport extends pixi_viewport.Viewport {
     viewport.on('click', (e) => {
         console.log("clicked on viewport", e);
         if (!e.altKey) {
-            const circle = new Circle(ctx, e.globalX, e.globalY);
+            const circle = new Circle(ctx, viewport.toWorld(e.client));
             viewport.addChild(circle);
         }
     });
-
-    viewport.eventMode = 'static';
 
     console.log("initialized!");
 
