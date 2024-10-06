@@ -2,6 +2,55 @@ import { Application, Graphics, GraphicsContext, FederatedPointerEvent, Containe
 import './style.css';
 
 
+class GlobalContext {
+    selected: Circle = null;
+    viewport: Container;
+
+    constructor(viewport: Container) {
+        this.viewport = viewport;
+    }
+
+    popSelected() {
+        const selected = this.selected;
+        this.selected = null;
+        return selected;
+    }
+}
+
+class Circle extends Graphics {
+    static graphicsContext = new GraphicsContext().circle(0, 0, 10).fill(0xff0000);
+
+    constructor(ctx: GlobalContext, x: number, y: number) {
+        super(Circle.graphicsContext);
+        this.x = x;
+        this.y = y;
+        this.zIndex = 2;
+        this.on('click', (e) => this.onClick(ctx, e));
+        this.eventMode = 'static';
+    }
+
+    onClick(ctx: GlobalContext, e: FederatedPointerEvent) {
+        console.log("clicked on circle", e);
+        if (!e.altKey) {
+            return;
+        }
+        e.stopPropagation();
+        const selected = ctx.popSelected();
+
+        if (selected === null) {
+            ctx.selected = this;
+        } else {
+            // TODO: this could be moved to a separate function/class
+            const line = new Graphics()
+                .moveTo(selected.x, selected.y)
+                .lineTo(this.x, this.y)
+                .stroke({ width: 2, color: 0 });
+            line.zIndex = 1;
+            ctx.viewport.addChild(line);
+        }
+    }
+}
+
 // IIFE to avoid errors
 (async () => {
     // Initialization
@@ -41,40 +90,16 @@ import './style.css';
     resizeRect();
 
 
+    // Context initialization
+    const ctx = new GlobalContext(viewport);
+
+
     // Circle and lines logic
-    const circleContext = new GraphicsContext().circle(0, 0, 10).fill(0xff0000);
-
-    let lineStart: { x: number, y: number } = null;
-
-    const circleOnClick = (e: FederatedPointerEvent, circle: Graphics) => {
-        console.log("clicked on circle", e);
-        if (!e.altKey) {
-            return;
-        }
-        e.stopPropagation();
-        if (lineStart === null) {
-            lineStart = { x: circle.x, y: circle.y };
-        } else {
-            const line = new Graphics()
-                .moveTo(lineStart.x, lineStart.y)
-                .lineTo(circle.x, circle.y)
-                .stroke({ width: 2, color: 0 });
-            line.zIndex = 1;
-            viewport.addChild(line);
-            lineStart = null;
-        }
-    };
-
     viewport.on('click', (e) => {
         console.log("clicked on viewport", e);
         if (!e.altKey) {
-            const circle = new Graphics(circleContext);
-            circle.x = e.globalX;
-            circle.y = e.globalY;
-            circle.zIndex = 2;
+            const circle = new Circle(ctx, e.globalX, e.globalY);
             viewport.addChild(circle);
-            circle.on('click', (e) => circleOnClick(e, circle));
-            circle.eventMode = 'static';
         }
     });
 
