@@ -1,5 +1,10 @@
-import { Application, Graphics, GraphicsContext, FederatedPointerEvent, Container } from 'pixi.js';
+import { Application, Graphics, GraphicsContext, FederatedPointerEvent, Container, EventSystem } from 'pixi.js';
+import * as pixi_viewport from 'pixi-viewport';
 import './style.css';
+
+
+const WORLD_WIDTH = 10000;
+const WORLD_HEIGHT = 10000;
 
 
 class GlobalContext {
@@ -54,7 +59,7 @@ class Circle extends Graphics {
 class Background extends Graphics {
     constructor() {
         super();
-        this.rect(0, 0, 1, 1).fill(0xe3e2e1);
+        this.rect(0, 0, WORLD_WIDTH, WORLD_HEIGHT).fill(0xe3e2e1);
         this.zIndex = 0;
     }
 
@@ -64,16 +69,21 @@ class Background extends Graphics {
     }
 }
 
-class Viewport extends Container {
-    constructor(ctx: GlobalContext) {
-        super();
+class Viewport extends pixi_viewport.Viewport {
+    constructor(ctx: GlobalContext, events: EventSystem) {
+        super({
+            worldWidth: WORLD_WIDTH,
+            worldHeight: WORLD_HEIGHT,
+            events: events,
+        });
         this.sortableChildren = true;
         ctx.setViewport(this);
-    }
 
-    resize(width: number, height: number) {
-        this.width = width;
-        this.height = height;
+        // TODO: enable these features
+        // viewport
+        //     .drag()
+        //     .pinch()
+        //     .wheel();
     }
 }
 
@@ -90,29 +100,13 @@ class Viewport extends Container {
     const ctx = new GlobalContext();
 
     // Background container initialization
-    const viewport = new Viewport(ctx);
-
-    const resizeViewport = () => {
-        viewport.width = app.renderer.width;
-        viewport.height = app.renderer.height;
-    }
-
+    const viewport = new Viewport(ctx, app.renderer.events);
     app.stage.addChild(viewport);
-    resizeViewport();
-
 
     // Background initialization
-    const rect = new Background();
+    const background = new Background();
 
-    const resizeRect = () => {
-        rect.width = app.renderer.width;
-        rect.height = app.renderer.height;
-    }
-
-    rect.zIndex = 0;
-
-    viewport.addChild(rect);
-    resizeRect();
+    viewport.addChild(background);
 
 
     // Circle and lines logic
@@ -138,7 +132,6 @@ class Viewport extends Container {
         const width = window.innerWidth;
         const height = window.innerHeight;
         app.renderer.resize(width, height);
-        rect.resize(width, height);
         viewport.resize(width, height);
     }
     resize();
