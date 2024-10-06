@@ -34,7 +34,6 @@ class Circle extends Graphics {
     }
 
     onClick(ctx: GlobalContext, e: FederatedPointerEvent) {
-        console.log("clicked on circle", e);
         if (!e.altKey) {
             return;
         }
@@ -105,15 +104,12 @@ class Viewport extends pixi_viewport.Viewport {
 
     // Circle and lines logic
     viewport.on('click', (e) => {
-        console.log("clicked on viewport", e);
         if (!e.altKey) {
-            const circle = new Circle(ctx, viewport.toWorld(e.client));
+            const position = viewport.toWorld(e.client);
+            const circle = new Circle(ctx, position);
             viewport.addChild(circle);
         }
     });
-
-    console.log("initialized!");
-
 
     // Ticker logic
 
@@ -129,4 +125,6 @@ class Viewport extends pixi_viewport.Viewport {
     resize();
 
     window.addEventListener('resize', resize);
+
+    console.log("initialized!");
 })();
