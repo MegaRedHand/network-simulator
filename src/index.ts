@@ -1,4 +1,4 @@
-import { Application, Graphics, GraphicsContext, FederatedPointerEvent } from 'pixi.js';
+import { Application, Graphics, GraphicsContext, FederatedPointerEvent, Container } from 'pixi.js';
 import './style.css';
 
 
@@ -11,6 +11,21 @@ import './style.css';
 
     document.body.appendChild(app.canvas);
 
+
+    // Background container initialization
+    const viewport = new Container();
+
+    const resizeViewport = () => {
+        viewport.width = app.renderer.width;
+        viewport.height = app.renderer.height;
+    }
+
+    viewport.sortableChildren = true;
+    app.stage.addChild(viewport);
+    resizeViewport();
+
+
+    // Background initialization
     let rect = new Graphics()
         .rect(0, 0, app.renderer.width, app.renderer.height)
         .fill(0xe3e2e1);
@@ -20,12 +35,13 @@ import './style.css';
         rect.height = app.renderer.height;
     }
 
-    app.stage.addChild(rect);
+    rect.zIndex = 0;
+
+    viewport.addChild(rect);
     resizeRect();
 
 
     // Circle and lines logic
-
     const circleContext = new GraphicsContext().circle(0, 0, 10).fill(0xff0000);
 
     let lineStart: { x: number, y: number } = null;
@@ -43,24 +59,28 @@ import './style.css';
                 .moveTo(lineStart.x, lineStart.y)
                 .lineTo(circle.x, circle.y)
                 .stroke({ width: 2, color: 0 });
-            rect.addChildAt(line, 0);
+            line.zIndex = 1;
+            viewport.addChild(line);
             lineStart = null;
         }
     };
 
-    rect.on('click', (e) => {
-        console.log("clicked on rect", e);
+    viewport.on('click', (e) => {
+        console.log("clicked on viewport", e);
         if (!e.altKey) {
             const circle = new Graphics(circleContext);
             circle.x = e.globalX;
             circle.y = e.globalY;
-            rect.addChild(circle);
+            circle.zIndex = 2;
+            viewport.addChild(circle);
             circle.on('click', (e) => circleOnClick(e, circle));
             circle.eventMode = 'static';
         }
     });
 
-    rect.eventMode = 'static';
+    viewport.eventMode = 'static';
+
+    console.log("initialized!");
 
 
     // Ticker logic
@@ -73,6 +93,7 @@ import './style.css';
     function resize() {
         app.renderer.resize(window.innerWidth, window.innerHeight);
         resizeRect();
+        resizeViewport();
     }
 
     window.addEventListener('resize', resize);
