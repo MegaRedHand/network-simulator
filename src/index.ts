@@ -11,9 +11,15 @@ const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;
 
 
+enum CursorMode {
+    Router,
+    Connection,
+}
+
+
 class GlobalContext {
-    // TODO: merge mode and selected fields
-    mode: string = "router";
+    // TODO: merge mode and selected fields into strategy class
+    mode: CursorMode = CursorMode.Router;
     selected: Circle = null;
 
     viewport: Container = null;
@@ -41,7 +47,7 @@ class Circle extends Graphics {
     }
 
     onClick(ctx: GlobalContext, e: FederatedPointerEvent) {
-        if (ctx.mode != "connection") {
+        if (ctx.mode != CursorMode.Connection) {
             return;
         }
         e.stopPropagation();
@@ -127,7 +133,7 @@ class Viewport extends pixi_viewport.Viewport {
 
         // Circle and lines logic
         this.on('click', (e) => {
-            if (ctx.mode == "router") {
+            if (ctx.mode == CursorMode.Router) {
                 const position = this.toWorld(e.global);
                 const circle = new Circle(ctx, position);
                 this.addChild(circle);
@@ -157,12 +163,12 @@ class Viewport extends pixi_viewport.Viewport {
 
     // Add router button
     leftBar.addButton(RouterSvg, () => {
-        ctx.mode = "router";
+        ctx.mode = CursorMode.Router;
     });
 
     // Add connection button
     leftBar.addButton(ConnectionSvg, () => {
-        ctx.mode = "connection";
+        ctx.mode = CursorMode.Connection;
     });
 
     // Get right bar
