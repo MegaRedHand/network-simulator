@@ -90,6 +90,15 @@ class Viewport extends pixi_viewport.Viewport {
             .clampZoom({ minHeight: 200, minWidth: 200, maxWidth: WORLD_WIDTH / 5, maxHeight: WORLD_HEIGHT / 5 });
 
         this.addChild(new Background());
+
+        // Circle and lines logic
+        this.on('click', (e) => {
+            if (ctx.mode == "router") {
+                const position = this.toWorld(e.global);
+                const circle = new Circle(ctx, position);
+                this.addChild(circle);
+            }
+        });
     }
 }
 
@@ -108,15 +117,6 @@ class Viewport extends pixi_viewport.Viewport {
     // Background container initialization
     const viewport = new Viewport(ctx, app.renderer.events);
     app.stage.addChild(viewport);
-
-    // Circle and lines logic
-    viewport.on('click', (e) => {
-        if (ctx.mode == "router") {
-            const position = viewport.toWorld(e.client);
-            const circle = new Circle(ctx, position);
-            viewport.addChild(circle);
-        }
-    });
 
     // Left bar logic
     const leftBar = document.getElementById('left-bar');
