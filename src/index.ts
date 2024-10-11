@@ -1,6 +1,10 @@
-import { Application, Graphics, GraphicsContext, FederatedPointerEvent, Container, EventSystem, PointData } from 'pixi.js';
-import * as pixi_viewport from 'pixi-viewport';
+// Doing this includes the file in the build
 import './style.css';
+
+import { Application, Graphics, GraphicsContext, FederatedPointerEvent, Container, EventSystem, PointData } from 'pixi.js';
+import RouterSvg from './assets/router.svg';
+import ConnectionSvg from './assets/connection.svg';
+import * as pixi_viewport from 'pixi-viewport';
 
 
 const WORLD_WIDTH = 10000;
@@ -8,7 +12,10 @@ const WORLD_HEIGHT = 10000;
 
 
 class GlobalContext {
+    // TODO: merge mode and selected fields
+    mode: string = "router";
     selected: Circle = null;
+
     viewport: Container = null;
 
     popSelected() {
@@ -34,7 +41,7 @@ class Circle extends Graphics {
     }
 
     onClick(ctx: GlobalContext, e: FederatedPointerEvent) {
-        if (!e.altKey) {
+        if (ctx.mode != "connection") {
             return;
         }
         e.stopPropagation();
@@ -90,10 +97,10 @@ class Viewport extends pixi_viewport.Viewport {
 (async () => {
     // Initialization
     const app = new Application();
-
     await app.init({ width: window.innerWidth, height: window.innerHeight, resolution: devicePixelRatio });
 
-    document.body.appendChild(app.canvas);
+    const canvasPlaceholder = document.getElementById('canvas');
+    canvasPlaceholder.replaceWith(app.canvas);
 
     // Context initialization
     const ctx = new GlobalContext();
@@ -104,21 +111,49 @@ class Viewport extends pixi_viewport.Viewport {
 
     // Circle and lines logic
     viewport.on('click', (e) => {
-        if (!e.altKey) {
+        if (ctx.mode == "router") {
             const position = viewport.toWorld(e.client);
             const circle = new Circle(ctx, position);
             viewport.addChild(circle);
         }
     });
 
-    // Ticker logic
+    // Left bar logic
+    const leftBar = document.getElementById('left-bar');
 
+    // Router
+    const routerButton = document.createElement("button");
+    routerButton.classList.add("tool-button");
+
+    routerButton.onclick = () => {
+        ctx.mode = "router";
+    }
+    leftBar.appendChild(routerButton);
+
+    const routerImg = document.createElement("img");
+    routerImg.src = RouterSvg;
+    routerButton.appendChild(routerImg);
+
+    // Connection
+    const connectionButton = document.createElement("button");
+    connectionButton.classList.add("tool-button");
+
+    connectionButton.onclick = () => {
+        ctx.mode = "connection";
+    }
+    leftBar.appendChild(connectionButton);
+
+    const connectionImg = document.createElement("img");
+    connectionImg.src = ConnectionSvg;
+    connectionButton.appendChild(connectionImg);
+
+    // Ticker logic
     app.ticker.add(() => { });
 
     // Resize logic
     function resize() {
-        const width = window.innerWidth;
-        const height = window.innerHeight;
+        const width = app.renderer.canvas.width;
+        const height = app.renderer.canvas.height;
         app.renderer.resize(width, height);
         viewport.resize(width, height);
     }
