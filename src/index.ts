@@ -61,6 +61,29 @@ class Circle extends Graphics {
     }
 }
 
+class LeftBar {
+    private leftBar: HTMLElement;
+
+    constructor(leftBar: HTMLElement) {
+        this.leftBar = leftBar;
+    }
+    static getFrom(document: Document) {
+        return new LeftBar(document.getElementById('left-bar'));
+    }
+
+    addButton(src: string, onClick: () => void) {
+        const button = document.createElement("button");
+        button.classList.add("tool-button");
+
+        button.onclick = onClick;
+        this.leftBar.appendChild(button);
+
+        const img = document.createElement("img");
+        img.src = src;
+        button.appendChild(img);
+    }
+}
+
 class Background extends Graphics {
     constructor() {
         super();
@@ -119,33 +142,17 @@ class Viewport extends pixi_viewport.Viewport {
     app.stage.addChild(viewport);
 
     // Left bar logic
-    const leftBar = document.getElementById('left-bar');
+    const leftBar = LeftBar.getFrom(document);
 
-    // Router
-    const routerButton = document.createElement("button");
-    routerButton.classList.add("tool-button");
-
-    routerButton.onclick = () => {
+    // Add router button
+    leftBar.addButton(RouterSvg, () => {
         ctx.mode = "router";
-    }
-    leftBar.appendChild(routerButton);
+    });
 
-    const routerImg = document.createElement("img");
-    routerImg.src = RouterSvg;
-    routerButton.appendChild(routerImg);
-
-    // Connection
-    const connectionButton = document.createElement("button");
-    connectionButton.classList.add("tool-button");
-
-    connectionButton.onclick = () => {
+    // Add connection button
+    leftBar.addButton(ConnectionSvg, () => {
         ctx.mode = "connection";
-    }
-    leftBar.appendChild(connectionButton);
-
-    const connectionImg = document.createElement("img");
-    connectionImg.src = ConnectionSvg;
-    connectionButton.appendChild(connectionImg);
+    });
 
     // Ticker logic
     app.ticker.add(() => { });
