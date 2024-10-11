@@ -84,6 +84,17 @@ class LeftBar {
     }
 }
 
+class RightBar {
+    private rightBar: HTMLElement;
+
+    constructor(rightBar: HTMLElement) {
+        this.rightBar = rightBar;
+    }
+    static getFrom(document: Document) {
+        return new RightBar(document.getElementById('right-bar'));
+    }
+}
+
 class Background extends Graphics {
     constructor() {
         super();
@@ -153,6 +164,9 @@ class Viewport extends pixi_viewport.Viewport {
     leftBar.addButton(ConnectionSvg, () => {
         ctx.mode = "connection";
     });
+
+    // Get right bar
+    const rightBar = RightBar.getFrom(document);
 
     // Ticker logic
     app.ticker.add(() => { });
