@@ -4,6 +4,7 @@ import './style.css';
 // Assets
 import RouterSvg from './assets/router.svg';
 import ConnectionSvg from './assets/connection.svg';
+import HandPointer from './assets/hand_pointer.svg';
 
 import { Application, Graphics, GraphicsContext, FederatedPointerEvent, Container, EventSystem, PointData } from 'pixi.js';
 
@@ -191,7 +192,7 @@ class RightBar {
     const leftBar = LeftBar.getFrom(document);
 
     // Add move button
-    leftBar.addButton(RouterSvg, () => { ctx.mode = new MoveMode() });
+    leftBar.addButton(HandPointer, () => { ctx.mode = new MoveMode() });
 
     // Add router button
     leftBar.addButton(RouterSvg, () => { ctx.mode = new RouterMode() });
