@@ -14,15 +14,25 @@ import * as pixi_viewport from 'pixi-viewport';
 const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;
 
+
 // > context.ts
 
 class GlobalContext {
-    mode: ModeStrategy = new MoveMode();
+    private mode: ModeStrategy = null;
+    private viewport: Viewport = null;
 
-    viewport: Viewport = null;
-
-    setViewport(viewport: Viewport) {
+    initialize(viewport: Viewport, mode: ModeStrategy) {
         this.viewport = viewport;
+        this.setMode(mode);
+    }
+
+    getViewport() { return this.viewport; }
+
+    getMode() { return this.mode; }
+
+    setMode(mode: ModeStrategy) {
+        this.mode = mode;
+        this.mode.initialize(this);
     }
 }
 
@@ -33,17 +43,21 @@ interface ModeStrategy {
 }
 
 class MoveMode implements ModeStrategy {
-    initialize(ctx: GlobalContext) { }
+    initialize(ctx: GlobalContext) {
+        ctx.getViewport().enableMovement();
+    }
     clickViewport(ctx: GlobalContext, e: FederatedPointerEvent) { }
     clickCircle(ctx: GlobalContext, e: FederatedPointerEvent, circle: Circle) { }
 }
 
 class RouterMode {
-    initialize(ctx: GlobalContext) { }
+    initialize(ctx: GlobalContext) {
+        ctx.getViewport().disableMovement();
+    }
     clickViewport(ctx: GlobalContext, e: FederatedPointerEvent) {
-        const position = ctx.viewport.toWorld(e.global);
+        const position = ctx.getViewport().toWorld(e.global);
         const circle = new Circle(ctx, position);
-        ctx.viewport.addChild(circle);
+        ctx.getViewport().addChild(circle);
     }
     clickCircle(ctx: GlobalContext, e: FederatedPointerEvent, circle: Circle) {
         // To avoid overlapping circles
@@ -54,7 +68,9 @@ class RouterMode {
 class ConnectionMode {
     private selected: Circle = null;
 
-    initialize(ctx: GlobalContext) { }
+    initialize(ctx: GlobalContext) {
+        ctx.getViewport().disableMovement();
+    }
     clickViewport(ctx: GlobalContext, e: FederatedPointerEvent) {
         e.stopPropagation();
     }
@@ -72,7 +88,7 @@ class ConnectionMode {
             .lineTo(circle.x, circle.y)
             .stroke({ width: 2, color: 0 });
         line.zIndex = 1;
-        ctx.viewport.addChild(line);
+        ctx.getViewport().addChild(line);
     }
 
     // Private
@@ -82,6 +98,7 @@ class ConnectionMode {
         return selected;
     }
 }
+
 
 // > graphics.ts
 
@@ -99,6 +116,8 @@ class Background extends Graphics {
 }
 
 class Viewport extends pixi_viewport.Viewport {
+    static usedPlugins = ['drag', 'pinch'];
+
     constructor(ctx: GlobalContext, events: EventSystem) {
         super({
             worldWidth: WORLD_WIDTH,
@@ -107,16 +126,31 @@ class Viewport extends pixi_viewport.Viewport {
         });
         this.moveCenter(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
         this.sortableChildren = true;
-        ctx.setViewport(this);
-        this.drag().pinch().wheel()
-            .clamp({ direction: 'all' })
-            // TODO: revisit when all icons are finalized
-            .clampZoom({ minHeight: 200, minWidth: 200, maxWidth: WORLD_WIDTH / 5, maxHeight: WORLD_HEIGHT / 5 });
+        this.initializeMovement();
 
         this.addChild(new Background());
 
         // Circle and lines logic
-        this.on('click', (e) => { ctx.mode.clickViewport(ctx, e) });
+        this.on('click', (e) => { ctx.getMode().clickViewport(ctx, e) });
+    }
+
+    private initializeMovement() {
+        this.drag().pinch().wheel()
+            .clamp({ direction: 'all' })
+            // TODO: revisit when all icons are finalized
+            .clampZoom({ minHeight: 200, minWidth: 200, maxWidth: WORLD_WIDTH / 5, maxHeight: WORLD_HEIGHT / 5 });
+    }
+
+    enableMovement() {
+        for (const plugin of Viewport.usedPlugins) {
+            this.plugins.resume(plugin);
+        }
+    }
+
+    disableMovement() {
+        for (const plugin of Viewport.usedPlugins) {
+            this.plugins.pause(plugin);
+        }
     }
 }
 
@@ -127,10 +161,11 @@ class Circle extends Graphics {
         super(Circle.graphicsContext);
         this.position = position;
         this.zIndex = 2;
-        this.on('click', (e) => ctx.mode.clickCircle(ctx, e, this));
+        this.on('click', (e) => ctx.getMode().clickCircle(ctx, e, this));
         this.eventMode = 'static';
     }
 }
+
 
 // > left_bar.ts
 
@@ -170,6 +205,7 @@ class RightBar {
     }
 }
 
+
 // > index.ts
 
 // IIFE to avoid errors
@@ -192,17 +228,19 @@ class RightBar {
     const leftBar = LeftBar.getFrom(document);
 
     // Add move button
-    leftBar.addButton(HandPointer, () => { ctx.mode = new MoveMode() });
+    leftBar.addButton(HandPointer, () => { ctx.setMode(new MoveMode()) });
 
     // Add router button
-    leftBar.addButton(RouterSvg, () => { ctx.mode = new RouterMode() });
+    leftBar.addButton(RouterSvg, () => { ctx.setMode(new RouterMode()) });
 
     // Add connection button
-    leftBar.addButton(ConnectionSvg, () => { ctx.mode = new ConnectionMode() });
+    leftBar.addButton(ConnectionSvg, () => { ctx.setMode(new ConnectionMode()) });
 
     // Get right bar
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const rightBar = RightBar.getFrom(document);
+
+    ctx.initialize(viewport, new MoveMode());
 
     // Ticker logic
     // app.ticker.add(() => { });
