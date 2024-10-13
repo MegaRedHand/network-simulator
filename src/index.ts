@@ -5,12 +5,181 @@ import {
   Graphics,
   GraphicsContext,
   FederatedPointerEvent,
+  Texture,
+  Point,
 } from "pixi.js";
-import Bunny from "./bunny.png";
-import Router from "./router.png";
-import Server from "./server.png";
-import Computer from "./computer.png";
+import RouterImage from "./assets/router.svg";
+import ServerImage from "./assets/server.svg";
+import ComputerImage from "./assets/computer.svg";
 import "./style.css";
+
+const DISPOSITIVE_SIZE = 20;
+// const WORLD_HEIGHT = 10000;
+
+interface LineGraphics extends Graphics {
+  startPos?: { x: number; y: number };
+  endPos?: { x: number; y: number };
+}
+
+enum DispositiveEnum {
+  Router,
+  Server,
+  Computer,
+}
+
+class Dispositive {
+  element: Sprite;
+  stage: Graphics;
+  dragging: boolean = false;
+  dragData: FederatedPointerEvent | null = null;
+  connectedLines: { line: LineGraphics; start: boolean }[] = [];
+
+  constructor(
+    dispositive: string | Texture,
+    stage: Graphics,
+    onClick: (e: FederatedPointerEvent, dispositive: Dispositive) => void,
+    drag: boolean
+  ) {
+    this.element = Sprite.from(dispositive);
+    this.stage = stage;
+
+    this.element.anchor.x = 0.5;
+    this.element.anchor.y = 0.5;
+    stage.addChild(this.element);
+    this.resize();
+
+    this.element.eventMode = "static";
+    this.element.interactive = true;
+
+    if (drag) {
+      this.element.on("mousedown", this.onDragStart, this);
+      this.element.on("mouseup", this.onDragEnd, this);
+      this.element.on("mouseupoutside", this.onDragEnd, this);
+      this.element.on("mousemove", this.onDragMove, this);
+    }
+
+    this.element.on("click", (e) => onClick(e, this));
+  }
+
+  resizeDispositive(
+    proportion_x: number,
+    proportion_y: number,
+    proportion_w: number,
+    proportion_h: number
+  ): void {
+    // Setup the position of the serverOption
+    this.element.x = this.stage.width / proportion_x;
+    this.element.y = this.stage.height / proportion_y;
+    this.element.width = this.stage.width / proportion_w;
+    this.element.height = this.stage.height / proportion_h;
+  }
+
+  resize(): void {
+    // Setup the size of the new element
+    this.element.width = this.element.width / 70;
+    this.element.height = this.element.height / DISPOSITIVE_SIZE;
+  }
+
+  onDragStart(event: FederatedPointerEvent): void {
+    // Starts dragging functionality
+    this.dragging = true;
+    this.dragData = event;
+    const newPosition = this.dragData.global;
+    this.element.x = newPosition.x;
+    this.element.y = newPosition.y;
+  }
+
+  onDragMove(): void {
+    // Dargging functionality.
+    if (this.dragging && this.dragData) {
+      const newPosition = this.dragData.global;
+      this.element.x = newPosition.x;
+      this.element.y = newPosition.y;
+
+      this.updateLines();
+    }
+  }
+
+  onDragEnd(): void {
+    // Finishes dargging functionality.
+    this.dragging = false;
+    this.dragData = null;
+  }
+
+  connectTo(other: Dispositive): boolean {
+    // If other is in the same stage than this, connnects both
+    // dispositives with a line. Returns true if connection
+    // was established, false otherwise.
+    if (this.stage === other.stage) {
+      console.log("entro en connecTo");
+      const line = new Graphics() as LineGraphics;
+      line.moveTo(this.element.x, this.element.y);
+      line.lineTo(other.element.x, other.element.y);
+      line.stroke({ width: 1, color: 0x3e3e3e });
+
+      // Store the start and end positions
+      line.startPos = { x: this.element.x, y: this.element.y };
+      line.endPos = { x: other.element.x, y: other.element.y };
+
+      this.stage.addChild(line);
+
+      // Save the line in both dispositives
+      this.connectedLines.push({ line, start: true });
+      other.connectedLines.push({ line, start: false });
+      return true;
+    }
+    return false;
+  }
+
+  updateLines(): void {
+    // Updates the positions of the device-linked
+    // lines’s ends.
+    this.connectedLines.forEach(({ line, start }) => {
+      console.log("pasa por una linea");
+      if (start) {
+        // Update the starting point of the line
+        line.startPos = { x: this.element.x, y: this.element.y };
+      } else {
+        // Update the ending point of the line
+        line.endPos = { x: this.element.x, y: this.element.y };
+      }
+      line.clear();
+      line.stroke({ width: 1, color: 0x3e3e3e }); // Redraw the line
+      line.moveTo(line.startPos.x, line.startPos.y);
+      line.lineTo(line.endPos.x, line.endPos.y);
+    });
+  }
+}
+
+class Router extends Dispositive {
+  constructor(
+    stage: Graphics,
+    onClick: (e: FederatedPointerEvent, dispositive: Dispositive) => void,
+    drag: boolean
+  ) {
+    super(RouterImage, stage, onClick, drag);
+  }
+}
+
+class Server extends Dispositive {
+  constructor(
+    stage: Graphics,
+    onClick: (e: FederatedPointerEvent, dispositive: Dispositive) => void,
+    drag: boolean
+  ) {
+    super(ServerImage, stage, onClick, drag);
+  }
+}
+
+class Computer extends Dispositive {
+  constructor(
+    stage: Graphics,
+    onClick: (e: FederatedPointerEvent, dispositive: Dispositive) => void,
+    drag: boolean
+  ) {
+    super(ComputerImage, stage, onClick, drag);
+  }
+}
 
 // IIFE to avoid errors
 (async () => {
@@ -42,48 +211,11 @@ import "./style.css";
   // can then insert into the DOM
   document.body.appendChild(app.canvas);
 
-  await Assets.load(Router);
-  await Assets.load(Server);
-  await Assets.load(Computer);
+  await Assets.load(RouterImage);
+  await Assets.load(ServerImage);
+  await Assets.load(ComputerImage);
 
-  const resizeRouterOption = () => {
-    // Setup the position of the routerOption
-    routerOption.x = app.renderer.width / 100;
-    routerOption.y = app.renderer.height / 100;
-    routerOption.width = routerOption.width / 10;
-    routerOption.height = routerOption.height / 10;
-  };
-
-  const resizeServerOption = () => {
-    // Setup the position of the serverOption
-    serverOption.x = app.renderer.width / 100;
-    serverOption.y = app.renderer.height / 10;
-    serverOption.width = serverOption.width / 10;
-    serverOption.height = serverOption.height / 10;
-  };
-
-  const resizeComputerOption = () => {
-    // Setup the position of the computerOption
-    computerOption.x = app.renderer.width / 100;
-    computerOption.y = app.renderer.height / 5;
-    computerOption.width = computerOption.width / 10;
-    computerOption.height = computerOption.height / 10;
-  };
-
-  const routerOption = Sprite.from(Router);
-  const serverOption = Sprite.from(Server);
-  const computerOption = Sprite.from(Computer);
-
-  resizeRouterOption();
-  resizeServerOption();
-  resizeComputerOption();
-
-  const resizeElement = (element: Sprite) => {
-    // Setup the size of the new element
-    element.width = element.width / 10;
-    element.height = element.height / 10;
-  };
-
+  // Add the objects to the scene we are building
   let rect = new Graphics()
     .rect(0, 0, app.renderer.width, app.renderer.height)
     .fill("#ede7f0");
@@ -93,112 +225,98 @@ import "./style.css";
     rect.height = app.renderer.height;
   };
 
-  // Add the objects to the scene we are building
   app.stage.addChild(rect);
-  rect.addChild(routerOption);
-  rect.addChild(serverOption);
-  rect.addChild(computerOption);
 
-  var currElement = "router";
+  const optionOnClick = (
+    e: FederatedPointerEvent,
+    dispositive: Dispositive
+  ) => {
+    const newDispositive = new Dispositive(
+      dispositive.element.texture,
+      dispositive.stage,
+      dispositiveOnClick,
+      true
+    );
+    newDispositive.resizeDispositive(
+      2,
+      2,
+      DISPOSITIVE_SIZE + 15,
+      DISPOSITIVE_SIZE
+    );
+  };
 
-  let lineStart: { x: number; y: number } = null;
+  const routerOption = new Router(rect, optionOnClick, false);
+  routerOption.resizeDispositive(
+    40,
+    20,
+    DISPOSITIVE_SIZE + 15,
+    DISPOSITIVE_SIZE
+  );
+  const serverOption = new Server(rect, optionOnClick, false);
+  serverOption.resizeDispositive(
+    40,
+    8,
+    DISPOSITIVE_SIZE + 15,
+    DISPOSITIVE_SIZE
+  );
+  const computerOption = new Computer(rect, optionOnClick, false);
+  computerOption.resizeDispositive(
+    40,
+    5,
+    DISPOSITIVE_SIZE + 15,
+    DISPOSITIVE_SIZE
+  );
 
-  const elementOnClick = (e: FederatedPointerEvent, router: Sprite) => {
-    console.log("clicked on router", e);
+  let lineStart: Dispositive = null;
+
+  const dispositiveOnClick = (
+    e: FederatedPointerEvent,
+    dispositive: Dispositive
+  ) => {
+    console.log("clicked on dispositive", e);
     if (!e.altKey) {
       return;
     }
     e.stopPropagation();
     if (lineStart === null) {
-      lineStart = { x: router.x, y: router.y };
+      lineStart = dispositive;
     } else {
-      const line = new Graphics()
-        .moveTo(lineStart.x, lineStart.y)
-        .lineTo(router.x, router.y)
-        .stroke({ width: 5, color: "#3e3e3e" });
-      rect.addChildAt(line, 0);
-      lineStart = null;
+      if (lineStart.connectTo(dispositive)) {
+        lineStart = null;
+      }
     }
   };
 
   rect.on("click", (e) => {
     console.log("clicked on rect", e);
-    if (
-      !e.altKey &&
-      e.globalX !== routerOption.x &&
-      e.globalY !== routerOption.y &&
-      e.globalX !== serverOption.x &&
-      e.globalY !== serverOption.y &&
-      e.globalX !== computerOption.x &&
-      e.globalY !== computerOption.y
-    ) {
-      let element: Sprite;
-      if (currElement === "router") {
-        element = Sprite.from(Router);
-      } else if (currElement === "server") {
-        element = Sprite.from(Server);
-      } else {
-        element = Sprite.from(Computer);
-      }
-      resizeElement(element);
-      element.anchor.x = 0.5;
-      element.anchor.y = 0.5;
-      element.x = e.globalX;
-      element.y = e.globalY;
-      rect.addChild(element);
-      element.on("click", (e) => elementOnClick(e, element));
-      element.eventMode = "static";
-    }
-  });
-
-  routerOption.on("click", (e) => {
-    currElement = "router";
-  });
-
-  serverOption.on("click", (e) => {
-    currElement = "server";
-  });
-
-  computerOption.on("click", (e) => {
-    currElement = "computer";
   });
 
   rect.eventMode = "static";
-  routerOption.eventMode = "static";
-  serverOption.eventMode = "static";
-  computerOption.eventMode = "static";
-
-  // Listen for frame updates
-  //   app.ticker.add(() => {
-  //     // each frame we spin the bunny around a bit
-  //     bunny.rotation += 0.005;
-  //   });
 
   function resize() {
     // Resize the renderer
     app.renderer.resize(window.innerWidth, window.innerHeight);
 
-    resizeRouterOption();
-    resizeServerOption();
-    resizeComputerOption();
     resizeRect();
+    routerOption.resizeDispositive(
+      40,
+      20,
+      DISPOSITIVE_SIZE + 15,
+      DISPOSITIVE_SIZE
+    );
+    serverOption.resizeDispositive(
+      40,
+      8,
+      DISPOSITIVE_SIZE + 15,
+      DISPOSITIVE_SIZE
+    );
+    computerOption.resizeDispositive(
+      40,
+      5,
+      DISPOSITIVE_SIZE + 15,
+      DISPOSITIVE_SIZE
+    );
   }
 
   window.addEventListener("resize", resize);
-
-  //   input.onchange = () => {
-  //     const file = input.files[0];
-
-  //     console.log(file);
-  //     // setting up the reader
-  //     const reader = new FileReader();
-  //     reader.readAsDataURL(file); // this is reading as data url
-
-  //     // here we tell the reader what to do when it's done reading...
-  //     reader.onload = async (readerEvent) => {
-  //       fileContent = readerEvent.target.result; // this is the content!
-  //       const txt = await Assets.load(fileContent);
-  //       bunny.texture = txt;
-  //     };
-  //   };
 })();
