@@ -6,7 +6,7 @@ import RouterSvg from './assets/router.svg';
 import ConnectionSvg from './assets/connection.svg';
 import HandPointer from './assets/hand_pointer.svg';
 
-import { Application, Graphics, GraphicsContext, FederatedPointerEvent, Container, EventSystem, PointData } from 'pixi.js';
+import { Application, Graphics, GraphicsContext, FederatedPointerEvent, EventSystem, PointData } from 'pixi.js';
 
 import * as pixi_viewport from 'pixi-viewport';
 
@@ -46,19 +46,30 @@ class MoveMode implements ModeStrategy {
     initialize(ctx: GlobalContext) {
         ctx.getViewport().enableMovement();
     }
-    clickViewport(ctx: GlobalContext, e: FederatedPointerEvent) { }
-    clickCircle(ctx: GlobalContext, e: FederatedPointerEvent, circle: Circle) { }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    clickViewport(ctx: GlobalContext, e: FederatedPointerEvent) {
+        // do nothing
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    clickCircle(ctx: GlobalContext, e: FederatedPointerEvent, circle: Circle) {
+        // do nothing
+    }
 }
 
 class RouterMode {
     initialize(ctx: GlobalContext) {
         ctx.getViewport().disableMovement();
     }
+
     clickViewport(ctx: GlobalContext, e: FederatedPointerEvent) {
         const position = ctx.getViewport().toWorld(e.global);
         const circle = new Circle(ctx, position);
         ctx.getViewport().addChild(circle);
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     clickCircle(ctx: GlobalContext, e: FederatedPointerEvent, circle: Circle) {
         // To avoid overlapping circles
         e.stopPropagation();
@@ -71,9 +82,11 @@ class ConnectionMode {
     initialize(ctx: GlobalContext) {
         ctx.getViewport().disableMovement();
     }
+
     clickViewport(ctx: GlobalContext, e: FederatedPointerEvent) {
         e.stopPropagation();
     }
+
     clickCircle(ctx: GlobalContext, e: FederatedPointerEvent, circle: Circle) {
         e.stopPropagation();
         const selected = this.popSelected();
