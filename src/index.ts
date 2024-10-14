@@ -1,7 +1,7 @@
 // Doing this includes the file in the build
 import './style.css';
 
-import { Application, Graphics, GraphicsContext, FederatedPointerEvent, Container, EventSystem, PointData } from 'pixi.js';
+import { Application, Graphics, GraphicsContext, FederatedPointerEvent, EventSystem, PointData } from 'pixi.js';
 import RouterSvg from './assets/router.svg';
 import ConnectionSvg from './assets/connection.svg';
 import * as pixi_viewport from 'pixi-viewport';
@@ -22,7 +22,7 @@ class GlobalContext {
     mode: CursorMode = CursorMode.Router;
     selected: Circle = null;
 
-    viewport: Container = null;
+    viewport: Viewport = null;
 
     popSelected() {
         const selected = this.selected;
@@ -30,7 +30,7 @@ class GlobalContext {
         return selected;
     }
 
-    setViewport(viewport: Container) {
+    setViewport(viewport: Viewport) {
         this.viewport = viewport;
     }
 }
@@ -172,10 +172,11 @@ class Viewport extends pixi_viewport.Viewport {
     });
 
     // Get right bar
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const rightBar = RightBar.getFrom(document);
 
     // Ticker logic
-    app.ticker.add(() => { });
+    // app.ticker.add(() => { });
 
     // Resize logic
     function resize() {
