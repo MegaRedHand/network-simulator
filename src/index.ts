@@ -1,14 +1,27 @@
-import { Application, Graphics, GraphicsContext, FederatedPointerEvent, Container, EventSystem, PointData } from 'pixi.js';
-import * as pixi_viewport from 'pixi-viewport';
+// Doing this includes the file in the build
 import './style.css';
+
+import { Application, Graphics, GraphicsContext, FederatedPointerEvent, Container, EventSystem, PointData } from 'pixi.js';
+import RouterSvg from './assets/router.svg';
+import ConnectionSvg from './assets/connection.svg';
+import * as pixi_viewport from 'pixi-viewport';
 
 
 const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;
 
 
+enum CursorMode {
+    Router,
+    Connection,
+}
+
+
 class GlobalContext {
+    // TODO: merge mode and selected fields into strategy class
+    mode: CursorMode = CursorMode.Router;
     selected: Circle = null;
+
     viewport: Container = null;
 
     popSelected() {
@@ -34,7 +47,7 @@ class Circle extends Graphics {
     }
 
     onClick(ctx: GlobalContext, e: FederatedPointerEvent) {
-        if (!e.altKey) {
+        if (ctx.mode != CursorMode.Connection) {
             return;
         }
         e.stopPropagation();
@@ -51,6 +64,40 @@ class Circle extends Graphics {
             line.zIndex = 1;
             ctx.viewport.addChild(line);
         }
+    }
+}
+
+class LeftBar {
+    private leftBar: HTMLElement;
+
+    constructor(leftBar: HTMLElement) {
+        this.leftBar = leftBar;
+    }
+    static getFrom(document: Document) {
+        return new LeftBar(document.getElementById('left-bar'));
+    }
+
+    addButton(src: string, onClick: () => void) {
+        const button = document.createElement("button");
+        button.classList.add("tool-button");
+
+        button.onclick = onClick;
+        this.leftBar.appendChild(button);
+
+        const img = document.createElement("img");
+        img.src = src;
+        button.appendChild(img);
+    }
+}
+
+class RightBar {
+    private rightBar: HTMLElement;
+
+    constructor(rightBar: HTMLElement) {
+        this.rightBar = rightBar;
+    }
+    static getFrom(document: Document) {
+        return new RightBar(document.getElementById('right-bar'));
     }
 }
 
@@ -83,6 +130,15 @@ class Viewport extends pixi_viewport.Viewport {
             .clampZoom({ minHeight: 200, minWidth: 200, maxWidth: WORLD_WIDTH / 5, maxHeight: WORLD_HEIGHT / 5 });
 
         this.addChild(new Background());
+
+        // Circle and lines logic
+        this.on('click', (e) => {
+            if (ctx.mode == CursorMode.Router) {
+                const position = this.toWorld(e.global);
+                const circle = new Circle(ctx, position);
+                this.addChild(circle);
+            }
+        });
     }
 }
 
@@ -90,10 +146,10 @@ class Viewport extends pixi_viewport.Viewport {
 (async () => {
     // Initialization
     const app = new Application();
-
     await app.init({ width: window.innerWidth, height: window.innerHeight, resolution: devicePixelRatio });
 
-    document.body.appendChild(app.canvas);
+    const canvasPlaceholder = document.getElementById('canvas');
+    canvasPlaceholder.replaceWith(app.canvas);
 
     // Context initialization
     const ctx = new GlobalContext();
@@ -102,23 +158,29 @@ class Viewport extends pixi_viewport.Viewport {
     const viewport = new Viewport(ctx, app.renderer.events);
     app.stage.addChild(viewport);
 
-    // Circle and lines logic
-    viewport.on('click', (e) => {
-        if (!e.altKey) {
-            const position = viewport.toWorld(e.client);
-            const circle = new Circle(ctx, position);
-            viewport.addChild(circle);
-        }
+    // Left bar logic
+    const leftBar = LeftBar.getFrom(document);
+
+    // Add router button
+    leftBar.addButton(RouterSvg, () => {
+        ctx.mode = CursorMode.Router;
     });
 
-    // Ticker logic
+    // Add connection button
+    leftBar.addButton(ConnectionSvg, () => {
+        ctx.mode = CursorMode.Connection;
+    });
 
+    // Get right bar
+    const rightBar = RightBar.getFrom(document);
+
+    // Ticker logic
     app.ticker.add(() => { });
 
     // Resize logic
     function resize() {
-        const width = window.innerWidth;
-        const height = window.innerHeight;
+        const width = app.renderer.canvas.width;
+        const height = app.renderer.canvas.height;
         app.renderer.resize(width, height);
         viewport.resize(width, height);
     }

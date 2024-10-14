@@ -16,4 +16,28 @@ body {
 
 canvas {
     height: 100%;
+    width: 100%;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 32px;
+}
+
+.center-bar {
+    display: flex;
+    flex-direction: column;
+    flex: 3 1 80%;
+}
+
+.tool-button {
+    margin-top: 4px;
+    min-width: 32px;
+    min-height: 32px;
 }
