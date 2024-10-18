@@ -31,8 +31,9 @@ class Dispositive {
   element: Sprite;
   stage: Graphics;
   dragging: boolean = false;
-  dragData: FederatedPointerEvent | null = null;
   connectedLines: { line: LineGraphics; start: boolean }[] = [];
+  offsetX: number = 0;
+  offsetY: number = 0;
 
   constructor(
     dispositive: string | Texture,
@@ -52,10 +53,12 @@ class Dispositive {
     this.element.interactive = true;
 
     if (drag) {
-      this.element.on("mousedown", this.onDragStart, this);
-      this.element.on("mouseup", this.onDragEnd, this);
-      this.element.on("mouseupoutside", this.onDragEnd, this);
-      this.element.on("mousemove", this.onDragMove, this);
+      // this.element.on("pointerdown", handlePointerDown(this));
+      this.element.on("pointerdown", this.onPointerDown, this);
+      // this.element.on("mousedown", this.onDragStart, this);
+      // this.element.on("mouseup", this.onDragEnd, this);
+      // this.element.on("mouseupoutside", this.onDragEnd, this);
+      // this.element.on("mousemove", this.onDragMove, this);
     }
 
     this.element.on("click", (e) => onClick(e, this));
@@ -80,22 +83,66 @@ class Dispositive {
     this.element.height = this.element.height / DISPOSITIVE_SIZE;
   }
 
+  onPointerDown(event: FederatedPointerEvent): void {
+    this.dragging = true;
+
+    // Calcula el desplazamiento entre el mouse y el elemento
+    this.offsetX = event.clientX - this.element.x;
+    this.offsetY = event.clientY - this.element.y;
+
+    // Escucha los eventos globales de pointermove y pointerup
+    document.addEventListener("pointermove", this.onPointerMove);
+    document.addEventListener("pointerup", this.onPointerUp);
+  }
+
+  onPointerMove = (event: PointerEvent): void => {
+    if (this.dragging) {
+      // Calcula la nueva posición usando el desplazamiento
+      const newPositionX = event.clientX - this.offsetX;
+      const newPositionY = event.clientY - this.offsetY;
+      this.element.x = newPositionX;
+      this.element.y = newPositionY;
+
+      // Actualiza las líneas conectadas
+      this.updateLines();
+    }
+  };
+
+  onPointerUp = (): void => {
+    this.dragging = false;
+
+    // Remueve los eventos globales de pointermove y pointerup
+    document.removeEventListener("pointermove", this.onPointerMove);
+    document.removeEventListener("pointerup", this.onPointerUp);
+  };
+
   onDragStart(event: FederatedPointerEvent): void {
     // Starts dragging functionality
     this.dragging = true;
-    this.dragData = event;
-    const newPosition = this.dragData.global;
-    this.element.x = newPosition.x;
-    this.element.y = newPosition.y;
+    // this.offset = {
+    //   x: event.clientX - this.element.x,
+    //   y: event.clientY - this.element.y,
+    // };
+    // this.element.x = event.globalX;
+    // this.element.y = event.globalY;
   }
 
-  onDragMove(): void {
+  onDragMove(event: FederatedPointerEvent): void {
     // Dargging functionality.
-    if (this.dragging && this.dragData) {
-      const newPosition = this.dragData.global;
-      this.element.x = newPosition.x;
-      this.element.y = newPosition.y;
+    if (this.dragging) {
+      // const newPosition = {
+      //   x: event.clientX - this.offset.x,
+      //   y: event.clientY - this.offset.y,
+      // };
 
+      // Calculate the delta (difference in position)
+      // const deltaX = newPosition.x - this.element.x;
+      // const deltaY = newPosition.y - this.element.y;
+
+      // this.element.x = newPosition.x;
+      // this.element.y = newPosition.y;
+
+      // Update the lines connected to this dispositive
       this.updateLines();
     }
   }
@@ -103,7 +150,6 @@ class Dispositive {
   onDragEnd(): void {
     // Finishes dargging functionality.
     this.dragging = false;
-    this.dragData = null;
   }
 
   connectTo(other: Dispositive): boolean {
