@@ -19,9 +19,9 @@ export class IpAddress {
     }
 
     static parse(addrString: string) {
-        let octets = new Uint8Array(4);
+        const octets = new Uint8Array(4);
         addrString.split(".").map((octet, i) => {
-            let octetInt = parseInt(octet);
+            const octetInt = parseInt(octet);
             if (octetInt < 0 || octetInt > 255) {
                 throw new Error("Invalid IP address");
             }
@@ -55,17 +55,17 @@ export interface IpPayload {
 export class IPv4Packet {
     // IP version field
     // 4 bits
-    get version() { return 4 }
+    readonly version = 4;
 
     // Length of the header in 32-bit words.
     // Has a minimum of 5
     // 4 bits
     // This is always 5 here because we don't have options
-    get internetHeaderLength() { return 5 }
+    readonly internetHeaderLength = 5;
 
     // Indication of the abstract parameters of the quality of service desired
     // 8 bits
-    typeOfService: number = 0;
+    typeOfService = 0;
 
     // Length of the datagram, in bytes
     // 16 bits
@@ -74,20 +74,20 @@ export class IPv4Packet {
     // Identifying value assigned by the sender
     // Used only for fragmentation and reassembly (see RFC-6864)
     // 16 bits
-    identification: number = 0;
+    identification = 0;
 
     // Various Control Flags
     // 3 bits
-    flags: number = 0;
+    flags = 0;
 
     // Indicates where in the datagram this fragment belongs.
     // Measured in units of 8 octets (8 bytes)
     // 13 bits
-    fragmentOffset: number = 0;
+    fragmentOffset = 0;
 
     // Maximum number of hops
     // 8 bits
-    timeToLive: number = 255;
+    timeToLive = 255;
 
     // Transport layer protocol identifier
     // 8 bits
