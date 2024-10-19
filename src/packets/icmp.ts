@@ -59,10 +59,10 @@ class EchoMessage extends IcmpPacket {
     // Variant data
 
     // 16 bits
-    identifier: number = 0;
+    identifier = 0;
 
     // 16 bits
-    sequenceNumber: number = 0;
+    sequenceNumber = 0;
 
     // Variable length
     data: Uint8Array = new Uint8Array(0);
