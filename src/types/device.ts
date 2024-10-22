@@ -20,12 +20,9 @@ export class Device {
   offsetX: number = 0;
   offsetY: number = 0;
 
-  private static idCounter: number = 0;
-
   constructor(device: string, graph: NetworkGraph, stage: Viewport) {
     console.log("Entro a constructor de Device");
     this.fatherGraph = graph;
-    this.id = Device.idCounter++;
 
     const texture = Texture.from(device);
     const sprite = Sprite.from(texture);

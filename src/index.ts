@@ -113,13 +113,14 @@ class LeftBar {
 
   addButton(src: string, onClick: () => void) {
     const button = document.createElement("button");
-    button.classList.add("tool-button");
+    button.classList.add("icon-button");
 
     button.onclick = onClick;
     this.leftBar.appendChild(button);
 
     const img = document.createElement("img");
     img.src = src;
+    img.classList.add("icon-img");
     button.appendChild(img);
   }
 }
@@ -134,20 +135,6 @@ class RightBar {
   }
   static getFrom(document: Document) {
     return new RightBar(document.getElementById("right-bar"));
-  }
-}
-
-class Circle extends Graphics {
-  static graphicsContext = new GraphicsContext()
-    .circle(0, 0, 10)
-    .fill(0xff0000);
-
-  constructor(x: number, y: number) {
-    super(Circle.graphicsContext);
-    this.x = x;
-    this.y = y;
-    this.zIndex = 2;
-    this.eventMode = "static";
   }
 }
 

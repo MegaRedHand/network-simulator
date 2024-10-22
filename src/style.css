@@ -5,23 +5,54 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #aaa;
+  background-color: #F2F2F2;
 }
 
+/* Barra superior que contiene el botón "Open file" y el título */
+#top-bar {
+  padding: 5px; /* Espacio interno reducido */
+  background-color: #333333; /* Fondo de la barra superior en gris oscuro */
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2); /* Sombra debajo de la barra */
+  display: flex; /* Flexbox para alinear el contenido */
+  align-items: center; /* Centra el contenido verticalmente */
+  position: relative; /* Posiciona el contenido relativo a esta barra */
+  height: 50px; /* Reduce la altura de la barra */
+  z-index: 10; /* Asegura que la barra esté sobre el contenido */
+}
+
+/* Título centrado dentro de la barra superior */
+#app-title {
+  position: absolute; /* Posiciona el título en relación a la barra superior */
+  left: 50%; /* Centra el título horizontalmente */
+  transform: translateX(-50%); /* Ajusta el título para que esté centrado exactamente */
+  margin: 0; /* Elimina márgenes por defecto */
+  font-size: 25px; /* Ajusta el tamaño de fuente para mayor visibilidad */
+  font-weight: bold; /* Hace el texto del título más grueso */
+  color: #FFFFFF; /* Color del texto en blanco */
+}
+
+/* Ajuste del contenedor principal para empezar justo debajo de la barra superior */
 .container {
   display: flex;
-  justify-content: center;
-  height: 100%;
+  height: calc(100% - 50px); /* Resta la altura de la top-bar para que el contenido comience debajo */
+  margin-top: 0; /* Elimina el margen superior */
 }
 
+/* Estilos para el canvas, ocupa el área central */
 canvas {
-  height: 100%;
-  width: 100%;
+  height: 100%; /* Asegura que el canvas ocupe toda la altura */
+  width: 100%; /* Asegura que el canvas ocupe todo el ancho disponible */
 }
 
 .row {
   display: flex;
   flex-direction: row;
+}
+
+/* Clase para organizar elementos en una columna */
+.column {
+  display: flex; /* Flexbox para alineación en columna */
+  flex-direction: column; /* Alinea en dirección vertical */
 }
 
 .sidebar {
@@ -40,4 +71,114 @@ canvas {
   margin-top: 4px;
   min-width: 32px;
   min-height: 32px;
+}
+
+/* Barra lateral izquierda que contiene los botones */
+.left-bar {
+  width: 80px; /* Ancho fijo para la barra lateral */
+  padding: 10px; /* Espacio interno alrededor de los botones */
+  display: flex; /* Flexbox para organizar los botones */
+  flex-direction: column; /* Alinea los botones en una columna */
+  align-items: center; /* Centra los botones horizontalmente */
+  background-color: #F1F1F1; /* Fondo de la barra */
+  box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.2); /* Sombra para resaltar */
+}
+
+/* Estilos para los botones de la barra lateral */
+.icon-button {
+  background-color: #FFFFFF; /* Fondo blanco del botón */
+  border: none; /* Sin borde */
+  padding: 5px; /* Espacio interno reducido */
+  margin-bottom: 10px; /* Separación entre botones */
+  cursor: pointer; /* Cambia el cursor a "pointer" al pasar el mouse */
+  border-radius: 5px; /* Bordes redondeados */
+  width: 70px; /* Ancho fijo del botón */
+  height: 70px; /* Alto fijo del botón */
+}
+
+/* Efecto de hover para los botones */
+.icon-button:hover {
+  background-color: #F0F0F0; /* Fondo más claro al pasar el mouse */
+}
+
+/* Imágenes dentro de los botones de la barra lateral */
+.icon-img {
+  width: 90%; /* Ocupa el 90% del ancho del botón */
+  height: 90%; /* Ocupa el 90% del alto del botón */
+  object-fit: contain; /* Ajusta la imagen para no distorsionarla */
+}
+
+
+/* Barra derecha que muestra la información del router */
+.right-bar {
+  width: 250px; /* Ancho fijo de la barra de información */
+  height: 100vh; /* Ocupa toda la altura de la ventana */
+  background-color: #FFFFFF; /* Fondo blanco para diferenciarla */
+  box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.2); /* Sombra para resaltar */
+  padding: 20px; /* Espacio interno para contenido */
+}
+
+.right-bar h2 {
+  text-align: center; /* Centra solo el título */
+  margin: 0; /* Elimina márgenes por defecto */
+  padding-bottom: 15px; /* Espacio inferior para separar el título del contenido */
+  font-size: 22px; /* Ajusta el tamaño de fuente para mayor visibilidad */
+  font-weight: bold; /* Hace el texto del título más grueso */
+  color: #333333; /* Color del texto en gris oscuro */
+}
+
+.info-content {
+  font-size: 15px; /* Ajusta el tamaño de fuente para mayor visibilidad */
+  font-weight: bold; /* Hace el texto del título más grueso */
+  color: #333333; /* Color del texto en gris oscuro */
+}
+
+/* Contenedor del canvas */
+.canvas-container {
+  flex: 1; /* Ocupa el espacio restante en el layout */
+  position: relative; /* Permite posicionar elementos de forma absoluta dentro de él */
+  background-color: #E3E2E1; /* Fondo gris claro para distinguirlo */
+}
+
+/* Menú desplegable sobre el canvas */
+#layer-select {
+  position: absolute; /* Se posiciona en relación al contenedor relativo */
+  top: 10px; /* Espacio superior para separarlo del borde */
+  right: 10px; /* Espacio derecho para alinearlo */
+  padding: 5px; /* Espacio interno */
+  font-size: 14px; /* Tamaño de fuente del menú */
+  z-index: 10; /* Asegura que esté encima del canvas */
+  background-color: #FFFFFF; /* Fondo blanco */
+  border: 1px solid #CCCCCC; /* Borde gris claro */
+}
+
+
+/* Estilos para el botón Save y Load */
+.save-button {
+  background-color: #4A90E2; /* Fondo azul suave */
+  color: #FFFFFF; /* Texto blanco */
+  border: none; /* Sin borde */
+  padding: 8px 16px; /* Espaciado interno */
+  cursor: pointer; /* Cambia el cursor al pasar el mouse */
+  margin-right: 10px; /* Espacio derecho entre botones */
+  border-radius: 5px; /* Bordes redondeados */
+}
+
+.save-button:hover {
+  background-color: #357ABD; /* Azul más oscuro al pasar el mouse */
+}
+
+/* Estilos para el botón Save y Load */
+.load-button {
+  background-color: #4A90E2; /* Fondo azul suave */
+  color: #FFFFFF; /* Texto blanco */
+  border: none; /* Sin borde */
+  padding: 8px 16px; /* Espaciado interno */
+  cursor: pointer; /* Cambia el cursor al pasar el mouse */
+  margin-right: 10px; /* Espacio derecho entre botones */
+  border-radius: 5px; /* Bordes redondeados */
+}
+
+.load-button:hover {
+  background-color: #357ABD; /* Azul más oscuro al pasar el mouse */
 }
