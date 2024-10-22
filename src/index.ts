@@ -58,16 +58,15 @@ class Background extends Graphics {
   }
 }
 
-export class Viewport extends pixi_viewport.Viewport {
+class Viewport extends pixi_viewport.Viewport {
   static usedPlugins = ["drag", "pinch"];
 
-  constructor(ctx: GlobalContext, events: EventSystem) {
+  constructor(events: EventSystem) {
     super({
       worldWidth: WORLD_WIDTH,
       worldHeight: WORLD_HEIGHT,
       events: events,
     });
-
     this.moveCenter(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
     this.sortableChildren = true;
     this.initializeMovement();
@@ -159,7 +158,7 @@ class RightBar {
   const ctx = new GlobalContext();
 
   // Background container initialization
-  const viewport = new Viewport(ctx, app.renderer.events);
+  const viewport = new Viewport(app.renderer.events);
   app.stage.addChild(viewport);
 
   // Left bar logic

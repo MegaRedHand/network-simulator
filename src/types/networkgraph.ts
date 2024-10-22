@@ -1,21 +1,20 @@
 import { Graphics, Sprite } from "pixi.js";
 import { Device } from "./device"; // Importa la clase Device
 import { Edge } from "./edge";
-import { Viewport } from "../index";
 
 export class NetworkGraph {
   private devices: Map<number, Device> = new Map();
   private edges: Map<number, Edge> = new Map();
-  private nodesLayer: Graphics;
-  private connectionsLayer: Graphics;
+  private nodesLayer: Graphics = new Graphics();
+  private connectionsLayer: Graphics = new Graphics();
 
   constructor() {}
 
-  getNodesLayer() {
+  getNodesLayer(): Graphics {
     return this.nodesLayer;
   }
 
-  getConnectionsLayer() {
+  getConnectionsLayer(): Graphics {
     return this.connectionsLayer;
   }
 
