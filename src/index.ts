@@ -67,6 +67,7 @@ export class Viewport extends pixi_viewport.Viewport {
       worldHeight: WORLD_HEIGHT,
       events: events,
     });
+
     this.moveCenter(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
     this.sortableChildren = true;
     this.initializeMovement();
