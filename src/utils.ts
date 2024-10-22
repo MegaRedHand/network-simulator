@@ -1,7 +1,7 @@
-import { FederatedPointerEvent } from "pixi.js";
-import { Device, DEVICE_SIZE } from "./device/device";
+import { FederatedPointerEvent, Sprite } from "pixi.js";
+import { Device, DEVICE_SIZE } from "./types/device";
 
-var lineStart: Device = null;
+var lineStart: { device: Device; sprite: Sprite } = null;
 
 const deviceOnClick = (e: FederatedPointerEvent, device: Device) => {
   console.log("clicked on device", e);
@@ -9,21 +9,20 @@ const deviceOnClick = (e: FederatedPointerEvent, device: Device) => {
     return;
   }
   e.stopPropagation();
+  const sprite = e.currentTarget as Sprite;
   if (lineStart === null) {
-    lineStart = device;
+    lineStart = { device, sprite };
   } else {
-    if (lineStart.connectTo(device)) {
+    if (
+      lineStart.device.connectTo(
+        device,
+        lineStart.sprite.x,
+        lineStart.sprite.y,
+        sprite.x,
+        sprite.y
+      )
+    ) {
       lineStart = null;
     }
   }
-};
-
-export const optionOnClick = (e: FederatedPointerEvent, device: Device) => {
-  const newDevice = new Device(
-    device.element.texture,
-    device.stage,
-    deviceOnClick,
-    true
-  );
-  newDevice.resizeDevice(2, 2, DEVICE_SIZE + 15, DEVICE_SIZE);
 };
