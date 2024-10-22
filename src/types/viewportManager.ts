@@ -1,13 +1,12 @@
-import { NetworkGraph } from "./networkgraph";
-import { Graphics, Sprite, Texture } from "pixi.js";
 import { GlobalContext } from "./../index";
 import { Device, Pc, Router, Server } from "./device";
 
 // Función para agregar un router en el centro del viewport
 export function AddRouter(ctx: GlobalContext) {
+  console.log("Entro a AddRouter");
   let networkGraph = ctx.getNetwork();
 
-  const newRouter: Device = new Router(networkGraph);
+  const newRouter: Device = new Router(networkGraph, ctx.getViewport());
 
   // Agregar el RouterNode al grafo
   networkGraph.addDevice(newRouter);
@@ -21,7 +20,7 @@ export function AddRouter(ctx: GlobalContext) {
 export function AddPc(ctx: GlobalContext) {
   let networkGraph = ctx.getNetwork();
 
-  const newPC: Device = new Pc(networkGraph);
+  const newPC: Device = new Pc(networkGraph, ctx.getViewport());
 
   // Agregar el PCNode al grafo
   networkGraph.addDevice(newPC);
@@ -33,7 +32,7 @@ export function AddPc(ctx: GlobalContext) {
 export function AddServer(ctx: GlobalContext) {
   let networkGraph = ctx.getNetwork();
 
-  const newServer: Device = new Server(networkGraph);
+  const newServer: Device = new Server(networkGraph, ctx.getViewport());
 
   // Agregar el ServerNode al grafo
   networkGraph.addDevice(newServer);

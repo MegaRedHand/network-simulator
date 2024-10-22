@@ -10,14 +10,13 @@ import {
   Application,
   Graphics,
   GraphicsContext,
-  FederatedPointerEvent,
   EventSystem,
-  PointData,
+  Assets,
 } from "pixi.js";
 
 import * as pixi_viewport from "pixi-viewport";
-import { AddPc, AddRouter, AddServer } from "./types/viewportManager";
 import { NetworkGraph } from "./types/networkgraph";
+import { AddPc, AddRouter, AddServer } from "./types/viewportManager";
 
 const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;
@@ -27,11 +26,10 @@ const WORLD_HEIGHT = 10000;
 export class GlobalContext {
   private viewport: Viewport = null;
   private network: NetworkGraph = new NetworkGraph();
+  i: number = 0;
 
   initialize(viewport: Viewport) {
     this.viewport = viewport;
-    this.viewport.addChild(this.network.getConnectionsLayer());
-    this.viewport.addChild(this.network.getNodesLayer());
   }
 
   getViewport() {
@@ -58,7 +56,7 @@ class Background extends Graphics {
   }
 }
 
-class Viewport extends pixi_viewport.Viewport {
+export class Viewport extends pixi_viewport.Viewport {
   static usedPlugins = ["drag", "pinch"];
 
   constructor(events: EventSystem) {
@@ -83,8 +81,8 @@ class Viewport extends pixi_viewport.Viewport {
       .clampZoom({
         minHeight: 200,
         minWidth: 200,
-        maxWidth: WORLD_WIDTH / 5,
-        maxHeight: WORLD_HEIGHT / 5,
+        maxWidth: WORLD_WIDTH / 2,
+        maxHeight: WORLD_HEIGHT / 2,
       });
   }
 
@@ -139,6 +137,20 @@ class RightBar {
   }
 }
 
+class Circle extends Graphics {
+  static graphicsContext = new GraphicsContext()
+    .circle(0, 0, 10)
+    .fill(0xff0000);
+
+  constructor(x: number, y: number) {
+    super(Circle.graphicsContext);
+    this.x = x;
+    this.y = y;
+    this.zIndex = 2;
+    this.eventMode = "static";
+  }
+}
+
 // > index.ts
 
 // IIFE to avoid errors
@@ -153,6 +165,9 @@ class RightBar {
 
   const canvasPlaceholder = document.getElementById("canvas");
   canvasPlaceholder.replaceWith(app.canvas);
+  await Assets.load(RouterSvg);
+  await Assets.load(ServerSvg);
+  await Assets.load(ComputerSvg);
 
   // Context initialization
   const ctx = new GlobalContext();
@@ -174,7 +189,7 @@ class RightBar {
     AddServer(ctx); // Función anónima que ejecuta AddServer cuando se hace clic
   });
 
-  // Add PC button
+  // // Add PC button
   leftBar.addButton(ComputerSvg, () => {
     AddPc(ctx); // Función anónima que ejecuta AddPc cuando se hace clic
   });

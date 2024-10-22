@@ -5,18 +5,8 @@ import { Edge } from "./edge";
 export class NetworkGraph {
   private devices: Map<number, Device> = new Map();
   private edges: Map<number, Edge> = new Map();
-  private nodesLayer: Graphics = new Graphics();
-  private connectionsLayer: Graphics = new Graphics();
 
   constructor() {}
-
-  getNodesLayer(): Graphics {
-    return this.nodesLayer;
-  }
-
-  getConnectionsLayer(): Graphics {
-    return this.connectionsLayer;
-  }
 
   // Agregar un dispositivo al grafo
   addDevice(device: Device) {
@@ -49,6 +39,7 @@ export class NetworkGraph {
       edge.startPos = startPos;
       edge.endPos = endPos;
       edge.id = this.edges.size;
+      edge.connectedNodes = { n1: n1Info.id, n2: n2Info.id };
       this.edges.set(edge.id, edge);
       console.log(
         `Conexión creada entre dispositivos ID: ${n1Info.id} y ID: ${n2Info.id}`
