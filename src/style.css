@@ -1,43 +1,145 @@
+/* Estilo general para la página: ajusta el tamaño del HTML y el body al 100% del viewport */
 html,
 body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background-color: #aaa;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Evita que aparezcan barras de scroll */
+  background-color: #F2F2F2; /* Color de fondo general */
 }
 
+/* Estilo para la barra superior (top-bar) que contiene botones y el título */
+#top-bar {
+  padding: 5px; /* Espacio interno para evitar que el contenido esté pegado a los bordes */
+  background-color: #333333; /* Color de fondo gris oscuro */
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2); /* Sombra para dar sensación de profundidad */
+  display: flex; /* Utiliza flexbox para organizar el contenido en una línea */
+  align-items: center; /* Centra los elementos verticalmente */
+  position: relative; /* Posiciona el contenido en relación con la barra */
+  z-index: 10; /* Asegura que la barra esté encima de los demás elementos */
+  height: 40px; /* Altura fija para la barra superior */
+}
+
+/* Título centrado dentro de la barra superior */
+#app-title {
+  position: absolute; /* Permite posicionar el título en relación a la barra */
+  left: 50%; /* Centra el título horizontalmente */
+  transform: translateX(-50%); /* Ajusta el título para que quede exactamente centrado */
+  margin: 0; /* Elimina márgenes por defecto */
+  font-size: 25px; /* Tamaño de fuente del título */
+  font-weight: bold; /* Hace el texto del título más grueso */
+  color: #FFFFFF; /* Color del texto en blanco */
+}
+
+/* Flexbox container principal para la distribución de las barras laterales y el canvas */
 .container {
-    display: flex;
-    justify-content: center;
-    height: 100%;
+  display: flex;
+  height: calc(100vh - 40px); /* Altura restante después de restar la altura de la top-bar */
+  width: 100%; /* El contenedor ocupa todo el ancho */
 }
 
+/* Estilo para la barra lateral izquierda (left-bar) */
+.left-bar {
+  display: flex;
+  padding-top: 10px; /* Añade espacio en la parte superior para separar los botones de la barra superior */
+  flex-direction: column; /* Coloca los elementos (botones) en una columna */
+  align-items: center; /* Centra los botones horizontalmente */
+  flex: 0 0 100px; /* La barra tiene un ancho fijo de 100px */
+  background-color: #F1F1F1; /* Color de fondo claro */
+  box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.2); /* Sombra a la derecha para resaltar la barra */
+}
+
+/* Estilo para los botones dentro de la barra lateral izquierda */
+.icon-button {
+  background-color: #FFFFFF; /* Fondo blanco del botón */
+  border: none; /* Sin borde */
+  padding: 5px; /* Espacio interno del botón */
+  margin-bottom: 10px; /* Espaciado entre botones */
+  cursor: pointer; /* Cambia el cursor al estilo pointer cuando pasas sobre el botón */
+  border-radius: 5px; /* Bordes redondeados */
+  width: 70px; /* Ancho fijo del botón */
+  height: 70px; /* Alto fijo del botón */
+}
+
+/* Efecto hover (al pasar el mouse) para los botones */
+.icon-button:hover {
+  background-color: #F0F0F0; /* Fondo más claro cuando el mouse pasa sobre el botón */
+}
+
+/* Estilo para las imágenes dentro de los botones de la barra lateral */
+.icon-img {
+  width: 90%; /* Las imágenes ocupan el 90% del ancho del botón */
+  height: 90%; /* Las imágenes ocupan el 90% de la altura del botón */
+  object-fit: contain; /* Mantiene la proporción de la imagen sin distorsionarla */
+}
+
+/* Estilo para la barra lateral derecha (right-bar) */
+.right-bar {
+  flex: 0 0 250px; /* Ancho fijo de 250px para la barra derecha */
+  background-color: #F1F1F1; /* Fondo claro para la barra */
+  box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.2); /* Sombra a la izquierda para resaltar la barra */
+  padding: 20px; /* Espacio interno alrededor del contenido */
+}
+
+/* Título de la sección de información en la barra derecha */
+.right-bar h2 {
+  text-align: center; /* Centra el título horizontalmente */
+  margin: 0; /* Elimina márgenes por defecto */
+  padding-bottom: 15px; /* Espaciado debajo del título */
+  font-size: 22px; /* Tamaño de fuente del título */
+  font-weight: bold; /* Hace el texto del título más grueso */
+  color: #333333; /* Color del texto en gris oscuro */
+}
+
+/* Estilo para el contenido de información en la barra derecha */
+.info-content {
+  font-size: 15px; /* Ajusta el tamaño de fuente */
+  font-weight: bold; /* Hace el texto más grueso */
+  color: #333333; /* Color del texto en gris oscuro */
+}
+
+/* Contenedor para el canvas (gráfico central) */
+.canvas-container {
+  flex: 1; /* El canvas ocupará todo el espacio restante entre las barras */
+  display: flex;
+  position: relative;
+  background-color: #a09f9f; /* Color de fondo gris claro */
+}
+
+/* Ajuste del canvas para que ocupe todo el espacio disponible */
 canvas {
-    height: 100%;
-    width: 100%;
+  width: 100%; /* El canvas ocupará el 100% del ancho del contenedor */
+  height: 100%; /* El canvas ocupará el 100% de la altura del contenedor */
+  background-color: #FFFFFF; /* Fondo blanco del canvas */
 }
 
-.row {
-    display: flex;
-    flex-direction: row;
+/* Menú desplegable que se muestra sobre el canvas para seleccionar capas */
+#layer-select {
+  position: absolute; /* Posición relativa al canvas-container */
+  top: 10px; /* Margen superior para separar del borde */
+  right: 10px; /* Margen derecho para alinear a la derecha */
+  padding: 5px; /* Espaciado interno */
+  font-size: 14px; /* Tamaño de fuente */
+  z-index: 10; /* Asegura que el menú esté por encima del canvas */
+  background-color: #FFFFFF; /* Fondo blanco */
+  border: 1px solid #CCCCCC; /* Borde gris claro */
 }
 
-.sidebar {
-    display: flex;
-    flex-direction: column;
-    flex: 1 0 32px;
+/* Estilos para los botones de guardar y cargar */
+.save-button,
+.load-button {
+  background-color: #4A90E2; /* Fondo azul */
+  color: #FFFFFF; /* Texto en blanco */
+  border: none; /* Sin borde */
+  padding: 8px 16px; /* Espaciado interno */
+  cursor: pointer; /* Cambia el cursor al pasar el mouse */
+  margin-right: 10px; /* Espaciado entre los botones */
+  border-radius: 5px; /* Bordes redondeados */
 }
 
-.center-bar {
-    display: flex;
-    flex-direction: column;
-    flex: 3 1 80%;
-}
-
-.tool-button {
-    margin-top: 4px;
-    min-width: 32px;
-    min-height: 32px;
+/* Efecto hover para los botones de guardar y cargar */
+.save-button:hover,
+.load-button:hover {
+  background-color: #357ABD; /* Fondo más oscuro al pasar el mouse */
 }
