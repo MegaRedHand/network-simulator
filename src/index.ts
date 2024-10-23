@@ -16,7 +16,7 @@ import {
 
 import * as pixi_viewport from "pixi-viewport";
 import { NetworkGraph } from "./types/networkgraph";
-import { AddPc, AddRouter, AddServer } from "./types/viewportManager";
+import { AddPc, AddRouter, AddServer, loadGraph, saveGraph } from "./types/viewportManager";
 
 const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;
@@ -215,6 +215,35 @@ class RightBar {
   resize();
 
   window.addEventListener("resize", resize);
+
+ // Gestión de los botones de carga y guardado
+ const loadButton = document.getElementById("load-button");
+ const saveButton = document.getElementById("save-button");
+
+ // Función para manejar el botón de guardar
+ saveButton.onclick = () => {
+   saveGraph(ctx); // Llama a la función saveGraph pasando el contexto actual
+ };
+
+ // Función para manejar el botón de cargar
+ loadButton.onclick = () => {
+   const input = document.createElement("input");
+   input.type = "file";
+   input.accept = ".json";
+
+   input.onchange = (event) => {
+     const file = (event.target as HTMLInputElement).files[0];
+     const reader = new FileReader();
+     reader.readAsText(file);
+
+     reader.onload = (readerEvent) => {
+       const jsonData = readerEvent.target.result as string;
+       loadGraph(jsonData, ctx); // Llama a la función loadGraph pasando el JSON y el contexto
+     };
+   };
+
+   input.click(); // Simula el click para abrir el cuadro de diálogo de selección de archivo
+ };
 
   console.log("initialized!");
 })();

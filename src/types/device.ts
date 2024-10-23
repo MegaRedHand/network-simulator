@@ -148,21 +148,38 @@ export class Device {
   }
 
   updateLines(x: number, y: number): void {
-    // Updates the positions of the device-linked
-    // lines’s ends.
+    // Updates the positions of the device-linked lines’ ends.
     this.connections.forEach((edge) => {
       console.log("pasa por una linea");
+  
+      let startDevice, endDevice;
+      
       if (edge.connectedNodes.n1 === this.id) {
-        edge.startPos = { x: x, y: y };
+        startDevice = this;
+        endDevice = this.fatherGraph.getDevice(edge.connectedNodes.n2);
       } else {
-        edge.endPos = { x: x, y: y };
+        startDevice = this.fatherGraph.getDevice(edge.connectedNodes.n1);
+        endDevice = this;
       }
-      edge.clear();
-      edge.moveTo(edge.startPos.x, edge.startPos.y);
-      edge.lineTo(edge.endPos.x, edge.endPos.y);
-      edge.stroke({ width: 2, color: 0x3e3e3e }); // Redraw the line
+  
+      if (startDevice && endDevice) {
+        const dx = endDevice.sprite.x - startDevice.sprite.x;
+        const dy = endDevice.sprite.y - startDevice.sprite.y;
+        const angle = Math.atan2(dy, dx);
+  
+        // Ajustar el punto de inicio y fin para que estén en el borde del ícono
+        const offsetX = (startDevice.sprite.width / 2) * Math.cos(angle);
+        const offsetY = (startDevice.sprite.height / 2) * Math.sin(angle);
+  
+        // Redibuja la línea
+        edge.clear();
+        edge.moveTo(startDevice.sprite.x + offsetX, startDevice.sprite.y + offsetY);
+        edge.lineTo(endDevice.sprite.x - offsetX, endDevice.sprite.y - offsetY);
+        edge.stroke({ width: 2, color: 0x3e3e3e }); // Redraw the line
+      }
     });
   }
+  
 
   onClick(e: FederatedPointerEvent) {
     if (!e.altKey) {
@@ -177,6 +194,10 @@ export class Device {
       lineStart = this;
     } else {
       console.log("El LineStart NO es Null");
+      if (lineStart.id == this.id) {
+        lineStart = null;
+        return;
+      }
       if (
         lineStart.connectTo(
           this,
