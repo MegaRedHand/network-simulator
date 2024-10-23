@@ -1,12 +1,10 @@
-import { Graphics, Sprite } from "pixi.js";
+import { Graphics } from "pixi.js";
 import { Device } from "./device"; // Importa la clase Device
 import { Edge } from "./edge";
 
 export class NetworkGraph {
-  private devices: Map<number, Device> = new Map();
-  private edges: Map<number, Edge> = new Map();
-
-  constructor() {}
+  private devices = new Map<number, Device>();
+  private edges = new Map<number, Edge>();
 
   // Agregar un dispositivo al grafo
   addDevice(device: Device) {
@@ -34,7 +32,7 @@ export class NetworkGraph {
       console.warn(`El dispositivo con ID ${n2Info.id} no existe en devices.`);
     } else {
       // Verificar si ya existe una arista entre estos dos dispositivos
-      for (let edge of this.edges.values()) {
+      for (const edge of this.edges.values()) {
         const { n1, n2 } = edge.connectedNodes;
         if (
           (n1 === n1Info.id && n2 === n2Info.id) ||

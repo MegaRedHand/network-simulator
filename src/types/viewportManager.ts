@@ -18,7 +18,7 @@ interface GraphEdge {
 // Función para agregar un router en el centro del viewport
 export function AddRouter(ctx: GlobalContext) {
   console.log("Entro a AddRouter");
-  let networkGraph = ctx.getNetwork();
+  const networkGraph = ctx.getNetwork();
 
   const newRouter: Device = new Router(networkGraph, ctx.getViewport());
 
@@ -32,7 +32,7 @@ export function AddRouter(ctx: GlobalContext) {
 
 // Función para agregar un PC en el centro del viewport
 export function AddPc(ctx: GlobalContext) {
-  let networkGraph = ctx.getNetwork();
+  const networkGraph = ctx.getNetwork();
 
   const newPC: Device = new Pc(networkGraph, ctx.getViewport());
 
@@ -44,7 +44,7 @@ export function AddPc(ctx: GlobalContext) {
 
 // Función para agregar un server en el centro del viewport (suponiendo que existe un tipo ServerNode)
 export function AddServer(ctx: GlobalContext) {
-  let networkGraph = ctx.getNetwork();
+  const networkGraph = ctx.getNetwork();
 
   const newServer: Device = new Server(networkGraph, ctx.getViewport());
 
@@ -118,7 +118,7 @@ export function loadGraph(jsonData: string, ctx: GlobalContext) {
   networkGraph.clear();
 
   // Deserializar y recrear los nodos
-  graphData.nodes.forEach((nodeData: any) => {
+  graphData.nodes.forEach((nodeData: GraphNode) => {
     let newNode: Device;
     switch (nodeData.type) {
       case "Router":
@@ -144,7 +144,7 @@ export function loadGraph(jsonData: string, ctx: GlobalContext) {
   });
 
   // Deserializar y recrear las conexiones (aristas)
-  graphData.edges.forEach((edgeData: any) => {
+  graphData.edges.forEach((edgeData: GraphEdge) => {
     const node1 = networkGraph.getDevice(edgeData.n1);
     const node2 = networkGraph.getDevice(edgeData.n2);
 

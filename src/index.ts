@@ -9,7 +9,6 @@ import ComputerSvg from "./assets/pc.svg";
 import {
   Application,
   Graphics,
-  GraphicsContext,
   EventSystem,
   Assets,
 } from "pixi.js";

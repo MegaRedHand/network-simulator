@@ -8,19 +8,19 @@ import { Edge } from "./edge";
 import { Viewport } from "..";
 
 export const DEVICE_SIZE = 20;
-var lineStart: Device = null;
+let currentLineStartId: number | null = null;  // Almacena solo el ID en lugar de 'this'
 
 export class Device {
   id: number;
-  dragging: boolean = false;
+  dragging = false;
   sprite: Sprite;
   fatherGraph: NetworkGraph;
   stage: Viewport;
-  connections: Map<number, Edge> = new Map();
-  offsetX: number = 0;
-  offsetY: number = 0;
+  connections = new Map<number, Edge>();
+  offsetX = 0;
+  offsetY = 0;
 
-  private static idCounter: number = 0;
+  private static idCounter = 0;
 
   constructor(device: string, graph: NetworkGraph, stage: Viewport) {
     console.log("Entro a constructor de Device");
@@ -111,7 +111,7 @@ export class Device {
       this.sprite.y = newPositionY;
   
       // Actualiza las líneas conectadas
-      this.updateLines(newPositionX, newPositionY);
+      this.updateLines();
     }
   };
   
@@ -147,20 +147,19 @@ export class Device {
     return false;
   }
 
-  updateLines(x: number, y: number): void {
+  updateLines(): void {
     // Updates the positions of the device-linked lines’ ends.
     this.connections.forEach((edge) => {
       console.log("pasa por una linea");
   
-      let startDevice, endDevice;
-      
-      if (edge.connectedNodes.n1 === this.id) {
-        startDevice = this;
-        endDevice = this.fatherGraph.getDevice(edge.connectedNodes.n2);
-      } else {
-        startDevice = this.fatherGraph.getDevice(edge.connectedNodes.n1);
-        endDevice = this;
-      }
+      // Obtener los dispositivos de inicio y fin directamente
+      const startDevice = edge.connectedNodes.n1 === this.id 
+        ? this 
+        : this.fatherGraph.getDevice(edge.connectedNodes.n1);
+  
+      const endDevice = edge.connectedNodes.n1 === this.id 
+        ? this.fatherGraph.getDevice(edge.connectedNodes.n2) 
+        : this;
   
       if (startDevice && endDevice) {
         const dx = endDevice.sprite.x - startDevice.sprite.x;
@@ -180,6 +179,7 @@ export class Device {
     });
   }
   
+  
 
   onClick(e: FederatedPointerEvent) {
     if (!e.altKey) {
@@ -187,27 +187,35 @@ export class Device {
       e.stopPropagation();
       return;
     }
+  
     console.log("clicked on device", e);
     e.stopPropagation();
-    if (lineStart === null) {
+  
+    if (currentLineStartId === null) {
       console.log("El LineStart es Null");
-      lineStart = this;
+      currentLineStartId = this.id;  // Solo almacenamos el ID del dispositivo
     } else {
       console.log("El LineStart NO es Null");
-      if (lineStart.id == this.id) {
-        lineStart = null;
+  
+      // Si el ID almacenado es el mismo que el de este dispositivo, lo reseteamos
+      if (currentLineStartId === this.id) {
+        currentLineStartId = null;
         return;
       }
+  
+      const startDevice = this.fatherGraph.getDevice(currentLineStartId);  // Usamos el ID para obtener el dispositivo original
+  
       if (
-        lineStart.connectTo(
+        startDevice &&
+        startDevice.connectTo(
           this,
-          lineStart.sprite.x,
-          lineStart.sprite.y,
+          startDevice.sprite.x,
+          startDevice.sprite.y,
           this.sprite.x,
           this.sprite.y
         )
       ) {
-        lineStart = null;
+        currentLineStartId = null;
       }
     }
   }
