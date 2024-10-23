@@ -20,9 +20,12 @@ export class Device {
   offsetX: number = 0;
   offsetY: number = 0;
 
+  private static idCounter: number = 0;
+
   constructor(device: string, graph: NetworkGraph, stage: Viewport) {
     console.log("Entro a constructor de Device");
     this.fatherGraph = graph;
+    this.id = Device.idCounter++;
 
     const texture = Texture.from(device);
     const sprite = Sprite.from(texture);
@@ -62,29 +65,38 @@ export class Device {
     console.log("Entro al onPointerDown");
     this.dragging = true;
     event.stopPropagation();
-
-    // Calcula el desplazamiento entre el mouse y el elemento
-    this.offsetX = event.clientX - this.sprite.x;
-    this.offsetY = event.clientY - this.sprite.y;
-
+  
+    // Obtén la posición del puntero en coordenadas del mundo (viewport) 
+    const worldPosition = this.stage.toWorld(event.clientX, event.clientY);
+  
+    // Calcula el desplazamiento entre el puntero y el sprite
+    this.offsetX = worldPosition.x - this.sprite.x;
+    this.offsetY = worldPosition.y - this.sprite.y;
+  
     // Escucha los eventos globales de pointermove y pointerup
     document.addEventListener("pointermove", this.onPointerMove);
     document.addEventListener("pointerup", this.onPointerUp);
   }
-
+  
   onPointerMove = (event: FederatedPointerEvent): void => {
     console.log("Entro al onPointerMove");
     if (this.dragging) {
-      // Calcula la nueva posición usando el desplazamiento
-      const newPositionX = event.clientX - this.offsetX;
-      const newPositionY = event.clientY - this.offsetY;
+      // Obtén la nueva posición del puntero en coordenadas del mundo
+      const worldPosition = this.stage.toWorld(event.clientX, event.clientY);
+  
+      // Calcula la nueva posición del sprite usando el desplazamiento calculado
+      const newPositionX = worldPosition.x - this.offsetX;
+      const newPositionY = worldPosition.y - this.offsetY;
+  
+      // Actualiza la posición del sprite
       this.sprite.x = newPositionX;
       this.sprite.y = newPositionY;
-
+  
       // Actualiza las líneas conectadas
-      this.updateLines(this.sprite.x, this.sprite.y);
+      this.updateLines(newPositionX, newPositionY);
     }
   };
+  
 
   onPointerUp = (): void => {
     console.log("Entro al onPointerUp");

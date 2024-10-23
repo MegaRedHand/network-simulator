@@ -26,7 +26,6 @@ const WORLD_HEIGHT = 10000;
 export class GlobalContext {
   private viewport: Viewport = null;
   private network: NetworkGraph = new NetworkGraph();
-  i: number = 0;
 
   initialize(viewport: Viewport) {
     this.viewport = viewport;
@@ -142,12 +141,19 @@ class RightBar {
 
 // IIFE to avoid errors
 (async () => {
+
+  // Obtener el ancho y alto de las barras laterales y superior
+  const lBar = document.getElementById("left-bar");
+  const rBar = document.getElementById("right-bar");
+  const tBar = document.getElementById("top-bar");
+
   // Initialization
   const app = new Application();
   await app.init({
     width: window.innerWidth,
     height: window.innerHeight,
-    resolution: devicePixelRatio,
+    resolution: window.devicePixelRatio || 1,
+    autoDensity: true, // Ajusta la densidad para pantallas de alta resolución
   });
 
   const canvasPlaceholder = document.getElementById("canvas");
@@ -192,11 +198,20 @@ class RightBar {
 
   // Resize logic
   function resize() {
-    const width = app.renderer.canvas.width;
-    const height = app.renderer.canvas.height;
-    app.renderer.resize(width, height);
-    viewport.resize(width, height);
+    // Obtener los tamaños actuales de las barras desde el DOM
+    const leftBarWidth = lBar ? lBar.offsetWidth : 100; // Ancho actual de la barra izquierda
+    const rightBarWidth = rBar ? rBar.offsetWidth : 250; // Ancho actual de la barra derecha
+    const topBarHeight = tBar ? tBar.offsetHeight : 40; // Altura actual de la barra superior
+  
+    // Calcular el nuevo tamaño del canvas
+    const newWidth = window.innerWidth - leftBarWidth - rightBarWidth;
+    const newHeight = window.innerHeight - topBarHeight;
+  
+    // Redimensionar el renderer y el viewport de Pixi.js
+    app.renderer.resize(newWidth, newHeight);
+    viewport.resize(newWidth, newHeight);
   }
+  
   resize();
 
   window.addEventListener("resize", resize);
