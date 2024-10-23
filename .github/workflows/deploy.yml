@@ -21,6 +21,9 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+env:
+  NODE_VERSION: 20
+
 jobs:
   # Single deploy job since we're just deploying
   deploy:
@@ -32,11 +35,11 @@ jobs:
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Build
         run: |
-          npm install
+          npm ci
           npm run build
 
       - name: Upload artifact
