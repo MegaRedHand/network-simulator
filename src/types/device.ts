@@ -61,6 +61,24 @@ export class Device {
     sprite.height = sprite.height / DEVICE_SIZE;
   }
 
+  // Método para actualizar la right-bar con info del device
+  showInfo() {
+    const rightBar = document.getElementById("info-content");
+    if (rightBar) {
+        // Recorremos las conexiones para extraer los IDs de los dispositivos conectados
+        const connectedDeviceIds = Array.from(this.connections.values())
+            .map(edge => edge.connectedNodes.n1 === this.id ? edge.connectedNodes.n2 : edge.connectedNodes.n1)
+            .join(", ");
+        
+        rightBar.innerHTML = `
+            <h3>Device Information</h3>
+            <p><strong>ID:</strong> ${this.id}</p>
+            <p><strong>Connected Devices:</strong> ${connectedDeviceIds ? connectedDeviceIds : "None"}</p>
+        `;
+    }
+  }
+
+
   onPointerDown(event: FederatedPointerEvent): void {
     console.log("Entro al onPointerDown");
     this.dragging = true;
@@ -148,6 +166,8 @@ export class Device {
 
   onClick(e: FederatedPointerEvent) {
     if (!e.altKey) {
+      this.showInfo();
+      e.stopPropagation();
       return;
     }
     console.log("clicked on device", e);
@@ -177,11 +197,43 @@ export class Router extends Device {
     console.log("Entro a constructor de Router");
     super(RouterImage, graph, stage);
   }
+
+  showInfo() {
+    const rightBar = document.getElementById("info-content");
+    if (rightBar) {
+      const connectedDeviceIds = Array.from(this.connections.values())
+        .map(edge => edge.connectedNodes.n1 === this.id ? edge.connectedNodes.n2 : edge.connectedNodes.n1)
+        .join(", ");
+
+      rightBar.innerHTML = `
+        <h3>Router Information</h3>
+        <p><strong>ID:</strong> ${this.id}</p>
+        <p><strong>Connected Devices:</strong> ${connectedDeviceIds ? connectedDeviceIds : "None"}</p>
+        <p><strong>Type:</strong> Router</p>
+      `;
+    }
+  }
 }
 
 export class Server extends Device {
   constructor(graph: NetworkGraph, stage: Viewport) {
     super(ServerImage, graph, stage);
+  }
+
+  showInfo() {
+    const rightBar = document.getElementById("info-content");
+    if (rightBar) {
+      const connectedDeviceIds = Array.from(this.connections.values())
+        .map(edge => edge.connectedNodes.n1 === this.id ? edge.connectedNodes.n2 : edge.connectedNodes.n1)
+        .join(", ");
+
+      rightBar.innerHTML = `
+        <h3>Server Information</h3>
+        <p><strong>ID:</strong> ${this.id}</p>
+        <p><strong>Connected Devices:</strong> ${connectedDeviceIds ? connectedDeviceIds : "None"}</p>
+        <p><strong>Type:</strong> Server</p>
+      `;
+    }
   }
 }
 
@@ -189,4 +241,21 @@ export class Pc extends Device {
   constructor(graph: NetworkGraph, stage: Viewport) {
     super(PcImage, graph, stage);
   }
+
+  showInfo() {
+    const rightBar = document.getElementById("info-content");
+    if (rightBar) {
+      const connectedDeviceIds = Array.from(this.connections.values())
+        .map(edge => edge.connectedNodes.n1 === this.id ? edge.connectedNodes.n2 : edge.connectedNodes.n1)
+        .join(", ");
+
+      rightBar.innerHTML = `
+        <h3>PC Information</h3>
+        <p><strong>ID:</strong> ${this.id}</p>
+        <p><strong>Connected Devices:</strong> ${connectedDeviceIds ? connectedDeviceIds : "None"}</p>
+        <p><strong>Type:</strong> PC</p>
+      `;
+    }
+  }
 }
+
