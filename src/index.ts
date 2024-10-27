@@ -6,16 +6,17 @@ import RouterSvg from "./assets/router.svg";
 import ServerSvg from "./assets/server.svg";
 import ComputerSvg from "./assets/pc.svg";
 
-import {
-  Application,
-  Graphics,
-  EventSystem,
-  Assets,
-} from "pixi.js";
+import { Application, Graphics, EventSystem, Assets } from "pixi.js";
 
 import * as pixi_viewport from "pixi-viewport";
 import { NetworkGraph } from "./types/networkgraph";
-import { AddPc, AddRouter, AddServer, loadGraph, saveGraph } from "./types/viewportManager";
+import {
+  AddPc,
+  AddRouter,
+  AddServer,
+  loadGraph,
+  saveGraph,
+} from "./types/viewportManager";
 
 const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;
@@ -140,7 +141,6 @@ class RightBar {
 
 // IIFE to avoid errors
 (async () => {
-
   // Obtener el ancho y alto de las barras laterales y superior
   const lBar = document.getElementById("left-bar");
   const rBar = document.getElementById("right-bar");
@@ -201,48 +201,48 @@ class RightBar {
     const leftBarWidth = lBar ? lBar.offsetWidth : 100; // Ancho actual de la barra izquierda
     const rightBarWidth = rBar ? rBar.offsetWidth : 250; // Ancho actual de la barra derecha
     const topBarHeight = tBar ? tBar.offsetHeight : 40; // Altura actual de la barra superior
-  
+
     // Calcular el nuevo tamaño del canvas
     const newWidth = window.innerWidth - leftBarWidth - rightBarWidth;
     const newHeight = window.innerHeight - topBarHeight;
-  
+
     // Redimensionar el renderer y el viewport de Pixi.js
     app.renderer.resize(newWidth, newHeight);
     viewport.resize(newWidth, newHeight);
   }
-  
+
   resize();
 
   window.addEventListener("resize", resize);
 
- // Gestión de los botones de carga y guardado
- const loadButton = document.getElementById("load-button");
- const saveButton = document.getElementById("save-button");
+  // Gestión de los botones de carga y guardado
+  const loadButton = document.getElementById("load-button");
+  const saveButton = document.getElementById("save-button");
 
- // Función para manejar el botón de guardar
- saveButton.onclick = () => {
-   saveGraph(ctx); // Llama a la función saveGraph pasando el contexto actual
- };
+  // Función para manejar el botón de guardar
+  saveButton.onclick = () => {
+    saveGraph(ctx); // Llama a la función saveGraph pasando el contexto actual
+  };
 
- // Función para manejar el botón de cargar
- loadButton.onclick = () => {
-   const input = document.createElement("input");
-   input.type = "file";
-   input.accept = ".json";
+  // Función para manejar el botón de cargar
+  loadButton.onclick = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
 
-   input.onchange = (event) => {
-     const file = (event.target as HTMLInputElement).files[0];
-     const reader = new FileReader();
-     reader.readAsText(file);
+    input.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files[0];
+      const reader = new FileReader();
+      reader.readAsText(file);
 
-     reader.onload = (readerEvent) => {
-       const jsonData = readerEvent.target.result as string;
-       loadGraph(jsonData, ctx); // Llama a la función loadGraph pasando el JSON y el contexto
-     };
-   };
+      reader.onload = (readerEvent) => {
+        const jsonData = readerEvent.target.result as string;
+        loadGraph(jsonData, ctx); // Llama a la función loadGraph pasando el JSON y el contexto
+      };
+    };
 
-   input.click(); // Simula el click para abrir el cuadro de diálogo de selección de archivo
- };
+    input.click(); // Simula el click para abrir el cuadro de diálogo de selección de archivo
+  };
 
   console.log("initialized!");
 })();

@@ -19,10 +19,12 @@ export class NetworkGraph {
   // Agregar una conexión entre dos dispositivos
   addEdge(
     n1Info: { id: number; x: number; y: number },
-    n2Info: { id: number; x: number; y: number }
+    n2Info: { id: number; x: number; y: number },
   ): Edge | null {
     if (n1Info.id === n2Info.id) {
-      console.warn(`No se puede crear una conexión entre el mismo dispositivo (ID ${n1Info.id}).`);
+      console.warn(
+        `No se puede crear una conexión entre el mismo dispositivo (ID ${n1Info.id}).`,
+      );
       return null;
     }
 
@@ -38,7 +40,9 @@ export class NetworkGraph {
           (n1 === n1Info.id && n2 === n2Info.id) ||
           (n1 === n2Info.id && n2 === n1Info.id)
         ) {
-          console.warn(`La conexión entre ID ${n1Info.id} y ID ${n2Info.id} ya existe.`);
+          console.warn(
+            `La conexión entre ID ${n1Info.id} y ID ${n2Info.id} ya existe.`,
+          );
           return null;
         }
       }
@@ -80,7 +84,7 @@ export class NetworkGraph {
         this.edges.set(edge.id, edge);
 
         console.log(
-          `Conexión creada entre dispositivos ID: ${n1Info.id} y ID: ${n2Info.id}`
+          `Conexión creada entre dispositivos ID: ${n1Info.id} y ID: ${n2Info.id}`,
         );
 
         return edge;
@@ -88,8 +92,6 @@ export class NetworkGraph {
     }
     return null;
   }
-
-
 
   // Obtener todas las conexiones de un dispositivo
   getConnections(id: number): Edge[] {
