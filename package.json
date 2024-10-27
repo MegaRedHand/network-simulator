@@ -26,7 +26,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "webpack serve --open",
     "build": "webpack",
-    "lint": "eslint src/"
+    "format": "prettier . --write",
+    "lint": "prettier . --check && eslint src/"
   },
   "keywords": [],
   "author": "",
