@@ -93,6 +93,42 @@ export class NetworkGraph {
     return null;
   }
 
+  getPathBetween(idA: number, idB: number): Array<number> {
+    if (idA === idB) {
+      return [];
+    }
+    const a = this.devices.get(idA);
+    const b = this.devices.get(idB);
+    if (!a || !b) {
+      return [];
+    }
+    let current = a;
+    const unvisitedNodes = new Array(0);
+    const connectingEdges = new Map<number, number>([[a.id, null]]);
+    while (current.id !== idB) {
+      for (const [, edge] of a.connections) {
+        const newId = edge.otherEnd(current.id);
+        if (!connectingEdges.has(newId)) {
+          connectingEdges.set(newId, edge.id);
+          unvisitedNodes.push(this.devices.get(newId));
+        }
+      }
+      if (unvisitedNodes.length === 0) {
+        return [];
+      }
+      current = unvisitedNodes.shift();
+    }
+    const path = new Array();
+    while (current.id !== idA) {
+      const edgeId = connectingEdges.get(current.id);
+      path.push(edgeId);
+      const edge = this.edges.get(edgeId);
+      const parentId = edge.otherEnd(current.id);
+      current = this.devices.get(parentId);
+    }
+    return path;
+  }
+
   // Obtener todas las conexiones de un dispositivo
   getConnections(id: number): Edge[] {
     const device = this.devices.get(id);
