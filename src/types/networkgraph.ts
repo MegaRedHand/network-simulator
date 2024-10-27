@@ -93,7 +93,7 @@ export class NetworkGraph {
     return null;
   }
 
-  getPathBetween(idA: number, idB: number): Array<number> {
+  getPathBetween(idA: number, idB: number): number[] {
     if (idA === idB) {
       return [];
     }
@@ -103,7 +103,7 @@ export class NetworkGraph {
       return [];
     }
     let current = a;
-    const unvisitedNodes = new Array(0);
+    const unvisitedNodes = [];
     const connectingEdges = new Map<number, number>([[a.id, null]]);
     while (current.id !== idB) {
       for (const [, edge] of a.connections) {
@@ -118,7 +118,7 @@ export class NetworkGraph {
       }
       current = unvisitedNodes.shift();
     }
-    const path = new Array();
+    const path = [];
     while (current.id !== idA) {
       const edgeId = connectingEdges.get(current.id);
       path.push(edgeId);
