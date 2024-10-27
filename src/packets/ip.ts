@@ -3,6 +3,11 @@ export const ICMP_PROTOCOL_NUMBER = 1;
 export const TCP_PROTOCOL_NUMBER = 6;
 export const UDP_PROTOCOL_NUMBER = 17;
 
+export class EmptyPayload implements IpPayload {
+    toBytes() { return new Uint8Array(0) }
+    protocol() { return 0xfd }
+}
+
 export class IpAddress {
     octets: Uint8Array;
 
