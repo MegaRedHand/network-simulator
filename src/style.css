@@ -6,7 +6,7 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden; /* Evita que aparezcan barras de scroll */
-  background-color: #F2F2F2; /* Color de fondo general */
+  background-color: #f2f2f2; /* Color de fondo general */
 }
 
 /* Estilo para la barra superior (top-bar) que contiene botones y el título */
@@ -25,17 +25,21 @@ body {
 #app-title {
   position: absolute; /* Permite posicionar el título en relación a la barra */
   left: 50%; /* Centra el título horizontalmente */
-  transform: translateX(-50%); /* Ajusta el título para que quede exactamente centrado */
+  transform: translateX(
+    -50%
+  ); /* Ajusta el título para que quede exactamente centrado */
   margin: 0; /* Elimina márgenes por defecto */
   font-size: 25px; /* Tamaño de fuente del título */
   font-weight: bold; /* Hace el texto del título más grueso */
-  color: #FFFFFF; /* Color del texto en blanco */
+  color: #ffffff; /* Color del texto en blanco */
 }
 
 /* Flexbox container principal para la distribución de las barras laterales y el canvas */
 .container {
   display: flex;
-  height: calc(100vh - 40px); /* Altura restante después de restar la altura de la top-bar */
+  height: calc(
+    100vh - 40px
+  ); /* Altura restante después de restar la altura de la top-bar */
   width: 100%; /* El contenedor ocupa todo el ancho */
 }
 
@@ -46,13 +50,13 @@ body {
   flex-direction: column; /* Coloca los elementos (botones) en una columna */
   align-items: center; /* Centra los botones horizontalmente */
   flex: 0 0 100px; /* La barra tiene un ancho fijo de 100px */
-  background-color: #F1F1F1; /* Color de fondo claro */
+  background-color: #f1f1f1; /* Color de fondo claro */
   box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.2); /* Sombra a la derecha para resaltar la barra */
 }
 
 /* Estilo para los botones dentro de la barra lateral izquierda */
 .icon-button {
-  background-color: #FFFFFF; /* Fondo blanco del botón */
+  background-color: #ffffff; /* Fondo blanco del botón */
   border: none; /* Sin borde */
   padding: 5px; /* Espacio interno del botón */
   margin-bottom: 10px; /* Espaciado entre botones */
@@ -64,7 +68,7 @@ body {
 
 /* Efecto hover (al pasar el mouse) para los botones */
 .icon-button:hover {
-  background-color: #F0F0F0; /* Fondo más claro cuando el mouse pasa sobre el botón */
+  background-color: #f0f0f0; /* Fondo más claro cuando el mouse pasa sobre el botón */
 }
 
 /* Estilo para las imágenes dentro de los botones de la barra lateral */
@@ -77,7 +81,7 @@ body {
 /* Estilo para la barra lateral derecha (right-bar) */
 .right-bar {
   flex: 0 0 250px; /* Ancho fijo de 250px para la barra derecha */
-  background-color: #F1F1F1; /* Fondo claro para la barra */
+  background-color: #f1f1f1; /* Fondo claro para la barra */
   box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.2); /* Sombra a la izquierda para resaltar la barra */
   padding: 20px; /* Espacio interno alrededor del contenido */
 }
@@ -111,7 +115,7 @@ body {
 canvas {
   width: 100%; /* El canvas ocupará el 100% del ancho del contenedor */
   height: 100%; /* El canvas ocupará el 100% de la altura del contenedor */
-  background-color: #FFFFFF; /* Fondo blanco del canvas */
+  background-color: #ffffff; /* Fondo blanco del canvas */
 }
 
 /* Menú desplegable que se muestra sobre el canvas para seleccionar capas */
@@ -122,15 +126,15 @@ canvas {
   padding: 5px; /* Espaciado interno */
   font-size: 14px; /* Tamaño de fuente */
   z-index: 10; /* Asegura que el menú esté por encima del canvas */
-  background-color: #FFFFFF; /* Fondo blanco */
-  border: 1px solid #CCCCCC; /* Borde gris claro */
+  background-color: #ffffff; /* Fondo blanco */
+  border: 1px solid #cccccc; /* Borde gris claro */
 }
 
 /* Estilos para los botones de guardar y cargar */
 .save-button,
 .load-button {
-  background-color: #4A90E2; /* Fondo azul */
-  color: #FFFFFF; /* Texto en blanco */
+  background-color: #4a90e2; /* Fondo azul */
+  color: #ffffff; /* Texto en blanco */
   border: none; /* Sin borde */
   padding: 8px 16px; /* Espaciado interno */
   cursor: pointer; /* Cambia el cursor al pasar el mouse */
@@ -141,5 +145,5 @@ canvas {
 /* Efecto hover para los botones de guardar y cargar */
 .save-button:hover,
 .load-button:hover {
-  background-color: #357ABD; /* Fondo más oscuro al pasar el mouse */
+  background-color: #357abd; /* Fondo más oscuro al pasar el mouse */
 }

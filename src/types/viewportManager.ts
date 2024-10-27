@@ -26,7 +26,7 @@ export function AddRouter(ctx: GlobalContext) {
   networkGraph.addDevice(newRouter);
 
   console.log(
-    `Router añadido con ID ${newRouter.id} en el centro de la pantalla.`
+    `Router añadido con ID ${newRouter.id} en el centro de la pantalla.`,
   );
 }
 
@@ -52,17 +52,17 @@ export function AddServer(ctx: GlobalContext) {
   networkGraph.addDevice(newServer);
 
   console.log(
-    `Server añadido con ID ${newServer.id} en el centro de la pantalla.`
+    `Server añadido con ID ${newServer.id} en el centro de la pantalla.`,
   );
 }
 
 // Función para guardar el grafo actual en formato JSON
 export function saveGraph(ctx: GlobalContext) {
   const networkGraph: NetworkGraph = ctx.getNetwork();
-  
-  const graphData: { nodes: GraphNode[]; edges: GraphEdge[] }  = {
+
+  const graphData: { nodes: GraphNode[]; edges: GraphEdge[] } = {
     nodes: [],
-    edges: []
+    edges: [],
   };
 
   // Serializar nodos
@@ -71,7 +71,7 @@ export function saveGraph(ctx: GlobalContext) {
       id: device.id,
       x: device.sprite.x,
       y: device.sprite.y,
-      type: device.constructor.name // Guardar el tipo de dispositivo (Router, Server, PC)
+      type: device.constructor.name, // Guardar el tipo de dispositivo (Router, Server, PC)
     });
   });
 
@@ -149,12 +149,19 @@ export function loadGraph(jsonData: string, ctx: GlobalContext) {
     const node2 = networkGraph.getDevice(edgeData.n2);
 
     if (node1 && node2) {
-      node1.connectTo(node2, node1.sprite.x, node1.sprite.y, node2.sprite.x, node2.sprite.y);
+      node1.connectTo(
+        node2,
+        node1.sprite.x,
+        node1.sprite.y,
+        node2.sprite.x,
+        node2.sprite.y,
+      );
     } else {
-      console.error(`No se encontraron los nodos para la conexión: ${edgeData.id}`);
+      console.error(
+        `No se encontraron los nodos para la conexión: ${edgeData.id}`,
+      );
     }
   });
 
   console.log("Grafo cargado con éxito.");
 }
-
