@@ -1,6 +1,6 @@
 import { Graphics } from "pixi.js";
-import { Device } from "./device"; // Importa la clase Device
-import { Edge } from "./edge";
+import { Device } from "./../device"; // Importa la clase Device
+import { Edge } from "./../edge";
 
 // import { v4 as uuidv4 } from "uuid";
 
@@ -37,6 +37,9 @@ export class DataGraph {
   addDevice(idDevice: number, deviceInfo: GraphNode) {
     if (!this.devices.has(idDevice)) {
       this.devices.set(idDevice, deviceInfo);
+      if (this.idCounter < idDevice) {
+        this.idCounter = idDevice;
+      }
       console.log(`Dispositivo añadido con ID ${idDevice}`);
     } else {
       console.warn(`El dispositivo con ID ${idDevice} ya existe en el grafo.`);
@@ -91,5 +94,6 @@ export class DataGraph {
   // Limpiar el grafo
   clear() {
     this.devices.clear();
+    this.idCounter = 0;
   }
 }

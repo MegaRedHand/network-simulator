@@ -9,7 +9,7 @@ import ComputerSvg from "./assets/pc.svg";
 import { Application, Graphics, EventSystem, Assets } from "pixi.js";
 
 import * as pixi_viewport from "pixi-viewport";
-import { ViewGraph } from "./types/viewgraph";
+import { ViewGraph } from "./types/graphs/viewgraph";
 import {
   AddPc,
   AddRouter,
@@ -17,7 +17,7 @@ import {
   loadGraph,
   saveGraph,
 } from "./types/viewportManager";
-import { DataGraph } from "./types/datagraph";
+import { DataGraph } from "./types/graphs/datagraph";
 
 const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;

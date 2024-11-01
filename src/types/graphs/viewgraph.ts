@@ -1,6 +1,6 @@
 import { Graphics } from "pixi.js";
-import { Device } from "./device"; // Importa la clase Device
-import { Edge } from "./edge";
+import { Device } from "./../device"; // Importa la clase Device
+import { Edge } from "./../edge";
 
 export class ViewGraph {
   private devices = new Map<number, Device>();

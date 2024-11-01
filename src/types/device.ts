@@ -3,9 +3,10 @@ import { Texture, Sprite, FederatedPointerEvent } from "pixi.js";
 import RouterImage from "../assets/router.svg";
 import ServerImage from "../assets/server.svg";
 import PcImage from "../assets/pc.svg";
-import { ViewGraph } from "./viewgraph";
+import { ViewGraph } from "./graphs/viewgraph";
 import { Edge } from "./edge";
 import { Viewport } from "..";
+import { DataGraph } from "./graphs/datagraph";
 
 export const DEVICE_SIZE = 20;
 let currentLineStartId: number | null = null; // Almacena solo el ID en lugar de 'this'
@@ -14,7 +15,8 @@ export class Device {
   id: number;
   dragging = false;
   sprite: Sprite;
-  fatherGraph: ViewGraph;
+  viewGraph: ViewGraph;
+  dataGraph: DataGraph;
   stage: Viewport;
   connections = new Map<number, Edge>();
   offsetX = 0;
@@ -23,34 +25,39 @@ export class Device {
   constructor(
     id: number,
     device: string,
-    graph: ViewGraph,
+    viewgraph: ViewGraph,
+    datagraph: DataGraph,
     stage: Viewport,
     position: { x: number; y: number } | null = null,
   ) {
     console.log("Entro a constructor de Device");
     this.id = id;
-    this.fatherGraph = graph;
+    this.viewGraph = viewgraph;
+    this.dataGraph = datagraph;
 
     const texture = Texture.from(device);
     const sprite = Sprite.from(texture);
     console.log(sprite.texture);
     sprite.anchor.x = 0.5;
     sprite.anchor.y = 0.5;
-    console.log(sprite.zIndex);
 
-    // Obtener las coordenadas centrales del mundo después del zoom
-    if (!position) {
+    console.log(`la position es: ${position.x} y ${position.y}`);
+
+    // Usar las coordenadas especificadas o el centro del mundo
+    if (position) {
+      sprite.x = position.x;
+      sprite.y = position.y;
+      console.log("ENTRE A POSITION existente");
+    } else {
       const worldCenter = stage.toWorld(
         stage.screenWidth / 2,
         stage.screenHeight / 2,
       );
-
       sprite.x = worldCenter.x;
       sprite.y = worldCenter.y;
-    } else {
-      sprite.x = position.x;
-      sprite.y = position.y;
     }
+  
+    console.log(`la position del sprite es: ${sprite.x} y ${sprite.y}`);
 
     sprite.eventMode = "static";
     sprite.interactive = true;
@@ -121,6 +128,9 @@ export class Device {
       // Actualiza la posición del sprite
       this.sprite.x = newPositionX;
       this.sprite.y = newPositionY;
+      const device = this.dataGraph.getDevice(this.id);
+      device.x = newPositionX;
+      device.y = newPositionY;
 
       // Actualiza las líneas conectadas
       this.updateLines();
@@ -143,12 +153,13 @@ export class Device {
     y2: number,
   ): boolean {
     // Connnects both devices with an edge.
-    console.log("entro en connecTo");
+    console.log("entro en connectTo");
 
     // Save the edge in both devices
     const n1Info = { id: this.id, x: x1, y: y1 };
     const n2Info = { id: otherDevice.id, x: x2, y: y2 };
-    const edge = this.fatherGraph.addEdge(n1Info, n2Info);
+    const edge = this.viewGraph.addEdge(n1Info, n2Info);
+    this.dataGraph.addEdge(this.id, otherDevice.id);
     if (edge) {
       this.connections.set(edge.id, edge);
       otherDevice.connections.set(edge.id, edge);
@@ -167,11 +178,11 @@ export class Device {
       const startDevice =
         edge.connectedNodes.n1 === this.id
           ? this
-          : this.fatherGraph.getDevice(edge.connectedNodes.n1);
+          : this.viewGraph.getDevice(edge.connectedNodes.n1);
 
       const endDevice =
         edge.connectedNodes.n1 === this.id
-          ? this.fatherGraph.getDevice(edge.connectedNodes.n2)
+          ? this.viewGraph.getDevice(edge.connectedNodes.n2)
           : this;
 
       if (startDevice && endDevice) {
@@ -217,7 +228,7 @@ export class Device {
         return;
       }
 
-      const startDevice = this.fatherGraph.getDevice(currentLineStartId); // Usamos el ID para obtener el dispositivo original
+      const startDevice = this.viewGraph.getDevice(currentLineStartId); // Usamos el ID para obtener el dispositivo original
 
       if (
         startDevice &&
@@ -245,12 +256,13 @@ export class Device {
 export class Router extends Device {
   constructor(
     id: number,
-    graph: ViewGraph,
+    viewgraph: ViewGraph,
+    datagraph: DataGraph,
     stage: Viewport,
     position: { x: number; y: number },
   ) {
     console.log("Entro a constructor de Router");
-    super(id, RouterImage, graph, stage, position);
+    super(id, RouterImage, viewgraph, datagraph, stage, position);
   }
 
   showInfo() {
@@ -277,11 +289,12 @@ export class Router extends Device {
 export class Server extends Device {
   constructor(
     id: number,
-    graph: ViewGraph,
+    viewgraph: ViewGraph,
+    datagraph: DataGraph,
     stage: Viewport,
     position: { x: number; y: number },
   ) {
-    super(id, ServerImage, graph, stage, position);
+    super(id, ServerImage, viewgraph, datagraph, stage, position);
   }
 
   showInfo() {
@@ -308,11 +321,12 @@ export class Server extends Device {
 export class Pc extends Device {
   constructor(
     id: number,
-    graph: ViewGraph,
+    viewgraph: ViewGraph,
+    datagraph: DataGraph,
     stage: Viewport,
     position: { x: number; y: number },
   ) {
-    super(id, PcImage, graph, stage, position);
+    super(id, PcImage, viewgraph, datagraph, stage, position);
   }
 
   showInfo() {
