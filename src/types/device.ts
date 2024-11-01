@@ -3,7 +3,7 @@ import { Texture, Sprite, FederatedPointerEvent } from "pixi.js";
 import RouterImage from "../assets/router.svg";
 import ServerImage from "../assets/server.svg";
 import PcImage from "../assets/pc.svg";
-import { NetworkGraph } from "./networkgraph";
+import { ViewGraph } from "./viewgraph";
 import { Edge } from "./edge";
 import { Viewport } from "..";
 
@@ -14,18 +14,22 @@ export class Device {
   id: number;
   dragging = false;
   sprite: Sprite;
-  fatherGraph: NetworkGraph;
+  fatherGraph: ViewGraph;
   stage: Viewport;
   connections = new Map<number, Edge>();
   offsetX = 0;
   offsetY = 0;
 
-  private static idCounter = 0;
-
-  constructor(device: string, graph: NetworkGraph, stage: Viewport) {
+  constructor(
+    id: number,
+    device: string,
+    graph: ViewGraph,
+    stage: Viewport,
+    position: { x: number; y: number } | null = null,
+  ) {
     console.log("Entro a constructor de Device");
+    this.id = id;
     this.fatherGraph = graph;
-    this.id = Device.idCounter++;
 
     const texture = Texture.from(device);
     const sprite = Sprite.from(texture);
@@ -35,13 +39,18 @@ export class Device {
     console.log(sprite.zIndex);
 
     // Obtener las coordenadas centrales del mundo después del zoom
-    const worldCenter = stage.toWorld(
-      stage.screenWidth / 2,
-      stage.screenHeight / 2,
-    );
+    if (!position) {
+      const worldCenter = stage.toWorld(
+        stage.screenWidth / 2,
+        stage.screenHeight / 2,
+      );
 
-    sprite.x = worldCenter.x;
-    sprite.y = worldCenter.y;
+      sprite.x = worldCenter.x;
+      sprite.y = worldCenter.y;
+    } else {
+      sprite.x = position.x;
+      sprite.y = position.y;
+    }
 
     sprite.eventMode = "static";
     sprite.interactive = true;
@@ -224,12 +233,24 @@ export class Device {
       }
     }
   }
+
+  // "Clean up" device’s resources.
+  // Warning: after calling this method, object must not be used.
+  private clean() {
+    this.stage.removeChild(this.sprite);
+    this.sprite.destroy({ children: true, texture: true });
+  }
 }
 
 export class Router extends Device {
-  constructor(graph: NetworkGraph, stage: Viewport) {
+  constructor(
+    id: number,
+    graph: ViewGraph,
+    stage: Viewport,
+    position: { x: number; y: number },
+  ) {
     console.log("Entro a constructor de Router");
-    super(RouterImage, graph, stage);
+    super(id, RouterImage, graph, stage, position);
   }
 
   showInfo() {
@@ -254,8 +275,13 @@ export class Router extends Device {
 }
 
 export class Server extends Device {
-  constructor(graph: NetworkGraph, stage: Viewport) {
-    super(ServerImage, graph, stage);
+  constructor(
+    id: number,
+    graph: ViewGraph,
+    stage: Viewport,
+    position: { x: number; y: number },
+  ) {
+    super(id, ServerImage, graph, stage, position);
   }
 
   showInfo() {
@@ -280,8 +306,13 @@ export class Server extends Device {
 }
 
 export class Pc extends Device {
-  constructor(graph: NetworkGraph, stage: Viewport) {
-    super(PcImage, graph, stage);
+  constructor(
+    id: number,
+    graph: ViewGraph,
+    stage: Viewport,
+    position: { x: number; y: number },
+  ) {
+    super(id, PcImage, graph, stage, position);
   }
 
   showInfo() {

@@ -9,7 +9,7 @@ import ComputerSvg from "./assets/pc.svg";
 import { Application, Graphics, EventSystem, Assets } from "pixi.js";
 
 import * as pixi_viewport from "pixi-viewport";
-import { NetworkGraph } from "./types/networkgraph";
+import { ViewGraph } from "./types/viewgraph";
 import {
   AddPc,
   AddRouter,
@@ -17,6 +17,7 @@ import {
   loadGraph,
   saveGraph,
 } from "./types/viewportManager";
+import { DataGraph } from "./types/datagraph";
 
 const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;
@@ -25,7 +26,8 @@ const WORLD_HEIGHT = 10000;
 
 export class GlobalContext {
   private viewport: Viewport = null;
-  private network: NetworkGraph = new NetworkGraph();
+  private viewgraph: ViewGraph = new ViewGraph();
+  private datagraph: DataGraph = new DataGraph();
 
   initialize(viewport: Viewport) {
     this.viewport = viewport;
@@ -35,8 +37,12 @@ export class GlobalContext {
     return this.viewport;
   }
 
-  getNetwork() {
-    return this.network;
+  getViewGraph() {
+    return this.viewgraph;
+  }
+
+  getDataGraph() {
+    return this.datagraph;
   }
 }
 
