@@ -1,10 +1,12 @@
 import { Graphics } from "pixi.js";
 import { Device } from "./../device"; // Importa la clase Device
 import { Edge } from "./../edge";
+import { DataGraph } from "./datagraph";
 
 export class ViewGraph {
   private devices = new Map<number, Device>();
   private edges = new Map<number, Edge>();
+  private idCounter = 0;
 
   // Agregar un dispositivo al grafo
   addDevice(device: Device) {
@@ -20,6 +22,7 @@ export class ViewGraph {
   addEdge(
     n1Info: { id: number; x: number; y: number },
     n2Info: { id: number; x: number; y: number },
+    datagraph: DataGraph,
   ): Edge | null {
     if (n1Info.id === n2Info.id) {
       console.warn(
@@ -71,16 +74,8 @@ export class ViewGraph {
           y: device2.sprite.y - offsetY2,
         };
 
-        // Dibuja la línea
-        const edge = new Graphics() as Edge;
-        edge.moveTo(startPos.x, startPos.y);
-        edge.lineTo(endPos.x, endPos.y);
-        edge.stroke({ width: 2, color: 0x3e3e3e });
-
-        edge.startPos = startPos;
-        edge.endPos = endPos;
-        edge.id = this.edges.size;
-        edge.connectedNodes = { n1: n1Info.id, n2: n2Info.id };
+        // Crear la arista como instancia de Edge
+        const edge = new Edge(this.idCounter++, { n1: n1Info.id, n2: n2Info.id }, startPos, endPos, datagraph, this);
         this.edges.set(edge.id, edge);
 
         console.log(
@@ -150,6 +145,36 @@ export class ViewGraph {
     // Finalmente, eliminar el dispositivo del grafo
     this.devices.delete(id);
     console.log(`Dispositivo con ID ${id} y todas sus conexiones fueron eliminados.`);
+  }
+
+  // Método para eliminar una arista específica por su ID
+  removeEdge(edgeId: number) {
+    const edge = this.edges.get(edgeId);
+
+    if (!edge) {
+      console.warn(`La arista con ID ${edgeId} no existe en el grafo.`);
+      return;
+    }
+
+    // Obtener los IDs de los dispositivos conectados por esta arista
+    const { n1, n2 } = edge.connectedNodes;
+
+    // Eliminar la conexión de los dispositivos conectados
+    const device1 = this.devices.get(n1);
+    const device2 = this.devices.get(n2);
+
+    if (device1) {
+      device1.connections.delete(edgeId);
+    }
+
+    if (device2) {
+      device2.connections.delete(edgeId);
+    }
+
+    // Eliminar la arista del mapa de edges
+    this.edges.delete(edgeId);
+
+    console.log(`Arista con ID ${edgeId} eliminada entre dispositivos ${n1} y ${n2}.`);
   }
 
   // Método para imprimir toda la data del grafo en consola

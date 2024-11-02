@@ -12,7 +12,7 @@ export class DataGraph {
 
   // Agregar un nuevo dispositivo al grafo
   addNewDevice(deviceInfo: { x: number; y: number; type: string }): number {
-    const id = this.idCounter++;
+    const id = this.idCounter += 1;
     const graphnode: GraphNode = {
       ...deviceInfo,
       connections: new Set<number>(),
@@ -26,7 +26,7 @@ export class DataGraph {
   addDevice(idDevice: number, deviceInfo: GraphNode) {
     if (!this.devices.has(idDevice)) {
       this.devices.set(idDevice, deviceInfo);
-      if (this.idCounter < idDevice) {
+      if (this.idCounter <= idDevice) {
         this.idCounter = idDevice;
       }
       console.log(`Dispositivo añadido con ID ${idDevice}`);
@@ -100,6 +100,34 @@ export class DataGraph {
     // Eliminar el nodo del grafo
     this.devices.delete(id);
     console.log(`Dispositivo con ID ${id} y sus conexiones fueron eliminados.`);
+  }
+
+  // Método para eliminar una conexión (edge) entre dos dispositivos por sus IDs
+  removeEdge(n1Id: number, n2Id: number): void {
+    const device1 = this.devices.get(n1Id);
+    const device2 = this.devices.get(n2Id);
+
+    if (!device1) {
+      console.warn(`El dispositivo con ID ${n1Id} no existe en el grafo.`);
+      return;
+    }
+
+    if (!device2) {
+      console.warn(`El dispositivo con ID ${n2Id} no existe en el grafo.`);
+      return;
+    }
+
+    // Verificar que la conexión existe
+    if (!device1.connections.has(n2Id) || !device2.connections.has(n1Id)) {
+      console.warn(`La conexión entre ID ${n1Id} y ID ${n2Id} no existe.`);
+      return;
+    }
+
+    // Eliminar la conexión en ambos dispositivos
+    device1.connections.delete(n2Id);
+    device2.connections.delete(n1Id);
+
+    console.log(`Conexión eliminada entre dispositivos ID: ${n1Id} y ID: ${n2Id}`);
   }
 
   // Limpiar el grafo

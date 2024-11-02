@@ -168,7 +168,7 @@ export class Device {
     // Save the edge in both devices
     const n1Info = { id: this.id, x: x1, y: y1 };
     const n2Info = { id: otherDevice.id, x: x2, y: y2 };
-    const edge = this.viewGraph.addEdge(n1Info, n2Info);
+    const edge = this.viewGraph.addEdge(n1Info, n2Info, this.dataGraph);
     this.dataGraph.addEdge(this.id, otherDevice.id);
     if (edge) {
       this.connections.set(edge.id, edge);
@@ -205,14 +205,25 @@ export class Device {
         const offsetX = (startDevice.sprite.width / 2) * Math.cos(angle);
         const offsetY = (startDevice.sprite.height / 2) * Math.sin(angle);
 
-        // Redibuja la línea
+        // Calcular las nuevas posiciones para el inicio y fin de la arista
+        const newStartPos = {
+          x: startDevice.sprite.x + offsetX,
+          y: startDevice.sprite.y + offsetY,
+        };
+        const newEndPos = {
+          x: endDevice.sprite.x - offsetX,
+          y: endDevice.sprite.y - offsetY,
+        };
+
+        // Actualizar la posición en el objeto Edge
+        edge.startPos = newStartPos;
+        edge.endPos = newEndPos;
+
+        // Redibuja la línea en su nueva posición
         edge.clear();
-        edge.moveTo(
-          startDevice.sprite.x + offsetX,
-          startDevice.sprite.y + offsetY,
-        );
-        edge.lineTo(endDevice.sprite.x - offsetX, endDevice.sprite.y - offsetY);
-        edge.stroke({ width: 2, color: 0x3e3e3e }); // Redraw the line
+        edge.moveTo(newStartPos.x, newStartPos.y);
+        edge.lineTo(newEndPos.x, newEndPos.y);
+        edge.stroke({ width: 4, color: 0xFF0000 });
       }
     });
   }
