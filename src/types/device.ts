@@ -4,6 +4,7 @@ import RouterImage from "../assets/router.svg";
 import ServerImage from "../assets/server.svg";
 import PcImage from "../assets/pc.svg";
 import { NetworkGraph } from "./networkgraph";
+import { Packet } from "./packet";
 import { Edge } from "./edge";
 import { Viewport } from "..";
 
@@ -61,7 +62,29 @@ export class Device {
 
   sendPacket(packetType: string, destinationId: number): void {
     console.log(`Sending ${packetType} packet from ${this.id} to ${destinationId}`);
-  }
+
+    const packetColors: Record<string, number> = {
+        'IP': 0x00FF00,  // Verde para paquetes IP
+        'ICMP': 0xFF0000  // Rojo para paquetes ICMP
+    };
+
+    const color = packetColors[packetType] || 0xFFFFFF; // Color por defecto blanco
+    const speed = 200; // Velocidad en píxeles por segundo
+
+    const destinationDevice = this.fatherGraph.getDevice(destinationId);
+    if (destinationDevice) {
+        const edge = this.fatherGraph.getEdge(this.id, destinationId);
+        if (edge) {
+            const packet = new Packet(color, speed);
+            this.stage.addChild(packet.sprite); // Añadir el paquete al escenario
+            packet.animateAlongEdge(edge,destinationDevice.id); // Animar el paquete a lo largo de la arista
+        } else {
+            console.warn(`No se encontró una arista entre ${this.id} y ${destinationId}.`);
+        }
+    } else {
+        console.warn(`Dispositivo de destino con ID ${destinationId} no encontrado.`);
+    }
+}
 
   // Método general para mostrar la información del dispositivo
   showInfo(extraInfo = "") {
@@ -149,6 +172,7 @@ export class Device {
       this.sprite.y = newPositionY;
 
       this.updateLines();
+      this.fatherGraph.updateEdges();
     }
   };
 

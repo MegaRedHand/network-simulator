@@ -114,6 +114,57 @@ export class NetworkGraph {
     return this.devices.size;
   }
 
+  // Obtener una arista específica por los IDs de sus nodos
+  getEdge(startId: number, endId: number): Edge | undefined {
+    for (const edge of this.edges.values()) {
+      const { n1, n2 } = edge.connectedNodes;
+      if ((n1 === startId && n2 === endId) || (n1 === endId && n2 === startId)) {
+        console.log(`Arista encontrada entre ID ${startId} y ID ${endId}`);
+        return edge;
+      }
+    }
+    return undefined; // Si no se encuentra la arista
+  }
+
+  // Método para actualizar las posiciones de las aristas
+  updateEdges() {
+    for (const edge of this.edges.values()) {
+      const { n1, n2 } = edge.connectedNodes;
+    
+      const device1 = this.devices.get(n1);
+      const device2 = this.devices.get(n2);
+    
+      if (device1 && device2) {
+        // Calcula el ángulo entre los dos dispositivos
+        const dx = device2.sprite.x - device1.sprite.x;
+        const dy = device2.sprite.y - device1.sprite.y;
+        const angle = Math.atan2(dy, dx);
+      
+        // Ajusta los puntos de inicio y fin para que estén en el borde de los íconos
+        const offsetX1 = (device1.sprite.width / 2) * Math.cos(angle);
+        const offsetY1 = (device1.sprite.height / 2) * Math.sin(angle);
+        const offsetX2 = (device2.sprite.width / 2) * Math.cos(angle);
+        const offsetY2 = (device2.sprite.height / 2) * Math.sin(angle);
+      
+        edge.startPos = {
+          x: device1.sprite.x + offsetX1,
+          y: device1.sprite.y + offsetY1,
+        };
+        edge.endPos = {
+          x: device2.sprite.x - offsetX2,
+          y: device2.sprite.y - offsetY2,
+        };
+      
+        // Redibuja la línea con las nuevas posiciones
+        edge.clear(); // Limpia la línea existente
+        edge.moveTo(edge.startPos.x, edge.startPos.y);
+        edge.lineTo(edge.endPos.x, edge.endPos.y);
+        edge.stroke({ width: 2, color: 0x3e3e3e });
+      }
+    }
+  }
+
+
   // Limpiar el grafo
   clear() {
     this.devices.clear();
