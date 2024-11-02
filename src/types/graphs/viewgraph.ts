@@ -118,4 +118,62 @@ export class ViewGraph {
   clear() {
     this.devices.clear();
   }
+
+  // Método para eliminar un dispositivo y sus conexiones (edges)
+  removeDevice(id: number) {
+    const device = this.devices.get(id);
+
+    if (!device) {
+      console.warn(`El dispositivo con ID ${id} no existe en el grafo.`);
+      return;
+    }
+
+    // Eliminar todas las conexiones del dispositivo en cuestión
+    const edgesToRemove = Array.from(this.edges.values()).filter(
+      (edge) => edge.connectedNodes.n1 === id || edge.connectedNodes.n2 === id
+    );
+
+    edgesToRemove.forEach((edge) => {
+      // Remover la conexión de los otros dispositivos conectados
+      const otherDeviceId = edge.connectedNodes.n1 === id ? edge.connectedNodes.n2 : edge.connectedNodes.n1;
+      const otherDevice = this.devices.get(otherDeviceId);
+
+      if (otherDevice) {
+        otherDevice.connections.delete(edge.id);
+      }
+
+      // Remover la arista (edge) del grafo
+      this.edges.delete(edge.id);
+      edge.destroy(); // Eliminar los recursos gráficos del edge
+    });
+
+    // Finalmente, eliminar el dispositivo del grafo
+    this.devices.delete(id);
+    console.log(`Dispositivo con ID ${id} y todas sus conexiones fueron eliminados.`);
+  }
+
+  // Método para imprimir toda la data del grafo en consola
+  logGraphData() {
+    console.log("===== ViewGraph Data =====");
+    
+    // Imprimir información de los dispositivos
+    console.log("Devices:");
+    this.devices.forEach((device, id) => {
+      console.log(`- ID: ${id}`);
+      console.log(`  Type: ${device.constructor.name}`);
+      console.log(`  Position: x=${device.sprite.x}, y=${device.sprite.y}`);
+      console.log(`  Connections: ${Array.from(device.connections.keys()).join(", ") || "None"}`);
+    });
+    
+    // Imprimir información de las conexiones
+    console.log("Edges:");
+    this.edges.forEach((edge, id) => {
+      console.log(`- Edge ID: ${id}`);
+      console.log(`  Connected Devices: ${edge.connectedNodes.n1} <-> ${edge.connectedNodes.n2}`);
+      console.log(`  Start Position: x=${edge.startPos.x}, y=${edge.startPos.y}`);
+      console.log(`  End Position: x=${edge.endPos.x}, y=${edge.endPos.y}`);
+    });
+    
+    console.log("==========================");
+  }
 }

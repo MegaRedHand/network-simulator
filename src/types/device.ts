@@ -47,7 +47,6 @@ export class Device {
     if (position) {
       sprite.x = position.x;
       sprite.y = position.y;
-      console.log("ENTRE A POSITION existente");
     } else {
       const worldCenter = stage.toWorld(
         stage.screenWidth / 2,
@@ -56,8 +55,6 @@ export class Device {
       sprite.x = worldCenter.x;
       sprite.y = worldCenter.y;
     }
-  
-    console.log(`la position del sprite es: ${sprite.x} y ${sprite.y}`);
 
     sprite.eventMode = "static";
     sprite.interactive = true;
@@ -69,6 +66,7 @@ export class Device {
 
     this.sprite = sprite;
     this.stage = stage;
+    this.viewGraph.logGraphData();
   }
 
   resize(sprite: Sprite): void {
@@ -97,6 +95,18 @@ export class Device {
         `;
     }
   }
+
+  deleteDevice(): void {
+    
+    this.dataGraph.removeDevice(this.id);
+    this.viewGraph.removeDevice(this.id);
+    // Limpiar conexiones
+    this.connections.clear();
+    
+    this.clean();
+
+    this.viewGraph.logGraphData();
+    }
 
   onPointerDown(event: FederatedPointerEvent): void {
     console.log("Entro al onPointerDown");
@@ -164,6 +174,7 @@ export class Device {
       this.connections.set(edge.id, edge);
       otherDevice.connections.set(edge.id, edge);
       this.stage.addChild(edge);
+      this.viewGraph.logGraphData();
       return true;
     }
     return false;
@@ -247,9 +258,9 @@ export class Device {
 
   // "Clean up" device’s resources.
   // Warning: after calling this method, object must not be used.
-  private clean() {
+  public clean() {
     this.stage.removeChild(this.sprite);
-    this.sprite.destroy({ children: true, texture: true });
+    this.sprite.destroy({ children: true });
   }
 }
 
@@ -268,23 +279,30 @@ export class Router extends Device {
   showInfo() {
     const rightBar = document.getElementById("info-content");
     if (rightBar) {
-      const connectedDeviceIds = Array.from(this.connections.values())
+      const connectedDeviceIds = `[${Array.from(this.connections.values())
         .map((edge) =>
           edge.connectedNodes.n1 === this.id
             ? edge.connectedNodes.n2
             : edge.connectedNodes.n1,
         )
-        .join(", ");
+        .join(", ")}]`;
 
-      rightBar.innerHTML = `
+        rightBar.innerHTML = `
         <h3>Router Information</h3>
         <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${connectedDeviceIds ? connectedDeviceIds : "None"}</p>
+        <p><strong>Dispositivos Conectados:</strong> ${connectedDeviceIds !== "[]" ? connectedDeviceIds : "Ninguno"}</p>
         <p><strong>Type:</strong> Router</p>
+        <button id="delete-device">Eliminar dispositivo</button>
       `;
+  
+      // Añadir el evento al botón de eliminar
+      const deleteButton = document.getElementById("delete-device");
+      deleteButton?.addEventListener("click", () => this.deleteDevice());
     }
   }
+
 }
+
 
 export class Server extends Device {
   constructor(
@@ -300,20 +318,25 @@ export class Server extends Device {
   showInfo() {
     const rightBar = document.getElementById("info-content");
     if (rightBar) {
-      const connectedDeviceIds = Array.from(this.connections.values())
+      const connectedDeviceIds = `[${Array.from(this.connections.values())
         .map((edge) =>
           edge.connectedNodes.n1 === this.id
             ? edge.connectedNodes.n2
             : edge.connectedNodes.n1,
         )
-        .join(", ");
+        .join(", ")}]`;
 
       rightBar.innerHTML = `
         <h3>Server Information</h3>
         <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${connectedDeviceIds ? connectedDeviceIds : "None"}</p>
+        <p><strong>Dispositivos Conectados:</strong> ${connectedDeviceIds !== "[]" ? connectedDeviceIds : "Ninguno"}</p>
         <p><strong>Type:</strong> Server</p>
+        <button id="delete-device">Eliminar dispositivo</button>
       `;
+
+      // Añadir el evento al botón de eliminar
+      const deleteButton = document.getElementById("delete-device");
+      deleteButton?.addEventListener("click", () => this.deleteDevice());
     }
   }
 }
@@ -332,20 +355,25 @@ export class Pc extends Device {
   showInfo() {
     const rightBar = document.getElementById("info-content");
     if (rightBar) {
-      const connectedDeviceIds = Array.from(this.connections.values())
+      const connectedDeviceIds = `[${Array.from(this.connections.values())
         .map((edge) =>
           edge.connectedNodes.n1 === this.id
             ? edge.connectedNodes.n2
             : edge.connectedNodes.n1,
         )
-        .join(", ");
+        .join(", ")}]`;
 
       rightBar.innerHTML = `
         <h3>PC Information</h3>
         <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${connectedDeviceIds ? connectedDeviceIds : "None"}</p>
+        <p><strong>Dispositivos Conectados:</strong> ${connectedDeviceIds !== "[]" ? connectedDeviceIds : "Ninguno"}</p>
         <p><strong>Type:</strong> PC</p>
+        <button id="delete-device">Eliminar dispositivo</button>
       `;
+
+      // Añadir el evento al botón de eliminar
+      const deleteButton = document.getElementById("delete-device");
+      deleteButton?.addEventListener("click", () => this.deleteDevice());
     }
   }
 }

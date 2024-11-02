@@ -1,14 +1,3 @@
-import { Graphics } from "pixi.js";
-import { Device } from "./../device"; // Importa la clase Device
-import { Edge } from "./../edge";
-
-// import { v4 as uuidv4 } from "uuid";
-
-// function generateUniqueId(): string {
-//   return uuidv4();
-// }
-
-// npm install uuid
 
 export interface GraphNode {
   x: number;
@@ -89,6 +78,28 @@ export class DataGraph {
   // Obtener la cantidad de dispositivos en el grafo
   getDeviceCount(): number {
     return this.devices.size;
+  }
+
+  // Método para eliminar un dispositivo y todas sus conexiones
+  removeDevice(id: number): void {
+    const device = this.devices.get(id);
+
+    if (!device) {
+      console.warn(`El dispositivo con ID ${id} no existe en el grafo.`);
+      return;
+    }
+
+    // Eliminar la conexión del nodo actual en los dispositivos conectados
+    device.connections.forEach((connectedId) => {
+      const connectedDevice = this.devices.get(connectedId);
+      if (connectedDevice) {
+        connectedDevice.connections.delete(id);
+      }
+    });
+
+    // Eliminar el nodo del grafo
+    this.devices.delete(id);
+    console.log(`Dispositivo con ID ${id} y sus conexiones fueron eliminados.`);
   }
 
   // Limpiar el grafo
