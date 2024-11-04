@@ -22,18 +22,18 @@ export class Device extends Sprite {
     viewgraph: ViewGraph,
     position: { x: number; y: number } | null = null,
   ) {
-    console.log("Entro a constructor de Device");
+    // console.log("Entro a constructor de Device");
     const texture = Texture.from(device);
     super(texture);
 
     this.id = id;
     this.viewgraph = viewgraph;
 
-    console.log(this.texture);
+    // console.log(this.texture);
     this.anchor.x = 0.5;
     this.anchor.y = 0.5;
 
-    console.log(`la position es: ${position.x} y ${position.y}`);
+    // console.log(`la position es: ${position.x} y ${position.y}`);
 
     // Usar las coordenadas especificadas o el centro del mundo
     const stage = this.viewgraph.getViewport();
@@ -57,7 +57,7 @@ export class Device extends Sprite {
     this.on("pointerdown", this.onPointerDown, this);
     this.on("click", this.onClick, this);
 
-    this.viewgraph.logGraphData();
+    // this.viewgraph.logGraphData();
   }
 
   getConnections(): { edgeId: number; adyacentId: number }[] {
@@ -102,7 +102,7 @@ export class Device extends Sprite {
   }
 
   onPointerDown(event: FederatedPointerEvent): void {
-    console.log("Entro al onPointerDown");
+    // console.log("Entro al onPointerDown");
     this.dragging = true;
     event.stopPropagation();
 
@@ -121,7 +121,7 @@ export class Device extends Sprite {
   }
 
   onPointerMove = (event: FederatedPointerEvent): void => {
-    console.log("Entro al onPointerMove");
+    // console.log("Entro al onPointerMove");
     if (this.dragging) {
       // Obtén la nueva posición del puntero en coordenadas del mundo
       const worldPosition = this.viewgraph
@@ -142,7 +142,7 @@ export class Device extends Sprite {
   };
 
   onPointerUp = (): void => {
-    console.log("Entro al onPointerUp");
+    // console.log("Entro al onPointerUp");
     this.dragging = false;
     // Remueve los eventos globales de pointermove y pointerup
     document.removeEventListener("pointermove", this.onPointerMove);
@@ -151,7 +151,7 @@ export class Device extends Sprite {
 
   connectTo(adyacentId: number): boolean {
     // Connnects both devices with an edge.
-    console.log("entro en connectTo");
+    // console.log("entro en connectTo");
 
     const edgeId = this.viewgraph.addEdge(this.id, adyacentId);
     if (edgeId) {
@@ -171,14 +171,14 @@ export class Device extends Sprite {
       return;
     }
 
-    console.log("clicked on device", e);
+    // console.log("clicked on device", e);
     e.stopPropagation();
 
     if (currentLineStartId === null) {
-      console.log("El LineStart es Null");
+      // console.log("El LineStart es Null");
       currentLineStartId = this.id; // Solo almacenamos el ID del dispositivo
     } else {
-      console.log("El LineStart NO es Null");
+      // console.log("El LineStart NO es Null");
 
       // Si el ID almacenado es el mismo que el de este dispositivo, lo reseteamos
       if (currentLineStartId === this.id) {
@@ -228,6 +228,7 @@ export class Server extends Device {
     viewgraph: ViewGraph,
     position: { x: number; y: number },
   ) {
+    console.log("Entro a constructor de Server");
     super(id, ServerImage, viewgraph, position);
   }
 
@@ -255,6 +256,7 @@ export class Pc extends Device {
     viewgraph: ViewGraph,
     position: { x: number; y: number },
   ) {
+    console.log("Entro a constructor de Pc");
     super(id, PcImage, viewgraph, position);
   }
 

@@ -175,7 +175,13 @@ export class ViewGraph {
 
   // Limpiar el grafo
   clear() {
-    this.devices.clear(); // habría que "limpiar" los dispositivos y aristas tambien
+    this.devices.forEach((device) => {
+      device.deleteDevice();
+    });
+    // ya no deberian quedar aristas por borrar
+    this.devices.clear();
+    this.edges.clear();
+    this.idCounter = 1;
   }
 
   // Método para eliminar un dispositivo y sus conexiones (edges)

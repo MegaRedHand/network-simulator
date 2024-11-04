@@ -120,7 +120,6 @@ function setDevice(
 }
 
 function addDeviceToView(
-  viewport: Viewport,
   datagraph: DataGraph,
   viewgraph: ViewGraph,
   id: number,
@@ -192,7 +191,6 @@ export function loadGraph(jsonData: string, ctx: GlobalContext) {
   const graphData = JSON.parse(jsonData);
   const viewgraph = ctx.getViewGraph();
   const datagraph = ctx.getDataGraph();
-  const viewport = ctx.getViewport();
 
   // Limpiar los nodos y las conexiones actuales
   viewgraph.clear();
@@ -210,16 +208,16 @@ export function loadGraph(jsonData: string, ctx: GlobalContext) {
       // AGREGAR EL DATAGRAPH Y LAS ARISTAS
       console.log(nodeData);
       setDevice(datagraph, nodeData);
-      addDeviceToView(viewport, datagraph, viewgraph, nodeData.id);
     },
   );
+  datagraph.constructView(viewgraph);
 
-  // Paso 2: Establecer las conexiones una vez que todos los nodos están añadidos
-  graphData.forEach((nodeData: { id: number; connections: number[] }) => {
-    for (const otherNodeId of nodeData.connections) {
-      addConnectionToView(nodeData.id, otherNodeId, viewgraph);
-    }
-  });
+  // // Paso 2: Establecer las conexiones una vez que todos los nodos están añadidos
+  // graphData.forEach((nodeData: { id: number; connections: number[] }) => {
+  //   for (const otherNodeId of nodeData.connections) {
+  //     addConnectionToView(nodeData.id, otherNodeId, viewgraph);
+  //   }
+  // });
 
   // Establecer aristas
 

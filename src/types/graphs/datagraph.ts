@@ -30,7 +30,7 @@ export class DataGraph {
     if (!this.devices.has(idDevice)) {
       this.devices.set(idDevice, deviceInfo);
       if (this.idCounter <= idDevice) {
-        this.idCounter = idDevice;
+        this.idCounter = idDevice + 1;
       }
       console.log(`Dispositivo añadido con ID ${idDevice}`);
     } else {
@@ -148,7 +148,7 @@ export class DataGraph {
   // Limpiar el grafo
   clear() {
     this.devices.clear();
-    this.idCounter = 0;
+    this.idCounter = 1;
   }
 
   constructView(viewgraph: ViewGraph) {
@@ -165,16 +165,19 @@ export class DataGraph {
             x: graphNode.x,
             y: graphNode.y,
           });
+          break;
         case "Server":
           device = new Server(deviceId, viewgraph, {
             x: graphNode.x,
             y: graphNode.y,
           });
+          break;
         case "Pc":
           device = new Pc(deviceId, viewgraph, {
             x: graphNode.x,
             y: graphNode.y,
           });
+          break;
       }
       viewgraph.addDevice(device);
       graphNode.connections.forEach((adyacentId) => {
@@ -183,6 +186,8 @@ export class DataGraph {
         }
       });
     });
+    console.log("Se termino de crear los dispositivos");
+    viewgraph.logGraphData();
     connections.forEach((connection) => {
       const device1 = viewgraph.getDevice(connection.deviceId);
       const device2 = viewgraph.getDevice(connection.adyacentId);
