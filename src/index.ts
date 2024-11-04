@@ -26,11 +26,13 @@ const WORLD_HEIGHT = 10000;
 
 export class GlobalContext {
   private viewport: Viewport = null;
-  private viewgraph: ViewGraph = new ViewGraph();
-  private datagraph: DataGraph = new DataGraph();
+  private datagraph: DataGraph;
+  private viewgraph: ViewGraph;
 
   initialize(viewport: Viewport) {
     this.viewport = viewport;
+    this.datagraph = new DataGraph();
+    this.viewgraph = new ViewGraph(this.datagraph, this.viewport);
   }
 
   getViewport() {

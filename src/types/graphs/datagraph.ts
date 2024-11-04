@@ -1,3 +1,6 @@
+import { Viewport } from "../..";
+import { Device, Pc, Router, Server } from "../device";
+import { ViewGraph } from "./viewgraph";
 
 export interface GraphNode {
   x: number;
@@ -8,11 +11,11 @@ export interface GraphNode {
 
 export class DataGraph {
   private devices = new Map<number, GraphNode>();
-  private idCounter = 0;
+  private idCounter = 1;
 
   // Agregar un nuevo dispositivo al grafo
   addNewDevice(deviceInfo: { x: number; y: number; type: string }): number {
-    const id = this.idCounter += 1;
+    const id = this.idCounter++;
     const graphnode: GraphNode = {
       ...deviceInfo,
       connections: new Set<number>(),
@@ -58,6 +61,15 @@ export class DataGraph {
     }
   }
 
+  updateDevicePosition(id: number, newValues: { x?: number; y?: number }) {
+    const deviceGraphNode = this.devices.get(id);
+    if (!deviceGraphNode) {
+      console.warn("Device’s id is not registered");
+      return;
+    }
+    this.devices.set(id, { ...deviceGraphNode, ...newValues });
+  }
+
   getDevice(id: number): GraphNode | undefined {
     return this.devices.get(id);
   }
@@ -91,6 +103,7 @@ export class DataGraph {
 
     // Eliminar la conexión del nodo actual en los dispositivos conectados
     device.connections.forEach((connectedId) => {
+      // se puede hacer que lo haga el device directamente
       const connectedDevice = this.devices.get(connectedId);
       if (connectedDevice) {
         connectedDevice.connections.delete(id);
@@ -103,7 +116,7 @@ export class DataGraph {
   }
 
   // Método para eliminar una conexión (edge) entre dos dispositivos por sus IDs
-  removeEdge(n1Id: number, n2Id: number): void {
+  removeConnection(n1Id: number, n2Id: number): void {
     const device1 = this.devices.get(n1Id);
     const device2 = this.devices.get(n2Id);
 
@@ -127,12 +140,55 @@ export class DataGraph {
     device1.connections.delete(n2Id);
     device2.connections.delete(n1Id);
 
-    console.log(`Conexión eliminada entre dispositivos ID: ${n1Id} y ID: ${n2Id}`);
+    console.log(
+      `Conexión eliminada entre dispositivos ID: ${n1Id} y ID: ${n2Id}`,
+    );
   }
 
   // Limpiar el grafo
   clear() {
     this.devices.clear();
     this.idCounter = 0;
+  }
+
+  constructView(viewgraph: ViewGraph) {
+    console.log("Entra al constructView de DataGraph");
+    const connections: Set<{ deviceId: number; adyacentId: number }> = new Set<{
+      deviceId: number;
+      adyacentId: number;
+    }>();
+    this.devices.forEach((graphNode, deviceId) => {
+      let device: Device;
+      switch (graphNode.type) {
+        case "Router":
+          device = new Router(deviceId, viewgraph, {
+            x: graphNode.x,
+            y: graphNode.y,
+          });
+        case "Server":
+          device = new Server(deviceId, viewgraph, {
+            x: graphNode.x,
+            y: graphNode.y,
+          });
+        case "Pc":
+          device = new Pc(deviceId, viewgraph, {
+            x: graphNode.x,
+            y: graphNode.y,
+          });
+      }
+      viewgraph.addDevice(device);
+      graphNode.connections.forEach((adyacentId) => {
+        if (!connections.has({ deviceId: adyacentId, adyacentId: deviceId })) {
+          connections.add({ deviceId, adyacentId });
+        }
+      });
+    });
+    connections.forEach((connection) => {
+      const device1 = viewgraph.getDevice(connection.deviceId);
+      const device2 = viewgraph.getDevice(connection.adyacentId);
+      device1.connectTo(device2.id); // se supone que lo intenta agregar nuevamente al datagraph pero como ya existe el datagraph no lo hace
+    });
+    console.log("Termino con el constructView de DataGraph");
+    viewgraph.logGraphData();
   }
 }

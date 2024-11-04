@@ -23,7 +23,7 @@ export function AddRouter(ctx: GlobalContext) {
   });
   const device = datagraph.getDevice(idDevice);
 
-  const newRouter: Device = new Router(idDevice, viewgraph, datagraph, viewport, {
+  const newRouter: Device = new Router(idDevice, viewgraph, {
     x: device.x,
     y: device.y,
   });
@@ -55,7 +55,7 @@ export function AddPc(ctx: GlobalContext) {
   });
   const device = datagraph.getDevice(idDevice);
 
-  const newPC: Device = new Pc(idDevice, viewgraph, datagraph, viewport, {
+  const newPC: Device = new Pc(idDevice, viewgraph, {
     x: device.x,
     y: device.y,
   });
@@ -85,7 +85,7 @@ export function AddServer(ctx: GlobalContext) {
   });
   const device = datagraph.getDevice(idDevice);
 
-  const newServer: Device = new Server(idDevice, viewgraph, datagraph, viewport, {
+  const newServer: Device = new Server(idDevice, viewgraph, {
     x: device.x,
     y: device.y,
   });
@@ -109,7 +109,12 @@ function setDevice(
   },
 ) {
   const connections = new Set(nodeData.connections);
-  const graphNode: GraphNode = { x: nodeData.x, y: nodeData.y, type: nodeData.type, connections: connections };
+  const graphNode: GraphNode = {
+    x: nodeData.x,
+    y: nodeData.y,
+    type: nodeData.type,
+    connections: connections,
+  };
   datagraph.addDevice(nodeData.id, graphNode);
   console.log(`setee Device ${nodeData.id}`);
 }
@@ -122,25 +127,23 @@ function addDeviceToView(
 ) {
   const device = datagraph.getDevice(id);
   console.log(
-    `El device que me da datagraph es: ${device.x}, ${device.y}, ${device.type}, [${[...device.connections].join(', ')}]`
+    `El device que me da datagraph es: ${device.x}, ${device.y}, ${device.type}, [${[...device.connections].join(", ")}]`,
   );
 
   const position = { x: device.x, y: device.y }; // Establece la posición con las coordenadas de datagraph
 
-  console.log(
-    `position es ${position}`
-  );
+  console.log(`position es ${position}`);
   switch (device.type) {
     case "Router":
-      const router = new Router(id, viewgraph, datagraph, viewport, position);
+      const router = new Router(id, viewgraph, position);
       viewgraph.addDevice(router);
       break;
     case "Server":
-      const server = new Server(id, viewgraph, datagraph, viewport, position);
+      const server = new Server(id, viewgraph, position);
       viewgraph.addDevice(server);
       break;
     case "Pc":
-      const pc = new Pc(id, viewgraph, datagraph, viewport, position);
+      const pc = new Pc(id, viewgraph, position);
       viewgraph.addDevice(pc);
       break;
   }
@@ -205,7 +208,7 @@ export function loadGraph(jsonData: string, ctx: GlobalContext) {
       connections: number[];
     }) => {
       // AGREGAR EL DATAGRAPH Y LAS ARISTAS
-      console.log(nodeData)
+      console.log(nodeData);
       setDevice(datagraph, nodeData);
       addDeviceToView(viewport, datagraph, viewgraph, nodeData.id);
     },
@@ -225,13 +228,7 @@ export function loadGraph(jsonData: string, ctx: GlobalContext) {
 function addConnectionToView(n1Id: number, n2Id: number, viewgraph: ViewGraph) {
   const device1 = viewgraph.getDevice(n1Id);
   const device2 = viewgraph.getDevice(n2Id);
-  console.log(`posicion sprite 1: ${device1.sprite.x}, ${device1.sprite.y}`)
-  console.log(`posicion sprite 2: ${device2.sprite.x}, ${device2.sprite.y}`)
-  device1.connectTo(
-    device2,
-    device1.sprite.x,
-    device1.sprite.y,
-    device2.sprite.x,
-    device2.sprite.y,
-  );
+  console.log(`posicion sprite 1: ${device1.x}, ${device1.y}`);
+  console.log(`posicion sprite 2: ${device2.x}, ${device2.y}`);
+  device1.connectTo(device2.id);
 }
