@@ -61,30 +61,36 @@ export class Device {
   }
 
   sendPacket(packetType: string, destinationId: number): void {
-    console.log(`Sending ${packetType} packet from ${this.id} to ${destinationId}`);
+    console.log(
+      `Sending ${packetType} packet from ${this.id} to ${destinationId}`,
+    );
 
     const packetColors: Record<string, number> = {
-        'IP': 0x00FF00,  // Verde para paquetes IP
-        'ICMP': 0xFF0000  // Rojo para paquetes ICMP
+      IP: 0x00ff00, // Verde para paquetes IP
+      ICMP: 0xff0000, // Rojo para paquetes ICMP
     };
 
-    const color = packetColors[packetType] || 0xFFFFFF; // Color por defecto blanco
+    const color = packetColors[packetType] || 0xffffff; // Color por defecto blanco
     const speed = 200; // Velocidad en píxeles por segundo
 
     const destinationDevice = this.fatherGraph.getDevice(destinationId);
     if (destinationDevice) {
-        const edge = this.fatherGraph.getEdge(this.id, destinationId);
-        if (edge) {
-            const packet = new Packet(color, speed);
-            this.stage.addChild(packet.sprite); // Añadir el paquete al escenario
-            packet.animateAlongEdge(edge,destinationDevice.id); // Animar el paquete a lo largo de la arista
-        } else {
-            console.warn(`No se encontró una arista entre ${this.id} y ${destinationId}.`);
-        }
+      const edge = this.fatherGraph.getEdge(this.id, destinationId);
+      if (edge) {
+        const packet = new Packet(color, speed);
+        this.stage.addChild(packet.sprite); // Añadir el paquete al escenario
+        packet.animateAlongEdge(edge, destinationDevice.id); // Animar el paquete a lo largo de la arista
+      } else {
+        console.warn(
+          `No se encontró una arista entre ${this.id} y ${destinationId}.`,
+        );
+      }
     } else {
-        console.warn(`Dispositivo de destino con ID ${destinationId} no encontrado.`);
+      console.warn(
+        `Dispositivo de destino con ID ${destinationId} no encontrado.`,
+      );
     }
-}
+  }
 
   // Método general para mostrar la información del dispositivo
   showInfo(extraInfo = "") {
@@ -106,14 +112,18 @@ export class Device {
       `;
     }
   }
-  
+
   // Método para manejar la información específica de envío de paquetes
   showPacketInfo() {
-    const adjacentDevices = Array.from(this.connections.values()).map(edge =>
-      edge.connectedNodes.n1 === this.id ? edge.connectedNodes.n2 : edge.connectedNodes.n1
+    const adjacentDevices = Array.from(this.connections.values()).map((edge) =>
+      edge.connectedNodes.n1 === this.id
+        ? edge.connectedNodes.n2
+        : edge.connectedNodes.n1,
     );
 
-    const destinationOptions = adjacentDevices.map(id => `<option value="${id}">${id}</option>`).join("");
+    const destinationOptions = adjacentDevices
+      .map((id) => `<option value="${id}">${id}</option>`)
+      .join("");
 
     // Agrega un evento al botón para manejar el envío del paquete
     const sendPacketButtonId = "sendPacketButton";
@@ -132,21 +142,25 @@ export class Device {
       <button id="${sendPacketButtonId}">Send Packet</button>
     `;
 
-  // Asigna el listener al botón
-  setTimeout(() => {
-    const button = document.getElementById(sendPacketButtonId);
-    if (button) {
-      button.addEventListener("click", () => {
-        const packetType = (document.getElementById("packetType") as HTMLSelectElement).value;
-        const destinationId = parseInt((document.getElementById("destination") as HTMLSelectElement).value, 10);
-        this.sendPacket(packetType, destinationId);
-      });
-    }
-  }, 0); // Delay para asegurar que el HTML esté en el DOM
+    // Asigna el listener al botón
+    setTimeout(() => {
+      const button = document.getElementById(sendPacketButtonId);
+      if (button) {
+        button.addEventListener("click", () => {
+          const packetType = (
+            document.getElementById("packetType") as HTMLSelectElement
+          ).value;
+          const destinationId = parseInt(
+            (document.getElementById("destination") as HTMLSelectElement).value,
+            10,
+          );
+          this.sendPacket(packetType, destinationId);
+        });
+      }
+    }, 0); // Delay para asegurar que el HTML esté en el DOM
 
-  return htmlContent;
-}
-
+    return htmlContent;
+  }
 
   onPointerDown(event: FederatedPointerEvent): void {
     console.log("Entro al onPointerDown");
@@ -157,8 +171,8 @@ export class Device {
     this.offsetX = worldPosition.x - this.sprite.x;
     this.offsetY = worldPosition.y - this.sprite.y;
 
-    document.addEventListener("pointermove", this.onPointerMove);
-    document.addEventListener("pointerup", this.onPointerUp);
+    document.addEventListener("pointermove", this.onPointerMove.bind(this));
+    document.addEventListener("pointerup", this.onPointerUp.bind(this));
   }
 
   onPointerMove = (event: FederatedPointerEvent): void => {
@@ -179,11 +193,17 @@ export class Device {
   onPointerUp = (): void => {
     console.log("Entro al onPointerUp");
     this.dragging = false;
-    document.removeEventListener("pointermove", this.onPointerMove);
-    document.removeEventListener("pointerup", this.onPointerUp);
+    document.removeEventListener("pointermove", this.onPointerMove.bind(this));
+    document.removeEventListener("pointerup", this.onPointerUp.bind(this));
   };
 
-  connectTo(otherDevice: Device, x1: number, y1: number, x2: number, y2: number): boolean {
+  connectTo(
+    otherDevice: Device,
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+  ): boolean {
     console.log("entro en connectTo");
 
     const n1Info = { id: this.id, x: x1, y: y1 };
