@@ -1,4 +1,4 @@
-import { Device } from "./../device"; // Import the Device class
+import { Device, Pc, Router, Server } from "./../device"; // Import the Device class
 import { Edge } from "./../edge";
 import { DataGraph } from "./datagraph";
 import { Viewport } from "../..";
@@ -13,7 +13,54 @@ export class ViewGraph {
   constructor(datagraph: DataGraph, viewport: Viewport) {
     this.datagraph = datagraph;
     this.viewport = viewport;
-    datagraph.constructView(this);
+    this.constructView();
+  }
+
+  constructView() {
+    // TODO: Adjust construction based on the selected layer in the future
+    console.log("Constructing ViewGraph from DataGraph");
+    const connections: Set<{ deviceId: number; adyacentId: number }> =
+      new Set();
+
+    this.datagraph.getDevices().forEach(([deviceId, graphNode]) => {
+      let device: Device;
+      switch (graphNode.type) {
+        case "Router":
+          device = new Router(deviceId, this, {
+            x: graphNode.x,
+            y: graphNode.y,
+          });
+          break;
+        case "Server":
+          device = new Server(deviceId, this, {
+            x: graphNode.x,
+            y: graphNode.y,
+          });
+          break;
+        case "Pc":
+          device = new Pc(deviceId, this, { x: graphNode.x, y: graphNode.y });
+          break;
+      }
+
+      device.eventMode = "static";
+      device.interactive = true;
+      this.viewport.addChild(device);
+
+      this.addDevice(device);
+      graphNode.connections.forEach((adyacentId) => {
+        if (!connections.has({ deviceId: adyacentId, adyacentId: deviceId })) {
+          connections.add({ deviceId, adyacentId });
+        }
+      });
+    });
+
+    console.log("Finished creating devices in ViewGraph");
+    connections.forEach(({ deviceId, adyacentId }) => {
+      const device1 = this.getDevice(deviceId);
+      const device2 = this.getDevice(adyacentId);
+      device1.connectTo(device2.id);
+    });
+    console.log("Finished constructing ViewGraph");
   }
 
   // Add a device to the graph
@@ -58,32 +105,11 @@ export class ViewGraph {
       const device2 = this.devices.get(device2Id);
 
       if (device1 && device2) {
-        // Calculate the angle between the two devices
-        const dx = device2.x - device1.x;
-        const dy = device2.y - device1.y;
-        const angle = Math.atan2(dy, dx);
-
-        // Adjust start and end points to be on the edge of the icons
-        const offsetX1 = (device1.width / 2) * Math.cos(angle);
-        const offsetY1 = (device1.height / 2) * Math.sin(angle);
-        const offsetX2 = (device2.width / 2) * Math.cos(angle);
-        const offsetY2 = (device2.height / 2) * Math.sin(angle);
-
-        const startPos = {
-          x: device1.x + offsetX1,
-          y: device1.y + offsetY1,
-        };
-        const endPos = {
-          x: device2.x - offsetX2,
-          y: device2.y - offsetY2,
-        };
-
-        // Create the edge as an instance of Edge
         const edge = new Edge(
           this.idCounter++,
           { n1: device1Id, n2: device2Id },
-          startPos,
-          endPos,
+          device1,
+          device2,
           this,
         );
         this.edges.set(edge.id, edge);
@@ -204,7 +230,7 @@ export class ViewGraph {
 
     // Remove the device from the viewport and destroy it
     this.viewport.removeChild(device);
-    device.destroy({ children: true });
+    device.destroy();
 
     // Finally, remove the device from the graph
     this.datagraph.removeDevice(id);

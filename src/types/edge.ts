@@ -1,5 +1,6 @@
 import { Graphics } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
+import { Device } from "./device";
 
 export class Edge extends Graphics {
   id: number;
@@ -11,17 +12,35 @@ export class Edge extends Graphics {
   constructor(
     id: number,
     connectedNodes: { n1: number; n2: number },
-    startPos: { x: number; y: number },
-    endPos: { x: number; y: number },
+    device1: Device,
+    device2: Device,
     viewgraph: ViewGraph,
   ) {
     super();
 
     this.id = id;
     this.connectedNodes = connectedNodes;
-    this.startPos = startPos;
-    this.endPos = endPos;
     this.viewgraph = viewgraph;
+
+    // Calculate the angle and offsets between the devices
+    const dx = device2.x - device1.x;
+    const dy = device2.y - device1.y;
+    const angle = Math.atan2(dy, dx);
+
+    const offsetX1 = (device1.width / 2) * Math.cos(angle);
+    const offsetY1 = (device1.height / 2) * Math.sin(angle);
+    const offsetX2 = (device2.width / 2) * Math.cos(angle);
+    const offsetY2 = (device2.height / 2) * Math.sin(angle);
+
+    // Define start and end positions based on offsets
+    this.startPos = {
+      x: device1.x + offsetX1,
+      y: device1.y + offsetY1,
+    };
+    this.endPos = {
+      x: device2.x - offsetX2,
+      y: device2.y - offsetY2,
+    };
 
     // Draw the line and make it interactive
     this.drawEdge(this.startPos, this.endPos);

@@ -30,6 +30,10 @@ export function AddRouter(ctx: GlobalContext) {
   // Add the RouterNode to the graph
   viewgraph.addDevice(newRouter);
 
+  newRouter.eventMode = "static";
+  newRouter.interactive = true;
+  viewport.addChild(newRouter);
+
   console.log(
     `Router added with ID ${newRouter.id} at the center of the screen.`,
   );
@@ -62,6 +66,10 @@ export function AddPc(ctx: GlobalContext) {
   // Add the PCNode to the graph
   viewgraph.addDevice(newPC);
 
+  newPC.eventMode = "static";
+  newPC.interactive = true;
+  viewport.addChild(newPC);
+
   console.log(`PC added with ID ${newPC.id} at the center of the screen.`);
 }
 
@@ -91,6 +99,10 @@ export function AddServer(ctx: GlobalContext) {
 
   // Add the ServerNode to the graph
   viewgraph.addDevice(newServer);
+
+  newServer.eventMode = "static";
+  newServer.interactive = true;
+  viewport.addChild(newServer);
 
   console.log(
     `Server added with ID ${newServer.id} at the center of the screen.`,
@@ -180,7 +192,8 @@ export function loadGraph(jsonData: string, ctx: GlobalContext) {
       setDevice(datagraph, nodeData);
     },
   );
-  datagraph.constructView(viewgraph);
+
+  viewgraph.constructView();
 
   console.log("Graph loaded successfully.");
 }

@@ -18,22 +18,18 @@ export class Device extends Sprite {
 
   constructor(
     id: number,
-    device: string,
+    svg: string,
     viewgraph: ViewGraph,
     position: { x: number; y: number } | null = null,
   ) {
-    // console.log("Entered Device constructor");
-    const texture = Texture.from(device);
+    const texture = Texture.from(svg);
     super(texture);
 
     this.id = id;
     this.viewgraph = viewgraph;
 
-    // console.log(this.texture);
     this.anchor.x = 0.5;
     this.anchor.y = 0.5;
-
-    // console.log(`Position is: ${position.x} and ${position.y}`);
 
     // Use specified coordinates or the center of the world
     const stage = this.viewgraph.getViewport();
@@ -49,15 +45,8 @@ export class Device extends Sprite {
       this.y = worldCenter.y;
     }
 
-    this.eventMode = "static";
-    this.interactive = true;
-
-    stage.addChild(this);
-
     this.on("pointerdown", this.onPointerDown, this);
     this.on("click", this.onClick, this);
-
-    // this.viewgraph.logGraphData();
   }
 
   getConnections(): { edgeId: number; adyacentId: number }[] {
@@ -116,11 +105,11 @@ export class Device extends Sprite {
     this.offsetY = worldPosition.y - this.y;
 
     // Listen to global pointermove and pointerup events
-    document.addEventListener("pointermove", this.onPointerMove);
-    document.addEventListener("pointerup", this.onPointerUp);
+    document.addEventListener("pointermove", this.onPointerMove.bind(this));
+    document.addEventListener("pointerup", this.onPointerUp.bind(this));
   }
 
-  onPointerMove = (event: FederatedPointerEvent): void => {
+  onPointerMove(event: FederatedPointerEvent): void {
     // console.log("Entered onPointerMove");
     if (this.dragging) {
       // Get the new pointer position in world coordinates
@@ -139,15 +128,15 @@ export class Device extends Sprite {
       // Notify view graph about its movement
       this.viewgraph.deviceMoved(this.id);
     }
-  };
+  }
 
-  onPointerUp = (): void => {
+  onPointerUp(): void {
     // console.log("Entered onPointerUp");
     this.dragging = false;
     // Remove global pointermove and pointerup events
     document.removeEventListener("pointermove", this.onPointerMove);
     document.removeEventListener("pointerup", this.onPointerUp);
-  };
+  }
 
   connectTo(adyacentId: number): boolean {
     // Connects both devices with an edge.
