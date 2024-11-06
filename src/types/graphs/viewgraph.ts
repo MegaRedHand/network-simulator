@@ -19,8 +19,7 @@ export class ViewGraph {
   constructView() {
     // TODO: Adjust construction based on the selected layer in the future
     console.log("Constructing ViewGraph from DataGraph");
-    const connections: Set<{ deviceId: number; adyacentId: number }> =
-      new Set();
+    const connections = new Set<{ deviceId: number; adyacentId: number }>();
 
     this.datagraph.getDevices().forEach(([deviceId, graphNode]) => {
       let device: Device;
