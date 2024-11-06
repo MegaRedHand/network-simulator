@@ -210,9 +210,7 @@ export class ViewGraph {
     // Finally, remove the device from the graph
     this.datagraph.removeDevice(id);
     this.devices.delete(id);
-    console.log(
-      `Device with ID ${id} and all its connections were removed.`,
-    );
+    console.log(`Device with ID ${id} and all its connections were removed.`);
   }
 
   // Method to remove a specific edge by its ID

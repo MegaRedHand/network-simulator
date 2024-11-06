@@ -50,7 +50,9 @@ export class DataGraph {
       console.warn(`Device with ID ${n2Id} does not exist in devices.`);
       // Check if an edge already exists between these two devices
     } else if (this.devices.get(n1Id).connections.has(n2Id)) {
-      console.warn(`Connection between ID ${n1Id} and ID ${n2Id} already exists.`);
+      console.warn(
+        `Connection between ID ${n1Id} and ID ${n2Id} already exists.`,
+      );
     } else {
       this.devices.get(n1Id).connections.add(n2Id);
       this.devices.get(n2Id).connections.add(n1Id);
@@ -132,7 +134,9 @@ export class DataGraph {
 
     // Check if the connection exists
     if (!device1.connections.has(n2Id) || !device2.connections.has(n1Id)) {
-      console.warn(`Connection between ID ${n1Id} and ID ${n2Id} does not exist.`);
+      console.warn(
+        `Connection between ID ${n1Id} and ID ${n2Id} does not exist.`,
+      );
       return;
     }
 

@@ -210,7 +210,7 @@ export class Router extends Device {
       rightBar.innerHTML = `
         <h3>Router Information</h3>
         <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? '[' + Array.from(this.connections.values()).join(', ') + ']' : "None"}</p>
+        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
         <p><strong>Type:</strong> Router</p>
         <button id="delete-device">Delete device</button>
       `;
@@ -238,7 +238,7 @@ export class Server extends Device {
       rightBar.innerHTML = `
         <h3>Server Information</h3>
         <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? '[' + Array.from(this.connections.values()).join(', ') + ']' : "None"}</p>
+        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
         <p><strong>Type:</strong> Server</p>
         <button id="delete-device">Delete device</button>
       `;
@@ -266,7 +266,7 @@ export class Pc extends Device {
       rightBar.innerHTML = `
         <h3>PC Information</h3>
         <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? '[' + Array.from(this.connections.values()).join(', ') + ']' : "None"}</p>
+        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
         <p><strong>Type:</strong> PC</p>
         <button id="delete-device">Delete device</button>
       `;

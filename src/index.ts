@@ -149,7 +149,6 @@ class RightBar {
 
 // IIFE to avoid errors
 (async () => {
-
   const lBar = document.getElementById("left-bar");
   const rBar = document.getElementById("right-bar");
   const tBar = document.getElementById("top-bar");
@@ -205,7 +204,6 @@ class RightBar {
 
   // Resize logic
   function resize() {
-    
     const leftBarWidth = lBar ? lBar.offsetWidth : 100;
     const rightBarWidth = rBar ? rBar.offsetWidth : 250;
     const topBarHeight = tBar ? tBar.offsetHeight : 40;
