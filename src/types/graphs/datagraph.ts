@@ -13,7 +13,7 @@ export class DataGraph {
   private devices = new Map<number, GraphNode>();
   private idCounter = 1;
 
-  // Agregar un nuevo dispositivo al grafo
+  // Add a new device to the graph
   addNewDevice(deviceInfo: { x: number; y: number; type: string }): number {
     const id = this.idCounter++;
     const graphnode: GraphNode = {
@@ -21,42 +21,42 @@ export class DataGraph {
       connections: new Set<number>(),
     };
     this.devices.set(id, graphnode);
-    console.log(`Dispositivo añadido con ID ${id}`);
+    console.log(`Device added with ID ${id}`);
     return id;
   }
 
-  // Agregar un dispositivo al grafo
+  // Add a device to the graph
   addDevice(idDevice: number, deviceInfo: GraphNode) {
     if (!this.devices.has(idDevice)) {
       this.devices.set(idDevice, deviceInfo);
       if (this.idCounter <= idDevice) {
         this.idCounter = idDevice + 1;
       }
-      console.log(`Dispositivo añadido con ID ${idDevice}`);
+      console.log(`Device added with ID ${idDevice}`);
     } else {
-      console.warn(`El dispositivo con ID ${idDevice} ya existe en el grafo.`);
+      console.warn(`Device with ID ${idDevice} already exists in the graph.`);
     }
   }
 
-  // Agregar una conexión entre dos dispositivos
+  // Add a connection between two devices
   addEdge(n1Id: number, n2Id: number) {
     if (n1Id === n2Id) {
       console.warn(
-        `No se puede crear una conexión entre el mismo dispositivo (ID ${n1Id}).`,
+        `Cannot create a connection between the same device (ID ${n1Id}).`,
       );
     } else if (!this.devices.has(n1Id)) {
-      console.warn(`El dispositivo con ID ${n1Id} no existe en devices.`);
+      console.warn(`Device with ID ${n1Id} does not exist in devices.`);
     } else if (!this.devices.has(n2Id)) {
-      console.warn(`El dispositivo con ID ${n2Id} no existe en devices.`);
-      // Verificar si ya existe una arista entre estos dos dispositivos
+      console.warn(`Device with ID ${n2Id} does not exist in devices.`);
+      // Check if an edge already exists between these two devices
     } else if (this.devices.get(n1Id).connections.has(n2Id)) {
-      console.warn(`La conexión entre ID ${n1Id} y ID ${n2Id} ya existe.`);
+      console.warn(`Connection between ID ${n1Id} and ID ${n2Id} already exists.`);
     } else {
       this.devices.get(n1Id).connections.add(n2Id);
       this.devices.get(n2Id).connections.add(n1Id);
 
       console.log(
-        `Conexión creada entre dispositivos ID: ${n1Id} y ID: ${n2Id}`,
+        `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,
       );
     }
   }
@@ -74,7 +74,7 @@ export class DataGraph {
     return this.devices.get(id);
   }
 
-  // Obtener todas las conexiones de un dispositivo
+  // Get all connections of a device
   getConnections(id: number): number[] {
     const deviceInfo = this.devices.get(id);
     return deviceInfo.connections
@@ -82,77 +82,77 @@ export class DataGraph {
       : [];
   }
 
-  // Obtener todos los dispositivos en el grafo
+  // Get all devices in the graph
   getDevices(): [number, GraphNode][] {
     return Array.from(this.devices.entries());
   }
 
-  // Obtener la cantidad de dispositivos en el grafo
+  // Get the number of devices in the graph
   getDeviceCount(): number {
     return this.devices.size;
   }
 
-  // Método para eliminar un dispositivo y todas sus conexiones
+  // Method to remove a device and all its connections
   removeDevice(id: number): void {
     const device = this.devices.get(id);
 
     if (!device) {
-      console.warn(`El dispositivo con ID ${id} no existe en el grafo.`);
+      console.warn(`Device with ID ${id} does not exist in the graph.`);
       return;
     }
 
-    // Eliminar la conexión del nodo actual en los dispositivos conectados
+    // Remove the connection of the current node in connected devices
     device.connections.forEach((connectedId) => {
-      // se puede hacer que lo haga el device directamente
+      // can be done directly by the device
       const connectedDevice = this.devices.get(connectedId);
       if (connectedDevice) {
         connectedDevice.connections.delete(id);
       }
     });
 
-    // Eliminar el nodo del grafo
+    // Remove the node from the graph
     this.devices.delete(id);
-    console.log(`Dispositivo con ID ${id} y sus conexiones fueron eliminados.`);
+    console.log(`Device with ID ${id} and its connections were removed.`);
   }
 
-  // Método para eliminar una conexión (edge) entre dos dispositivos por sus IDs
+  // Method to remove a connection (edge) between two devices by their IDs
   removeConnection(n1Id: number, n2Id: number): void {
     const device1 = this.devices.get(n1Id);
     const device2 = this.devices.get(n2Id);
 
     if (!device1) {
-      console.warn(`El dispositivo con ID ${n1Id} no existe en el grafo.`);
+      console.warn(`Device with ID ${n1Id} does not exist in the graph.`);
       return;
     }
 
     if (!device2) {
-      console.warn(`El dispositivo con ID ${n2Id} no existe en el grafo.`);
+      console.warn(`Device with ID ${n2Id} does not exist in the graph.`);
       return;
     }
 
-    // Verificar que la conexión existe
+    // Check if the connection exists
     if (!device1.connections.has(n2Id) || !device2.connections.has(n1Id)) {
-      console.warn(`La conexión entre ID ${n1Id} y ID ${n2Id} no existe.`);
+      console.warn(`Connection between ID ${n1Id} and ID ${n2Id} does not exist.`);
       return;
     }
 
-    // Eliminar la conexión en ambos dispositivos
+    // Remove the connection in both devices
     device1.connections.delete(n2Id);
     device2.connections.delete(n1Id);
 
     console.log(
-      `Conexión eliminada entre dispositivos ID: ${n1Id} y ID: ${n2Id}`,
+      `Connection removed between devices ID: ${n1Id} and ID: ${n2Id}`,
     );
   }
 
-  // Limpiar el grafo
+  // Clear the graph
   clear() {
     this.devices.clear();
     this.idCounter = 1;
   }
 
   constructView(viewgraph: ViewGraph) {
-    console.log("Entra al constructView de DataGraph");
+    console.log("Entering DataGraph's constructView");
     const connections: Set<{ deviceId: number; adyacentId: number }> = new Set<{
       deviceId: number;
       adyacentId: number;
@@ -186,14 +186,14 @@ export class DataGraph {
         }
       });
     });
-    console.log("Se termino de crear los dispositivos");
+    console.log("Finished creating devices");
     viewgraph.logGraphData();
     connections.forEach((connection) => {
       const device1 = viewgraph.getDevice(connection.deviceId);
       const device2 = viewgraph.getDevice(connection.adyacentId);
-      device1.connectTo(device2.id); // se supone que lo intenta agregar nuevamente al datagraph pero como ya existe el datagraph no lo hace
+      device1.connectTo(device2.id); // supposed to try adding it to the datagraph again, but since it already exists in the datagraph, it doesn't
     });
-    console.log("Termino con el constructView de DataGraph");
+    console.log("Finished DataGraph's constructView");
     viewgraph.logGraphData();
   }
 }

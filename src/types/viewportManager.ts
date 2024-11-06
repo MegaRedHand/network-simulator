@@ -1,16 +1,15 @@
-import { GlobalContext, Viewport } from "./../index";
+import { GlobalContext } from "./../index";
 import { DataGraph, GraphNode } from "./graphs/datagraph";
 import { Device, Pc, Router, Server } from "./device";
-import { ViewGraph } from "./graphs/viewgraph";
 
-// Función para agregar un router en el centro del viewport
+// Function to add a router at the center of the viewport
 export function AddRouter(ctx: GlobalContext) {
-  console.log("Entro a AddRouter");
+  console.log("Entered AddRouter");
   const viewgraph = ctx.getViewGraph();
   const datagraph = ctx.getDataGraph();
   const viewport = ctx.getViewport();
 
-  // Obtener las coordenadas centrales del mundo después del zoom
+  // Get the center coordinates of the world after zoom
   const worldCenter = viewport.toWorld(
     viewport.screenWidth / 2,
     viewport.screenHeight / 2,
@@ -28,21 +27,21 @@ export function AddRouter(ctx: GlobalContext) {
     y: device.y,
   });
 
-  // Agregar el RouterNode al grafo
+  // Add the RouterNode to the graph
   viewgraph.addDevice(newRouter);
 
   console.log(
-    `Router añadido con ID ${newRouter.id} en el centro de la pantalla.`,
+    `Router added with ID ${newRouter.id} at the center of the screen.`,
   );
 }
 
-// Función para agregar un PC en el centro del viewport
+// Function to add a PC at the center of the viewport
 export function AddPc(ctx: GlobalContext) {
   const viewgraph = ctx.getViewGraph();
   const datagraph = ctx.getDataGraph();
   const viewport = ctx.getViewport();
 
-  // Obtener las coordenadas centrales del mundo después del zoom
+  // Get the center coordinates of the world after zoom
   const worldCenter = viewport.toWorld(
     viewport.screenWidth / 2,
     viewport.screenHeight / 2,
@@ -60,19 +59,19 @@ export function AddPc(ctx: GlobalContext) {
     y: device.y,
   });
 
-  // Agregar el PCNode al grafo
+  // Add the PCNode to the graph
   viewgraph.addDevice(newPC);
 
-  console.log(`PC añadido con ID ${newPC.id} en el centro de la pantalla.`);
+  console.log(`PC added with ID ${newPC.id} at the center of the screen.`);
 }
 
-// Función para agregar un server en el centro del viewport (suponiendo que existe un tipo ServerNode)
+// Function to add a server at the center of the viewport (assuming there is a ServerNode type)
 export function AddServer(ctx: GlobalContext) {
   const viewgraph = ctx.getViewGraph();
   const datagraph = ctx.getDataGraph();
   const viewport = ctx.getViewport();
 
-  // Obtener las coordenadas centrales del mundo después del zoom
+  // Get the center coordinates of the world after zoom
   const worldCenter = viewport.toWorld(
     viewport.screenWidth / 2,
     viewport.screenHeight / 2,
@@ -90,11 +89,11 @@ export function AddServer(ctx: GlobalContext) {
     y: device.y,
   });
 
-  // Agregar el ServerNode al grafo
+  // Add the ServerNode to the graph
   viewgraph.addDevice(newServer);
 
   console.log(
-    `Server añadido con ID ${newServer.id} en el centro de la pantalla.`,
+    `Server added with ID ${newServer.id} at the center of the screen.`,
   );
 }
 
@@ -116,39 +115,10 @@ function setDevice(
     connections: connections,
   };
   datagraph.addDevice(nodeData.id, graphNode);
-  console.log(`setee Device ${nodeData.id}`);
+  console.log(`Device set with ID ${nodeData.id}`);
 }
 
-function addDeviceToView(
-  datagraph: DataGraph,
-  viewgraph: ViewGraph,
-  id: number,
-) {
-  const device = datagraph.getDevice(id);
-  console.log(
-    `El device que me da datagraph es: ${device.x}, ${device.y}, ${device.type}, [${[...device.connections].join(", ")}]`,
-  );
-
-  const position = { x: device.x, y: device.y }; // Establece la posición con las coordenadas de datagraph
-
-  console.log(`position es ${position}`);
-  switch (device.type) {
-    case "Router":
-      const router = new Router(id, viewgraph, position);
-      viewgraph.addDevice(router);
-      break;
-    case "Server":
-      const server = new Server(id, viewgraph, position);
-      viewgraph.addDevice(server);
-      break;
-    case "Pc":
-      const pc = new Pc(id, viewgraph, position);
-      viewgraph.addDevice(pc);
-      break;
-  }
-}
-
-// Función para guardar el grafo actual en formato JSON
+// Function to save the current graph in JSON format
 export function saveGraph(ctx: GlobalContext) {
   const datagraph: DataGraph = ctx.getDataGraph();
 
@@ -160,7 +130,7 @@ export function saveGraph(ctx: GlobalContext) {
     connections: number[];
   }[] = [];
 
-  // Serializar nodos
+  // Serialize nodes
   datagraph.getDevices().forEach((deviceInfo) => {
     const id = deviceInfo[0];
     const info = deviceInfo[1];
@@ -168,12 +138,12 @@ export function saveGraph(ctx: GlobalContext) {
       id: id,
       x: info.x,
       y: info.y,
-      type: info.type, // Guardar el tipo de dispositivo (Router, Server, PC)
+      type: info.type, // Save the device type (Router, Server, PC)
       connections: Array.from(info.connections.values()),
     });
   });
 
-  // Convertir a JSON y descargar
+  // Convert to JSON and download
   const jsonString = JSON.stringify(graphData, null, 2);
   const blob = new Blob([jsonString], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -183,20 +153,20 @@ export function saveGraph(ctx: GlobalContext) {
   link.click();
   URL.revokeObjectURL(url);
 
-  console.log("Estado del grafo guardado.");
+  console.log("Graph state saved.");
 }
 
-// Función para cargar un grafo desde un archivo JSON
+// Function to load a graph from a JSON file
 export function loadGraph(jsonData: string, ctx: GlobalContext) {
   const graphData = JSON.parse(jsonData);
   const viewgraph = ctx.getViewGraph();
   const datagraph = ctx.getDataGraph();
 
-  // Limpiar los nodos y las conexiones actuales
+  // Clear current nodes and connections
   viewgraph.clear();
   datagraph.clear();
 
-  // Deserializar y recrear los nodos
+  // Deserialize and recreate nodes
   graphData.forEach(
     (nodeData: {
       id: number;
@@ -205,28 +175,12 @@ export function loadGraph(jsonData: string, ctx: GlobalContext) {
       type: string;
       connections: number[];
     }) => {
-      // AGREGAR EL DATAGRAPH Y LAS ARISTAS
+      // ADD DATAGRAPH AND EDGES
       console.log(nodeData);
       setDevice(datagraph, nodeData);
     },
   );
   datagraph.constructView(viewgraph);
 
-  // // Paso 2: Establecer las conexiones una vez que todos los nodos están añadidos
-  // graphData.forEach((nodeData: { id: number; connections: number[] }) => {
-  //   for (const otherNodeId of nodeData.connections) {
-  //     addConnectionToView(nodeData.id, otherNodeId, viewgraph);
-  //   }
-  // });
-
-  // Establecer aristas
-
-  console.log("Grafo cargado con éxito.");
-}
-function addConnectionToView(n1Id: number, n2Id: number, viewgraph: ViewGraph) {
-  const device1 = viewgraph.getDevice(n1Id);
-  const device2 = viewgraph.getDevice(n2Id);
-  console.log(`posicion sprite 1: ${device1.x}, ${device1.y}`);
-  console.log(`posicion sprite 2: ${device2.x}, ${device2.y}`);
-  device1.connectTo(device2.id);
+  console.log("Graph loaded successfully.");
 }

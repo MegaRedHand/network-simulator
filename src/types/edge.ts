@@ -1,5 +1,4 @@
 import { Graphics } from "pixi.js";
-import { DataGraph } from "./graphs/datagraph";
 import { ViewGraph } from "./graphs/viewgraph";
 
 export class Edge extends Graphics {
@@ -24,14 +23,14 @@ export class Edge extends Graphics {
     this.endPos = endPos;
     this.viewgraph = viewgraph;
 
-    // Dibuja la línea y la hace interactiva
+    // Draw the line and make it interactive
     this.drawEdge(this.startPos, this.endPos);
     this.eventMode = "static";
     this.interactive = true;
     this.on("click", this.showInfo);
   }
 
-  // Método para dibujar la línea
+  // Method to draw the line
   public drawEdge(
     startPos: { x: number; y: number },
     endPos: { x: number; y: number },
@@ -44,7 +43,7 @@ export class Edge extends Graphics {
     this.endPos = endPos;
   }
 
-  // Método para mostrar la información de la arista y el botón de eliminar
+  // Method to display the edge information and the delete button
   showInfo() {
     const rightBar = document.getElementById("info-content");
     if (rightBar) {
@@ -56,29 +55,29 @@ export class Edge extends Graphics {
       rightBar.innerHTML = `
         <h3>Edge Information</h3>
         <p><strong>Edge ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${this.connectedNodes.n1} <-> ${this.connectedNodes.n2}</p>
+        <p><strong>Connected Devices:</strong> ${this.connectedNodes.n1} <=> ${this.connectedNodes.n2}</p>
         <p><strong>Start Position:</strong> x=${startX}, y=${startY}</p>
         <p><strong>End Position:</strong> x=${endX}, y=${endY}</p>
-        <button id="delete-edge">Eliminar Edge</button>
+        <button id="delete-edge">Delete Edge</button>
       `;
 
-      // Añadir el evento al botón de eliminar
+      // Add event to the delete button
       const deleteButton = document.getElementById("delete-edge");
       deleteButton?.addEventListener("click", () => this.deleteEdge());
     }
   }
 
-  // Método para eliminar la arista
+  // Method to delete the edge
   deleteEdge() {
-    // Elimina la arista del viewgraph y del datagraph
+    // Remove the edge from the viewgraph and datagraph
     this.viewgraph.removeEdge(this.id);
 
-    // Muestra un mensaje de confirmación en la right-bar
+    // Display a confirmation message in the right-bar
     const rightBar = document.getElementById("info-content");
     if (rightBar) {
-      rightBar.innerHTML = "<p>Edge eliminado.</p>";
+      rightBar.innerHTML = "<p>Edge deleted.</p>";
     }
 
-    console.log(`Edge con ID ${this.id} eliminado.`);
+    console.log(`Edge with ID ${this.id} deleted.`);
   }
 }

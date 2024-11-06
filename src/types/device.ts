@@ -6,7 +6,7 @@ import PcImage from "../assets/pc.svg";
 import { ViewGraph } from "./graphs/viewgraph";
 
 export const DEVICE_SIZE = 20;
-let currentLineStartId: number | null = null; // Almacena solo el ID en lugar de 'this'
+let currentLineStartId: number | null = null; // Stores only the ID instead of 'this'
 
 export class Device extends Sprite {
   id: number;
@@ -22,7 +22,7 @@ export class Device extends Sprite {
     viewgraph: ViewGraph,
     position: { x: number; y: number } | null = null,
   ) {
-    // console.log("Entro a constructor de Device");
+    // console.log("Entered Device constructor");
     const texture = Texture.from(device);
     super(texture);
 
@@ -33,9 +33,9 @@ export class Device extends Sprite {
     this.anchor.x = 0.5;
     this.anchor.y = 0.5;
 
-    // console.log(`la position es: ${position.x} y ${position.y}`);
+    // console.log(`Position is: ${position.x} and ${position.y}`);
 
-    // Usar las coordenadas especificadas o el centro del mundo
+    // Use specified coordinates or the center of the world
     const stage = this.viewgraph.getViewport();
     if (position) {
       this.x = position.x;
@@ -82,7 +82,7 @@ export class Device extends Sprite {
     sprite.height = sprite.height / DEVICE_SIZE;
   }
 
-  // Método para actualizar la right-bar con info del device
+  // Method to update the right-bar with device info
   showInfo() {
     const rightBar = document.getElementById("info-content");
     if (rightBar) {
@@ -96,62 +96,62 @@ export class Device extends Sprite {
 
   deleteDevice(): void {
     this.viewgraph.removeDevice(this.id);
-    // Limpiar conexiones
+    // Clear connections
     this.connections.clear();
     this.viewgraph.logGraphData();
   }
 
   onPointerDown(event: FederatedPointerEvent): void {
-    // console.log("Entro al onPointerDown");
+    // console.log("Entered onPointerDown");
     this.dragging = true;
     event.stopPropagation();
 
-    // Obtén la posición del puntero en coordenadas del mundo (viewport)
+    // Get the pointer position in world (viewport) coordinates
     const worldPosition = this.viewgraph
       .getViewport()
       .toWorld(event.clientX, event.clientY);
 
-    // Calcula el desplazamiento entre el puntero y el sprite
+    // Calculate the offset between the pointer and the sprite
     this.offsetX = worldPosition.x - this.x;
     this.offsetY = worldPosition.y - this.y;
 
-    // Escucha los eventos globales de pointermove y pointerup
+    // Listen to global pointermove and pointerup events
     document.addEventListener("pointermove", this.onPointerMove);
     document.addEventListener("pointerup", this.onPointerUp);
   }
 
   onPointerMove = (event: FederatedPointerEvent): void => {
-    // console.log("Entro al onPointerMove");
+    // console.log("Entered onPointerMove");
     if (this.dragging) {
-      // Obtén la nueva posición del puntero en coordenadas del mundo
+      // Get the new pointer position in world coordinates
       const worldPosition = this.viewgraph
         .getViewport()
         .toWorld(event.clientX, event.clientY);
 
-      // Calcula la nueva posición del sprite usando el desplazamiento calculado
+      // Calculate the new sprite position using the calculated offset
       const newPositionX = worldPosition.x - this.offsetX;
       const newPositionY = worldPosition.y - this.offsetY;
 
-      // Actualiza la posición del sprite
+      // Update the sprite position
       this.x = newPositionX;
       this.y = newPositionY;
 
-      // Notify view graph about it movement
+      // Notify view graph about its movement
       this.viewgraph.deviceMoved(this.id);
     }
   };
 
   onPointerUp = (): void => {
-    // console.log("Entro al onPointerUp");
+    // console.log("Entered onPointerUp");
     this.dragging = false;
-    // Remueve los eventos globales de pointermove y pointerup
+    // Remove global pointermove and pointerup events
     document.removeEventListener("pointermove", this.onPointerMove);
     document.removeEventListener("pointerup", this.onPointerUp);
   };
 
   connectTo(adyacentId: number): boolean {
-    // Connnects both devices with an edge.
-    // console.log("entro en connectTo");
+    // Connects both devices with an edge.
+    // console.log("Entered connectTo");
 
     const edgeId = this.viewgraph.addEdge(this.id, adyacentId);
     if (edgeId) {
@@ -175,18 +175,18 @@ export class Device extends Sprite {
     e.stopPropagation();
 
     if (currentLineStartId === null) {
-      // console.log("El LineStart es Null");
-      currentLineStartId = this.id; // Solo almacenamos el ID del dispositivo
+      // console.log("LineStart is Null");
+      currentLineStartId = this.id; // Only stores the device ID
     } else {
-      // console.log("El LineStart NO es Null");
+      // console.log("LineStart is NOT Null");
 
-      // Si el ID almacenado es el mismo que el de este dispositivo, lo reseteamos
+      // If the stored ID is the same as this device's, reset it
       if (currentLineStartId === this.id) {
         currentLineStartId = null;
         return;
       }
 
-      // El dispositivo "LineStart" termina siendo el final del dibujo pero es lo mismo
+      // The "LineStart" device ends up as the end of the drawing but it's the same
       if (this.connectTo(currentLineStartId)) {
         currentLineStartId = null;
       }
@@ -200,7 +200,7 @@ export class Router extends Device {
     viewgraph: ViewGraph,
     position: { x: number; y: number },
   ) {
-    console.log("Entro a constructor de Router");
+    console.log("Entered Router constructor");
     super(id, RouterImage, viewgraph, position);
   }
 
@@ -210,12 +210,12 @@ export class Router extends Device {
       rightBar.innerHTML = `
         <h3>Router Information</h3>
         <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Dispositivos Conectados:</strong> ${this.connections.size !== 0 ? Array.from(this.connections.values()) : "Ninguno"}</p>
+        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? '[' + Array.from(this.connections.values()).join(', ') + ']' : "None"}</p>
         <p><strong>Type:</strong> Router</p>
-        <button id="delete-device">Eliminar dispositivo</button>
+        <button id="delete-device">Delete device</button>
       `;
 
-      // Añadir el evento al botón de eliminar
+      // Add event to the delete button
       const deleteButton = document.getElementById("delete-device");
       deleteButton?.addEventListener("click", () => this.deleteDevice());
     }
@@ -228,7 +228,7 @@ export class Server extends Device {
     viewgraph: ViewGraph,
     position: { x: number; y: number },
   ) {
-    console.log("Entro a constructor de Server");
+    console.log("Entered Server constructor");
     super(id, ServerImage, viewgraph, position);
   }
 
@@ -238,12 +238,12 @@ export class Server extends Device {
       rightBar.innerHTML = `
         <h3>Server Information</h3>
         <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Dispositivos Conectados:</strong> ${this.connections.size !== 0 ? Array.from(this.connections.values()) : "Ninguno"}</p>
+        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? '[' + Array.from(this.connections.values()).join(', ') + ']' : "None"}</p>
         <p><strong>Type:</strong> Server</p>
-        <button id="delete-device">Eliminar dispositivo</button>
+        <button id="delete-device">Delete device</button>
       `;
 
-      // Añadir el evento al botón de eliminar
+      // Add event to the delete button
       const deleteButton = document.getElementById("delete-device");
       deleteButton?.addEventListener("click", () => this.deleteDevice());
     }
@@ -256,7 +256,7 @@ export class Pc extends Device {
     viewgraph: ViewGraph,
     position: { x: number; y: number },
   ) {
-    console.log("Entro a constructor de Pc");
+    console.log("Entered Pc constructor");
     super(id, PcImage, viewgraph, position);
   }
 
@@ -266,12 +266,12 @@ export class Pc extends Device {
       rightBar.innerHTML = `
         <h3>PC Information</h3>
         <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Dispositivos Conectados:</strong> ${this.connections.size !== 0 ? Array.from(this.connections.values()) : "Ninguno"}</p>
+        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? '[' + Array.from(this.connections.values()).join(', ') + ']' : "None"}</p>
         <p><strong>Type:</strong> PC</p>
-        <button id="delete-device">Eliminar dispositivo</button>
+        <button id="delete-device">Delete device</button>
       `;
 
-      // Añadir el evento al botón de eliminar
+      // Add event to the delete button
       const deleteButton = document.getElementById("delete-device");
       deleteButton?.addEventListener("click", () => this.deleteDevice());
     }

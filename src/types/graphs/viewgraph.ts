@@ -1,5 +1,5 @@
 import { Graphics } from "pixi.js";
-import { Device } from "./../device"; // Importa la clase Device
+import { Device } from "./../device"; // Import the Device class
 import { Edge } from "./../edge";
 import { DataGraph } from "./datagraph";
 import { Viewport } from "../..";
@@ -17,32 +17,31 @@ export class ViewGraph {
     datagraph.constructView(this);
   }
 
-  // Agregar un dispositivo al grafo
+  // Add a device to the graph
   addDevice(device: Device) {
     if (!this.devices.has(device.id)) {
       this.devices.set(device.id, device);
-      console.log(`Dispositivo añadido con ID ${device.id}`);
+      console.log(`Device added with ID ${device.id}`);
     } else {
-      console.warn(`El dispositivo con ID ${device.id} ya existe en el grafo.`);
+      console.warn(`Device with ID ${device.id} already exists in the graph.`);
     }
   }
 
-  // Agregar una conexión entre dos dispositivos
+  // Add a connection between two devices
   addEdge(device1Id: number, device2Id: number): number | null {
     if (device1Id === device2Id) {
       console.warn(
-        `No se puede crear una conexión entre el mismo dispositivo (ID ${device1Id}).`,
+        `Cannot create a connection between the same device (ID ${device1Id}).`,
       );
       return null;
     }
 
     if (!this.devices.has(device1Id)) {
-      console.warn(`El dispositivo con ID ${device1Id} no existe en devices.`);
+      console.warn(`Device with ID ${device1Id} does not exist in devices.`);
     } else if (!this.devices.has(device2Id)) {
-      console.warn(`El dispositivo con ID ${device2Id} no existe en devices.`);
+      console.warn(`Device with ID ${device2Id} does not exist in devices.`);
     } else {
-      // Verificar si ya existe una arista entre estos dos dispositivos
-      // cambiar esto
+      // Check if an edge already exists between these two devices
       for (const edge of this.edges.values()) {
         const { n1, n2 } = edge.connectedNodes;
         if (
@@ -50,7 +49,7 @@ export class ViewGraph {
           (n1 === device2Id && n2 === device1Id)
         ) {
           console.warn(
-            `La conexión entre ID ${device1Id} y ID ${device2Id} ya existe.`,
+            `Connection between ID ${device1Id} and ID ${device2Id} already exists.`,
           );
           return null;
         }
@@ -60,12 +59,12 @@ export class ViewGraph {
       const device2 = this.devices.get(device2Id);
 
       if (device1 && device2) {
-        // Calcula el ángulo entre los dos dispositivos
+        // Calculate the angle between the two devices
         const dx = device2.x - device1.x;
         const dy = device2.y - device1.y;
         const angle = Math.atan2(dy, dx);
 
-        // Ajusta los puntos de inicio y fin para que estén en el borde de los íconos
+        // Adjust start and end points to be on the edge of the icons
         const offsetX1 = (device1.width / 2) * Math.cos(angle);
         const offsetY1 = (device1.height / 2) * Math.sin(angle);
         const offsetX2 = (device2.width / 2) * Math.cos(angle);
@@ -80,7 +79,7 @@ export class ViewGraph {
           y: device2.y - offsetY2,
         };
 
-        // Crear la arista como instancia de Edge
+        // Create the edge as an instance of Edge
         const edge = new Edge(
           this.idCounter++,
           { n1: device1Id, n2: device2Id },
@@ -94,7 +93,7 @@ export class ViewGraph {
         this.viewport.addChild(edge);
 
         console.log(
-          `Conexión creada entre dispositivos ID: ${device1Id} y ID: ${device2Id}`,
+          `Connection created between devices ID: ${device1Id} and ID: ${device2Id}`,
         );
 
         return edge.id;
@@ -115,7 +114,7 @@ export class ViewGraph {
       ) {
         return;
       }
-      // Obtener los dispositivos de inicio y fin directamente
+      // Get start and end devices directly
       const startDevice =
         edge.connectedNodes.n1 === device.id
           ? device
@@ -131,11 +130,11 @@ export class ViewGraph {
         const dy = endDevice.y - startDevice.y;
         const angle = Math.atan2(dy, dx);
 
-        // Ajustar el punto de inicio y fin para que estén en el borde del ícono
+        // Adjust start and end points to be on the edge of the icon
         const offsetX = (startDevice.width / 2) * Math.cos(angle);
         const offsetY = (startDevice.height / 2) * Math.sin(angle);
 
-        // Calcular las nuevas posiciones para el inicio y fin de la arista
+        // Calculate new positions for the start and end of the edge
         const newStartPos = {
           x: startDevice.x + offsetX,
           y: startDevice.y + offsetY,
@@ -145,51 +144,51 @@ export class ViewGraph {
           y: endDevice.y - offsetY,
         };
 
-        // Redibuja la arista
+        // Redraw the edge
         edge.drawEdge(newStartPos, newEndPos);
       }
     });
     this.datagraph.updateDevicePosition(deviceId, { x: device.x, y: device.y });
   }
 
-  // Obtener todas las conexiones de un disevicestartDeviceitivo
+  // Get all connections of a device
   getConnections(id: number): Edge[] {
     const device = this.devices.get(id);
     return device ? Array.from(this.edges.values()) : [];
   }
 
-  // Obtener un dispositivo específico por su ID
+  // Get a specific device by its ID
   getDevice(id: number): Device | undefined {
     return this.devices.get(id);
   }
 
-  // Obtener todos los dispositivos en el grafo
+  // Get all devices in the graph
   getDevices(): Device[] {
     return Array.from(this.devices.values());
   }
 
-  // Obtener la cantidad de dispositivos en el grafo
+  // Get the number of devices in the graph
   getDeviceCount(): number {
     return this.devices.size;
   }
 
-  // Limpiar el grafo
+  // Clear the graph
   clear() {
     this.devices.forEach((device) => {
       device.deleteDevice();
     });
-    // ya no deberian quedar aristas por borrar
+    // no edges should remain to delete
     this.devices.clear();
     this.edges.clear();
     this.idCounter = 1;
   }
 
-  // Método para eliminar un dispositivo y sus conexiones (edges)
+  // Method to remove a device and its connections (edges)
   removeDevice(id: number) {
     const device = this.devices.get(id);
 
     if (!device) {
-      console.warn(`El dispositivo con ID ${id} no existe en el grafo.`);
+      console.warn(`Device with ID ${id} does not exist in the graph.`);
       return;
     }
 
@@ -204,31 +203,31 @@ export class ViewGraph {
       }
     });
 
-    // Remover el dispositivo del viewport y lo destruimos
+    // Remove the device from the viewport and destroy it
     this.viewport.removeChild(device);
     device.destroy({ children: true });
 
-    // Finalmente, eliminar el dispositivo del grafo
+    // Finally, remove the device from the graph
     this.datagraph.removeDevice(id);
     this.devices.delete(id);
     console.log(
-      `Dispositivo con ID ${id} y todas sus conexiones fueron eliminados.`,
+      `Device with ID ${id} and all its connections were removed.`,
     );
   }
 
-  // Método para eliminar una arista específica por su ID
+  // Method to remove a specific edge by its ID
   removeEdge(edgeId: number) {
     const edge = this.edges.get(edgeId);
 
     if (!edge) {
-      console.warn(`La arista con ID ${edgeId} no existe en el grafo.`);
+      console.warn(`Edge with ID ${edgeId} does not exist in the graph.`);
       return;
     }
 
-    // Obtener los IDs de los dispositivos conectados por esta arista
+    // Get the IDs of the devices connected by this edge
     const { n1, n2 } = edge.connectedNodes;
 
-    // Eliminar la conexión de los dispositivos conectados
+    // Remove the connection from the connected devices
     const device1 = this.devices.get(n1);
     const device2 = this.devices.get(n2);
 
@@ -240,16 +239,16 @@ export class ViewGraph {
       device2.connections.delete(edgeId);
     }
 
-    // Remover la arista del viewport y la destruimos
+    // Remove the edge from the viewport and destroy it
     this.viewport.removeChild(edge);
     edge.destroy();
 
-    // Eliminar la arista del mapa de edges y del datagraph
+    // Remove the edge from the edges map and from datagraph
     this.datagraph.removeConnection(n1, n2);
     this.edges.delete(edgeId);
 
     console.log(
-      `Arista con ID ${edgeId} eliminada entre dispositivos ${n1} y ${n2}.`,
+      `Edge with ID ${edgeId} removed between devices ${n1} and ${n2}.`,
     );
   }
 
@@ -257,11 +256,11 @@ export class ViewGraph {
     return this.viewport;
   }
 
-  // Método para imprimir toda la data del grafo en consola
+  // Method to log all graph data to the console
   logGraphData() {
     console.log("===== ViewGraph Data =====");
 
-    // Imprimir información de los dispositivos
+    // Log device information
     console.log("Devices:");
     this.devices.forEach((device, id) => {
       console.log(`- ID: ${id}`);
@@ -272,7 +271,7 @@ export class ViewGraph {
       );
     });
 
-    // Imprimir información de las conexiones
+    // Log connection information
     console.log("Edges:");
     this.edges.forEach((edge, id) => {
       console.log(`- Edge ID: ${id}`);
