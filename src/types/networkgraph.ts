@@ -72,7 +72,7 @@ export class NetworkGraph {
         };
 
         // Dibuja la línea
-        const edge = new Graphics() as Edge;
+        const edge = new Edge();
         edge.moveTo(startPos.x, startPos.y);
         edge.lineTo(endPos.x, endPos.y);
         edge.stroke({ width: 2, color: 0x3e3e3e });
@@ -93,6 +93,7 @@ export class NetworkGraph {
     return null;
   }
 
+  /// Returns the IDs of the edges connecting the two devices
   getPathBetween(idA: number, idB: number): number[] {
     if (idA === idB) {
       return [];
@@ -106,7 +107,7 @@ export class NetworkGraph {
     const unvisitedNodes = [];
     const connectingEdges = new Map<number, number>([[a.id, null]]);
     while (current.id !== idB) {
-      for (const [, edge] of a.connections) {
+      for (const [, edge] of current.connections) {
         const newId = edge.otherEnd(current.id);
         if (!connectingEdges.has(newId)) {
           connectingEdges.set(newId, edge.id);
@@ -151,18 +152,8 @@ export class NetworkGraph {
   }
 
   // Obtener una arista específica por los IDs de sus nodos
-  getEdge(startId: number, endId: number): Edge | undefined {
-    for (const edge of this.edges.values()) {
-      const { n1, n2 } = edge.connectedNodes;
-      if (
-        (n1 === startId && n2 === endId) ||
-        (n1 === endId && n2 === startId)
-      ) {
-        console.log(`Arista encontrada entre ID ${startId} y ID ${endId}`);
-        return edge;
-      }
-    }
-    return undefined; // Si no se encuentra la arista
+  getEdge(edgeId: number): Edge | undefined {
+    return this.edges.get(edgeId);
   }
 
   // Método para actualizar las posiciones de las aristas

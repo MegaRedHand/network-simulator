@@ -73,23 +73,20 @@ export class Device {
     const color = packetColors[packetType] || 0xffffff; // Color por defecto blanco
     const speed = 200; // Velocidad en píxeles por segundo
 
-    const destinationDevice = this.fatherGraph.getDevice(destinationId);
-    if (destinationDevice) {
-      const edge = this.fatherGraph.getEdge(this.id, destinationId);
-      if (edge) {
-        const packet = new Packet(color, speed);
-        this.stage.addChild(packet.sprite); // Añadir el paquete al escenario
-        packet.animateAlongEdge(edge, destinationDevice.id); // Animar el paquete a lo largo de la arista
-      } else {
-        console.warn(
-          `No se encontró una arista entre ${this.id} y ${destinationId}.`,
-        );
-      }
-    } else {
+    const pathEdgeIds = this.fatherGraph.getPathBetween(this.id, destinationId);
+
+    if (pathEdgeIds.length === 0) {
       console.warn(
-        `Dispositivo de destino con ID ${destinationId} no encontrado.`,
+        `No se encontró un camino entre ${this.id} y ${destinationId}.`,
       );
+      return;
     }
+
+    const pathEdges = pathEdgeIds.map((id) => this.fatherGraph.getEdge(id));
+
+    const packet = new Packet(color, speed);
+    this.stage.addChild(packet);
+    packet.animateAlongPath(pathEdges, this.id);
   }
 
   // Método general para mostrar la información del dispositivo
@@ -115,13 +112,10 @@ export class Device {
 
   // Método para manejar la información específica de envío de paquetes
   showPacketInfo() {
-    const adjacentDevices = Array.from(this.connections.values()).map((edge) =>
-      edge.connectedNodes.n1 === this.id
-        ? edge.connectedNodes.n2
-        : edge.connectedNodes.n1,
-    );
+    const adjacentDevices = Array.from(this.fatherGraph.getDevices().keys());
 
     const destinationOptions = adjacentDevices
+      .filter((id) => id !== this.id)
       .map((id) => `<option value="${id}">${id}</option>`)
       .join("");
 
@@ -130,8 +124,8 @@ export class Device {
 
     const htmlContent = `
       <h3>Send Packet</h3>
-      <label for="packetType">Select Packet Type:</label>
-      <select id="packetType">
+      <label for="packet-type">Select Packet Type:</label>
+      <select id="packet-type">
         <option value="IP">IP</option>
         <option value="ICMP">ICMP</option>
       </select>
@@ -148,7 +142,7 @@ export class Device {
       if (button) {
         button.addEventListener("click", () => {
           const packetType = (
-            document.getElementById("packetType") as HTMLSelectElement
+            document.getElementById("packet-type") as HTMLSelectElement
           ).value;
           const destinationId = parseInt(
             (document.getElementById("destination") as HTMLSelectElement).value,
