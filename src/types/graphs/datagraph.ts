@@ -1,6 +1,3 @@
-import { Device, Pc, Router, Server } from "../device";
-import { ViewGraph } from "./viewgraph";
-
 export interface GraphNode {
   x: number;
   y: number;

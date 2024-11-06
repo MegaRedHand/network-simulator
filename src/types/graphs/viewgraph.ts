@@ -4,8 +4,8 @@ import { DataGraph } from "./datagraph";
 import { Viewport } from "../..";
 
 export class ViewGraph {
-  private devices = new Map<number, Device>();
-  private edges = new Map<number, Edge>();
+  private devices: Map<number, Device> = new Map<number, Device>();
+  private edges: Map<number, Edge> = new Map<number, Edge>();
   private idCounter = 1;
   private datagraph: DataGraph;
   viewport: Viewport;
