@@ -9,7 +9,7 @@ import ComputerSvg from "./assets/pc.svg";
 import { Application, Graphics, EventSystem, Assets } from "pixi.js";
 
 import * as pixi_viewport from "pixi-viewport";
-import { NetworkGraph } from "./types/networkgraph";
+import { ViewGraph } from "./types/graphs/viewgraph";
 import {
   AddPc,
   AddRouter,
@@ -17,6 +17,7 @@ import {
   loadGraph,
   saveGraph,
 } from "./types/viewportManager";
+import { DataGraph } from "./types/graphs/datagraph";
 
 const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;
@@ -25,18 +26,25 @@ const WORLD_HEIGHT = 10000;
 
 export class GlobalContext {
   private viewport: Viewport = null;
-  private network: NetworkGraph = new NetworkGraph();
+  private datagraph: DataGraph;
+  private viewgraph: ViewGraph;
 
   initialize(viewport: Viewport) {
     this.viewport = viewport;
+    this.datagraph = new DataGraph();
+    this.viewgraph = new ViewGraph(this.datagraph, this.viewport);
   }
 
   getViewport() {
     return this.viewport;
   }
 
-  getNetwork() {
-    return this.network;
+  getViewGraph() {
+    return this.viewgraph;
+  }
+
+  getDataGraph() {
+    return this.datagraph;
   }
 }
 
@@ -141,7 +149,6 @@ class RightBar {
 
 // IIFE to avoid errors
 (async () => {
-  // Obtener el ancho y alto de las barras laterales y superior
   const lBar = document.getElementById("left-bar");
   const rBar = document.getElementById("right-bar");
   const tBar = document.getElementById("top-bar");
@@ -152,7 +159,7 @@ class RightBar {
     width: window.innerWidth,
     height: window.innerHeight,
     resolution: window.devicePixelRatio || 1,
-    autoDensity: true, // Ajusta la densidad para pantallas de alta resolución
+    autoDensity: true,
   });
 
   const canvasPlaceholder = document.getElementById("canvas");
@@ -173,17 +180,17 @@ class RightBar {
 
   // Add router button
   leftBar.addButton(RouterSvg, () => {
-    AddRouter(ctx); // Esta es una función anónima que ejecuta AddRouter cuando se hace clic
+    AddRouter(ctx);
   });
 
   // Add server button
   leftBar.addButton(ServerSvg, () => {
-    AddServer(ctx); // Función anónima que ejecuta AddServer cuando se hace clic
+    AddServer(ctx);
   });
 
   // // Add PC button
   leftBar.addButton(ComputerSvg, () => {
-    AddPc(ctx); // Función anónima que ejecuta AddPc cuando se hace clic
+    AddPc(ctx);
   });
 
   // Get right bar
@@ -197,16 +204,13 @@ class RightBar {
 
   // Resize logic
   function resize() {
-    // Obtener los tamaños actuales de las barras desde el DOM
-    const leftBarWidth = lBar ? lBar.offsetWidth : 100; // Ancho actual de la barra izquierda
-    const rightBarWidth = rBar ? rBar.offsetWidth : 250; // Ancho actual de la barra derecha
-    const topBarHeight = tBar ? tBar.offsetHeight : 40; // Altura actual de la barra superior
+    const leftBarWidth = lBar ? lBar.offsetWidth : 100;
+    const rightBarWidth = rBar ? rBar.offsetWidth : 250;
+    const topBarHeight = tBar ? tBar.offsetHeight : 40;
 
-    // Calcular el nuevo tamaño del canvas
     const newWidth = window.innerWidth - leftBarWidth - rightBarWidth;
     const newHeight = window.innerHeight - topBarHeight;
 
-    // Redimensionar el renderer y el viewport de Pixi.js
     app.renderer.resize(newWidth, newHeight);
     viewport.resize(newWidth, newHeight);
   }
@@ -215,16 +219,13 @@ class RightBar {
 
   window.addEventListener("resize", resize);
 
-  // Gestión de los botones de carga y guardado
   const loadButton = document.getElementById("load-button");
   const saveButton = document.getElementById("save-button");
 
-  // Función para manejar el botón de guardar
   saveButton.onclick = () => {
-    saveGraph(ctx); // Llama a la función saveGraph pasando el contexto actual
+    saveGraph(ctx);
   };
 
-  // Función para manejar el botón de cargar
   loadButton.onclick = () => {
     const input = document.createElement("input");
     input.type = "file";
@@ -237,11 +238,11 @@ class RightBar {
 
       reader.onload = (readerEvent) => {
         const jsonData = readerEvent.target.result as string;
-        loadGraph(jsonData, ctx); // Llama a la función loadGraph pasando el JSON y el contexto
+        loadGraph(jsonData, ctx);
       };
     };
 
-    input.click(); // Simula el click para abrir el cuadro de diálogo de selección de archivo
+    input.click();
   };
 
   console.log("initialized!");
