@@ -1,4 +1,3 @@
-import { Viewport } from "../..";
 import { Device, Pc, Router, Server } from "../device";
 import { ViewGraph } from "./viewgraph";
 

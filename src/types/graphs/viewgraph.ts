@@ -1,4 +1,3 @@
-import { Graphics } from "pixi.js";
 import { Device } from "./../device"; // Import the Device class
 import { Edge } from "./../edge";
 import { DataGraph } from "./datagraph";
