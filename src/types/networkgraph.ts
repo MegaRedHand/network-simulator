@@ -127,7 +127,7 @@ export class NetworkGraph {
       const parentId = edge.otherEnd(current.id);
       current = this.devices.get(parentId);
     }
-    return path;
+    return path.reverse();
   }
 
   // Obtener todas las conexiones de un dispositivo

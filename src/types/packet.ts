@@ -4,6 +4,9 @@ import { Edge, Position } from "./edge";
 export class Packet extends Graphics {
   speed: number;
   progress = 0;
+  currentPath: Edge[];
+  currentEdge: Edge;
+  currentStart: number;
 
   constructor(color: number, speed: number) {
     super();
@@ -14,53 +17,46 @@ export class Packet extends Graphics {
   }
 
   animateAlongPath(path: Edge[], start: number): void {
-    const ticker = Ticker.shared;
-    let currentEdge = path[0];
-    // let startPos = currentEdge.nodePosition(start);
-    // this.position.set(startPos.x, startPos.y);
-    // ticker.add(() => {});
-    this.animateAlongEdge(currentEdge, currentEdge.otherEnd(start));
+    if (path.length === 0) {
+      console.error(
+        "No se puede animar un paquete a lo largo de un camino vacío",
+      );
+      return;
+    }
+    console.log(path);
+    this.currentPath = path;
+    this.currentEdge = this.currentPath.shift();
+    this.currentStart = start;
+    Ticker.shared.add(this.updateProgress, this);
   }
 
-  animateAlongEdge(edge: Edge, destinationId: number): void {
-    // Establecer la posición inicial del paquete al inicio de la arista
-    if (destinationId === edge.connectedNodes.n2) {
-      this.position.set(edge.startPos.x, edge.startPos.y);
-    } else {
-      this.position.set(edge.endPos.x, edge.endPos.y);
+  updateProgress(ticker: Ticker) {
+    if (this.progress >= 1) {
+      this.progress = 0;
+      if (this.currentPath.length == 0) {
+        ticker.remove(this.updateProgress, this);
+        this.removeFromParent();
+        return;
+      }
+      this.currentStart = this.currentEdge.otherEnd(this.currentStart);
+      this.currentEdge = this.currentPath.shift();
     }
+    this.progress += (ticker.deltaMS * this.speed) / 100000;
 
-    // Configurar un ticker para la animación
-    const ticker = new Ticker();
-    ticker.add(() => {
-      let start;
-      let end;
+    const current = this.currentEdge;
+    const start = this.currentStart;
 
-      // Obtener posiciones de inicio y fin de la arista
-      if (destinationId === edge.connectedNodes.n2) {
-        start = edge.startPos;
-        end = edge.endPos;
-      } else {
-        start = edge.endPos;
-        end = edge.startPos;
-      }
+    console.log("current: ", current);
+    console.log("start: ", start);
 
-      this.progress += (ticker.deltaMS * this.speed) / 100000;
-
-      this.setPositionAlongEdge(start, end, this.progress);
-
-      if (this.progress >= 1) {
-        this.position.set(end.x, end.y); // Ajustar a la posición final
-        this.visible = false; // Ocultar el sprite al llegar al destino
-        ticker.stop(); // Detener el ticker una vez que el paquete llega
-        ticker.destroy(); // Limpiar el ticker
-      }
-    });
-    ticker.start();
+    let startPos = current.nodePosition(start);
+    console.log("startPos: ", startPos);
+    let endPos = current.nodePosition(current.otherEnd(start));
+    console.log("endPos: ", endPos);
+    this.setPositionAlongEdge(startPos, endPos, this.progress);
   }
 
   /// Updates the position according to the current progress.
-  /// Returns `true` if the packet has reached the destination or `false` otherwise.
   setPositionAlongEdge(start: Position, end: Position, progress: number) {
     const dx = end.x - start.x;
     const dy = end.y - start.y;
