@@ -1,6 +1,6 @@
 import { Graphics } from "pixi.js";
 
-type Position = { x: number; y: number };
+export type Position = { x: number; y: number };
 
 export class Edge extends Graphics {
   id: number;

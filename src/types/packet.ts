@@ -1,8 +1,9 @@
 import { Graphics, Ticker } from "pixi.js";
-import { Edge } from "./edge";
+import { Edge, Position } from "./edge";
 
 export class Packet extends Graphics {
   speed: number;
+  progress = 0;
 
   constructor(color: number, speed: number) {
     super();
@@ -44,27 +45,11 @@ export class Packet extends Graphics {
         end = edge.startPos;
       }
 
-      // Calcular la distancia y dirección
-      const dx = end.x - start.x;
-      const dy = end.y - start.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
+      this.progress += (ticker.deltaMS * this.speed) / 100000;
 
-      // Normalizar la dirección
-      const directionX = dx / distance;
-      const directionY = dy / distance;
+      this.setPositionAlongEdge(start, end, this.progress);
 
-      // Actualizar la posición del paquete basada en la velocidad
-      const delta = ticker.deltaMS / 1000;
-
-      // Mover el paquete
-      this.x += directionX * this.speed * delta;
-      this.y += directionY * this.speed * delta;
-
-      // Comprobar si el paquete ha llegado al punto final
-      if (
-        Math.abs(this.x - end.x) < Math.abs(directionX * this.speed * delta) &&
-        Math.abs(this.y - end.y) < Math.abs(directionY * this.speed * delta)
-      ) {
+      if (this.progress >= 1) {
         this.position.set(end.x, end.y); // Ajustar a la posición final
         this.visible = false; // Ocultar el sprite al llegar al destino
         ticker.stop(); // Detener el ticker una vez que el paquete llega
@@ -72,5 +57,16 @@ export class Packet extends Graphics {
       }
     });
     ticker.start();
+  }
+
+  /// Updates the position according to the current progress.
+  /// Returns `true` if the packet has reached the destination or `false` otherwise.
+  setPositionAlongEdge(start: Position, end: Position, progress: number) {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+
+    // Mover el paquete
+    this.x = start.x + progress * dx;
+    this.y = start.y + progress * dy;
   }
 }
