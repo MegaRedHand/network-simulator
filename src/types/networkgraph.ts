@@ -1,4 +1,3 @@
-import { Graphics } from "pixi.js";
 import { Device } from "./device"; // Importa la clase Device
 import { Edge } from "./edge";
 

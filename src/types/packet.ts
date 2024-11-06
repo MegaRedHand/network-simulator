@@ -49,9 +49,9 @@ export class Packet extends Graphics {
     console.log("current: ", current);
     console.log("start: ", start);
 
-    let startPos = current.nodePosition(start);
+    const startPos = current.nodePosition(start);
     console.log("startPos: ", startPos);
-    let endPos = current.nodePosition(current.otherEnd(start));
+    const endPos = current.nodePosition(current.otherEnd(start));
     console.log("endPos: ", endPos);
     this.setPositionAlongEdge(startPos, endPos, this.progress);
   }
