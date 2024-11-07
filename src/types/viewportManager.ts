@@ -1,6 +1,32 @@
 import { GlobalContext } from "./../index";
 import { DataGraph, GraphNode } from "./graphs/datagraph";
 import { Device, Pc, Router, Server } from "./device";
+import { Edge } from "./edge";
+
+let selectedElement: Device | Edge | null = null; // Variable global para almacenar el elemento seleccionado
+
+// Función para manejar la selección
+export function selectElement(element: Device | Edge) {
+  deselectElement();
+  selectedElement = element;
+  element.select(); // select()
+}
+
+// Función para deseleccionar
+export function deselectElement() {
+  if (selectedElement) {
+    // if (selectedElement instanceof Device) {
+    //   // currentLineStartId = null;
+    // }
+
+    selectedElement.deselect();
+    selectedElement = null;
+    const rightBar = document.getElementById("info-content");
+    if (rightBar) {
+      rightBar.innerHTML = ""; // Borra la información de la barra derecha
+    }
+  }
+}
 
 // Function to add a router at the center of the viewport
 export function AddRouter(ctx: GlobalContext) {

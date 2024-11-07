@@ -4,6 +4,7 @@ import RouterImage from "../assets/router.svg";
 import ServerImage from "../assets/server.svg";
 import PcImage from "../assets/pc.svg";
 import { ViewGraph } from "./graphs/viewgraph";
+import { selectElement } from "./viewportManager";
 
 export const DEVICE_SIZE = 20;
 let currentLineStartId: number | null = null; // Stores only the ID instead of 'this'
@@ -154,19 +155,10 @@ export class Device extends Sprite {
   }
 
   onClick(e: FederatedPointerEvent) {
-    if (!e.altKey) {
-      this.showInfo();
-      e.stopPropagation();
-      return;
-    }
-
-    // console.log("clicked on device", e);
+    selectElement(this);
     e.stopPropagation();
 
-    if (currentLineStartId === null) {
-      // console.log("LineStart is Null");
-      currentLineStartId = this.id; // Only stores the device ID
-    } else {
+    if (currentLineStartId) {
       // console.log("LineStart is NOT Null");
 
       // If the stored ID is the same as this device's, reset it
@@ -180,6 +172,16 @@ export class Device extends Sprite {
         currentLineStartId = null;
       }
     }
+  }
+
+  select() {
+    this.showInfo();
+  }
+
+  deselect() {
+    // TODO
+
+    console.log("deseleccione");
   }
 }
 
@@ -201,8 +203,16 @@ export class Router extends Device {
         <p><strong>ID:</strong> ${this.id}</p>
         <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
         <p><strong>Type:</strong> Router</p>
+        <button id="connect-device">Connect device</button>
         <button id="delete-device">Delete device</button>
       `;
+
+      // Add event to the connect button
+      const connectButton = document.getElementById("connect-device");
+      connectButton?.addEventListener(
+        "click",
+        () => (currentLineStartId = this.id),
+      ); //this.connectDevice());
 
       // Add event to the delete button
       const deleteButton = document.getElementById("delete-device");
@@ -229,8 +239,16 @@ export class Server extends Device {
         <p><strong>ID:</strong> ${this.id}</p>
         <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
         <p><strong>Type:</strong> Server</p>
+        <button id="connect-device">Connect device</button>
         <button id="delete-device">Delete device</button>
       `;
+
+      // Add event to the connect button
+      const connectButton = document.getElementById("connect-device");
+      connectButton?.addEventListener(
+        "click",
+        () => (currentLineStartId = this.id),
+      );
 
       // Add event to the delete button
       const deleteButton = document.getElementById("delete-device");
@@ -257,8 +275,16 @@ export class Pc extends Device {
         <p><strong>ID:</strong> ${this.id}</p>
         <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
         <p><strong>Type:</strong> PC</p>
+        <button id="connect-device">Connect device</button>
         <button id="delete-device">Delete device</button>
       `;
+
+      // Add event to the connect button
+      const connectButton = document.getElementById("connect-device");
+      connectButton?.addEventListener(
+        "click",
+        () => (currentLineStartId = this.id),
+      );
 
       // Add event to the delete button
       const deleteButton = document.getElementById("delete-device");

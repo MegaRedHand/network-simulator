@@ -1,6 +1,7 @@
 import { Graphics } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
 import { Device } from "./device";
+import { selectElement } from "./viewportManager";
 
 export class Edge extends Graphics {
   id: number;
@@ -46,7 +47,7 @@ export class Edge extends Graphics {
     this.drawEdge(this.startPos, this.endPos);
     this.eventMode = "static";
     this.interactive = true;
-    this.on("click", this.showInfo);
+    this.on("click", () => selectElement(this));
   }
 
   // Method to draw the line
@@ -60,6 +61,15 @@ export class Edge extends Graphics {
     this.stroke({ width: 3, color: 0xff0000 });
     this.startPos = startPos;
     this.endPos = endPos;
+  }
+
+  select() {
+    this.showInfo();
+  }
+
+  deselect() {
+    // TODO
+    console.log("deseleccione");
   }
 
   // Method to display the edge information and the delete button

@@ -14,6 +14,7 @@ import {
   AddPc,
   AddRouter,
   AddServer,
+  deselectElement,
   loadGraph,
   saveGraph,
 } from "./types/viewportManager";
@@ -77,6 +78,13 @@ export class Viewport extends pixi_viewport.Viewport {
     this.initializeMovement();
 
     this.addChild(new Background());
+
+    this.on("click", (event) => {
+      // If the click target is the viewport itself, deselect any selected element
+      if (event.target === this) {
+        deselectElement();
+      }
+    });
   }
 
   private initializeMovement() {
