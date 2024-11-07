@@ -7,7 +7,12 @@ import { ViewGraph } from "./graphs/viewgraph";
 import { selectElement } from "./viewportManager";
 
 export const DEVICE_SIZE = 20;
+
 let currentLineStartId: number | null = null; // Stores only the ID instead of 'this'
+
+export function setCurrentLineStartId(value: number | null) {
+  currentLineStartId = value;
+}
 
 export class Device extends Sprite {
   id: number;

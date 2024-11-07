@@ -1,30 +1,40 @@
 import { GlobalContext } from "./../index";
 import { DataGraph, GraphNode } from "./graphs/datagraph";
-import { Device, Pc, Router, Server } from "./device";
+import { setCurrentLineStartId, Device, Pc, Router, Server } from "./device";
 import { Edge } from "./edge";
+import { Viewport } from "pixi-viewport";
 
 let selectedElement: Device | Edge | null = null; // Variable global para almacenar el elemento seleccionado
 
 // Función para manejar la selección
-export function selectElement(element: Device | Edge) {
+export function selectElement(element: Device | Edge | null) {
+
+
+  console.log("selectedElement:", selectedElement);
+  console.log("element:", element);
+
+
+  if (selectedElement instanceof Device && !(element instanceof Device)) {
+    setCurrentLineStartId(null); // Establece currentLineStartId en null
+  }
+
   deselectElement();
-  selectedElement = element;
-  element.select(); // select()
+
+  if (element) {
+    selectedElement = element;
+    element.select(); // select()
+  }
 }
 
 // Función para deseleccionar
 export function deselectElement() {
   if (selectedElement) {
-    // if (selectedElement instanceof Device) {
-    //   // currentLineStartId = null;
-    // }
-
     selectedElement.deselect();
     selectedElement = null;
-    const rightBar = document.getElementById("info-content");
-    if (rightBar) {
-      rightBar.innerHTML = ""; // Borra la información de la barra derecha
-    }
+  }
+  const rightBar = document.getElementById("info-content");
+  if (rightBar) {
+    rightBar.innerHTML = ""; // Borra la información de la barra derecha
   }
 }
 

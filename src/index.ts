@@ -17,6 +17,7 @@ import {
   deselectElement,
   loadGraph,
   saveGraph,
+  selectElement,
 } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
 
@@ -82,7 +83,7 @@ export class Viewport extends pixi_viewport.Viewport {
     this.on("click", (event) => {
       // If the click target is the viewport itself, deselect any selected element
       if (event.target === this) {
-        deselectElement();
+        selectElement(null);
       }
     });
   }
