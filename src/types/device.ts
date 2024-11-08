@@ -3,7 +3,7 @@ import RouterImage from "../assets/router.svg";
 import ServerImage from "../assets/server.svg";
 import PcImage from "../assets/pc.svg";
 import { ViewGraph } from "./graphs/viewgraph";
-import { selectElement } from "./viewportManager";
+import { deselectElement, selectElement } from "./viewportManager";
 import { RightBar } from "../index"
 
 export const DEVICE_SIZE = 20;
@@ -87,6 +87,7 @@ export class Device extends Sprite {
     // Clear connections
     this.connections.clear();
     this.viewgraph.logGraphData();
+    deselectElement();
   }
 
   onPointerDown(event: FederatedPointerEvent): void {
@@ -161,16 +162,27 @@ export class Device extends Sprite {
 
       // If the stored ID is the same as this device's, reset it
       if (selectedDeviceId === this.id) {
-        selectedDeviceId = null;
+        // selectedDeviceId = null;
         return;
       }
 
       // The "LineStart" device ends up as the end of the drawing but it's the same
       if (this.connectTo(selectedDeviceId)) {
+        let device = this.viewgraph.getDevice(selectedDeviceId);
+        selectElement(device);
         selectedDeviceId = null;
       }
+    } else {
+      selectElement(this);
     }
-    selectElement(this);
+  }
+
+  selectToConnect(id: number) {
+    if (selectedDeviceId === id) {
+      setSelectedDeviceId(null);
+    } else {
+      setSelectedDeviceId(id);
+    }
   }
 
   showInfo() {
@@ -210,7 +222,7 @@ export class Router extends Device {
     ]);
 
     // Agrega los botones comunes y específicos del Router
-    this.rightbar.addButton("Connect device", () => setSelectedDeviceId(this.id), "right-bar-button", true);
+    this.rightbar.addButton("Connect device", () => this.selectToConnect(this.id), "right-bar-button", true);
     this.rightbar.addButton("Delete device", () => this.deleteDevice());
     this.rightbar.addButton("Reboot Router", () => this.rebootRouter());
   }
@@ -242,8 +254,7 @@ export class Server extends Device {
       { label: "Last Backup", value: "2024-11-01 02:30 AM" }
     ]);
 
-    // Agrega los botones comunes y específicos del Server
-    this.rightbar.addButton("Connect device", () => setSelectedDeviceId(this.id), "right-bar-button", true);
+    this.rightbar.addButton("Connect device", () => this.selectToConnect(this.id), "right-bar-button", true);
     this.rightbar.addButton("Delete device", () => this.deleteDevice());
     this.rightbar.addButton("Shutdown Server", () => this.shutdownServer());
     this.rightbar.addButton("Start Server", () => this.startServer());
@@ -283,7 +294,7 @@ export class Pc extends Device {
     ]);
 
     // Agrega los botones comunes y específicos del PC
-    this.rightbar.addButton("Connect device", () => setSelectedDeviceId(this.id), "right-bar-button", true);
+    this.rightbar.addButton("Connect device", () => this.selectToConnect(this.id), "right-bar-button", true);
     this.rightbar.addButton("Delete device", () => this.deleteDevice());
     this.rightbar.addButton("Run Virus Scan", () => this.runVirusScan());
   }
