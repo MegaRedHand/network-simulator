@@ -5,7 +5,7 @@ import { deselectElement, selectElement } from "./viewportManager";
 import { RightBar } from "..";
 
 export enum Colors {
-  Violet = 0x5200c1, // Violeta
+  Violet = 0x4b0082, // Violeta
   Burgundy = 0x6d071a, // Bordo
 }
 

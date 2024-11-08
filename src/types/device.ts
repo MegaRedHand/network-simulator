@@ -186,10 +186,7 @@ export class Device extends Sprite {
   highlight() {
     if (!this.highlightMarker) {
       // Create the square as a selection marker
-      this.highlightMarker = new Graphics().setStrokeStyle({
-        width: 3,
-        color: 0x4b0082,
-      });
+      this.highlightMarker = new Graphics();
 
       // Increase the square size
       const size = this.width; // Side length of the square, now larger
