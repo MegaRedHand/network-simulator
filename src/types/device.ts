@@ -1,4 +1,4 @@
-import { Texture, Sprite, FederatedPointerEvent } from "pixi.js";
+import { Texture, Sprite, FederatedPointerEvent, Graphics } from "pixi.js";
 import RouterImage from "../assets/router.svg";
 import ServerImage from "../assets/server.svg";
 import PcImage from "../assets/pc.svg";
@@ -22,6 +22,7 @@ export class Device extends Sprite {
   offsetX = 0;
   offsetY = 0;
   rightbar: RightBar;
+  highlightMarker: Graphics | null = null; // Marker para indicar selección
 
   constructor(
     id: number,
@@ -37,8 +38,7 @@ export class Device extends Sprite {
     this.id = id;
     this.viewgraph = viewgraph;
 
-    this.anchor.x = 0.5;
-    this.anchor.y = 0.5;
+    this.anchor.set(0.5);
 
     this.cursor = "pointer";
 
@@ -182,15 +182,52 @@ export class Device extends Sprite {
     }
   }
 
+  highlight() {
+    if (!this.highlightMarker) {
+      // Crear el cuadrado como marcador de selección
+      this.highlightMarker = new Graphics();
+  
+      // Aumentar el tamaño del cuadrado
+      const size = this.width + 10; // Tamaño del lado del cuadrado, ahora más grande
+  
+      // Dibujar un cuadrado usando moveTo y lineTo
+      this.highlightMarker.moveTo(-size / 2, -size / 2); // Mover a la esquina superior izquierda del cuadrado centrado
+      this.highlightMarker.lineTo(size / 2, -size / 2); // Línea superior
+      this.highlightMarker.lineTo(size / 2, size / 2); // Línea derecha
+      this.highlightMarker.lineTo(-size / 2, size / 2); // Línea inferior
+      this.highlightMarker.lineTo(-size / 2, -size / 2); // Línea izquierda, cierra el cuadrado
+
+  
+      // Cambiar el color a rojo y aumentar el grosor de la línea
+      this.highlightMarker.stroke({ width: 3, color: 0x4B0082 }); // Rojo y más grueso
+  
+      // Asegurarse de que el marcador esté en el mismo contenedor que el viewport
+      this.addChild(this.highlightMarker);
+    }
+  }
+  
+  removeHighlight() {
+    if (this.highlightMarker) {
+      this.highlightMarker.clear(); // Limpia el gráfico
+      this.removeChild(this.highlightMarker); // Elimina el marcador del viewport
+      this.highlightMarker.destroy(); // Destruye el objeto gráfico para liberar memoria
+      this.highlightMarker = null;
+    }
+  }
+  
+  
+
   showInfo() {
     throw new Error("Method not implemented.");
   }
 
   select() {
+    this.highlight(); // Llama a highlight al seleccionar
     this.showInfo();
   }
 
   deselect() {
+    this.removeHighlight(); // Llama a removeHighlight al deseleccionar
     setSelectedDeviceId(null);
   }
 

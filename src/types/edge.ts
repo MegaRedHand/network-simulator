@@ -31,10 +31,10 @@ export class Edge extends Graphics {
     const dy = device2.y - device1.y;
     const angle = Math.atan2(dy, dx);
 
-    const offsetX1 = (device1.width / 2) * Math.cos(angle);
-    const offsetY1 = (device1.height / 2) * Math.sin(angle);
-    const offsetX2 = (device2.width / 2) * Math.cos(angle);
-    const offsetY2 = (device2.height / 2) * Math.sin(angle);
+    const offsetX1 = ((device1.width + 5) / 2) * Math.cos(angle);
+    const offsetY1 = ((device1.height + 5) / 2) * Math.sin(angle);
+    const offsetX2 = ((device2.width + 5) / 2) * Math.cos(angle);
+    const offsetY2 = ((device2.height + 5)/ 2) * Math.sin(angle);
 
     // Define start and end positions based on offsets
     this.startPos = {
@@ -62,7 +62,7 @@ export class Edge extends Graphics {
     this.clear();
     this.moveTo(startPos.x, startPos.y);
     this.lineTo(endPos.x, endPos.y);
-    this.stroke({ width: 3, color: 0x8FD19E });
+    this.stroke({ width: 3, color: 0x6D071A });
     this.startPos = startPos;
     this.endPos = endPos;
   }
