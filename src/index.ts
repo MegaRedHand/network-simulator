@@ -16,6 +16,7 @@ import {
   AddServer,
   loadGraph,
   saveGraph,
+  selectElement,
 } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
 
@@ -77,6 +78,13 @@ export class Viewport extends pixi_viewport.Viewport {
     this.initializeMovement();
 
     this.addChild(new Background());
+
+    this.on("click", (event) => {
+      // If the click target is the viewport itself, deselect any selected element
+      if (event.target === this) {
+        selectElement(null);
+      }
+    });
   }
 
   private initializeMovement() {
@@ -132,16 +140,81 @@ class LeftBar {
   }
 }
 
-// > right_bar.ts
-
-class RightBar {
+export class RightBar {
+  private static instance: RightBar | null = null; // Unique instance
   private rightBar: HTMLElement;
 
-  constructor(rightBar: HTMLElement) {
+  private constructor(rightBar: HTMLElement) {
     this.rightBar = rightBar;
+    this.initializeBaseContent();
   }
-  static getFrom(document: Document) {
-    return new RightBar(document.getElementById("right-bar"));
+
+  // Static method to get the unique instance of RightBar
+  static getInstance() {
+    // If an instance already exists, return it. If not, create it.
+    if (!RightBar.instance) {
+      const rightBarElement = document.getElementById("right-bar");
+      if (!rightBarElement) {
+        console.error("Element with ID 'right-bar' not found.");
+        return null;
+      }
+      RightBar.instance = new RightBar(rightBarElement);
+    }
+    return RightBar.instance;
+  }
+
+  // Initializes the base title and info container (called only once)
+  private initializeBaseContent() {
+    const title = document.createElement("h2");
+    title.textContent = "Information";
+    this.rightBar.appendChild(title);
+
+    const infoContent = document.createElement("div");
+    infoContent.id = "info-content";
+    this.rightBar.appendChild(infoContent);
+  }
+
+  // Method to clear the content of the rightBar
+  clearContent() {
+    this.rightBar.innerHTML = ""; // Clears all current content
+  }
+
+  // Shows specific information of an element in info-content
+  renderInfo(title: string, info: { label: string; value: string }[]) {
+    this.clearContent(); // Clears before adding new content
+    this.initializeBaseContent(); // Adds the base title and empty container
+
+    const infoContent = document.getElementById("info-content");
+    if (infoContent) {
+      const header = document.createElement("h3");
+      header.textContent = title;
+      infoContent.appendChild(header);
+
+      info.forEach((item) => {
+        const p = document.createElement("p");
+        p.innerHTML = `<strong>${item.label}:</strong> ${item.value}`;
+        infoContent.appendChild(p);
+      });
+    }
+  }
+
+  // Adds a specific button to the right-bar
+  addButton(
+    text: string,
+    onClick: () => void,
+    buttonClass = "right-bar-button",
+    toggleSelected = false,
+  ) {
+    const button = document.createElement("button");
+    button.classList.add(buttonClass);
+    button.textContent = text;
+    button.onclick = () => {
+      onClick();
+      if (toggleSelected) {
+        button.classList.toggle("selected-button"); // Changes color on click
+      }
+    };
+    this.rightBar.appendChild(button);
   }
 }
 
@@ -192,10 +265,6 @@ class RightBar {
   leftBar.addButton(ComputerSvg, () => {
     AddPc(ctx);
   });
-
-  // Get right bar
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const rightBar = RightBar.getFrom(document);
 
   ctx.initialize(viewport);
 

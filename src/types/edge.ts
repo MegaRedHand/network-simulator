@@ -1,6 +1,13 @@
 import { Graphics } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
 import { Device } from "./device";
+import { deselectElement, selectElement } from "./viewportManager";
+import { RightBar } from "..";
+
+export enum Colors {
+  Violet = 0x4b0082, // Violeta
+  Burgundy = 0x6d071a, // Bordo
+}
 
 export class Edge extends Graphics {
   id: number;
@@ -8,6 +15,7 @@ export class Edge extends Graphics {
   startPos: { x: number; y: number };
   endPos: { x: number; y: number };
   viewgraph: ViewGraph;
+  rightbar: RightBar;
 
   constructor(
     id: number,
@@ -21,82 +29,112 @@ export class Edge extends Graphics {
     this.id = id;
     this.connectedNodes = connectedNodes;
     this.viewgraph = viewgraph;
+    this.rightbar = RightBar.getInstance();
 
-    // Calculate the angle and offsets between the devices
-    const dx = device2.x - device1.x;
-    const dy = device2.y - device1.y;
-    const angle = Math.atan2(dy, dx);
+    this.updatePosition(device1, device2);
 
-    const offsetX1 = (device1.width / 2) * Math.cos(angle);
-    const offsetY1 = (device1.height / 2) * Math.sin(angle);
-    const offsetX2 = (device2.width / 2) * Math.cos(angle);
-    const offsetY2 = (device2.height / 2) * Math.sin(angle);
-
-    // Define start and end positions based on offsets
-    this.startPos = {
-      x: device1.x + offsetX1,
-      y: device1.y + offsetY1,
-    };
-    this.endPos = {
-      x: device2.x - offsetX2,
-      y: device2.y - offsetY2,
-    };
-
-    // Draw the line and make it interactive
-    this.drawEdge(this.startPos, this.endPos);
     this.eventMode = "static";
     this.interactive = true;
-    this.on("click", this.showInfo);
+    this.cursor = "pointer";
+    this.on("click", () => selectElement(this));
   }
 
   // Method to draw the line
   public drawEdge(
     startPos: { x: number; y: number },
     endPos: { x: number; y: number },
+    color: number,
   ) {
     this.clear();
     this.moveTo(startPos.x, startPos.y);
     this.lineTo(endPos.x, endPos.y);
-    this.stroke({ width: 3, color: 0xff0000 });
+    this.stroke({ width: 3, color });
     this.startPos = startPos;
     this.endPos = endPos;
   }
 
-  // Method to display the edge information and the delete button
+  select() {
+    this.highlight();
+    this.showInfo();
+  }
+
+  deselect() {
+    // TODO
+    console.log("deselected");
+    this.removeHighlight();
+  }
+
+  highlight() {
+    this.drawEdge(this.startPos, this.endPos, Colors.Violet);
+  }
+
+  removeHighlight() {
+    this.drawEdge(this.startPos, this.endPos, Colors.Burgundy);
+  }
+
+  // Method to show the Edge information
   showInfo() {
-    const rightBar = document.getElementById("info-content");
-    if (rightBar) {
-      const startX = this.startPos.x.toFixed(2);
-      const startY = this.startPos.y.toFixed(2);
-      const endX = this.endPos.x.toFixed(2);
-      const endY = this.endPos.y.toFixed(2);
+    // Calls renderInfo to display Edge information
+    this.rightbar.renderInfo("Edge Information", [
+      { label: "Edge ID", value: this.id.toString() },
+      {
+        label: "Connected Devices",
+        value: `${this.connectedNodes.n1} <=> ${this.connectedNodes.n2}`,
+      },
+      {
+        label: "Start Position",
+        value: `x=${this.startPos.x.toFixed(2)}, y=${this.startPos.y.toFixed(2)}`,
+      },
+      {
+        label: "End Position",
+        value: `x=${this.endPos.x.toFixed(2)}, y=${this.endPos.y.toFixed(2)}`,
+      },
+    ]);
 
-      rightBar.innerHTML = `
-        <h3>Edge Information</h3>
-        <p><strong>Edge ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${this.connectedNodes.n1} <=> ${this.connectedNodes.n2}</p>
-        <p><strong>Start Position:</strong> x=${startX}, y=${startY}</p>
-        <p><strong>End Position:</strong> x=${endX}, y=${endY}</p>
-        <button id="delete-edge">Delete Edge</button>
-      `;
-
-      // Add event to the delete button
-      const deleteButton = document.getElementById("delete-edge");
-      deleteButton?.addEventListener("click", () => this.deleteEdge());
-    }
+    // Adds the delete button using addButton
+    this.rightbar.addButton("Delete Edge", () => this.deleteEdge());
   }
 
   // Method to delete the edge
   deleteEdge() {
     // Remove the edge from the viewgraph and datagraph
+    deselectElement();
     this.viewgraph.removeEdge(this.id);
 
-    // Display a confirmation message in the right-bar
-    const rightBar = document.getElementById("info-content");
-    if (rightBar) {
-      rightBar.innerHTML = "<p>Edge deleted.</p>";
-    }
-
     console.log(`Edge with ID ${this.id} deleted.`);
+  }
+
+  public updatePosition(device1: Device, device2: Device) {
+    const dx = device2.x - device1.x;
+    const dy = device2.y - device1.y;
+    const angle = Math.atan2(dy, dx);
+
+    const offsetX1 = ((device1.width + 5) / 2) * Math.cos(angle);
+    const offsetY1 = ((device1.height + 5) / 2) * Math.sin(angle);
+    const offsetX2 = ((device2.width + 5) / 2) * Math.cos(angle);
+    const offsetY2 = ((device2.height + 5) / 2) * Math.sin(angle);
+
+    const newStartPos = { x: device1.x + offsetX1, y: device1.y + offsetY1 };
+    const newEndPos = { x: device2.x - offsetX2, y: device2.y - offsetY2 };
+
+    this.drawEdge(newStartPos, newEndPos, 0x6d071a);
+  }
+
+  public remove() {
+    const { n1, n2 } = this.connectedNodes;
+    const device1 = this.viewgraph.getDevice(n1);
+    const device2 = this.viewgraph.getDevice(n2);
+
+    // Remove the connection from each connected device
+    if (device1) device1.connections.delete(this.id);
+    if (device2) device2.connections.delete(this.id);
+
+    // Remove the edge from the viewport
+    this.viewgraph.getViewport().removeChild(this);
+    this.destroy();
+
+    console.log(
+      `Edge with ID ${this.id} removed between devices ${n1} and ${n2}.`,
+    );
   }
 }

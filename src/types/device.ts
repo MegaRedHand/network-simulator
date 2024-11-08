@@ -1,12 +1,22 @@
-import { Texture, Sprite, FederatedPointerEvent } from "pixi.js";
-
+import { Texture, Sprite, FederatedPointerEvent, Graphics } from "pixi.js";
 import RouterImage from "../assets/router.svg";
 import ServerImage from "../assets/server.svg";
 import PcImage from "../assets/pc.svg";
 import { ViewGraph } from "./graphs/viewgraph";
+import {
+  deselectElement,
+  refreshElement,
+  selectElement,
+} from "./viewportManager";
+import { RightBar } from "../index";
 
 export const DEVICE_SIZE = 20;
-let currentLineStartId: number | null = null; // Stores only the ID instead of 'this'
+
+let selectedDeviceId: number | null = null; // Stores only the ID instead of 'this'
+
+export function setSelectedDeviceId(value: number | null) {
+  selectedDeviceId = value;
+}
 
 export class Device extends Sprite {
   id: number;
@@ -15,6 +25,8 @@ export class Device extends Sprite {
   connections = new Map<number, number>();
   offsetX = 0;
   offsetY = 0;
+  rightbar: RightBar;
+  highlightMarker: Graphics | null = null; // Marker to indicate selection
 
   constructor(
     id: number,
@@ -25,13 +37,13 @@ export class Device extends Sprite {
     const texture = Texture.from(svg);
     super(texture);
 
+    this.rightbar = RightBar.getInstance();
     this.id = id;
     this.viewgraph = viewgraph;
 
-    this.anchor.x = 0.5;
-    this.anchor.y = 0.5;
+    this.anchor.set(0.5);
 
-    // Use specified coordinates or the center of the world
+    // Use specified coordinates or center of the world
     const stage = this.viewgraph.getViewport();
     if (position) {
       this.x = position.x;
@@ -44,6 +56,10 @@ export class Device extends Sprite {
       this.x = worldCenter.x;
       this.y = worldCenter.y;
     }
+
+    this.eventMode = "static";
+    this.interactive = true;
+    this.cursor = "pointer";
 
     this.on("pointerdown", this.onPointerDown, this);
     this.on("click", this.onClick, this);
@@ -71,23 +87,11 @@ export class Device extends Sprite {
     sprite.height = sprite.height / DEVICE_SIZE;
   }
 
-  // Method to update the right-bar with device info
-  showInfo() {
-    const rightBar = document.getElementById("info-content");
-    if (rightBar) {
-      rightBar.innerHTML = `
-            <h3>Device Information</h3>
-            <p><strong>ID:</strong> ${this.id}</p>
-            <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? Array.from(this.connections.values()) : "None"}</p>
-        `;
-    }
-  }
-
   deleteDevice(): void {
     this.viewgraph.removeDevice(this.id);
     // Clear connections
     this.connections.clear();
-    this.viewgraph.logGraphData();
+    deselectElement();
   }
 
   onPointerDown(event: FederatedPointerEvent): void {
@@ -147,39 +151,92 @@ export class Device extends Sprite {
       const adyacentDevice = this.viewgraph.getDevice(adyacentId);
       this.addConnection(edgeId, adyacentId);
       adyacentDevice.addConnection(edgeId, this.id);
-      this.viewgraph.logGraphData();
       return true;
     }
     return false;
   }
 
   onClick(e: FederatedPointerEvent) {
-    if (!e.altKey) {
-      this.showInfo();
-      e.stopPropagation();
-      return;
-    }
-
-    // console.log("clicked on device", e);
     e.stopPropagation();
 
-    if (currentLineStartId === null) {
-      // console.log("LineStart is Null");
-      currentLineStartId = this.id; // Only stores the device ID
-    } else {
-      // console.log("LineStart is NOT Null");
-
+    if (selectedDeviceId) {
       // If the stored ID is the same as this device's, reset it
-      if (currentLineStartId === this.id) {
-        currentLineStartId = null;
+      if (selectedDeviceId === this.id) {
         return;
       }
-
       // The "LineStart" device ends up as the end of the drawing but it's the same
-      if (this.connectTo(currentLineStartId)) {
-        currentLineStartId = null;
+      if (this.connectTo(selectedDeviceId)) {
+        // selectElement(this.viewgraph.getDevice(selectedDeviceId));
+        refreshElement();
+        selectedDeviceId = null;
       }
+    } else {
+      selectElement(this);
     }
+  }
+
+  selectToConnect(id: number) {
+    if (selectedDeviceId === id) {
+      setSelectedDeviceId(null);
+    } else {
+      setSelectedDeviceId(id);
+    }
+  }
+
+  highlight() {
+    if (!this.highlightMarker) {
+      // Create the square as a selection marker
+      this.highlightMarker = new Graphics();
+
+      // Increase the square size
+      const size = this.width; // Side length of the square, now larger
+
+      // Draw a square using moveTo and lineTo
+      this.highlightMarker.moveTo(-size / 2, -size / 2); // Move to the top left corner of the centered square
+      this.highlightMarker.lineTo(size / 2, -size / 2); // Top line
+      this.highlightMarker.lineTo(size / 2, size / 2); // Right line
+      this.highlightMarker.lineTo(-size / 2, size / 2); // Bottom line
+      this.highlightMarker.lineTo(-size / 2, -size / 2); // Left line, closes the square
+
+      // Change color to red and increase line thickness
+      this.highlightMarker.stroke({ width: 3, color: 0x4b0082 }); // Red and thicker
+
+      // Ensure the marker is in the same container as the viewport
+      this.addChild(this.highlightMarker);
+    }
+  }
+
+  removeHighlight() {
+    if (this.highlightMarker) {
+      this.highlightMarker.clear(); // Clear the graphic
+      this.removeChild(this.highlightMarker); // Remove the marker from the viewport
+      this.highlightMarker.destroy(); // Destroy the graphic object to free memory
+      this.highlightMarker = null;
+    }
+  }
+
+  addCommonButtons() {
+    this.rightbar.addButton(
+      "Connect device",
+      () => this.selectToConnect(this.id),
+      "right-bar-button",
+      true,
+    );
+    this.rightbar.addButton("Delete device", () => this.deleteDevice());
+  }
+
+  showInfo() {
+    throw new Error("Method not implemented.");
+  }
+
+  select() {
+    this.highlight(); // Calls highlight on select
+    this.showInfo();
+  }
+
+  deselect() {
+    this.removeHighlight(); // Calls removeHighlight on deselect
+    setSelectedDeviceId(null);
   }
 }
 
@@ -194,20 +251,23 @@ export class Router extends Device {
   }
 
   showInfo() {
-    const rightBar = document.getElementById("info-content");
-    if (rightBar) {
-      rightBar.innerHTML = `
-        <h3>Router Information</h3>
-        <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
-        <p><strong>Type:</strong> Router</p>
-        <button id="delete-device">Delete device</button>
-      `;
+    // Shows specific Router information
+    this.rightbar.renderInfo("Router Information", [
+      { label: "ID", value: this.id.toString() },
+      {
+        label: "Connected Devices",
+        value:
+          this.connections.size !== 0
+            ? "[" + Array.from(this.connections.values()).join(", ") + "]"
+            : "None",
+      },
+      { label: "Model", value: "TP-Link AX6000" },
+      { label: "IP Address", value: "192.168.1.1" },
+      { label: "Firmware Version", value: "1.2.3" },
+      { label: "Uptime", value: "5 days, 4 hours, 23 minutes" },
+    ]);
 
-      // Add event to the delete button
-      const deleteButton = document.getElementById("delete-device");
-      deleteButton?.addEventListener("click", () => this.deleteDevice());
-    }
+    this.addCommonButtons();
   }
 }
 
@@ -222,20 +282,24 @@ export class Server extends Device {
   }
 
   showInfo() {
-    const rightBar = document.getElementById("info-content");
-    if (rightBar) {
-      rightBar.innerHTML = `
-        <h3>Server Information</h3>
-        <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
-        <p><strong>Type:</strong> Server</p>
-        <button id="delete-device">Delete device</button>
-      `;
+    // Shows specific Server information
+    this.rightbar.renderInfo("Server Information", [
+      { label: "ID", value: this.id.toString() },
+      {
+        label: "Connected Devices",
+        value:
+          this.connections.size !== 0
+            ? "[" + Array.from(this.connections.values()).join(", ") + "]"
+            : "None",
+      },
+      { label: "Operating System", value: "Ubuntu 20.04 LTS" },
+      { label: "CPU Usage", value: "42%" },
+      { label: "Memory Usage", value: "8 GB / 16 GB" },
+      { label: "Disk Space", value: "500 GB / 1 TB" },
+      { label: "Last Backup", value: "2024-11-01 02:30 AM" },
+    ]);
 
-      // Add event to the delete button
-      const deleteButton = document.getElementById("delete-device");
-      deleteButton?.addEventListener("click", () => this.deleteDevice());
-    }
+    this.addCommonButtons();
   }
 }
 
@@ -250,19 +314,22 @@ export class Pc extends Device {
   }
 
   showInfo() {
-    const rightBar = document.getElementById("info-content");
-    if (rightBar) {
-      rightBar.innerHTML = `
-        <h3>PC Information</h3>
-        <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
-        <p><strong>Type:</strong> PC</p>
-        <button id="delete-device">Delete device</button>
-      `;
+    // Shows specific PC information
+    this.rightbar.renderInfo("PC Information", [
+      { label: "ID", value: this.id.toString() },
+      {
+        label: "Connected Devices",
+        value:
+          this.connections.size !== 0
+            ? "[" + Array.from(this.connections.values()).join(", ") + "]"
+            : "None",
+      },
+      { label: "Operating System", value: "Windows 10 Pro" },
+      { label: "Antivirus Status", value: "Active" },
+      { label: "IP Address", value: "192.168.1.100" },
+      { label: "Storage Available", value: "250 GB / 512 GB" },
+    ]);
 
-      // Add event to the delete button
-      const deleteButton = document.getElementById("delete-device");
-      deleteButton?.addEventListener("click", () => this.deleteDevice());
-    }
+    this.addCommonButtons();
   }
 }
