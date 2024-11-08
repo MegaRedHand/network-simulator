@@ -1,13 +1,12 @@
 import { GlobalContext } from "./../index";
 import { DataGraph, GraphNode } from "./graphs/datagraph";
-import { setSelectedDeviceId, Device, Pc, Router, Server } from "./device";
+import { Device, Pc, Router, Server } from "./device";
 import { Edge } from "./edge";
-import { RightBar } from "../index"; // Asegúrate de que la ruta sea correcta
+import { RightBar } from "../index"; // Ensure the path is correct
 
-let selectedElement: Device | Edge | null = null; // Variable global para almacenar el elemento seleccionado
+let selectedElement: Device | Edge | null = null; // Global variable to store the selected element
 
 export function selectElement(element: Device | Edge | null) {
-
   deselectElement();
 
   if (element) {
@@ -62,11 +61,7 @@ export function AddRouter(ctx: GlobalContext) {
 
   // Add the RouterNode to the graph
   viewgraph.addDevice(newRouter);
-
-  newRouter.eventMode = "static";
-  newRouter.interactive = true;
   viewport.addChild(newRouter);
-  selectElement(newRouter);
 
   console.log(
     `Router added with ID ${newRouter.id} at the center of the screen.`,
@@ -99,11 +94,7 @@ export function AddPc(ctx: GlobalContext) {
 
   // Add the PCNode to the graph
   viewgraph.addDevice(newPC);
-
-  newPC.eventMode = "static";
-  newPC.interactive = true;
   viewport.addChild(newPC);
-  selectElement(newPC);
 
   console.log(`PC added with ID ${newPC.id} at the center of the screen.`);
 }
@@ -134,11 +125,7 @@ export function AddServer(ctx: GlobalContext) {
 
   // Add the ServerNode to the graph
   viewgraph.addDevice(newServer);
-
-  newServer.eventMode = "static";
-  newServer.interactive = true;
   viewport.addChild(newServer);
-  selectElement(newServer);
 
   console.log(
     `Server added with ID ${newServer.id} at the center of the screen.`,

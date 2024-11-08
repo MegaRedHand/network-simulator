@@ -41,8 +41,6 @@ export class ViewGraph {
           break;
       }
 
-      device.eventMode = "static";
-      device.interactive = true;
       this.viewport.addChild(device);
 
       this.addDevice(device);
@@ -150,26 +148,7 @@ export class ViewGraph {
           : device;
 
       if (startDevice && endDevice) {
-        const dx = endDevice.x - startDevice.x;
-        const dy = endDevice.y - startDevice.y;
-        const angle = Math.atan2(dy, dx);
-
-        // Adjust start and end points to be on the edge of the icon
-        const offsetX = (startDevice.width / 2) * Math.cos(angle);
-        const offsetY = (startDevice.height / 2) * Math.sin(angle);
-
-        // Calculate new positions for the start and end of the edge
-        const newStartPos = {
-          x: startDevice.x + offsetX,
-          y: startDevice.y + offsetY,
-        };
-        const newEndPos = {
-          x: endDevice.x - offsetX,
-          y: endDevice.y - offsetY,
-        };
-
-        // Redraw the edge
-        edge.drawEdge(newStartPos, newEndPos);
+        edge.updatePosition(startDevice, endDevice);
       }
     });
     this.datagraph.updateDevicePosition(deviceId, { x: device.x, y: device.y });
@@ -246,66 +225,16 @@ export class ViewGraph {
       return;
     }
 
-    // Get the IDs of the devices connected by this edge
-    const { n1, n2 } = edge.connectedNodes;
+    // Call Edge's remove method to handle disconnection and cleanup
+    edge.remove();
 
-    // Remove the connection from the connected devices
-    const device1 = this.devices.get(n1);
-    const device2 = this.devices.get(n2);
-
-    if (device1) {
-      device1.connections.delete(edgeId);
-    }
-
-    if (device2) {
-      device2.connections.delete(edgeId);
-    }
-
-    // Remove the edge from the viewport and destroy it
-    this.viewport.removeChild(edge);
-    edge.destroy();
-
-    // Remove the edge from the edges map and from datagraph
-    this.datagraph.removeConnection(n1, n2);
+    // Remove the edge from the edges map in ViewGraph
     this.edges.delete(edgeId);
 
-    console.log(
-      `Edge with ID ${edgeId} removed between devices ${n1} and ${n2}.`,
-    );
+    console.log(`Edge with ID ${edgeId} successfully removed from ViewGraph.`);
   }
 
   getViewport() {
     return this.viewport;
-  }
-
-  // Method to log all graph data to the console
-  logGraphData() {
-    console.log("===== ViewGraph Data =====");
-
-    // Log device information
-    console.log("Devices:");
-    this.devices.forEach((device, id) => {
-      console.log(`- ID: ${id}`);
-      console.log(`  Type: ${device.constructor.name}`);
-      console.log(`  Position: x=${device.x}, y=${device.y}`);
-      console.log(
-        `  Connections: ${Array.from(device.connections.keys()).join(", ") || "None"}`,
-      );
-    });
-
-    // Log connection information
-    console.log("Edges:");
-    this.edges.forEach((edge, id) => {
-      console.log(`- Edge ID: ${id}`);
-      console.log(
-        `  Connected Devices: ${edge.connectedNodes.n1} <-> ${edge.connectedNodes.n2}`,
-      );
-      console.log(
-        `  Start Position: x=${edge.startPos.x}, y=${edge.startPos.y}`,
-      );
-      console.log(`  End Position: x=${edge.endPos.x}, y=${edge.endPos.y}`);
-    });
-
-    console.log("==========================");
   }
 }

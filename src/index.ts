@@ -129,7 +129,7 @@ class LeftBar {
   addButton(src: string, onClick: () => void) {
     const button = document.createElement("button");
     button.classList.add("icon-button");
-    
+
     button.onclick = onClick;
     this.leftBar.appendChild(button);
 
@@ -141,7 +141,7 @@ class LeftBar {
 }
 
 export class RightBar {
-  private static instance: RightBar | null = null; // Instancia única
+  private static instance: RightBar | null = null; // Unique instance
   private rightBar: HTMLElement;
 
   private constructor(rightBar: HTMLElement) {
@@ -149,9 +149,9 @@ export class RightBar {
     this.initializeBaseContent();
   }
 
-  // Método estático para obtener la única instancia de RightBar
+  // Static method to get the unique instance of RightBar
   static getInstance() {
-    // Si ya existe una instancia, la devuelve. Si no, la crea.
+    // If an instance already exists, return it. If not, create it.
     if (!RightBar.instance) {
       const rightBarElement = document.getElementById("right-bar");
       if (!rightBarElement) {
@@ -163,7 +163,7 @@ export class RightBar {
     return RightBar.instance;
   }
 
-  // Inicializa el título base y contenedor de información (solo se llama una vez)
+  // Initializes the base title and info container (called only once)
   private initializeBaseContent() {
     const title = document.createElement("h2");
     title.textContent = "Information";
@@ -174,23 +174,23 @@ export class RightBar {
     this.rightBar.appendChild(infoContent);
   }
 
-  // Método para limpiar el contenido de la rightBar
+  // Method to clear the content of the rightBar
   clearContent() {
-    this.rightBar.innerHTML = ""; // Limpia todo el contenido actual
+    this.rightBar.innerHTML = ""; // Clears all current content
   }
 
-  // Muestra la información específica de un elemento en info-content
+  // Shows specific information of an element in info-content
   renderInfo(title: string, info: { label: string; value: string }[]) {
-    this.clearContent(); // Limpia antes de añadir contenido nuevo
-    this.initializeBaseContent(); // Agrega el título base y contenedor vacío
-    
+    this.clearContent(); // Clears before adding new content
+    this.initializeBaseContent(); // Adds the base title and empty container
+
     const infoContent = document.getElementById("info-content");
     if (infoContent) {
       const header = document.createElement("h3");
       header.textContent = title;
       infoContent.appendChild(header);
 
-      info.forEach(item => {
+      info.forEach((item) => {
         const p = document.createElement("p");
         p.innerHTML = `<strong>${item.label}:</strong> ${item.value}`;
         infoContent.appendChild(p);
@@ -198,12 +198,12 @@ export class RightBar {
     }
   }
 
-  // Añade un botón específico al right-bar
+  // Adds a specific button to the right-bar
   addButton(
     text: string,
     onClick: () => void,
     buttonClass = "right-bar-button",
-    toggleSelected = false
+    toggleSelected = false,
   ) {
     const button = document.createElement("button");
     button.classList.add(buttonClass);
@@ -211,13 +211,12 @@ export class RightBar {
     button.onclick = () => {
       onClick();
       if (toggleSelected) {
-        button.classList.toggle("selected-button"); // Cambia el color al hacer clic
+        button.classList.toggle("selected-button"); // Changes color on click
       }
     };
     this.rightBar.appendChild(button);
   }
 }
-
 
 // > index.ts
 

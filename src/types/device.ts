@@ -3,8 +3,12 @@ import RouterImage from "../assets/router.svg";
 import ServerImage from "../assets/server.svg";
 import PcImage from "../assets/pc.svg";
 import { ViewGraph } from "./graphs/viewgraph";
-import { deselectElement, refreshElement, selectElement } from "./viewportManager";
-import { RightBar } from "../index"
+import {
+  deselectElement,
+  refreshElement,
+  selectElement,
+} from "./viewportManager";
+import { RightBar } from "../index";
 
 export const DEVICE_SIZE = 20;
 
@@ -22,7 +26,7 @@ export class Device extends Sprite {
   offsetX = 0;
   offsetY = 0;
   rightbar: RightBar;
-  highlightMarker: Graphics | null = null; // Marker para indicar selección
+  highlightMarker: Graphics | null = null; // Marker to indicate selection
 
   constructor(
     id: number,
@@ -30,19 +34,16 @@ export class Device extends Sprite {
     viewgraph: ViewGraph,
     position: { x: number; y: number } | null = null,
   ) {
-
     const texture = Texture.from(svg);
     super(texture);
-    
+
     this.rightbar = RightBar.getInstance();
     this.id = id;
     this.viewgraph = viewgraph;
 
     this.anchor.set(0.5);
 
-    this.cursor = "pointer";
-
-    // Use specified coordinates or the center of the world
+    // Use specified coordinates or center of the world
     const stage = this.viewgraph.getViewport();
     if (position) {
       this.x = position.x;
@@ -55,6 +56,10 @@ export class Device extends Sprite {
       this.x = worldCenter.x;
       this.y = worldCenter.y;
     }
+
+    this.eventMode = "static";
+    this.interactive = true;
+    this.cursor = "pointer";
 
     this.on("pointerdown", this.onPointerDown, this);
     this.on("click", this.onClick, this);
@@ -86,7 +91,6 @@ export class Device extends Sprite {
     this.viewgraph.removeDevice(this.id);
     // Clear connections
     this.connections.clear();
-    this.viewgraph.logGraphData();
     deselectElement();
   }
 
@@ -112,7 +116,6 @@ export class Device extends Sprite {
   onPointerMove(event: FederatedPointerEvent): void {
     // console.log("Entered onPointerMove");
     if (this.dragging) {
-
       // Get the new pointer position in world coordinates
       const worldPosition = this.viewgraph
         .getViewport()
@@ -148,7 +151,6 @@ export class Device extends Sprite {
       const adyacentDevice = this.viewgraph.getDevice(adyacentId);
       this.addConnection(edgeId, adyacentId);
       adyacentDevice.addConnection(edgeId, this.id);
-      this.viewgraph.logGraphData();
       return true;
     }
     return false;
@@ -158,7 +160,6 @@ export class Device extends Sprite {
     e.stopPropagation();
 
     if (selectedDeviceId) {
-
       // If the stored ID is the same as this device's, reset it
       if (selectedDeviceId === this.id) {
         return;
@@ -184,53 +185,62 @@ export class Device extends Sprite {
 
   highlight() {
     if (!this.highlightMarker) {
-      // Crear el cuadrado como marcador de selección
-      this.highlightMarker = new Graphics();
-  
-      // Aumentar el tamaño del cuadrado
-      const size = this.width + 10; // Tamaño del lado del cuadrado, ahora más grande
-  
-      // Dibujar un cuadrado usando moveTo y lineTo
-      this.highlightMarker.moveTo(-size / 2, -size / 2); // Mover a la esquina superior izquierda del cuadrado centrado
-      this.highlightMarker.lineTo(size / 2, -size / 2); // Línea superior
-      this.highlightMarker.lineTo(size / 2, size / 2); // Línea derecha
-      this.highlightMarker.lineTo(-size / 2, size / 2); // Línea inferior
-      this.highlightMarker.lineTo(-size / 2, -size / 2); // Línea izquierda, cierra el cuadrado
+      // Create the square as a selection marker
+      this.highlightMarker = new Graphics().setStrokeStyle({
+        width: 3,
+        color: 0x4b0082,
+      });
 
-  
-      // Cambiar el color a rojo y aumentar el grosor de la línea
-      this.highlightMarker.stroke({ width: 3, color: 0x4B0082 }); // Rojo y más grueso
-  
-      // Asegurarse de que el marcador esté en el mismo contenedor que el viewport
+      // Increase the square size
+      const size = this.width; // Side length of the square, now larger
+
+      // Draw a square using moveTo and lineTo
+      this.highlightMarker.moveTo(-size / 2, -size / 2); // Move to the top left corner of the centered square
+      this.highlightMarker.lineTo(size / 2, -size / 2); // Top line
+      this.highlightMarker.lineTo(size / 2, size / 2); // Right line
+      this.highlightMarker.lineTo(-size / 2, size / 2); // Bottom line
+      this.highlightMarker.lineTo(-size / 2, -size / 2); // Left line, closes the square
+
+      // Change color to red and increase line thickness
+      this.highlightMarker.stroke({ width: 3, color: 0x4b0082 }); // Red and thicker
+
+      // Ensure the marker is in the same container as the viewport
       this.addChild(this.highlightMarker);
     }
   }
-  
+
   removeHighlight() {
     if (this.highlightMarker) {
-      this.highlightMarker.clear(); // Limpia el gráfico
-      this.removeChild(this.highlightMarker); // Elimina el marcador del viewport
-      this.highlightMarker.destroy(); // Destruye el objeto gráfico para liberar memoria
+      this.highlightMarker.clear(); // Clear the graphic
+      this.removeChild(this.highlightMarker); // Remove the marker from the viewport
+      this.highlightMarker.destroy(); // Destroy the graphic object to free memory
       this.highlightMarker = null;
     }
   }
-  
-  
+
+  addCommonButtons() {
+    this.rightbar.addButton(
+      "Connect device",
+      () => this.selectToConnect(this.id),
+      "right-bar-button",
+      true,
+    );
+    this.rightbar.addButton("Delete device", () => this.deleteDevice());
+  }
 
   showInfo() {
     throw new Error("Method not implemented.");
   }
 
   select() {
-    this.highlight(); // Llama a highlight al seleccionar
+    this.highlight(); // Calls highlight on select
     this.showInfo();
   }
 
   deselect() {
-    this.removeHighlight(); // Llama a removeHighlight al deseleccionar
+    this.removeHighlight(); // Calls removeHighlight on deselect
     setSelectedDeviceId(null);
   }
-
 }
 
 export class Router extends Device {
@@ -244,24 +254,23 @@ export class Router extends Device {
   }
 
   showInfo() {
-    // Muestra la información específica del Router
+    // Shows specific Router information
     this.rightbar.renderInfo("Router Information", [
       { label: "ID", value: this.id.toString() },
-      { label: "Connected Devices", value: this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None" },
+      {
+        label: "Connected Devices",
+        value:
+          this.connections.size !== 0
+            ? "[" + Array.from(this.connections.values()).join(", ") + "]"
+            : "None",
+      },
       { label: "Model", value: "TP-Link AX6000" },
       { label: "IP Address", value: "192.168.1.1" },
       { label: "Firmware Version", value: "1.2.3" },
-      { label: "Uptime", value: "5 days, 4 hours, 23 minutes" }
+      { label: "Uptime", value: "5 days, 4 hours, 23 minutes" },
     ]);
 
-    // Agrega los botones comunes y específicos del Router
-    this.rightbar.addButton("Connect device", () => this.selectToConnect(this.id), "right-bar-button", true);
-    this.rightbar.addButton("Delete device", () => this.deleteDevice());
-    this.rightbar.addButton("Reboot Router", () => this.rebootRouter());
-  }
-
-  rebootRouter() {
-    console.log("Rebooting router...");
+    this.addCommonButtons();
   }
 }
 
@@ -276,32 +285,24 @@ export class Server extends Device {
   }
 
   showInfo() {
-    // Muestra la información específica del Server
+    // Shows specific Server information
     this.rightbar.renderInfo("Server Information", [
       { label: "ID", value: this.id.toString() },
-      { label: "Connected Devices", value: this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None" },
+      {
+        label: "Connected Devices",
+        value:
+          this.connections.size !== 0
+            ? "[" + Array.from(this.connections.values()).join(", ") + "]"
+            : "None",
+      },
       { label: "Operating System", value: "Ubuntu 20.04 LTS" },
       { label: "CPU Usage", value: "42%" },
       { label: "Memory Usage", value: "8 GB / 16 GB" },
       { label: "Disk Space", value: "500 GB / 1 TB" },
-      { label: "Last Backup", value: "2024-11-01 02:30 AM" }
+      { label: "Last Backup", value: "2024-11-01 02:30 AM" },
     ]);
 
-    this.rightbar.addButton("Connect device", () => this.selectToConnect(this.id), "right-bar-button", true);
-    this.rightbar.addButton("Delete device", () => this.deleteDevice());
-    this.rightbar.addButton("Shutdown Server", () => this.shutdownServer());
-    this.rightbar.addButton("Start Server", () => this.startServer());
-  }
-
-
-  shutdownServer() {
-    console.log("Shutting down server...");
-    this.tint = 0xFF0000; // Cambia el color del sprite a rojo
-  }
-
-  startServer() {
-    console.log("Starting server...");
-    this.tint = 0x00FF00; // Cambia el color del sprite a verde
+    this.addCommonButtons();
   }
 }
 
@@ -316,23 +317,22 @@ export class Pc extends Device {
   }
 
   showInfo() {
-    // Muestra la información específica del PC
+    // Shows specific PC information
     this.rightbar.renderInfo("PC Information", [
       { label: "ID", value: this.id.toString() },
-      { label: "Connected Devices", value: this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None" },
+      {
+        label: "Connected Devices",
+        value:
+          this.connections.size !== 0
+            ? "[" + Array.from(this.connections.values()).join(", ") + "]"
+            : "None",
+      },
       { label: "Operating System", value: "Windows 10 Pro" },
       { label: "Antivirus Status", value: "Active" },
       { label: "IP Address", value: "192.168.1.100" },
-      { label: "Storage Available", value: "250 GB / 512 GB" }
+      { label: "Storage Available", value: "250 GB / 512 GB" },
     ]);
 
-    // Agrega los botones comunes y específicos del PC
-    this.rightbar.addButton("Connect device", () => this.selectToConnect(this.id), "right-bar-button", true);
-    this.rightbar.addButton("Delete device", () => this.deleteDevice());
-    this.rightbar.addButton("Run Virus Scan", () => this.runVirusScan());
-  }
-
-  runVirusScan() {
-    console.log("Running virus scan on PC...");
+    this.addCommonButtons();
   }
 }
