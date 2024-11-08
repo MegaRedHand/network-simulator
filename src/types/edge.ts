@@ -24,7 +24,7 @@ export class Edge extends Graphics {
     this.id = id;
     this.connectedNodes = connectedNodes;
     this.viewgraph = viewgraph;
-    this.rightbar = RightBar.getFrom(document);
+    this.rightbar = RightBar.getInstance();
 
     // Calculate the angle and offsets between the devices
     const dx = device2.x - device1.x;
@@ -78,6 +78,7 @@ export class Edge extends Graphics {
 
   // Método para mostrar la información del Edge
   showInfo() {
+
     // Llama a renderInfo para mostrar la información del Edge
     this.rightbar.renderInfo("Edge Information", [
       { label: "Edge ID", value: this.id.toString() },

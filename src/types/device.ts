@@ -3,7 +3,7 @@ import RouterImage from "../assets/router.svg";
 import ServerImage from "../assets/server.svg";
 import PcImage from "../assets/pc.svg";
 import { ViewGraph } from "./graphs/viewgraph";
-import { deselectElement, selectElement } from "./viewportManager";
+import { deselectElement, refreshElement, selectElement } from "./viewportManager";
 import { RightBar } from "../index"
 
 export const DEVICE_SIZE = 20;
@@ -33,7 +33,7 @@ export class Device extends Sprite {
     const texture = Texture.from(svg);
     super(texture);
     
-    this.rightbar = RightBar.getFrom(document);
+    this.rightbar = RightBar.getInstance();
     this.id = id;
     this.viewgraph = viewgraph;
 
@@ -158,18 +158,15 @@ export class Device extends Sprite {
     e.stopPropagation();
 
     if (selectedDeviceId) {
-      // console.log("LineStart is NOT Null");
 
       // If the stored ID is the same as this device's, reset it
       if (selectedDeviceId === this.id) {
-        // selectedDeviceId = null;
         return;
       }
-
       // The "LineStart" device ends up as the end of the drawing but it's the same
       if (this.connectTo(selectedDeviceId)) {
-        let device = this.viewgraph.getDevice(selectedDeviceId);
-        selectElement(device);
+        // selectElement(this.viewgraph.getDevice(selectedDeviceId));
+        refreshElement();
         selectedDeviceId = null;
       }
     } else {
@@ -190,12 +187,11 @@ export class Device extends Sprite {
   }
 
   select() {
-    // Aplica el filtro de contorno
     this.showInfo();
   }
 
   deselect() {
-    // TODO
+    setSelectedDeviceId(null);
   }
 
 }

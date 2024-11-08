@@ -6,35 +6,32 @@ import { RightBar } from "../index"; // Asegúrate de que la ruta sea correcta
 
 let selectedElement: Device | Edge | null = null; // Variable global para almacenar el elemento seleccionado
 
-// Función para manejar la selección
 export function selectElement(element: Device | Edge | null) {
-
-
-  console.log("selectedElement:", selectedElement);
-  console.log("element:", element);
-
-
-  if (selectedElement instanceof Device && !(element instanceof Device)) {
-    setSelectedDeviceId(null); // Establece selectedDeviceId en null
-  }
 
   deselectElement();
 
   if (element) {
     selectedElement = element;
-    element.select(); // select()
+    element.select();
   }
 }
 
-// Función para deseleccionar
 export function deselectElement() {
   if (selectedElement) {
     selectedElement.deselect();
     selectedElement = null;
-    const rightBar = RightBar.getFrom(document);
+    const rightBar = RightBar.getInstance();
     if (rightBar) {
       rightBar.clearContent();
     }
+  }
+}
+
+export function refreshElement() {
+  if (selectedElement) {
+    // Deselect the current element and then reselect it to refresh
+    selectedElement.deselect();
+    selectedElement.select();
   }
 }
 
@@ -233,7 +230,6 @@ export function loadGraph(jsonData: string, ctx: GlobalContext) {
   );
 
   viewgraph.constructView();
-  RightBar.getFrom(document).clearContent();
 
   console.log("Graph loaded successfully.");
 }

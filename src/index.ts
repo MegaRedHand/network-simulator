@@ -140,21 +140,30 @@ class LeftBar {
   }
 }
 
-// > right_bar.ts
-
 export class RightBar {
+  private static instance: RightBar | null = null; // Instancia única
   private rightBar: HTMLElement;
 
-  constructor(rightBar: HTMLElement) {
+  private constructor(rightBar: HTMLElement) {
     this.rightBar = rightBar;
     this.initializeBaseContent();
   }
 
-  static getFrom(document: Document) {
-    return new RightBar(document.getElementById("right-bar"));
+  // Método estático para obtener la única instancia de RightBar
+  static getInstance() {
+    // Si ya existe una instancia, la devuelve. Si no, la crea.
+    if (!RightBar.instance) {
+      const rightBarElement = document.getElementById("right-bar");
+      if (!rightBarElement) {
+        console.error("Element with ID 'right-bar' not found.");
+        return null;
+      }
+      RightBar.instance = new RightBar(rightBarElement);
+    }
+    return RightBar.instance;
   }
 
-  // Inicializa el título base y contenedor de información (siempre que sea necesario)
+  // Inicializa el título base y contenedor de información (solo se llama una vez)
   private initializeBaseContent() {
     const title = document.createElement("h2");
     title.textContent = "Information";
@@ -190,7 +199,12 @@ export class RightBar {
   }
 
   // Añade un botón específico al right-bar
-  addButton(text: string, onClick: () => void, buttonClass = "right-bar-button", toggleSelected = false) {
+  addButton(
+    text: string,
+    onClick: () => void,
+    buttonClass = "right-bar-button",
+    toggleSelected = false
+  ) {
     const button = document.createElement("button");
     button.classList.add(buttonClass);
     button.textContent = text;
@@ -202,9 +216,7 @@ export class RightBar {
     };
     this.rightBar.appendChild(button);
   }
-
 }
-
 
 
 // > index.ts
@@ -242,25 +254,18 @@ export class RightBar {
 
   // Add router button
   leftBar.addButton(RouterSvg, () => {
-    selectElement(null);
     AddRouter(ctx);
   });
 
   // Add server button
   leftBar.addButton(ServerSvg, () => {
-    selectElement(null);
     AddServer(ctx);
   });
 
   // // Add PC button
   leftBar.addButton(ComputerSvg, () => {
-    selectElement(null);
     AddPc(ctx);
   });
-
-  // Get right bar
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const rightBar = RightBar.getFrom(document);
 
   ctx.initialize(viewport);
 
