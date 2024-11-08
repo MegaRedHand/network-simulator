@@ -1,4 +1,4 @@
-import { Graphics } from "pixi.js";
+import { FederatedPointerEvent, Graphics } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
 import { Device } from "./device";
 import { selectElement } from "./viewportManager";
@@ -47,7 +47,7 @@ export class Edge extends Graphics {
     this.drawEdge(this.startPos, this.endPos);
     this.eventMode = "static";
     this.interactive = true;
-    this.on("click", () => selectElement(this));
+    this.on("click", (event: FederatedPointerEvent) => selectElement(this));
   }
 
   // Method to draw the line
@@ -58,7 +58,7 @@ export class Edge extends Graphics {
     this.clear();
     this.moveTo(startPos.x, startPos.y);
     this.lineTo(endPos.x, endPos.y);
-    this.stroke({ width: 3, color: 0xff0000 });
+    this.stroke({ width: 3, color: 0x00FF00 });
     this.startPos = startPos;
     this.endPos = endPos;
   }

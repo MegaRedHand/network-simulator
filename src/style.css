@@ -147,3 +147,23 @@ canvas {
 .load-button:hover {
   background-color: #357abd; /* Fondo más oscuro al pasar el mouse */
 }
+
+/* Estilo para los botones de la barra derecha */
+.right-bar-button {
+  background-color: #4CAF50; /* Color de fondo */
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 5px;
+  width: 200px; /* Ancho fijo */
+}
+
+.right-bar-button:hover {
+  background-color: #45a049; /* Color al pasar el mouse */
+}

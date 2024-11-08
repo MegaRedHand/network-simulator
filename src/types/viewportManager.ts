@@ -1,8 +1,8 @@
 import { GlobalContext } from "./../index";
 import { DataGraph, GraphNode } from "./graphs/datagraph";
-import { setCurrentLineStartId, Device, Pc, Router, Server } from "./device";
+import { setSelectedDeviceId, Device, Pc, Router, Server } from "./device";
 import { Edge } from "./edge";
-import { Viewport } from "pixi-viewport";
+import { FederatedPointerEvent } from "pixi.js";
 
 let selectedElement: Device | Edge | null = null; // Variable global para almacenar el elemento seleccionado
 
@@ -15,7 +15,7 @@ export function selectElement(element: Device | Edge | null) {
 
 
   if (selectedElement instanceof Device && !(element instanceof Device)) {
-    setCurrentLineStartId(null); // Establece currentLineStartId en null
+    setSelectedDeviceId(null); // Establece selectedDeviceId en null
   }
 
   deselectElement();
@@ -31,10 +31,10 @@ export function deselectElement() {
   if (selectedElement) {
     selectedElement.deselect();
     selectedElement = null;
-  }
-  const rightBar = document.getElementById("info-content");
-  if (rightBar) {
-    rightBar.innerHTML = ""; // Borra la información de la barra derecha
+    const rightBar = document.getElementById("info-content");
+    if (rightBar) {
+      rightBar.innerHTML = ""; // Borra la información de la barra derecha
+    }
   }
 }
 

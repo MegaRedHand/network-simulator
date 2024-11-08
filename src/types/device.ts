@@ -1,5 +1,5 @@
-import { Texture, Sprite, FederatedPointerEvent } from "pixi.js";
-
+import { Texture, Sprite, FederatedPointerEvent, Graphics } from "pixi.js";
+import { OutlineFilter } from "@pixi/filter-outline";
 import RouterImage from "../assets/router.svg";
 import ServerImage from "../assets/server.svg";
 import PcImage from "../assets/pc.svg";
@@ -8,10 +8,10 @@ import { selectElement } from "./viewportManager";
 
 export const DEVICE_SIZE = 20;
 
-let currentLineStartId: number | null = null; // Stores only the ID instead of 'this'
+let selectedDeviceId: number | null = null; // Stores only the ID instead of 'this'
 
-export function setCurrentLineStartId(value: number | null) {
-  currentLineStartId = value;
+export function setSelectedDeviceId(value: number | null) {
+  selectedDeviceId = value;
 }
 
 export class Device extends Sprite {
@@ -21,6 +21,9 @@ export class Device extends Sprite {
   connections = new Map<number, number>();
   offsetX = 0;
   offsetY = 0;
+  connectIcon: Graphics;
+  selectionCircle: Graphics | null = null; // Círculo de selección
+  outlineFilter: any;
 
   constructor(
     id: number,
@@ -36,6 +39,8 @@ export class Device extends Sprite {
 
     this.anchor.x = 0.5;
     this.anchor.y = 0.5;
+
+    this.cursor = "pointer";
 
     // Use specified coordinates or the center of the world
     const stage = this.viewgraph.getViewport();
@@ -118,6 +123,7 @@ export class Device extends Sprite {
   onPointerMove(event: FederatedPointerEvent): void {
     // console.log("Entered onPointerMove");
     if (this.dragging) {
+
       // Get the new pointer position in world coordinates
       const worldPosition = this.viewgraph
         .getViewport()
@@ -163,31 +169,31 @@ export class Device extends Sprite {
     selectElement(this);
     e.stopPropagation();
 
-    if (currentLineStartId) {
+    if (selectedDeviceId) {
       // console.log("LineStart is NOT Null");
 
       // If the stored ID is the same as this device's, reset it
-      if (currentLineStartId === this.id) {
-        currentLineStartId = null;
+      if (selectedDeviceId === this.id) {
+        selectedDeviceId = null;
         return;
       }
 
       // The "LineStart" device ends up as the end of the drawing but it's the same
-      if (this.connectTo(currentLineStartId)) {
-        currentLineStartId = null;
+      if (this.connectTo(selectedDeviceId)) {
+        selectedDeviceId = null;
       }
     }
   }
 
   select() {
+    // Aplica el filtro de contorno
     this.showInfo();
   }
 
   deselect() {
     // TODO
-
-    console.log("deseleccione");
   }
+
 }
 
 export class Router extends Device {
@@ -208,15 +214,15 @@ export class Router extends Device {
         <p><strong>ID:</strong> ${this.id}</p>
         <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
         <p><strong>Type:</strong> Router</p>
-        <button id="connect-device">Connect device</button>
-        <button id="delete-device">Delete device</button>
+        <button id="connect-device" class="right-bar-button">Connect device</button>
+        <button id="delete-device" class="right-bar-button">Delete device</button>
       `;
 
       // Add event to the connect button
       const connectButton = document.getElementById("connect-device");
       connectButton?.addEventListener(
         "click",
-        () => (currentLineStartId = this.id),
+        () => setSelectedDeviceId(this.id),
       ); //this.connectDevice());
 
       // Add event to the delete button
@@ -244,15 +250,15 @@ export class Server extends Device {
         <p><strong>ID:</strong> ${this.id}</p>
         <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
         <p><strong>Type:</strong> Server</p>
-        <button id="connect-device">Connect device</button>
-        <button id="delete-device">Delete device</button>
+        <button id="connect-device" class="right-bar-button">Connect device</button>
+        <button id="delete-device" class="right-bar-button">Delete device</button>
       `;
 
       // Add event to the connect button
       const connectButton = document.getElementById("connect-device");
       connectButton?.addEventListener(
         "click",
-        () => (currentLineStartId = this.id),
+        () => setSelectedDeviceId(this.id),
       );
 
       // Add event to the delete button
@@ -280,15 +286,15 @@ export class Pc extends Device {
         <p><strong>ID:</strong> ${this.id}</p>
         <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
         <p><strong>Type:</strong> PC</p>
-        <button id="connect-device">Connect device</button>
-        <button id="delete-device">Delete device</button>
+        <button id="connect-device" class="right-bar-button">Connect device</button>
+        <button id="delete-device" class="right-bar-button">Delete device</button>
       `;
 
       // Add event to the connect button
       const connectButton = document.getElementById("connect-device");
       connectButton?.addEventListener(
         "click",
-        () => (currentLineStartId = this.id),
+        () => setSelectedDeviceId(this.id),
       );
 
       // Add event to the delete button
