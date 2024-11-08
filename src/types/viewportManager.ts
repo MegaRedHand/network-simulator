@@ -2,7 +2,7 @@ import { GlobalContext } from "./../index";
 import { DataGraph, GraphNode } from "./graphs/datagraph";
 import { setSelectedDeviceId, Device, Pc, Router, Server } from "./device";
 import { Edge } from "./edge";
-import { FederatedPointerEvent } from "pixi.js";
+import { RightBar } from "../index"; // Asegúrate de que la ruta sea correcta
 
 let selectedElement: Device | Edge | null = null; // Variable global para almacenar el elemento seleccionado
 
@@ -31,9 +31,9 @@ export function deselectElement() {
   if (selectedElement) {
     selectedElement.deselect();
     selectedElement = null;
-    const rightBar = document.getElementById("info-content");
+    const rightBar = RightBar.getFrom(document);
     if (rightBar) {
-      rightBar.innerHTML = ""; // Borra la información de la barra derecha
+      rightBar.clearContent();
     }
   }
 }
@@ -69,6 +69,7 @@ export function AddRouter(ctx: GlobalContext) {
   newRouter.eventMode = "static";
   newRouter.interactive = true;
   viewport.addChild(newRouter);
+  selectElement(newRouter);
 
   console.log(
     `Router added with ID ${newRouter.id} at the center of the screen.`,
@@ -105,6 +106,7 @@ export function AddPc(ctx: GlobalContext) {
   newPC.eventMode = "static";
   newPC.interactive = true;
   viewport.addChild(newPC);
+  selectElement(newPC);
 
   console.log(`PC added with ID ${newPC.id} at the center of the screen.`);
 }
@@ -139,6 +141,7 @@ export function AddServer(ctx: GlobalContext) {
   newServer.eventMode = "static";
   newServer.interactive = true;
   viewport.addChild(newServer);
+  selectElement(newServer);
 
   console.log(
     `Server added with ID ${newServer.id} at the center of the screen.`,
@@ -230,6 +233,7 @@ export function loadGraph(jsonData: string, ctx: GlobalContext) {
   );
 
   viewgraph.constructView();
+  RightBar.getFrom(document).clearContent();
 
   console.log("Graph loaded successfully.");
 }

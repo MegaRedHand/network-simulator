@@ -14,7 +14,6 @@ import {
   AddPc,
   AddRouter,
   AddServer,
-  deselectElement,
   loadGraph,
   saveGraph,
   selectElement,
@@ -130,7 +129,7 @@ class LeftBar {
   addButton(src: string, onClick: () => void) {
     const button = document.createElement("button");
     button.classList.add("icon-button");
-
+    
     button.onclick = onClick;
     this.leftBar.appendChild(button);
 
@@ -143,16 +142,70 @@ class LeftBar {
 
 // > right_bar.ts
 
-class RightBar {
+export class RightBar {
   private rightBar: HTMLElement;
 
   constructor(rightBar: HTMLElement) {
     this.rightBar = rightBar;
+    this.initializeBaseContent();
   }
+
   static getFrom(document: Document) {
     return new RightBar(document.getElementById("right-bar"));
   }
+
+  // Inicializa el título base y contenedor de información (siempre que sea necesario)
+  private initializeBaseContent() {
+    const title = document.createElement("h2");
+    title.textContent = "Information";
+    this.rightBar.appendChild(title);
+
+    const infoContent = document.createElement("div");
+    infoContent.id = "info-content";
+    this.rightBar.appendChild(infoContent);
+  }
+
+  // Método para limpiar el contenido de la rightBar
+  clearContent() {
+    this.rightBar.innerHTML = ""; // Limpia todo el contenido actual
+  }
+
+  // Muestra la información específica de un elemento en info-content
+  renderInfo(title: string, info: { label: string; value: string }[]) {
+    this.clearContent(); // Limpia antes de añadir contenido nuevo
+    this.initializeBaseContent(); // Agrega el título base y contenedor vacío
+    
+    const infoContent = document.getElementById("info-content");
+    if (infoContent) {
+      const header = document.createElement("h3");
+      header.textContent = title;
+      infoContent.appendChild(header);
+
+      info.forEach(item => {
+        const p = document.createElement("p");
+        p.innerHTML = `<strong>${item.label}:</strong> ${item.value}`;
+        infoContent.appendChild(p);
+      });
+    }
+  }
+
+  // Añade un botón específico al right-bar
+  addButton(text: string, onClick: () => void, buttonClass = "right-bar-button", toggleSelected = false) {
+    const button = document.createElement("button");
+    button.classList.add(buttonClass);
+    button.textContent = text;
+    button.onclick = () => {
+      onClick();
+      if (toggleSelected) {
+        button.classList.toggle("selected-button"); // Cambia el color al hacer clic
+      }
+    };
+    this.rightBar.appendChild(button);
+  }
+
 }
+
+
 
 // > index.ts
 
@@ -189,16 +242,19 @@ class RightBar {
 
   // Add router button
   leftBar.addButton(RouterSvg, () => {
+    selectElement(null);
     AddRouter(ctx);
   });
 
   // Add server button
   leftBar.addButton(ServerSvg, () => {
+    selectElement(null);
     AddServer(ctx);
   });
 
   // // Add PC button
   leftBar.addButton(ComputerSvg, () => {
+    selectElement(null);
     AddPc(ctx);
   });
 

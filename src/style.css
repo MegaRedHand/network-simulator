@@ -167,3 +167,9 @@ canvas {
 .right-bar-button:hover {
   background-color: #45a049; /* Color al pasar el mouse */
 }
+
+.right-bar-button.selected-button {
+  background-color: #007BFF; /* Azul o el color que prefieras */
+  color: white;
+}
+

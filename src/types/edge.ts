@@ -1,7 +1,8 @@
 import { FederatedPointerEvent, Graphics } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
 import { Device } from "./device";
-import { selectElement } from "./viewportManager";
+import { deselectElement, selectElement } from "./viewportManager";
+import { RightBar } from "..";
 
 export class Edge extends Graphics {
   id: number;
@@ -9,6 +10,7 @@ export class Edge extends Graphics {
   startPos: { x: number; y: number };
   endPos: { x: number; y: number };
   viewgraph: ViewGraph;
+  rightbar: RightBar;
 
   constructor(
     id: number,
@@ -22,6 +24,7 @@ export class Edge extends Graphics {
     this.id = id;
     this.connectedNodes = connectedNodes;
     this.viewgraph = viewgraph;
+    this.rightbar = RightBar.getFrom(document);
 
     // Calculate the angle and offsets between the devices
     const dx = device2.x - device1.x;
@@ -47,6 +50,7 @@ export class Edge extends Graphics {
     this.drawEdge(this.startPos, this.endPos);
     this.eventMode = "static";
     this.interactive = true;
+    this.cursor = "pointer";
     this.on("click", (event: FederatedPointerEvent) => selectElement(this));
   }
 
@@ -58,7 +62,7 @@ export class Edge extends Graphics {
     this.clear();
     this.moveTo(startPos.x, startPos.y);
     this.lineTo(endPos.x, endPos.y);
-    this.stroke({ width: 3, color: 0x00FF00 });
+    this.stroke({ width: 3, color: 0x8FD19E });
     this.startPos = startPos;
     this.endPos = endPos;
   }
@@ -72,40 +76,25 @@ export class Edge extends Graphics {
     console.log("deseleccione");
   }
 
-  // Method to display the edge information and the delete button
+  // Método para mostrar la información del Edge
   showInfo() {
-    const rightBar = document.getElementById("info-content");
-    if (rightBar) {
-      const startX = this.startPos.x.toFixed(2);
-      const startY = this.startPos.y.toFixed(2);
-      const endX = this.endPos.x.toFixed(2);
-      const endY = this.endPos.y.toFixed(2);
+    // Llama a renderInfo para mostrar la información del Edge
+    this.rightbar.renderInfo("Edge Information", [
+      { label: "Edge ID", value: this.id.toString() },
+      { label: "Connected Devices", value: `${this.connectedNodes.n1} <=> ${this.connectedNodes.n2}` },
+      { label: "Start Position", value: `x=${this.startPos.x.toFixed(2)}, y=${this.startPos.y.toFixed(2)}` },
+      { label: "End Position", value: `x=${this.endPos.x.toFixed(2)}, y=${this.endPos.y.toFixed(2)}` }
+    ]);
 
-      rightBar.innerHTML = `
-        <h3>Edge Information</h3>
-        <p><strong>Edge ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${this.connectedNodes.n1} <=> ${this.connectedNodes.n2}</p>
-        <p><strong>Start Position:</strong> x=${startX}, y=${startY}</p>
-        <p><strong>End Position:</strong> x=${endX}, y=${endY}</p>
-        <button id="delete-edge">Delete Edge</button>
-      `;
-
-      // Add event to the delete button
-      const deleteButton = document.getElementById("delete-edge");
-      deleteButton?.addEventListener("click", () => this.deleteEdge());
-    }
+    // Añade el botón de eliminación utilizando addButton
+    this.rightbar.addButton("Delete Edge", () => this.deleteEdge());
   }
 
   // Method to delete the edge
   deleteEdge() {
     // Remove the edge from the viewgraph and datagraph
     this.viewgraph.removeEdge(this.id);
-
-    // Display a confirmation message in the right-bar
-    const rightBar = document.getElementById("info-content");
-    if (rightBar) {
-      rightBar.innerHTML = "<p>Edge deleted.</p>";
-    }
+    deselectElement();
 
     console.log(`Edge with ID ${this.id} deleted.`);
   }

@@ -1,10 +1,10 @@
-import { Texture, Sprite, FederatedPointerEvent, Graphics } from "pixi.js";
-import { OutlineFilter } from "@pixi/filter-outline";
+import { Texture, Sprite, FederatedPointerEvent } from "pixi.js";
 import RouterImage from "../assets/router.svg";
 import ServerImage from "../assets/server.svg";
 import PcImage from "../assets/pc.svg";
 import { ViewGraph } from "./graphs/viewgraph";
 import { selectElement } from "./viewportManager";
+import { RightBar } from "../index"
 
 export const DEVICE_SIZE = 20;
 
@@ -21,9 +21,7 @@ export class Device extends Sprite {
   connections = new Map<number, number>();
   offsetX = 0;
   offsetY = 0;
-  connectIcon: Graphics;
-  selectionCircle: Graphics | null = null; // Círculo de selección
-  outlineFilter: any;
+  rightbar: RightBar;
 
   constructor(
     id: number,
@@ -31,9 +29,11 @@ export class Device extends Sprite {
     viewgraph: ViewGraph,
     position: { x: number; y: number } | null = null,
   ) {
+
     const texture = Texture.from(svg);
     super(texture);
-
+    
+    this.rightbar = RightBar.getFrom(document);
     this.id = id;
     this.viewgraph = viewgraph;
 
@@ -80,18 +80,6 @@ export class Device extends Sprite {
     // Setup the size of the new element
     sprite.width = sprite.width / 70;
     sprite.height = sprite.height / DEVICE_SIZE;
-  }
-
-  // Method to update the right-bar with device info
-  showInfo() {
-    const rightBar = document.getElementById("info-content");
-    if (rightBar) {
-      rightBar.innerHTML = `
-            <h3>Device Information</h3>
-            <p><strong>ID:</strong> ${this.id}</p>
-            <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? Array.from(this.connections.values()) : "None"}</p>
-        `;
-    }
   }
 
   deleteDevice(): void {
@@ -166,7 +154,6 @@ export class Device extends Sprite {
   }
 
   onClick(e: FederatedPointerEvent) {
-    selectElement(this);
     e.stopPropagation();
 
     if (selectedDeviceId) {
@@ -183,6 +170,11 @@ export class Device extends Sprite {
         selectedDeviceId = null;
       }
     }
+    selectElement(this);
+  }
+
+  showInfo() {
+    throw new Error("Method not implemented.");
   }
 
   select() {
@@ -207,28 +199,24 @@ export class Router extends Device {
   }
 
   showInfo() {
-    const rightBar = document.getElementById("info-content");
-    if (rightBar) {
-      rightBar.innerHTML = `
-        <h3>Router Information</h3>
-        <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
-        <p><strong>Type:</strong> Router</p>
-        <button id="connect-device" class="right-bar-button">Connect device</button>
-        <button id="delete-device" class="right-bar-button">Delete device</button>
-      `;
+    // Muestra la información específica del Router
+    this.rightbar.renderInfo("Router Information", [
+      { label: "ID", value: this.id.toString() },
+      { label: "Connected Devices", value: this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None" },
+      { label: "Model", value: "TP-Link AX6000" },
+      { label: "IP Address", value: "192.168.1.1" },
+      { label: "Firmware Version", value: "1.2.3" },
+      { label: "Uptime", value: "5 days, 4 hours, 23 minutes" }
+    ]);
 
-      // Add event to the connect button
-      const connectButton = document.getElementById("connect-device");
-      connectButton?.addEventListener(
-        "click",
-        () => setSelectedDeviceId(this.id),
-      ); //this.connectDevice());
+    // Agrega los botones comunes y específicos del Router
+    this.rightbar.addButton("Connect device", () => setSelectedDeviceId(this.id), "right-bar-button", true);
+    this.rightbar.addButton("Delete device", () => this.deleteDevice());
+    this.rightbar.addButton("Reboot Router", () => this.rebootRouter());
+  }
 
-      // Add event to the delete button
-      const deleteButton = document.getElementById("delete-device");
-      deleteButton?.addEventListener("click", () => this.deleteDevice());
-    }
+  rebootRouter() {
+    console.log("Rebooting router...");
   }
 }
 
@@ -243,28 +231,33 @@ export class Server extends Device {
   }
 
   showInfo() {
-    const rightBar = document.getElementById("info-content");
-    if (rightBar) {
-      rightBar.innerHTML = `
-        <h3>Server Information</h3>
-        <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
-        <p><strong>Type:</strong> Server</p>
-        <button id="connect-device" class="right-bar-button">Connect device</button>
-        <button id="delete-device" class="right-bar-button">Delete device</button>
-      `;
+    // Muestra la información específica del Server
+    this.rightbar.renderInfo("Server Information", [
+      { label: "ID", value: this.id.toString() },
+      { label: "Connected Devices", value: this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None" },
+      { label: "Operating System", value: "Ubuntu 20.04 LTS" },
+      { label: "CPU Usage", value: "42%" },
+      { label: "Memory Usage", value: "8 GB / 16 GB" },
+      { label: "Disk Space", value: "500 GB / 1 TB" },
+      { label: "Last Backup", value: "2024-11-01 02:30 AM" }
+    ]);
 
-      // Add event to the connect button
-      const connectButton = document.getElementById("connect-device");
-      connectButton?.addEventListener(
-        "click",
-        () => setSelectedDeviceId(this.id),
-      );
+    // Agrega los botones comunes y específicos del Server
+    this.rightbar.addButton("Connect device", () => setSelectedDeviceId(this.id), "right-bar-button", true);
+    this.rightbar.addButton("Delete device", () => this.deleteDevice());
+    this.rightbar.addButton("Shutdown Server", () => this.shutdownServer());
+    this.rightbar.addButton("Start Server", () => this.startServer());
+  }
 
-      // Add event to the delete button
-      const deleteButton = document.getElementById("delete-device");
-      deleteButton?.addEventListener("click", () => this.deleteDevice());
-    }
+
+  shutdownServer() {
+    console.log("Shutting down server...");
+    this.tint = 0xFF0000; // Cambia el color del sprite a rojo
+  }
+
+  startServer() {
+    console.log("Starting server...");
+    this.tint = 0x00FF00; // Cambia el color del sprite a verde
   }
 }
 
@@ -279,27 +272,23 @@ export class Pc extends Device {
   }
 
   showInfo() {
-    const rightBar = document.getElementById("info-content");
-    if (rightBar) {
-      rightBar.innerHTML = `
-        <h3>PC Information</h3>
-        <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None"}</p>
-        <p><strong>Type:</strong> PC</p>
-        <button id="connect-device" class="right-bar-button">Connect device</button>
-        <button id="delete-device" class="right-bar-button">Delete device</button>
-      `;
+    // Muestra la información específica del PC
+    this.rightbar.renderInfo("PC Information", [
+      { label: "ID", value: this.id.toString() },
+      { label: "Connected Devices", value: this.connections.size !== 0 ? "[" + Array.from(this.connections.values()).join(", ") + "]" : "None" },
+      { label: "Operating System", value: "Windows 10 Pro" },
+      { label: "Antivirus Status", value: "Active" },
+      { label: "IP Address", value: "192.168.1.100" },
+      { label: "Storage Available", value: "250 GB / 512 GB" }
+    ]);
 
-      // Add event to the connect button
-      const connectButton = document.getElementById("connect-device");
-      connectButton?.addEventListener(
-        "click",
-        () => setSelectedDeviceId(this.id),
-      );
+    // Agrega los botones comunes y específicos del PC
+    this.rightbar.addButton("Connect device", () => setSelectedDeviceId(this.id), "right-bar-button", true);
+    this.rightbar.addButton("Delete device", () => this.deleteDevice());
+    this.rightbar.addButton("Run Virus Scan", () => this.runVirusScan());
+  }
 
-      // Add event to the delete button
-      const deleteButton = document.getElementById("delete-device");
-      deleteButton?.addEventListener("click", () => this.deleteDevice());
-    }
+  runVirusScan() {
+    console.log("Running virus scan on PC...");
   }
 }
