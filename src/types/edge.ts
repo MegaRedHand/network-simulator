@@ -12,7 +12,7 @@ export interface Position {
 export enum Colors {
   Violet = 0x4b0082, // Violeta
   Burgundy = 0x6d071a, // Bordo
-  Lightblue = 0x1E90FF, // celeste
+  Lightblue = 0x1e90ff, // celeste
 }
 
 export class Edge extends Graphics {
