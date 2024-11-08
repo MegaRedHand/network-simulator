@@ -9,14 +9,16 @@ import ComputerSvg from "./assets/pc.svg";
 import { Application, Graphics, EventSystem, Assets } from "pixi.js";
 
 import * as pixi_viewport from "pixi-viewport";
-import { NetworkGraph } from "./types/networkgraph";
+import { ViewGraph } from "./types/graphs/viewgraph";
 import {
   AddPc,
   AddRouter,
   AddServer,
   loadGraph,
   saveGraph,
+  selectElement,
 } from "./types/viewportManager";
+import { DataGraph } from "./types/graphs/datagraph";
 
 const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;
@@ -25,18 +27,25 @@ const WORLD_HEIGHT = 10000;
 
 export class GlobalContext {
   private viewport: Viewport = null;
-  private network: NetworkGraph = new NetworkGraph();
+  private datagraph: DataGraph;
+  private viewgraph: ViewGraph;
 
   initialize(viewport: Viewport) {
     this.viewport = viewport;
+    this.datagraph = new DataGraph();
+    this.viewgraph = new ViewGraph(this.datagraph, this.viewport);
   }
 
   getViewport() {
     return this.viewport;
   }
 
-  getNetwork() {
-    return this.network;
+  getViewGraph() {
+    return this.viewgraph;
+  }
+
+  getDataGraph() {
+    return this.datagraph;
   }
 }
 
@@ -69,6 +78,13 @@ export class Viewport extends pixi_viewport.Viewport {
     this.initializeMovement();
 
     this.addChild(new Background());
+
+    this.on("click", (event) => {
+      // If the click target is the viewport itself, deselect any selected element
+      if (event.target === this) {
+        selectElement(null);
+      }
+    });
   }
 
   private initializeMovement() {
@@ -124,16 +140,115 @@ class LeftBar {
   }
 }
 
-// > right_bar.ts
-
-class RightBar {
+export class RightBar {
+  private static instance: RightBar | null = null; // Unique instance
   private rightBar: HTMLElement;
 
-  constructor(rightBar: HTMLElement) {
+  private constructor(rightBar: HTMLElement) {
     this.rightBar = rightBar;
+    this.initializeBaseContent();
   }
-  static getFrom(document: Document) {
-    return new RightBar(document.getElementById("right-bar"));
+
+  // Static method to get the unique instance of RightBar
+  static getInstance() {
+    // If an instance already exists, return it. If not, create it.
+    if (!RightBar.instance) {
+      const rightBarElement = document.getElementById("right-bar");
+      if (!rightBarElement) {
+        console.error("Element with ID 'right-bar' not found.");
+        return null;
+      }
+      RightBar.instance = new RightBar(rightBarElement);
+    }
+    return RightBar.instance;
+  }
+
+  // Initializes the base title and info container (called only once)
+  private initializeBaseContent() {
+    const title = document.createElement("h2");
+    title.textContent = "Information";
+    this.rightBar.appendChild(title);
+
+    const infoContent = document.createElement("div");
+    infoContent.id = "info-content";
+    this.rightBar.appendChild(infoContent);
+  }
+
+  // Method to clear the content of the rightBar
+  clearContent() {
+    this.rightBar.innerHTML = ""; // Clears all current content
+  }
+
+  // Shows specific information of an element in info-content
+  renderInfo(title: string, info: { label: string; value: string }[]) {
+    this.clearContent(); // Clears before adding new content
+    this.initializeBaseContent(); // Adds the base title and empty container
+
+    const infoContent = document.getElementById("info-content");
+    if (infoContent) {
+      const header = document.createElement("h3");
+      header.textContent = title;
+      infoContent.appendChild(header);
+
+      info.forEach((item) => {
+        const p = document.createElement("p");
+        p.innerHTML = `<strong>${item.label}:</strong> ${item.value}`;
+        infoContent.appendChild(p);
+      });
+    }
+  }
+
+  // Adds a standard button to the right-bar
+  addButton(
+    text: string,
+    onClick: () => void,
+    buttonClass = "right-bar-button",
+    toggleSelected = false,
+  ) {
+    const button = document.createElement("button");
+    button.classList.add(buttonClass);
+    button.textContent = text;
+    button.onclick = () => {
+      onClick();
+      if (toggleSelected) {
+        button.classList.toggle("selected-button"); // Changes color on click
+      }
+    };
+    this.rightBar.appendChild(button);
+  }
+
+  // Adds a select dropdown to the right-bar
+  addDropdown(
+    label: string,
+    options: { value: string; text: string }[],
+    onChange: (selectedValue: string) => void,
+    selectId?: string,
+  ) {
+    const container = document.createElement("div");
+    container.classList.add("dropdown-container");
+
+    const labelElement = document.createElement("label");
+    labelElement.textContent = label;
+    labelElement.classList.add("right-bar-label");
+
+    const select = document.createElement("select");
+    select.classList.add("right-bar-select");
+    if (selectId) select.id = selectId; // Assigns ID if provided
+
+    options.forEach((optionData) => {
+      const option = document.createElement("option");
+      option.value = optionData.value;
+      option.textContent = optionData.text;
+      select.appendChild(option);
+    });
+
+    select.onchange = () => {
+      onChange(select.value);
+    };
+
+    container.appendChild(labelElement);
+    container.appendChild(select);
+    this.rightBar.appendChild(container);
   }
 }
 
@@ -141,7 +256,6 @@ class RightBar {
 
 // IIFE to avoid errors
 (async () => {
-  // Obtener el ancho y alto de las barras laterales y superior
   const lBar = document.getElementById("left-bar");
   const rBar = document.getElementById("right-bar");
   const tBar = document.getElementById("top-bar");
@@ -152,7 +266,7 @@ class RightBar {
     width: window.innerWidth,
     height: window.innerHeight,
     resolution: window.devicePixelRatio || 1,
-    autoDensity: true, // Ajusta la densidad para pantallas de alta resolución
+    autoDensity: true,
   });
 
   const canvasPlaceholder = document.getElementById("canvas");
@@ -173,22 +287,18 @@ class RightBar {
 
   // Add router button
   leftBar.addButton(RouterSvg, () => {
-    AddRouter(ctx); // Esta es una función anónima que ejecuta AddRouter cuando se hace clic
+    AddRouter(ctx);
   });
 
   // Add server button
   leftBar.addButton(ServerSvg, () => {
-    AddServer(ctx); // Función anónima que ejecuta AddServer cuando se hace clic
+    AddServer(ctx);
   });
 
   // // Add PC button
   leftBar.addButton(ComputerSvg, () => {
-    AddPc(ctx); // Función anónima que ejecuta AddPc cuando se hace clic
+    AddPc(ctx);
   });
-
-  // Get right bar
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const rightBar = RightBar.getFrom(document);
 
   ctx.initialize(viewport);
 
@@ -197,16 +307,13 @@ class RightBar {
 
   // Resize logic
   function resize() {
-    // Obtener los tamaños actuales de las barras desde el DOM
-    const leftBarWidth = lBar ? lBar.offsetWidth : 100; // Ancho actual de la barra izquierda
-    const rightBarWidth = rBar ? rBar.offsetWidth : 250; // Ancho actual de la barra derecha
-    const topBarHeight = tBar ? tBar.offsetHeight : 40; // Altura actual de la barra superior
+    const leftBarWidth = lBar ? lBar.offsetWidth : 100;
+    const rightBarWidth = rBar ? rBar.offsetWidth : 250;
+    const topBarHeight = tBar ? tBar.offsetHeight : 40;
 
-    // Calcular el nuevo tamaño del canvas
     const newWidth = window.innerWidth - leftBarWidth - rightBarWidth;
     const newHeight = window.innerHeight - topBarHeight;
 
-    // Redimensionar el renderer y el viewport de Pixi.js
     app.renderer.resize(newWidth, newHeight);
     viewport.resize(newWidth, newHeight);
   }
@@ -215,16 +322,13 @@ class RightBar {
 
   window.addEventListener("resize", resize);
 
-  // Gestión de los botones de carga y guardado
   const loadButton = document.getElementById("load-button");
   const saveButton = document.getElementById("save-button");
 
-  // Función para manejar el botón de guardar
   saveButton.onclick = () => {
-    saveGraph(ctx); // Llama a la función saveGraph pasando el contexto actual
+    saveGraph(ctx);
   };
 
-  // Función para manejar el botón de cargar
   loadButton.onclick = () => {
     const input = document.createElement("input");
     input.type = "file";
@@ -237,11 +341,11 @@ class RightBar {
 
       reader.onload = (readerEvent) => {
         const jsonData = readerEvent.target.result as string;
-        loadGraph(jsonData, ctx); // Llama a la función loadGraph pasando el JSON y el contexto
+        loadGraph(jsonData, ctx);
       };
     };
 
-    input.click(); // Simula el click para abrir el cuadro de diálogo de selección de archivo
+    input.click();
   };
 
   console.log("initialized!");

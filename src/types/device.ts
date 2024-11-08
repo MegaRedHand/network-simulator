@@ -1,58 +1,85 @@
-import { Texture, Sprite, FederatedPointerEvent } from "pixi.js";
-
+import { Texture, Sprite, FederatedPointerEvent, Graphics } from "pixi.js";
 import RouterImage from "../assets/router.svg";
 import ServerImage from "../assets/server.svg";
 import PcImage from "../assets/pc.svg";
-import { NetworkGraph } from "./networkgraph";
 import { Packet } from "./packet";
-import { Edge } from "./edge";
-import { Viewport } from "..";
+import { ViewGraph } from "./graphs/viewgraph";
+import {
+  deselectElement,
+  refreshElement,
+  selectElement,
+} from "./viewportManager";
+import { RightBar } from "../index";
 
 export const DEVICE_SIZE = 20;
-let currentLineStartId: number | null = null;
 
-export class Device {
+let selectedDeviceId: number | null = null; // Stores only the ID instead of 'this'
+
+export function setSelectedDeviceId(value: number | null) {
+  selectedDeviceId = value;
+}
+
+export class Device extends Sprite {
   id: number;
   dragging = false;
-  sprite: Sprite;
-  fatherGraph: NetworkGraph;
-  stage: Viewport;
-  connections = new Map<number, Edge>();
+  viewgraph: ViewGraph;
+  connections = new Map<number, number>();
   offsetX = 0;
   offsetY = 0;
+  rightbar: RightBar;
+  highlightMarker: Graphics | null = null; // Marker to indicate selection
 
-  private static idCounter = 0;
+  constructor(
+    id: number,
+    svg: string,
+    viewgraph: ViewGraph,
+    position: { x: number; y: number } | null = null,
+  ) {
+    const texture = Texture.from(svg);
+    super(texture);
 
-  constructor(device: string, graph: NetworkGraph, stage: Viewport) {
-    console.log("Entro a constructor de Device");
-    this.fatherGraph = graph;
-    this.id = Device.idCounter++;
+    this.rightbar = RightBar.getInstance();
+    this.id = id;
+    this.viewgraph = viewgraph;
 
-    const texture = Texture.from(device);
-    const sprite = Sprite.from(texture);
-    console.log(sprite.texture);
-    sprite.anchor.x = 0.5;
-    sprite.anchor.y = 0.5;
-    console.log(sprite.zIndex);
+    this.anchor.set(0.5);
 
-    const worldCenter = stage.toWorld(
-      stage.screenWidth / 2,
-      stage.screenHeight / 2,
+    // Use specified coordinates or center of the world
+    const stage = this.viewgraph.getViewport();
+    if (position) {
+      this.x = position.x;
+      this.y = position.y;
+    } else {
+      const worldCenter = stage.toWorld(
+        stage.screenWidth / 2,
+        stage.screenHeight / 2,
+      );
+      this.x = worldCenter.x;
+      this.y = worldCenter.y;
+    }
+
+    this.eventMode = "static";
+    this.interactive = true;
+    this.cursor = "pointer";
+
+    this.on("pointerdown", this.onPointerDown, this);
+    this.on("click", this.onClick, this);
+  }
+
+  getConnections(): { edgeId: number; adyacentId: number }[] {
+    return Array.from(this.connections.entries()).map(
+      ([edgeId, adyacentId]) => {
+        return { edgeId, adyacentId };
+      },
     );
+  }
 
-    sprite.x = worldCenter.x;
-    sprite.y = worldCenter.y;
+  addConnection(edgeId: number, adyacentId: number) {
+    this.connections.set(edgeId, adyacentId);
+  }
 
-    sprite.eventMode = "static";
-    sprite.interactive = true;
-
-    stage.addChild(sprite);
-
-    sprite.on("pointerdown", this.onPointerDown, this);
-    sprite.on("click", this.onClick, this);
-
-    this.sprite = sprite;
-    this.stage = stage;
+  removeConnection(id: number) {
+    this.connections.delete(id);
   }
 
   resize(sprite: Sprite): void {
@@ -66,14 +93,14 @@ export class Device {
     );
 
     const packetColors: Record<string, number> = {
-      IP: 0x00ff00, // Verde para paquetes IP
+      IP: 0x0000ff, // Verde para paquetes IP
       ICMP: 0xff0000, // Rojo para paquetes ICMP
     };
 
     const color = packetColors[packetType] || 0xffffff; // Color por defecto blanco
     const speed = 200; // Velocidad en píxeles por segundo
 
-    const pathEdgeIds = this.fatherGraph.getPathBetween(this.id, destinationId);
+    const pathEdgeIds = this.viewgraph.getPathBetween(this.id, destinationId);
 
     if (pathEdgeIds.length === 0) {
       console.warn(
@@ -82,225 +109,297 @@ export class Device {
       return;
     }
 
-    const pathEdges = pathEdgeIds.map((id) => this.fatherGraph.getEdge(id));
+    const pathEdges = pathEdgeIds.map((id) => this.viewgraph.getEdge(id));
 
     const packet = new Packet(color, speed);
-    this.stage.addChild(packet);
+    const stage = this.viewgraph.getViewport();
+    stage.addChild(packet);
     packet.animateAlongPath(pathEdges, this.id);
   }
 
-  // Método general para mostrar la información del dispositivo
-  showInfo(extraInfo = "") {
-    const rightBar = document.getElementById("info-content");
-    if (rightBar) {
-      const connectedDeviceIds = Array.from(this.connections.values())
-        .map((edge) =>
-          edge.connectedNodes.n1 === this.id
-            ? edge.connectedNodes.n2
-            : edge.connectedNodes.n1,
-        )
-        .join(", ");
-
-      rightBar.innerHTML = `
-        <h3>${this.constructor.name} Information</h3>
-        <p><strong>ID:</strong> ${this.id}</p>
-        <p><strong>Connected Devices:</strong> ${connectedDeviceIds ? connectedDeviceIds : "None"}</p>
-        ${extraInfo}
-      `;
-    }
+  deleteDevice(): void {
+    this.viewgraph.removeDevice(this.id);
+    // Clear connections
+    this.connections.clear();
+    deselectElement();
   }
 
-  // Método para manejar la información específica de envío de paquetes
   showPacketInfo() {
-    const adjacentDevices = Array.from(this.fatherGraph.getDevices().keys());
-
-    const destinationOptions = adjacentDevices
-      .filter((id) => id !== this.id)
-      .map((id) => `<option value="${id}">${id}</option>`)
-      .join("");
-
-    // Agrega un evento al botón para manejar el envío del paquete
-    const sendPacketButtonId = "sendPacketButton";
-
-    const htmlContent = `
-      <h3>Send Packet</h3>
-      <label for="packet-type">Select Packet Type:</label>
-      <select id="packet-type">
-        <option value="IP">IP</option>
-        <option value="ICMP">ICMP</option>
-      </select>
-      <label for="destination">Select Destination:</label>
-      <select id="destination">
-        ${destinationOptions}
-      </select>
-      <button id="${sendPacketButtonId}">Send Packet</button>
-    `;
-
-    // Asigna el listener al botón
-    setTimeout(() => {
-      const button = document.getElementById(sendPacketButtonId);
-      if (button) {
-        button.addEventListener("click", () => {
-          const packetType = (
-            document.getElementById("packet-type") as HTMLSelectElement
-          ).value;
-          const destinationId = parseInt(
-            (document.getElementById("destination") as HTMLSelectElement).value,
-            10,
-          );
-          this.sendPacket(packetType, destinationId);
-        });
-      }
-    }, 0); // Delay para asegurar que el HTML esté en el DOM
-
-    return htmlContent;
+    this.rightbar.renderInfo("Packet Options", [
+      { label: "Packet Type", value: "Select a type from the dropdown" },
+      { label: "Destination", value: "Select a destination from the dropdown" },
+    ]);
   }
 
   onPointerDown(event: FederatedPointerEvent): void {
-    console.log("Entro al onPointerDown");
+    // console.log("Entered onPointerDown");
     this.dragging = true;
     event.stopPropagation();
 
-    const worldPosition = this.stage.toWorld(event.clientX, event.clientY);
-    this.offsetX = worldPosition.x - this.sprite.x;
-    this.offsetY = worldPosition.y - this.sprite.y;
+    // Get the pointer position in world (viewport) coordinates
+    const worldPosition = this.viewgraph
+      .getViewport()
+      .toWorld(event.clientX, event.clientY);
 
+    // Calculate the offset between the pointer and the sprite
+    this.offsetX = worldPosition.x - this.x;
+    this.offsetY = worldPosition.y - this.y;
+
+    // Listen to global pointermove and pointerup events
     document.addEventListener("pointermove", this.onPointerMove.bind(this));
     document.addEventListener("pointerup", this.onPointerUp.bind(this));
   }
 
-  onPointerMove = (event: FederatedPointerEvent): void => {
-    console.log("Entro al onPointerMove");
+  onPointerMove(event: FederatedPointerEvent): void {
+    // console.log("Entered onPointerMove");
     if (this.dragging) {
-      const worldPosition = this.stage.toWorld(event.clientX, event.clientY);
+      // Get the new pointer position in world coordinates
+      const worldPosition = this.viewgraph
+        .getViewport()
+        .toWorld(event.clientX, event.clientY);
+
+      // Calculate the new sprite position using the calculated offset
       const newPositionX = worldPosition.x - this.offsetX;
       const newPositionY = worldPosition.y - this.offsetY;
 
-      this.sprite.x = newPositionX;
-      this.sprite.y = newPositionY;
+      // Update the sprite position
+      this.x = newPositionX;
+      this.y = newPositionY;
 
-      this.updateLines();
-      this.fatherGraph.updateEdges();
+      // Notify view graph about its movement
+      this.viewgraph.deviceMoved(this.id);
     }
-  };
+  }
 
-  onPointerUp = (): void => {
-    console.log("Entro al onPointerUp");
+  onPointerUp(): void {
+    // console.log("Entered onPointerUp");
     this.dragging = false;
-    document.removeEventListener("pointermove", this.onPointerMove.bind(this));
-    document.removeEventListener("pointerup", this.onPointerUp.bind(this));
-  };
+    // Remove global pointermove and pointerup events
+    document.removeEventListener("pointermove", this.onPointerMove);
+    document.removeEventListener("pointerup", this.onPointerUp);
+  }
 
-  connectTo(
-    otherDevice: Device,
-    x1: number,
-    y1: number,
-    x2: number,
-    y2: number,
-  ): boolean {
-    console.log("entro en connectTo");
+  connectTo(adyacentId: number): boolean {
+    // Connects both devices with an edge.
+    // console.log("Entered connectTo");
 
-    const n1Info = { id: this.id, x: x1, y: y1 };
-    const n2Info = { id: otherDevice.id, x: x2, y: y2 };
-    const edge = this.fatherGraph.addEdge(n1Info, n2Info);
-    if (edge) {
-      this.connections.set(edge.id, edge);
-      otherDevice.connections.set(edge.id, edge);
-      this.stage.addChild(edge);
+    const edgeId = this.viewgraph.addEdge(this.id, adyacentId);
+    if (edgeId) {
+      const adyacentDevice = this.viewgraph.getDevice(adyacentId);
+      this.addConnection(edgeId, adyacentId);
+      adyacentDevice.addConnection(edgeId, this.id);
       return true;
     }
     return false;
   }
 
-  updateLines(): void {
-    this.connections.forEach((edge) => {
-      console.log("pasa por una linea");
+  onClick(e: FederatedPointerEvent) {
+    e.stopPropagation();
 
-      const startDevice =
-        edge.connectedNodes.n1 === this.id
-          ? this
-          : this.fatherGraph.getDevice(edge.connectedNodes.n1);
+    if (selectedDeviceId) {
+      // If the stored ID is the same as this device's, reset it
+      if (selectedDeviceId === this.id) {
+        return;
+      }
+      // The "LineStart" device ends up as the end of the drawing but it's the same
+      if (this.connectTo(selectedDeviceId)) {
+        // selectElement(this.viewgraph.getDevice(selectedDeviceId));
+        refreshElement();
+        selectedDeviceId = null;
+      }
+    } else {
+      selectElement(this);
+    }
+  }
 
-      const endDevice =
-        edge.connectedNodes.n1 === this.id
-          ? this.fatherGraph.getDevice(edge.connectedNodes.n2)
-          : this;
+  selectToConnect(id: number) {
+    if (selectedDeviceId === id) {
+      setSelectedDeviceId(null);
+    } else {
+      setSelectedDeviceId(id);
+    }
+  }
 
-      if (startDevice && endDevice) {
-        const dx = endDevice.sprite.x - startDevice.sprite.x;
-        const dy = endDevice.sprite.y - startDevice.sprite.y;
-        const angle = Math.atan2(dy, dx);
+  highlight() {
+    if (!this.highlightMarker) {
+      // Create the square as a selection marker
+      this.highlightMarker = new Graphics();
 
-        const offsetX = (startDevice.sprite.width / 2) * Math.cos(angle);
-        const offsetY = (startDevice.sprite.height / 2) * Math.sin(angle);
+      // Increase the square size
+      const size = this.width; // Side length of the square, now larger
 
-        edge.clear();
-        edge.moveTo(
-          startDevice.sprite.x + offsetX,
-          startDevice.sprite.y + offsetY,
-        );
-        edge.lineTo(endDevice.sprite.x - offsetX, endDevice.sprite.y - offsetY);
-        edge.stroke({ width: 2, color: 0x3e3e3e });
+      // Draw a square using moveTo and lineTo
+      this.highlightMarker.moveTo(-size / 2, -size / 2); // Move to the top left corner of the centered square
+      this.highlightMarker.lineTo(size / 2, -size / 2); // Top line
+      this.highlightMarker.lineTo(size / 2, size / 2); // Right line
+      this.highlightMarker.lineTo(-size / 2, size / 2); // Bottom line
+      this.highlightMarker.lineTo(-size / 2, -size / 2); // Left line, closes the square
+
+      // Change color to red and increase line thickness
+      this.highlightMarker.stroke({ width: 3, color: 0x4b0082 }); // Red and thicker
+
+      // Ensure the marker is in the same container as the viewport
+      this.addChild(this.highlightMarker);
+    }
+  }
+
+  removeHighlight() {
+    if (this.highlightMarker) {
+      this.highlightMarker.clear(); // Clear the graphic
+      this.removeChild(this.highlightMarker); // Remove the marker from the viewport
+      this.highlightMarker.destroy(); // Destroy the graphic object to free memory
+      this.highlightMarker = null;
+    }
+  }
+
+  addCommonButtons() {
+    this.rightbar.addButton(
+      "Connect device",
+      () => this.selectToConnect(this.id),
+      "right-bar-button",
+      true,
+    );
+    this.rightbar.addButton("Delete device", () => this.deleteDevice());
+
+    // Dropdown for selecting packet type
+    this.rightbar.addDropdown(
+      "Packet Type",
+      [
+        { value: "IP", text: "IP" },
+        { value: "ICMP", text: "ICMP" },
+      ],
+      (selectedValue) => {
+        console.log("Selected Packet Type:", selectedValue);
+      },
+      "packet-type",
+    );
+
+    // Dropdown for selecting destination
+    const adjacentDevices = this.viewgraph
+      .getDeviceIds()
+      .filter((id) => id !== this.id)
+      .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
+
+    this.rightbar.addDropdown(
+      "Destination",
+      adjacentDevices,
+      (selectedValue) => {
+        console.log("Selected Destination:", selectedValue);
+      },
+      "destination",
+    );
+
+    // Button to send the packet
+    this.rightbar.addButton("Send Packet", () => {
+      // Get the selected packet type and destination ID
+      const packetType = (
+        document.getElementById("packet-type") as HTMLSelectElement
+      )?.value;
+      const destinationId = Number(
+        (document.getElementById("destination") as HTMLSelectElement)?.value,
+      );
+
+      // Call the sendPacket method with the selected values
+      if (packetType && !isNaN(destinationId)) {
+        this.sendPacket(packetType, destinationId);
+      } else {
+        console.warn("Please select both a packet type and a destination.");
       }
     });
   }
 
-  onClick(e: FederatedPointerEvent) {
-    if (!e.altKey) {
-      this.showInfo(this.showPacketInfo());
-      e.stopPropagation();
-      return;
-    }
+  showInfo() {
+    throw new Error("Method not implemented.");
+  }
 
-    console.log("clicked on device", e);
-    e.stopPropagation();
+  select() {
+    this.highlight(); // Calls highlight on select
+    this.showInfo();
+  }
 
-    if (currentLineStartId === null) {
-      console.log("El LineStart es Null");
-      currentLineStartId = this.id;
-    } else {
-      console.log("El LineStart NO es Null");
-
-      if (currentLineStartId === this.id) {
-        currentLineStartId = null;
-        return;
-      }
-
-      const startDevice = this.fatherGraph.getDevice(currentLineStartId);
-
-      if (
-        startDevice &&
-        startDevice.connectTo(
-          this,
-          startDevice.sprite.x,
-          startDevice.sprite.y,
-          this.sprite.x,
-          this.sprite.y,
-        )
-      ) {
-        currentLineStartId = null;
-      }
-    }
+  deselect() {
+    this.removeHighlight(); // Calls removeHighlight on deselect
+    setSelectedDeviceId(null);
   }
 }
 
 export class Router extends Device {
-  constructor(graph: NetworkGraph, stage: Viewport) {
-    console.log("Entro a constructor de Router");
-    super(RouterImage, graph, stage);
+  constructor(
+    id: number,
+    viewgraph: ViewGraph,
+    position: { x: number; y: number },
+  ) {
+    console.log("Entered Router constructor");
+    super(id, RouterImage, viewgraph, position);
+  }
+
+  showInfo() {
+    // Shows specific Router information
+    this.rightbar.renderInfo("Router Information", [
+      { label: "ID", value: this.id.toString() },
+      {
+        label: "Connected Devices",
+        value:
+          this.connections.size !== 0
+            ? "[" + Array.from(this.connections.values()).join(", ") + "]"
+            : "None",
+      },
+    ]);
+
+    this.addCommonButtons();
   }
 }
 
 export class Server extends Device {
-  constructor(graph: NetworkGraph, stage: Viewport) {
-    console.log("Entro a constructor de Server");
-    super(ServerImage, graph, stage);
+  constructor(
+    id: number,
+    viewgraph: ViewGraph,
+    position: { x: number; y: number },
+  ) {
+    console.log("Entered Server constructor");
+    super(id, ServerImage, viewgraph, position);
+  }
+
+  showInfo() {
+    // Shows specific Server information
+    this.rightbar.renderInfo("Server Information", [
+      { label: "ID", value: this.id.toString() },
+      {
+        label: "Connected Devices",
+        value:
+          this.connections.size !== 0
+            ? "[" + Array.from(this.connections.values()).join(", ") + "]"
+            : "None",
+      },
+    ]);
+
+    this.addCommonButtons();
   }
 }
 
 export class Pc extends Device {
-  constructor(graph: NetworkGraph, stage: Viewport) {
-    console.log("Entro a constructor de PC");
-    super(PcImage, graph, stage);
+  constructor(
+    id: number,
+    viewgraph: ViewGraph,
+    position: { x: number; y: number },
+  ) {
+    console.log("Entered Pc constructor");
+    super(id, PcImage, viewgraph, position);
+  }
+
+  showInfo() {
+    // Shows specific PC information
+    this.rightbar.renderInfo("PC Information", [
+      { label: "ID", value: this.id.toString() },
+      {
+        label: "Connected Devices",
+        value:
+          this.connections.size !== 0
+            ? "[" + Array.from(this.connections.values()).join(", ") + "]"
+            : "None",
+      },
+    ]);
+
+    this.addCommonButtons();
   }
 }
