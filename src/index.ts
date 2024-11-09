@@ -19,6 +19,7 @@ import {
   selectElement,
 } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
+import { packetTicker } from "./types/packet";
 
 const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;
@@ -347,6 +348,20 @@ export class RightBar {
 
     input.click();
   };
+
+  const pauseButton = document.getElementById("pause-button");
+  let paused = false;
+  pauseButton.onclick = () => {
+    paused = !paused;
+    if (paused) {
+      pauseButton.textContent = "Resume";
+      packetTicker.stop();
+    } else {
+      pauseButton.textContent = "Pause";
+      packetTicker.start();
+    }
+  };
+  packetTicker.start();
 
   console.log("initialized!");
 })();
