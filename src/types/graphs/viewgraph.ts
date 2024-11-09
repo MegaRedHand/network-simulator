@@ -1,4 +1,4 @@
-import { Device, Pc, Router, Server } from "./../device"; // Import the Device class
+import { Device, Pc, Router, Server } from "./../devices/index"; // Import the Device class
 import { Edge } from "./../edge";
 import { DataGraph } from "./datagraph";
 import { Viewport } from "../..";

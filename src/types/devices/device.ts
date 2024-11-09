@@ -1,15 +1,14 @@
+// src/devices/device.ts
+
 import { Texture, Sprite, FederatedPointerEvent, Graphics } from "pixi.js";
-import RouterImage from "../assets/router.svg";
-import ServerImage from "../assets/server.svg";
-import PcImage from "../assets/pc.svg";
-import { Packet } from "./packet";
-import { ViewGraph } from "./graphs/viewgraph";
+import { ViewGraph } from "../graphs/viewgraph";
+import { RightBar } from "../../index";
 import {
   deselectElement,
   refreshElement,
   selectElement,
-} from "./viewportManager";
-import { RightBar } from "../index";
+} from "../viewportManager";
+import { Packet } from "../packet";
 
 export const DEVICE_SIZE = 20;
 
@@ -313,86 +312,5 @@ export class Device extends Sprite {
   deselect() {
     this.removeHighlight(); // Calls removeHighlight on deselect
     setSelectedDeviceId(null);
-  }
-}
-
-export class Router extends Device {
-  constructor(
-    id: number,
-    viewgraph: ViewGraph,
-    position: { x: number; y: number },
-  ) {
-    console.log("Entered Router constructor");
-    super(id, RouterImage, viewgraph, position);
-  }
-
-  showInfo() {
-    // Shows specific Router information
-    this.rightbar.renderInfo("Router Information", [
-      { label: "ID", value: this.id.toString() },
-      {
-        label: "Connected Devices",
-        value:
-          this.connections.size !== 0
-            ? "[" + Array.from(this.connections.values()).join(", ") + "]"
-            : "None",
-      },
-    ]);
-
-    this.addCommonButtons();
-  }
-}
-
-export class Server extends Device {
-  constructor(
-    id: number,
-    viewgraph: ViewGraph,
-    position: { x: number; y: number },
-  ) {
-    console.log("Entered Server constructor");
-    super(id, ServerImage, viewgraph, position);
-  }
-
-  showInfo() {
-    // Shows specific Server information
-    this.rightbar.renderInfo("Server Information", [
-      { label: "ID", value: this.id.toString() },
-      {
-        label: "Connected Devices",
-        value:
-          this.connections.size !== 0
-            ? "[" + Array.from(this.connections.values()).join(", ") + "]"
-            : "None",
-      },
-    ]);
-
-    this.addCommonButtons();
-  }
-}
-
-export class Pc extends Device {
-  constructor(
-    id: number,
-    viewgraph: ViewGraph,
-    position: { x: number; y: number },
-  ) {
-    console.log("Entered Pc constructor");
-    super(id, PcImage, viewgraph, position);
-  }
-
-  showInfo() {
-    // Shows specific PC information
-    this.rightbar.renderInfo("PC Information", [
-      { label: "ID", value: this.id.toString() },
-      {
-        label: "Connected Devices",
-        value:
-          this.connections.size !== 0
-            ? "[" + Array.from(this.connections.values()).join(", ") + "]"
-            : "None",
-      },
-    ]);
-
-    this.addCommonButtons();
   }
 }
