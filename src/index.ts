@@ -351,7 +351,7 @@ export class RightBar {
 
   const pauseButton = document.getElementById("pause-button");
   let paused = false;
-  pauseButton.onclick = () => {
+  const triggerPause = () => {
     paused = !paused;
     if (paused) {
       pauseButton.textContent = "Resume";
@@ -361,7 +361,17 @@ export class RightBar {
       packetTicker.start();
     }
   };
+  pauseButton.onclick = () => {
+    triggerPause();
+  };
   packetTicker.start();
+
+  document.body.onkeyup = function (e) {
+    if (e.key == " " || e.code == "Space") {
+      triggerPause();
+      e.preventDefault();
+    }
+  };
 
   console.log("initialized!");
 })();
