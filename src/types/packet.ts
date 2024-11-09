@@ -1,6 +1,8 @@
 import { Graphics, Ticker } from "pixi.js";
 import { Edge, Position } from "./edge";
 
+export let packetTicker = new Ticker();
+
 export class Packet extends Graphics {
   speed: number;
   progress = 0;
@@ -27,7 +29,8 @@ export class Packet extends Graphics {
     this.currentPath = path;
     this.currentEdge = this.currentPath.shift();
     this.currentStart = start;
-    Ticker.shared.add(this.updateProgress, this);
+    // TODO: use global ticker, and add "shouldProgress" flag
+    packetTicker.add(this.updateProgress, this);
   }
 
   updateProgress(ticker: Ticker) {
