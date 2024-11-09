@@ -1,7 +1,7 @@
 import { Graphics, Ticker } from "pixi.js";
 import { Edge, Position } from "./edge";
 
-export let packetTicker = new Ticker();
+export const packetTicker = new Ticker();
 
 export class Packet extends Graphics {
   speed: number;

@@ -6,7 +6,7 @@ import RouterSvg from "./assets/router.svg";
 import ServerSvg from "./assets/server.svg";
 import ComputerSvg from "./assets/pc.svg";
 
-import { Application, Graphics, EventSystem, Assets, Ticker } from "pixi.js";
+import { Application, Graphics, EventSystem, Assets } from "pixi.js";
 
 import * as pixi_viewport from "pixi-viewport";
 import { ViewGraph } from "./types/graphs/viewgraph";
