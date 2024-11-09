@@ -1,4 +1,4 @@
-import { Device, Pc, Router, Server } from "./../device"; // Import the Device class
+import { Device, Pc, Router, Server } from "./../devices/index"; // Import the Device class
 import { Edge } from "./../edge";
 import { DataGraph } from "./datagraph";
 import { Viewport } from "../..";
@@ -170,6 +170,11 @@ export class ViewGraph {
     return Array.from(this.devices.values());
   }
 
+  // Devuelve un array con solo los IDs de los dispositivos
+  getDeviceIds(): number[] {
+    return Array.from(this.devices.keys());
+  }
+
   // Get the number of devices in the graph
   getDeviceCount(): number {
     return this.devices.size;
@@ -236,5 +241,47 @@ export class ViewGraph {
 
   getViewport() {
     return this.viewport;
+  }
+
+  // En ViewGraph
+  getEdge(edgeId: number): Edge | undefined {
+    return this.edges.get(edgeId);
+  }
+
+  /// Returns the IDs of the edges connecting the two devices
+  getPathBetween(idA: number, idB: number): number[] {
+    if (idA === idB) {
+      return [];
+    }
+    const a = this.devices.get(idA);
+    const b = this.devices.get(idB);
+    if (!a || !b) {
+      return [];
+    }
+    let current = a;
+    const unvisitedNodes = [];
+    const connectingEdges = new Map<number, number>([[a.id, null]]);
+    while (current.id !== idB) {
+      for (const [edgeId, adyacentId] of current.connections) {
+        const edge = this.edges.get(edgeId);
+        if (!connectingEdges.has(adyacentId)) {
+          connectingEdges.set(adyacentId, edge.id);
+          unvisitedNodes.push(this.devices.get(adyacentId));
+        }
+      }
+      if (unvisitedNodes.length === 0) {
+        return [];
+      }
+      current = unvisitedNodes.shift();
+    }
+    const path = [];
+    while (current.id !== idA) {
+      const edgeId = connectingEdges.get(current.id);
+      path.push(edgeId);
+      const edge = this.edges.get(edgeId);
+      const parentId = edge.otherEnd(current.id);
+      current = this.devices.get(parentId);
+    }
+    return path.reverse();
   }
 }

@@ -1,19 +1,25 @@
 import { Graphics } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
-import { Device } from "./device";
+import { Device } from "./devices/index"; // Import the Device class
 import { deselectElement, selectElement } from "./viewportManager";
 import { RightBar } from "..";
+
+export interface Position {
+  x: number;
+  y: number;
+}
 
 export enum Colors {
   Violet = 0x4b0082, // Violeta
   Burgundy = 0x6d071a, // Bordo
+  Lightblue = 0x1e90ff, // celeste
 }
 
 export class Edge extends Graphics {
   id: number;
   connectedNodes: { n1: number; n2: number };
-  startPos: { x: number; y: number };
-  endPos: { x: number; y: number };
+  startPos: Position;
+  endPos: Position;
   viewgraph: ViewGraph;
   rightbar: RightBar;
 
@@ -39,12 +45,24 @@ export class Edge extends Graphics {
     this.on("click", () => selectElement(this));
   }
 
+  nodePosition(nodeId: number): Position | undefined {
+    return this.connectedNodes.n1 === nodeId
+      ? this.startPos
+      : this.connectedNodes.n2 === nodeId
+        ? this.endPos
+        : undefined;
+  }
+
+  otherEnd(nodeId: number): number | undefined {
+    return this.connectedNodes.n1 === nodeId
+      ? this.connectedNodes.n2
+      : this.connectedNodes.n2 === nodeId
+        ? this.connectedNodes.n1
+        : undefined;
+  }
+
   // Method to draw the line
-  public drawEdge(
-    startPos: { x: number; y: number },
-    endPos: { x: number; y: number },
-    color: number,
-  ) {
+  public drawEdge(startPos: Position, endPos: Position, color: number) {
     this.clear();
     this.moveTo(startPos.x, startPos.y);
     this.lineTo(endPos.x, endPos.y);
@@ -69,7 +87,7 @@ export class Edge extends Graphics {
   }
 
   removeHighlight() {
-    this.drawEdge(this.startPos, this.endPos, Colors.Burgundy);
+    this.drawEdge(this.startPos, this.endPos, Colors.Lightblue);
   }
 
   // Method to show the Edge information
@@ -114,10 +132,16 @@ export class Edge extends Graphics {
     const offsetX2 = ((device2.width + 5) / 2) * Math.cos(angle);
     const offsetY2 = ((device2.height + 5) / 2) * Math.sin(angle);
 
-    const newStartPos = { x: device1.x + offsetX1, y: device1.y + offsetY1 };
-    const newEndPos = { x: device2.x - offsetX2, y: device2.y - offsetY2 };
+    const newStartPos: Position = {
+      x: device1.x + offsetX1,
+      y: device1.y + offsetY1,
+    };
+    const newEndPos: Position = {
+      x: device2.x - offsetX2,
+      y: device2.y - offsetY2,
+    };
 
-    this.drawEdge(newStartPos, newEndPos, 0x6d071a);
+    this.drawEdge(newStartPos, newEndPos, Colors.Lightblue);
   }
 
   public remove() {

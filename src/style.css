@@ -76,31 +76,6 @@ body {
   object-fit: contain; /* Maintains image proportion without distortion */
 }
 
-/* Style for the right sidebar */
-.right-bar {
-  flex: 0 0 250px; /* Fixed width of 250px for the right bar */
-  background-color: #f1f1f1; /* Light background for the bar */
-  box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.2); /* Left shadow to highlight the bar */
-  padding: 20px; /* Internal space around content */
-}
-
-/* Title of the information section in the right bar */
-.right-bar h2 {
-  text-align: center; /* Center the title horizontally */
-  margin: 0; /* Remove default margins */
-  padding-bottom: 15px; /* Space below the title */
-  font-size: 22px; /* Font size of the title */
-  font-weight: bold; /* Makes the title text thicker */
-  color: #333333; /* Dark gray text color */
-}
-
-/* Style for the information content in the right bar */
-.info-content {
-  font-size: 15px; /* Adjust font size */
-  font-weight: bold; /* Makes the text thicker */
-  color: #333333; /* Dark gray text color */
-}
-
 /* Container for the canvas (central graphic) */
 .canvas-container {
   flex: 1; /* Canvas takes up the remaining space between bars */
@@ -146,27 +121,91 @@ canvas {
   background-color: #357abd; /* Darker background on hover */
 }
 
+/* Style for the right sidebar */
+.right-bar {
+  flex: 0 0 250px; /* Fixed width of 250px for the right bar */
+  background-color: #f1f1f1; /* Light background for the bar */
+  box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.2); /* Left shadow to highlight the bar */
+  padding: 20px; /* Internal space around content */
+}
+
+/* Title of the information section in the right bar */
+.right-bar h2 {
+  text-align: center; /* Center the title horizontally */
+  margin: 0; /* Remove default margins */
+  padding-bottom: 15px; /* Space below the title */
+  font-size: 22px; /* Font size of the title */
+  font-weight: bold; /* Makes the title text thicker */
+  color: #333333; /* Dark gray text color */
+}
+
+/* Style for the information content in the right bar */
+.info-content {
+  font-size: 15px; /* Adjust font size */
+  font-weight: bold; /* Makes the text thicker */
+  color: #333333; /* Dark gray text color */
+}
+
 /* Style for buttons in the right bar */
 .right-bar-button {
-  background-color: #4caf50; /* Background color */
+  background-color: #4caf50;
   border: none;
   color: white;
-  padding: 10px 20px;
+  padding: 6px 12px; /* Reduce padding */
   text-align: center;
   text-decoration: none;
   display: inline-block;
-  font-size: 16px;
-  margin: 4px 2px;
+  font-size: 14px; /* Reduce font size */
+  margin: 3px 1px; /* Reduce margin */
   cursor: pointer;
-  border-radius: 5px;
-  width: 200px; /* Fixed width */
+  border-radius: 4px;
+  width: 180px; /* Reduce width slightly */
 }
 
 .right-bar-button:hover {
-  background-color: #45a049; /* Color when hovering */
+  background-color: #45a049;
 }
 
 .right-bar-button.selected-button {
-  background-color: #007bff; /* Blue or your preferred color */
+  background-color: #007bff;
   color: white;
+}
+
+/* Container for packet options */
+.packet-options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Reduce gap */
+  width: 100%;
+  margin-top: 8px; /* Reduce top margin */
+}
+
+/* Style for labels in the right bar */
+.right-bar-label {
+  font-weight: bold;
+  margin-bottom: 2px; /* Reduce bottom margin */
+  font-size: 12px; /* Reduce font size */
+  color: #333333;
+}
+
+/* Style for dropdowns (selectors) */
+.right-bar-select {
+  width: 100%;
+  padding: 6px; /* Reduce padding */
+  font-size: 14px; /* Reduce font size */
+  border-radius: 4px;
+  border: 1px solid #cccccc;
+  background-color: #f1f1f1;
+  cursor: pointer;
+}
+
+.right-bar-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.4); /* Slightly reduce shadow */
+}
+
+/* Optional: Style to make the entire dropdown area compact */
+.dropdown-container {
+  margin-bottom: 8px; /* Reduce bottom margin */
 }

@@ -198,7 +198,7 @@ export class RightBar {
     }
   }
 
-  // Adds a specific button to the right-bar
+  // Adds a standard button to the right-bar
   addButton(
     text: string,
     onClick: () => void,
@@ -215,6 +215,40 @@ export class RightBar {
       }
     };
     this.rightBar.appendChild(button);
+  }
+
+  // Adds a select dropdown to the right-bar
+  addDropdown(
+    label: string,
+    options: { value: string; text: string }[],
+    onChange: (selectedValue: string) => void,
+    selectId?: string,
+  ) {
+    const container = document.createElement("div");
+    container.classList.add("dropdown-container");
+
+    const labelElement = document.createElement("label");
+    labelElement.textContent = label;
+    labelElement.classList.add("right-bar-label");
+
+    const select = document.createElement("select");
+    select.classList.add("right-bar-select");
+    if (selectId) select.id = selectId; // Assigns ID if provided
+
+    options.forEach((optionData) => {
+      const option = document.createElement("option");
+      option.value = optionData.value;
+      option.textContent = optionData.text;
+      select.appendChild(option);
+    });
+
+    select.onchange = () => {
+      onChange(select.value);
+    };
+
+    container.appendChild(labelElement);
+    container.appendChild(select);
+    this.rightBar.appendChild(container);
   }
 }
 
