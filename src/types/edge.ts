@@ -3,16 +3,11 @@ import { ViewGraph } from "./graphs/viewgraph";
 import { Device } from "./devices/index"; // Import the Device class
 import { deselectElement, selectElement } from "./viewportManager";
 import { RightBar } from "..";
+import { Colors } from "../utils";
 
 export interface Position {
   x: number;
   y: number;
-}
-
-export enum Colors {
-  Violet = 0x4b0082, // Violeta
-  Burgundy = 0x6d071a, // Bordo
-  Lightblue = 0x1e90ff, // celeste
 }
 
 export class Edge extends Graphics {

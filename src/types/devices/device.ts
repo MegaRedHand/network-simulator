@@ -1,14 +1,13 @@
-// src/devices/device.ts
-
 import { Texture, Sprite, FederatedPointerEvent, Graphics } from "pixi.js";
-import { ViewGraph } from "../graphs/viewgraph";
-import { RightBar } from "../../index";
+import { Packet } from "./../packet";
+import { ViewGraph } from "./../graphs/viewgraph";
 import {
   deselectElement,
   refreshElement,
   selectElement,
-} from "../viewportManager";
-import { Packet } from "../packet";
+} from "./../viewportManager";
+import { RightBar } from "../../index";
+import { Colors } from "../../utils";
 
 export const DEVICE_SIZE = 20;
 
@@ -90,13 +89,6 @@ export class Device extends Sprite {
     console.log(
       `Sending ${packetType} packet from ${this.id} to ${destinationId}`,
     );
-
-    const packetColors: Record<string, number> = {
-      IP: 0x0000ff, // Verde para paquetes IP
-      ICMP: 0xff0000, // Rojo para paquetes ICMP
-    };
-
-    const color = packetColors[packetType] || 0xffffff; // Color por defecto blanco
     const speed = 200; // Velocidad en píxeles por segundo
 
     const pathEdgeIds = this.viewgraph.getPathBetween(this.id, destinationId);
@@ -110,7 +102,7 @@ export class Device extends Sprite {
 
     const pathEdges = pathEdgeIds.map((id) => this.viewgraph.getEdge(id));
 
-    const packet = new Packet(color, speed);
+    const packet = new Packet(packetType, speed, this.id, destinationId);
     const stage = this.viewgraph.getViewport();
     stage.addChild(packet);
     packet.animateAlongPath(pathEdges, this.id);
@@ -228,7 +220,7 @@ export class Device extends Sprite {
       this.highlightMarker.lineTo(-size / 2, -size / 2); // Left line, closes the square
 
       // Change color to red and increase line thickness
-      this.highlightMarker.stroke({ width: 3, color: 0x4b0082 }); // Red and thicker
+      this.highlightMarker.stroke({ width: 3, color: Colors.Violet }); // Red and thicker
 
       // Ensure the marker is in the same container as the viewport
       this.addChild(this.highlightMarker);

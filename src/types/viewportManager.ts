@@ -3,10 +3,11 @@ import { DataGraph, GraphNode } from "./graphs/datagraph";
 import { Device, Pc, Router, Server } from "./devices/index";
 import { Edge } from "./edge";
 import { RightBar } from "../index"; // Ensure the path is correct
+import { Packet } from "./packet";
 
-let selectedElement: Device | Edge | null = null; // Global variable to store the selected element
+let selectedElement: Device | Edge | Packet | null = null; // Global variable to store the selected element
 
-export function selectElement(element: Device | Edge | null) {
+export function selectElement(element: Device | Edge | Packet | null) {
   deselectElement();
 
   if (element) {
