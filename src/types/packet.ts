@@ -1,5 +1,8 @@
-import { Graphics, Ticker } from "pixi.js";
+import { FederatedPointerEvent, Graphics, Ticker } from "pixi.js";
 import { Edge, Position } from "./edge";
+import { selectElement } from "./viewportManager";
+import { Colors, drawCircle } from "../utils";
+import { RightBar } from "../index";
 
 export const packetTicker = new Ticker();
 
@@ -9,13 +12,69 @@ export class Packet extends Graphics {
   currentPath: Edge[];
   currentEdge: Edge;
   currentStart: number;
+  color: number;
+  type: string;
+  sourceId: number;
+  destinationId: number;
 
-  constructor(color: number, speed: number) {
+  constructor(
+    type: string,
+    speed: number,
+    sourceid: number,
+    destinationid: number,
+  ) {
     super();
-    this.beginFill(color);
-    this.drawCircle(0, 0, 5); // Cambiar a un círculo con radio de 5
-    this.endFill();
+
+    this.type = type;
+
+    const packetColors: Record<string, number> = {
+      IP: Colors.Green, // Verde para paquetes IP
+      ICMP: Colors.Red, // Rojo para paquetes ICMP
+    };
+
+    this.color = packetColors[this.type] || Colors.White; // Color por defecto blanco
+
+    drawCircle(this, this.color, 0, 0, 5);
     this.speed = speed;
+    this.sourceId = sourceid;
+    this.destinationId = destinationid;
+
+    this.interactive = true;
+    this.cursor = "pointer";
+    this.on("click", this.onClick, this);
+  }
+
+  onClick(e: FederatedPointerEvent) {
+    e.stopPropagation();
+    selectElement(this);
+  }
+
+  select() {
+    this.highlight(); // Calls highlight on select
+    this.showInfo();
+  }
+
+  deselect() {
+    this.removeHighlight(); // Calls removeHighlight on deselect
+  }
+
+  showInfo() {
+    const rightbar = RightBar.getInstance();
+    const info = [
+      { label: "Type", value: this.type },
+      { label: "Source ID", value: this.sourceId.toString() },
+      { label: "Destination ID", value: this.destinationId.toString() },
+    ];
+
+    rightbar.renderInfo("Packet Information", info);
+  }
+
+  highlight() {
+    drawCircle(this, Colors.Violet, 0, 0, 5);
+  }
+
+  removeHighlight() {
+    drawCircle(this, this.color, 0, 0, 5);
   }
 
   animateAlongPath(path: Edge[], start: number): void {
