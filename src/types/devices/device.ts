@@ -243,7 +243,7 @@ export class Device extends Sprite {
       "right-bar-button",
       true,
     );
-    this.rightbar.addButton("Delete device", () => this.deleteDevice());
+    this.rightbar.addButton("Delete device", () => this.deleteDevice(), "right-bar-delete-button");
 
     // Dropdown for selecting packet type
     this.rightbar.addDropdown(

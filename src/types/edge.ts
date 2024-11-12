@@ -105,7 +105,7 @@ export class Edge extends Graphics {
     ]);
 
     // Adds the delete button using addButton
-    this.rightbar.addButton("Delete Edge", () => this.deleteEdge());
+    this.rightbar.addButton("Delete Edge", () => this.deleteEdge(), "right-bar-delete-button");
   }
 
   // Method to delete the edge
