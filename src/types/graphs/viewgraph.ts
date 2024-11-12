@@ -183,7 +183,7 @@ export class ViewGraph {
   // Clear the graph
   clear() {
     this.devices.forEach((device) => {
-      device.deleteDevice();
+      device.delete();
     });
     // no edges should remain to delete
     this.devices.clear();
@@ -207,7 +207,7 @@ export class ViewGraph {
         if (adyacentDevice) {
           adyacentDevice.removeConnection(edge.id);
         }
-        edge.deleteEdge();
+        edge.delete();
       }
     });
 

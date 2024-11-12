@@ -106,7 +106,7 @@ canvas {
 /* Styles for save and load buttons */
 .save-button,
 .load-button {
-  background-color: #4a90e2; /* Blue background */
+  background-color: #007bff; /* Blue background */
   color: #ffffff; /* White text */
   border: none; /* No border */
   padding: 8px 16px; /* Internal space */
@@ -118,7 +118,34 @@ canvas {
 /* Hover effect for save and load buttons */
 .save-button:hover,
 .load-button:hover {
-  background-color: #357abd; /* Darker background on hover */
+  background-color: #0056b3; /* Darker background on hover */
+}
+
+/* Styles for pause button */
+.pause-button {
+  background-color: #228b22; /* Forest Green background */
+  color: #ffffff; /* White text */
+  border: none;
+  padding: 0; /* No internal padding */
+  cursor: pointer;
+  width: 35px; /* Width of the circle */
+  height: 35px; /* Height of the circle */
+  border-radius: 50%; /* Makes the button circular */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease; /* Smooth color transition */
+}
+
+/* Hover effect for pause button */
+.pause-button:hover {
+  background-color: #006400; /* Darker Forest Green on hover */
+}
+
+/* Styles for the icon inside the button */
+.pause-button img {
+  width: 60%; /* Scale the icon to fit within the button */
+  height: 60%;
 }
 
 /* Style for the right sidebar */
@@ -148,27 +175,36 @@ canvas {
 
 /* Style for buttons in the right bar */
 .right-bar-button {
-  background-color: #4caf50;
+  background-color: #007bff;
   border: none;
   color: white;
-  padding: 6px 12px; /* Reduce padding */
+  padding: 6px 12px;
   text-align: center;
   text-decoration: none;
-  display: inline-block;
-  font-size: 14px; /* Reduce font size */
-  margin: 3px 1px; /* Reduce margin */
+  display: block; /* Change to block to occupy full width */
+  font-size: 14px;
+  margin: 5px 0; /* Adjust margin for spacing between buttons */
   cursor: pointer;
   border-radius: 4px;
-  width: 180px; /* Reduce width slightly */
+  width: 100%; /* Occupies 100% of the right-bar width */
+  box-sizing: border-box; /* Includes padding in the total width */
 }
 
 .right-bar-button:hover {
-  background-color: #45a049;
+  background-color: #0056b3;
 }
 
 .right-bar-button.selected-button {
-  background-color: #007bff;
+  background-color: #162a6d;
   color: white;
+}
+
+.right-bar-delete-button {
+  background-color: #f44336;
+}
+
+.right-bar-delete-button:hover {
+  background-color: #d32f2f;
 }
 
 /* Container for packet options */

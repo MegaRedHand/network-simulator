@@ -35,9 +35,29 @@ export function refreshElement() {
   }
 }
 
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Delete" || event.key === "Backspace") {
+    if (selectedElement) {
+      selectedElement.delete();
+    }
+  }
+
+  if (event.key === "c" || event.key === "C") {
+    if (selectedElement instanceof Device) {
+      selectedElement.selectToConnect(selectedElement.id);
+      const connectButton = document.querySelector(".right-bar-button");
+
+      if (connectButton) {
+        connectButton.classList.toggle("selected-button");
+      }
+    }
+  }
+});
+
 // Function to add a router at the center of the viewport
 export function AddRouter(ctx: GlobalContext) {
   console.log("Entered AddRouter");
+  deselectElement();
   const viewgraph = ctx.getViewGraph();
   const datagraph = ctx.getDataGraph();
   const viewport = ctx.getViewport();
@@ -71,6 +91,7 @@ export function AddRouter(ctx: GlobalContext) {
 
 // Function to add a PC at the center of the viewport
 export function AddPc(ctx: GlobalContext) {
+  deselectElement();
   const viewgraph = ctx.getViewGraph();
   const datagraph = ctx.getDataGraph();
   const viewport = ctx.getViewport();
@@ -102,6 +123,7 @@ export function AddPc(ctx: GlobalContext) {
 
 // Function to add a server at the center of the viewport (assuming there is a ServerNode type)
 export function AddServer(ctx: GlobalContext) {
+  deselectElement();
   const viewgraph = ctx.getViewGraph();
   const datagraph = ctx.getDataGraph();
   const viewport = ctx.getViewport();

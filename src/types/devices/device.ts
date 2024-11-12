@@ -108,7 +108,7 @@ export class Device extends Sprite {
     packet.animateAlongPath(pathEdges, this.id);
   }
 
-  deleteDevice(): void {
+  delete(): void {
     this.viewgraph.removeDevice(this.id);
     // Clear connections
     this.connections.clear();
@@ -240,10 +240,14 @@ export class Device extends Sprite {
     this.rightbar.addButton(
       "Connect device",
       () => this.selectToConnect(this.id),
-      "right-bar-button",
+      "right-bar-button right-bar-connect-button",
       true,
     );
-    this.rightbar.addButton("Delete device", () => this.deleteDevice());
+    this.rightbar.addButton(
+      "Delete device",
+      () => this.delete(),
+      "right-bar-button right-bar-delete-button",
+    );
 
     // Dropdown for selecting packet type
     this.rightbar.addDropdown(
@@ -252,9 +256,6 @@ export class Device extends Sprite {
         { value: "IP", text: "IP" },
         { value: "ICMP", text: "ICMP" },
       ],
-      (selectedValue) => {
-        console.log("Selected Packet Type:", selectedValue);
-      },
       "packet-type",
     );
 
@@ -264,14 +265,7 @@ export class Device extends Sprite {
       .filter((id) => id !== this.id)
       .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
 
-    this.rightbar.addDropdown(
-      "Destination",
-      adjacentDevices,
-      (selectedValue) => {
-        console.log("Selected Destination:", selectedValue);
-      },
-      "destination",
-    );
+    this.rightbar.addDropdown("Destination", adjacentDevices, "destination");
 
     // Button to send the packet
     this.rightbar.addButton("Send Packet", () => {
