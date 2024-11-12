@@ -125,17 +125,29 @@ canvas {
 .pause-button {
   background-color: #228b22; /* Forest Green background */
   color: #ffffff; /* White text */
-  border: none; /* No border */
-  padding: 8px 16px; /* Internal space */
-  cursor: pointer; /* Pointer cursor when hovering over */
-  margin-right: 10px; /* Spacing between buttons */
-  border-radius: 5px; /* Rounded corners */
+  border: none;
+  padding: 0; /* No internal padding */
+  cursor: pointer;
+  width: 35px; /* Width of the circle */
+  height: 35px; /* Height of the circle */
+  border-radius: 50%; /* Makes the button circular */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease; /* Smooth color transition */
 }
 
 /* Hover effect for pause button */
 .pause-button:hover {
   background-color: #006400; /* Darker Forest Green on hover */
 }
+
+/* Styles for the icon inside the button */
+.pause-button img {
+  width: 60%; /* Scale the icon to fit within the button */
+  height: 60%;
+}
+
 
 /* Style for the right sidebar */
 .right-bar {

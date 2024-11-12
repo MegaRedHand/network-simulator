@@ -5,6 +5,8 @@ import "./style.css";
 import RouterSvg from "./assets/router.svg";
 import ServerSvg from "./assets/server.svg";
 import ComputerSvg from "./assets/pc.svg";
+import PlaySvg from "./assets/play-icon.svg";
+import PauseSvg from "./assets/pause-icon.svg";
 
 import { Application, Graphics, EventSystem, Assets } from "pixi.js";
 
@@ -372,27 +374,43 @@ export class RightBar {
 
   const pauseButton = document.getElementById("pause-button");
   let paused = false;
+  
+  const pauseIcon = document.createElement("img");
+  pauseIcon.src = PauseSvg;
+  pauseIcon.alt = "Pause Icon";
+  
+  pauseButton.appendChild(pauseIcon);
+  
   const triggerPause = () => {
     paused = !paused;
+  
     if (paused) {
-      pauseButton.textContent = "Resume";
+      pauseIcon.src = PlaySvg;
+      pauseButton.style.backgroundColor = "#f44336";
+      pauseButton.title = "Resume";
       packetTicker.stop();
     } else {
-      pauseButton.textContent = "Pause";
+      pauseIcon.src = PauseSvg;
+      pauseButton.style.backgroundColor = "#228b22";
+      pauseButton.title = "Pause";
       packetTicker.start();
     }
   };
+  
   pauseButton.onclick = () => {
     triggerPause();
   };
   packetTicker.start();
-
+  
   document.body.onkeyup = function (e) {
-    if (e.key == " " || e.code == "Space") {
+    if (e.key === " " || e.code === "Space") {
       triggerPause();
       e.preventDefault();
     }
   };
+  
+  console.log("initialized!");
+  
 
   console.log("initialized!");
 })();
