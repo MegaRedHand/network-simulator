@@ -123,13 +123,15 @@ class LeftBar {
   constructor(leftBar: HTMLElement) {
     this.leftBar = leftBar;
   }
+
   static getFrom(document: Document) {
     return new LeftBar(document.getElementById("left-bar"));
   }
 
-  addButton(src: string, onClick: () => void) {
+  addButton(src: string, onClick: () => void, label: string) {
     const button = document.createElement("button");
     button.classList.add("icon-button");
+    button.setAttribute("title", label); // Shows Text
 
     button.onclick = onClick;
     this.leftBar.appendChild(button);
@@ -175,15 +177,17 @@ export class RightBar {
     this.rightBar.appendChild(infoContent);
   }
 
-  // Method to clear the content of the rightBar
+  // Method to clear only the content of info-content
   clearContent() {
-    this.rightBar.innerHTML = ""; // Clears all current content
+    const infoContent = this.rightBar.querySelector("#info-content");
+    if (infoContent) {
+      infoContent.innerHTML = ""; // Clears only the content of info-content
+    }
   }
 
   // Shows specific information of an element in info-content
   renderInfo(title: string, info: { label: string; value: string }[]) {
     this.clearContent(); // Clears before adding new content
-    this.initializeBaseContent(); // Adds the base title and empty container
 
     const infoContent = document.getElementById("info-content");
     if (infoContent) {
@@ -206,25 +210,28 @@ export class RightBar {
     buttonClass = "right-bar-button",
     toggleSelected = false,
   ) {
-    const button = document.createElement("button");
-    button.classList.add(buttonClass);
-    button.textContent = text;
-    button.onclick = () => {
-      onClick();
-      if (toggleSelected) {
-        button.classList.toggle("selected-button"); // Changes color on click
-      }
-    };
-    this.rightBar.appendChild(button);
+    const infoContent = document.getElementById("info-content");
+    if (infoContent) {
+      const button = document.createElement("button");
+      button.classList.add(buttonClass);
+      button.textContent = text;
+      button.onclick = () => {
+        onClick();
+        if (toggleSelected) {
+          button.classList.toggle("selected-button"); // Changes color on click
+        }
+      };
+      infoContent.appendChild(button);
+    }
   }
 
   // Adds a select dropdown to the right-bar
   addDropdown(
     label: string,
     options: { value: string; text: string }[],
-    onChange: (selectedValue: string) => void,
     selectId?: string,
   ) {
+    const infoContent = document.getElementById("info-content");
     const container = document.createElement("div");
     container.classList.add("dropdown-container");
 
@@ -234,7 +241,7 @@ export class RightBar {
 
     const select = document.createElement("select");
     select.classList.add("right-bar-select");
-    if (selectId) select.id = selectId; // Assigns ID if provided
+    if (selectId) select.id = selectId;
 
     options.forEach((optionData) => {
       const option = document.createElement("option");
@@ -243,13 +250,14 @@ export class RightBar {
       select.appendChild(option);
     });
 
+    // Default onchange behavior: logs the selected value
     select.onchange = () => {
-      onChange(select.value);
+      console.log(`Selected ${label}:`, select.value);
     };
 
     container.appendChild(labelElement);
     container.appendChild(select);
-    this.rightBar.appendChild(container);
+    infoContent.appendChild(container);
   }
 }
 
@@ -285,21 +293,34 @@ export class RightBar {
 
   // Left bar logic
   const leftBar = LeftBar.getFrom(document);
+  RightBar.getInstance();
 
   // Add router button
-  leftBar.addButton(RouterSvg, () => {
-    AddRouter(ctx);
-  });
+  leftBar.addButton(
+    RouterSvg,
+    () => {
+      AddRouter(ctx);
+    },
+    "Add Router",
+  );
 
   // Add server button
-  leftBar.addButton(ServerSvg, () => {
-    AddServer(ctx);
-  });
+  leftBar.addButton(
+    ServerSvg,
+    () => {
+      AddServer(ctx);
+    },
+    "Add Server",
+  );
 
-  // // Add PC button
-  leftBar.addButton(ComputerSvg, () => {
-    AddPc(ctx);
-  });
+  // Add PC button
+  leftBar.addButton(
+    ComputerSvg,
+    () => {
+      AddPc(ctx);
+    },
+    "Add PC",
+  );
 
   ctx.initialize(viewport);
 

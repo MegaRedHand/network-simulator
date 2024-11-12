@@ -121,6 +121,22 @@ canvas {
   background-color: #357abd; /* Darker background on hover */
 }
 
+/* Styles for pause button */
+.pause-button {
+  background-color: #228b22; /* Forest Green background */
+  color: #ffffff; /* White text */
+  border: none; /* No border */
+  padding: 8px 16px; /* Internal space */
+  cursor: pointer; /* Pointer cursor when hovering over */
+  margin-right: 10px; /* Spacing between buttons */
+  border-radius: 5px; /* Rounded corners */
+}
+
+/* Hover effect for pause button */
+.pause-button:hover {
+  background-color: #006400; /* Darker Forest Green on hover */
+}
+
 /* Style for the right sidebar */
 .right-bar {
   flex: 0 0 250px; /* Fixed width of 250px for the right bar */

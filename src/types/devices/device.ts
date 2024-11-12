@@ -252,9 +252,6 @@ export class Device extends Sprite {
         { value: "IP", text: "IP" },
         { value: "ICMP", text: "ICMP" },
       ],
-      (selectedValue) => {
-        console.log("Selected Packet Type:", selectedValue);
-      },
       "packet-type",
     );
 
@@ -264,14 +261,7 @@ export class Device extends Sprite {
       .filter((id) => id !== this.id)
       .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
 
-    this.rightbar.addDropdown(
-      "Destination",
-      adjacentDevices,
-      (selectedValue) => {
-        console.log("Selected Destination:", selectedValue);
-      },
-      "destination",
-    );
+    this.rightbar.addDropdown("Destination", adjacentDevices, "destination");
 
     // Button to send the packet
     this.rightbar.addButton("Send Packet", () => {
