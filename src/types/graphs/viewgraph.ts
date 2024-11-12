@@ -230,7 +230,10 @@ export class ViewGraph {
       return;
     }
 
-    this.datagraph.removeConnection(edge.connectedNodes.n1, edge.connectedNodes.n2);
+    this.datagraph.removeConnection(
+      edge.connectedNodes.n1,
+      edge.connectedNodes.n2,
+    );
     // Call Edge's remove method to handle disconnection and cleanup
     edge.remove();
 

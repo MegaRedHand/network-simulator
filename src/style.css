@@ -148,7 +148,6 @@ canvas {
   height: 60%;
 }
 
-
 /* Style for the right sidebar */
 .right-bar {
   flex: 0 0 250px; /* Fixed width of 250px for the right bar */
@@ -196,7 +195,7 @@ canvas {
 }
 
 .right-bar-button.selected-button {
-  background-color: #162A6D;
+  background-color: #162a6d;
   color: white;
 }
 

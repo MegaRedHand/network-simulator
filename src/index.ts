@@ -374,16 +374,16 @@ export class RightBar {
 
   const pauseButton = document.getElementById("pause-button");
   let paused = false;
-  
+
   const pauseIcon = document.createElement("img");
   pauseIcon.src = PauseSvg;
   pauseIcon.alt = "Pause Icon";
-  
+
   pauseButton.appendChild(pauseIcon);
-  
+
   const triggerPause = () => {
     paused = !paused;
-  
+
     if (paused) {
       pauseIcon.src = PlaySvg;
       pauseButton.style.backgroundColor = "#f44336";
@@ -396,21 +396,20 @@ export class RightBar {
       packetTicker.start();
     }
   };
-  
+
   pauseButton.onclick = () => {
     triggerPause();
   };
   packetTicker.start();
-  
+
   document.body.onkeyup = function (e) {
     if (e.key === " " || e.code === "Space") {
       triggerPause();
       e.preventDefault();
     }
   };
-  
+
   console.log("initialized!");
-  
 
   console.log("initialized!");
 })();
