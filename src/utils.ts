@@ -7,6 +7,7 @@ export enum Colors {
   Green = 0x0000ff,
   Red = 0xff0000,
   White = 0xffffff,
+  Black = 0x000000,
 }
 
 export function drawCircle(
@@ -20,4 +21,12 @@ export function drawCircle(
   graphics.beginFill(color);
   graphics.drawCircle(x, y, radius);
   graphics.endFill();
+  graphics.zIndex = ZIndexLevels.Packet;
+}
+
+export enum ZIndexLevels {
+  Device = 20,
+  Edge = 15,
+  Packet = 16,
+  Label = 19,
 }

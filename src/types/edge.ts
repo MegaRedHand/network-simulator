@@ -3,7 +3,7 @@ import { ViewGraph } from "./graphs/viewgraph";
 import { Device } from "./devices/index"; // Import the Device class
 import { deselectElement, selectElement } from "./viewportManager";
 import { RightBar } from "..";
-import { Colors } from "../utils";
+import { Colors, ZIndexLevels } from "../utils";
 
 export interface Position {
   x: number;
@@ -62,6 +62,7 @@ export class Edge extends Graphics {
     this.moveTo(startPos.x, startPos.y);
     this.lineTo(endPos.x, endPos.y);
     this.stroke({ width: 3, color });
+    this.zIndex = ZIndexLevels.Edge;
     this.startPos = startPos;
     this.endPos = endPos;
   }

@@ -1,4 +1,11 @@
-import { Texture, Sprite, FederatedPointerEvent, Graphics } from "pixi.js";
+import {
+  Texture,
+  Sprite,
+  FederatedPointerEvent,
+  Graphics,
+  TextStyle,
+  Text,
+} from "pixi.js";
 import { Packet } from "./../packet";
 import { ViewGraph } from "./../graphs/viewgraph";
 import {
@@ -7,7 +14,7 @@ import {
   selectElement,
 } from "./../viewportManager";
 import { RightBar } from "../../index";
-import { Colors } from "../../utils";
+import { Colors, ZIndexLevels } from "../../utils";
 
 export const DEVICE_SIZE = 20;
 
@@ -59,9 +66,27 @@ export class Device extends Sprite {
     this.eventMode = "static";
     this.interactive = true;
     this.cursor = "pointer";
+    this.zIndex = ZIndexLevels.Device;
+
+    // Add device ID label using the helper function
+    this.addDeviceIdLabel();
 
     this.on("pointerdown", this.onPointerDown, this);
     this.on("click", this.onClick, this);
+  }
+
+  // Function to add the ID label to the device
+  addDeviceIdLabel() {
+    const textStyle = new TextStyle({
+      fontSize: 12,
+      fill: Colors.Black,
+      align: "center",
+    });
+    const idText = new Text(`ID: ${this.id}`, textStyle);
+    idText.anchor.set(0.5);
+    idText.y = this.height - 15;
+    idText.zIndex = ZIndexLevels.Label;
+    this.addChild(idText); // Add the ID text as a child of the device
   }
 
   getConnections(): { edgeId: number; adyacentId: number }[] {
@@ -222,6 +247,8 @@ export class Device extends Sprite {
 
       // Change color to red and increase line thickness
       this.highlightMarker.stroke({ width: 3, color: Colors.Violet }); // Red and thicker
+
+      this.highlightMarker.zIndex = ZIndexLevels.Device;
 
       // Ensure the marker is in the same container as the viewport
       this.addChild(this.highlightMarker);
