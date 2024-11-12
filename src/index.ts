@@ -215,7 +215,7 @@ export class RightBar {
     const infoContent = document.getElementById("info-content");
     if (infoContent) {
       const button = document.createElement("button");
-      button.classList.add(buttonClass);
+      button.classList.add(...buttonClass.split(" "));
       button.textContent = text;
       button.onclick = () => {
         onClick();

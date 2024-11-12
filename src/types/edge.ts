@@ -105,11 +105,11 @@ export class Edge extends Graphics {
     ]);
 
     // Adds the delete button using addButton
-    this.rightbar.addButton("Delete Edge", () => this.deleteEdge(), "right-bar-delete-button");
+    this.rightbar.addButton("Delete Edge", () => this.delete(), "right-bar-button right-bar-delete-button");
   }
 
   // Method to delete the edge
-  deleteEdge() {
+  delete() {
     // Remove the edge from the viewgraph and datagraph
     deselectElement();
     this.viewgraph.removeEdge(this.id);

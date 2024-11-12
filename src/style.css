@@ -202,18 +202,6 @@ canvas {
 
 .right-bar-delete-button {
   background-color: #f44336;
-  border: none;
-  color: white;
-  padding: 6px 12px;
-  text-align: center;
-  text-decoration: none;
-  display: block; /* Change to block to occupy full width */
-  font-size: 14px;
-  margin: 5px 0; /* Adjust margin for spacing between buttons */
-  cursor: pointer;
-  border-radius: 4px;
-  width: 100%; /* Occupies 100% of the right-bar width */
-  box-sizing: border-box; /* Includes padding in the total width */
 }
 
 .right-bar-delete-button:hover {

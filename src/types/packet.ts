@@ -127,4 +127,7 @@ export class Packet extends Graphics {
     this.x = start.x + progress * dx;
     this.y = start.y + progress * dy;
   }
+
+  delete(){
+  }
 }
