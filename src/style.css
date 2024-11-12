@@ -167,15 +167,16 @@ canvas {
   background-color: #4caf50;
   border: none;
   color: white;
-  padding: 6px 12px; /* Reduce padding */
+  padding: 6px 12px;
   text-align: center;
   text-decoration: none;
-  display: inline-block;
-  font-size: 14px; /* Reduce font size */
-  margin: 3px 1px; /* Reduce margin */
+  display: block; /* Change to block to occupy full width */
+  font-size: 14px;
+  margin: 5px 0; /* Adjust margin for spacing between buttons */
   cursor: pointer;
   border-radius: 4px;
-  width: 180px; /* Reduce width slightly */
+  width: 100%; /* Occupies 100% of the right-bar width */
+  box-sizing: border-box; /* Includes padding in the total width */
 }
 
 .right-bar-button:hover {
