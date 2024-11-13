@@ -4,16 +4,6 @@ import { selectElement } from "./viewportManager";
 import { Colors, drawCircle } from "../utils";
 import { RightBar } from "../index";
 
-let animationPaused = false;
-
-export function pausePacketAnimation() {
-  animationPaused = true;
-}
-
-export function unpausePacketAnimation() {
-  animationPaused = false;
-}
-
 export class Packet extends Graphics {
   speed: number;
   progress = 0;
@@ -24,6 +14,16 @@ export class Packet extends Graphics {
   type: string;
   sourceId: number;
   destinationId: number;
+
+  static animationPaused: boolean = false;
+
+  static pauseAnimation() {
+    Packet.animationPaused = true;
+  }
+
+  static unpauseAnimation() {
+    Packet.animationPaused = true;
+  }
 
   constructor(
     type: string,
@@ -111,7 +111,7 @@ export class Packet extends Graphics {
       this.currentStart = this.currentEdge.otherEnd(this.currentStart);
       this.currentEdge = this.currentPath.shift();
     }
-    if (!animationPaused) {
+    if (!Packet.animationPaused) {
       this.progress += (ticker.deltaMS * this.speed) / 100000;
     }
 
