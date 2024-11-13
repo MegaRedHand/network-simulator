@@ -4,7 +4,15 @@ import { selectElement } from "./viewportManager";
 import { Colors, drawCircle } from "../utils";
 import { RightBar } from "../index";
 
-export const packetTicker = new Ticker();
+let animationPaused = false;
+
+export function pausePacketAnimation() {
+  animationPaused = true;
+}
+
+export function unpausePacketAnimation() {
+  animationPaused = false;
+}
 
 export class Packet extends Graphics {
   speed: number;
@@ -89,7 +97,7 @@ export class Packet extends Graphics {
     this.currentEdge = this.currentPath.shift();
     this.currentStart = start;
     // TODO: use global ticker, and add "shouldProgress" flag
-    packetTicker.add(this.updateProgress, this);
+    Ticker.shared.add(this.updateProgress, this);
   }
 
   updateProgress(ticker: Ticker) {
@@ -103,7 +111,9 @@ export class Packet extends Graphics {
       this.currentStart = this.currentEdge.otherEnd(this.currentStart);
       this.currentEdge = this.currentPath.shift();
     }
-    this.progress += (ticker.deltaMS * this.speed) / 100000;
+    if (!animationPaused) {
+      this.progress += (ticker.deltaMS * this.speed) / 100000;
+    }
 
     const current = this.currentEdge;
     const start = this.currentStart;
