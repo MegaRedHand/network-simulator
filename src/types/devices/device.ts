@@ -142,6 +142,9 @@ export class Device extends Sprite {
 
   onPointerDown(event: FederatedPointerEvent): void {
     // console.log("Entered onPointerDown");
+    if (!selectedDeviceId) {
+      selectElement(this);
+    }
     this.dragging = true;
     event.stopPropagation();
 
