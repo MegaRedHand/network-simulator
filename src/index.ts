@@ -410,6 +410,4 @@ export class RightBar {
   };
 
   console.log("initialized!");
-
-  console.log("initialized!");
 })();

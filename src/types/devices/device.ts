@@ -307,19 +307,6 @@ export class Device extends Sprite {
 function onPointerMove(event: FederatedPointerEvent): void {
   console.log("Entered onPointerMove");
   if (Device.dragTarget) {
-    // Get the new pointer position in world coordinates
-    // const worldPosition = Device.dragTarget.viewgraph
-    //   .getViewport()
-    //   .toWorld(event.clientX, event.clientY);
-
-    // // Calculate the new sprite position using the calculated offset
-    // const newPositionX = worldPosition.x - Device.dragTarget.offsetX;
-    // const newPositionY = worldPosition.y - Device.dragTarget.offsetY;
-
-    // // Update the sprite position
-    // Device.dragTarget.x = newPositionX;
-    // Device.dragTarget.y = newPositionY;
-
     Device.dragTarget.parent.toLocal(
       event.global,
       null,
