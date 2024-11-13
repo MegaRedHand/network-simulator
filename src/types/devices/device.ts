@@ -34,6 +34,8 @@ export class Device extends Sprite {
   rightbar: RightBar;
   highlightMarker: Graphics | null = null; // Marker to indicate selection
 
+  static dragTarget: Device | null = null;
+
   constructor(
     id: number,
     svg: string,
@@ -82,7 +84,7 @@ export class Device extends Sprite {
       fill: Colors.Black,
       align: "center",
     });
-    const idText = new Text(`ID: ${this.id}`, textStyle);
+    const idText = new Text({ text: `ID: ${this.id}`, style: textStyle });
     idText.anchor.set(0.5);
     idText.y = this.height - 15;
     idText.zIndex = ZIndexLevels.Label;
@@ -141,8 +143,11 @@ export class Device extends Sprite {
   }
 
   onPointerDown(event: FederatedPointerEvent): void {
-    // console.log("Entered onPointerDown");
-    this.dragging = true;
+    console.log("Entered onPointerDown");
+    if (!selectedDeviceId) {
+      selectElement(this);
+    }
+    Device.dragTarget = this;
     event.stopPropagation();
 
     // Get the pointer position in world (viewport) coordinates
@@ -155,37 +160,8 @@ export class Device extends Sprite {
     this.offsetY = worldPosition.y - this.y;
 
     // Listen to global pointermove and pointerup events
-    document.addEventListener("pointermove", this.onPointerMove.bind(this));
-    document.addEventListener("pointerup", this.onPointerUp.bind(this));
-  }
-
-  onPointerMove(event: FederatedPointerEvent): void {
-    // console.log("Entered onPointerMove");
-    if (this.dragging) {
-      // Get the new pointer position in world coordinates
-      const worldPosition = this.viewgraph
-        .getViewport()
-        .toWorld(event.clientX, event.clientY);
-
-      // Calculate the new sprite position using the calculated offset
-      const newPositionX = worldPosition.x - this.offsetX;
-      const newPositionY = worldPosition.y - this.offsetY;
-
-      // Update the sprite position
-      this.x = newPositionX;
-      this.y = newPositionY;
-
-      // Notify view graph about its movement
-      this.viewgraph.deviceMoved(this.id);
-    }
-  }
-
-  onPointerUp(): void {
-    // console.log("Entered onPointerUp");
-    this.dragging = false;
-    // Remove global pointermove and pointerup events
-    document.removeEventListener("pointermove", this.onPointerMove);
-    document.removeEventListener("pointerup", this.onPointerUp);
+    this.parent.on("pointermove", onPointerMove);
+    this.parent.on("pointerup", onPointerUp);
   }
 
   connectTo(adyacentId: number): boolean {
@@ -325,5 +301,29 @@ export class Device extends Sprite {
   deselect() {
     this.removeHighlight(); // Calls removeHighlight on deselect
     setSelectedDeviceId(null);
+  }
+}
+
+function onPointerMove(event: FederatedPointerEvent): void {
+  console.log("Entered onPointerMove");
+  if (Device.dragTarget) {
+    Device.dragTarget.parent.toLocal(
+      event.global,
+      null,
+      Device.dragTarget.position,
+    );
+
+    // Notify view graph about its movement
+    Device.dragTarget.viewgraph.deviceMoved(Device.dragTarget.id);
+  }
+}
+
+function onPointerUp(): void {
+  console.log("Entered onPointerUp");
+  if (Device.dragTarget) {
+    // Remove global pointermove and pointerup events
+    Device.dragTarget.parent.off("pointermove", onPointerMove);
+    Device.dragTarget.parent.off("pointerup", onPointerUp);
+    Device.dragTarget = null;
   }
 }
