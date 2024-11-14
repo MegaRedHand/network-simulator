@@ -342,9 +342,11 @@ export class RightBar {
 
   window.addEventListener("resize", resize);
 
+  const newButton = document.getElementById("new-button");
   const loadButton = document.getElementById("load-button");
   const saveButton = document.getElementById("save-button");
 
+  newButton.onclick = () => ctx.load(new DataGraph());
   saveButton.onclick = () => saveToFile(ctx);
   loadButton.onclick = () => loadFromFile(ctx);
 
