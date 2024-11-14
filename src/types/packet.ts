@@ -5,7 +5,7 @@ import {
   Ticker,
 } from "pixi.js";
 import { Edge, Position } from "./edge";
-import { selectElement } from "./viewportManager";
+import { deselectElement, isSelected, selectElement } from "./viewportManager";
 import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar } from "../index";
 
@@ -116,6 +116,9 @@ export class Packet extends Graphics {
       this.removeFromParent();
       if (this.currentPath.length == 0) {
         ticker.remove(this.animationTick, this);
+        if (isSelected(this)) {
+          deselectElement();
+        }
         this.destroy();
         return;
       }
