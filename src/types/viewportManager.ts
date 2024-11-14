@@ -35,6 +35,10 @@ export function refreshElement() {
   }
 }
 
+export function isSelected(element: Device | Edge | Packet) {
+  return element === selectedElement;
+}
+
 document.addEventListener("keydown", (event) => {
   if (event.key === "Delete" || event.key === "Backspace") {
     if (selectedElement) {
