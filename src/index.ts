@@ -366,22 +366,7 @@ export class RightBar {
   };
 
   loadButton.onclick = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json";
-
-    input.onchange = (event) => {
-      const file = (event.target as HTMLInputElement).files[0];
-      const reader = new FileReader();
-      reader.readAsText(file);
-
-      reader.onload = (readerEvent) => {
-        const jsonData = readerEvent.target.result as string;
-        loadGraph(jsonData, ctx);
-      };
-    };
-
-    input.click();
+    loadGraph(ctx);
   };
 
   const pauseButton = document.getElementById("pause-button");

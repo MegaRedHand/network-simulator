@@ -194,9 +194,24 @@ export function saveGraph(ctx: GlobalContext) {
 }
 
 // Function to load a graph from a JSON file
-export function loadGraph(jsonData: string, ctx: GlobalContext) {
-  const graphData = JSON.parse(jsonData);
-  ctx.load(DataGraph.fromData(graphData));
+export function loadGraph(ctx: GlobalContext) {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json";
 
-  console.log("Graph loaded successfully.");
+  input.onchange = (event) => {
+    const file = (event.target as HTMLInputElement).files[0];
+    const reader = new FileReader();
+    reader.readAsText(file);
+
+    reader.onload = (readerEvent) => {
+      const jsonData = readerEvent.target.result as string;
+      const graphData = JSON.parse(jsonData);
+      ctx.load(DataGraph.fromData(graphData));
+
+      console.log("Graph loaded successfully.");
+    };
+  };
+
+  input.click();
 }
