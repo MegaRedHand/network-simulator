@@ -5,13 +5,13 @@ export interface GraphNode {
   connections: Set<number>;
 }
 
-export type GraphDataNode = {
+export interface GraphDataNode {
   id: number;
   x: number;
   y: number;
   type: string;
   connections: number[];
-};
+}
 
 export type GraphData = GraphDataNode[];
 

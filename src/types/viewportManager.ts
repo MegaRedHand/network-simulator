@@ -1,5 +1,5 @@
 import { GlobalContext } from "./../index";
-import { DataGraph, GraphNode } from "./graphs/datagraph";
+import { DataGraph } from "./graphs/datagraph";
 import { Device, Pc, Router, Server } from "./devices/index";
 import { Edge } from "./edge";
 import { RightBar } from "../index"; // Ensure the path is correct
