@@ -18,9 +18,8 @@ export function drawCircle(
   radius: number,
 ) {
   graphics.clear();
-  graphics.beginFill(color);
-  graphics.drawCircle(x, y, radius);
-  graphics.endFill();
+  graphics.circle(x, y, radius);
+  graphics.fill(color);
   graphics.zIndex = ZIndexLevels.Packet;
 }
 
