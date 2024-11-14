@@ -21,7 +21,7 @@ import {
   selectElement,
 } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
-import { packetTicker } from "./types/packet";
+import { Packet } from "./types/packet";
 
 const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;
@@ -388,19 +388,18 @@ export class RightBar {
       pauseIcon.src = PlaySvg;
       pauseButton.style.backgroundColor = "#f44336";
       pauseButton.title = "Resume";
-      packetTicker.stop();
+      Packet.pauseAnimation();
     } else {
       pauseIcon.src = PauseSvg;
       pauseButton.style.backgroundColor = "#228b22";
       pauseButton.title = "Pause";
-      packetTicker.start();
+      Packet.unpauseAnimation();
     }
   };
 
   pauseButton.onclick = () => {
     triggerPause();
   };
-  packetTicker.start();
 
   document.body.onkeyup = function (e) {
     if (e.key === " " || e.code === "Space") {

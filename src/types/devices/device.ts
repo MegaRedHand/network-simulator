@@ -130,8 +130,6 @@ export class Device extends Sprite {
     const pathEdges = pathEdgeIds.map((id) => this.viewgraph.getEdge(id));
 
     const packet = new Packet(packetType, speed, this.id, destinationId);
-    const stage = this.viewgraph.getViewport();
-    stage.addChild(packet);
     packet.animateAlongPath(pathEdges, this.id);
   }
 

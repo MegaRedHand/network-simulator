@@ -4,6 +4,7 @@ import { Device } from "./devices/index"; // Import the Device class
 import { deselectElement, selectElement } from "./viewportManager";
 import { RightBar } from "..";
 import { Colors, ZIndexLevels } from "../utils";
+import { Packet } from "./packet";
 
 export interface Position {
   x: number;
@@ -65,6 +66,12 @@ export class Edge extends Graphics {
     this.zIndex = ZIndexLevels.Edge;
     this.startPos = startPos;
     this.endPos = endPos;
+
+    this.children.forEach((child) => {
+      if (child instanceof Packet) {
+        child.updatePosition();
+      }
+    });
   }
 
   select() {
