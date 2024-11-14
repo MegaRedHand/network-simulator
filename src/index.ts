@@ -39,6 +39,12 @@ export class GlobalContext {
     this.viewgraph = new ViewGraph(this.datagraph, this.viewport);
   }
 
+  load(datagraph: DataGraph) {
+    this.datagraph = datagraph;
+    this.viewport.clear();
+    this.viewgraph = new ViewGraph(this.datagraph, this.viewport);
+  }
+
   getViewport() {
     return this.viewport;
   }
@@ -88,6 +94,12 @@ export class Viewport extends pixi_viewport.Viewport {
         selectElement(null);
       }
     });
+  }
+
+  clear() {
+    this.removeChildren();
+    this.addChild(new Background());
+    this.moveCenter(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
   }
 
   private initializeMovement() {

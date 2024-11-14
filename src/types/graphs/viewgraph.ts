@@ -16,7 +16,7 @@ export class ViewGraph {
     this.constructView();
   }
 
-  constructView() {
+  private constructView() {
     // TODO: Adjust construction based on the selected layer in the future
     console.log("Constructing ViewGraph from DataGraph");
     const connections = new Set<{ deviceId: number; adyacentId: number }>();
@@ -178,17 +178,6 @@ export class ViewGraph {
   // Get the number of devices in the graph
   getDeviceCount(): number {
     return this.devices.size;
-  }
-
-  // Clear the graph
-  clear() {
-    this.devices.forEach((device) => {
-      device.delete();
-    });
-    // no edges should remain to delete
-    this.devices.clear();
-    this.edges.clear();
-    this.idCounter = 1;
   }
 
   // Method to remove a device and its connections (edges)

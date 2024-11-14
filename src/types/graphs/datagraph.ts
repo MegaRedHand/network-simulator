@@ -5,9 +5,53 @@ export interface GraphNode {
   connections: Set<number>;
 }
 
+export type GraphDataNode = {
+  id: number;
+  x: number;
+  y: number;
+  type: string;
+  connections: number[];
+};
+
+export type GraphData = GraphDataNode[];
+
 export class DataGraph {
   private devices = new Map<number, GraphNode>();
   private idCounter = 1;
+
+  static fromData(data: GraphData): DataGraph {
+    const dataGraph = new DataGraph();
+    data.forEach((nodeData: GraphDataNode) => {
+      // ADD DATAGRAPH AND EDGES
+      console.log(nodeData);
+      const connections = new Set(nodeData.connections);
+      const graphNode: GraphNode = {
+        x: nodeData.x,
+        y: nodeData.y,
+        type: nodeData.type,
+        connections: connections,
+      };
+      dataGraph.addDevice(nodeData.id, graphNode);
+    });
+    return dataGraph;
+  }
+
+  toData(): GraphData {
+    const graphData: GraphData = [];
+
+    // Serialize nodes
+    this.getDevices().forEach(([id, info]) => {
+      graphData.push({
+        id: id,
+        x: info.x,
+        y: info.y,
+        type: info.type, // Save the device type (Router, Server, PC)
+        connections: Array.from(info.connections.values()),
+      });
+    });
+
+    return graphData;
+  }
 
   // Add a new device to the graph
   addNewDevice(deviceInfo: { x: number; y: number; type: string }): number {
@@ -143,11 +187,5 @@ export class DataGraph {
     console.log(
       `Connection removed between devices ID: ${n1Id} and ID: ${n2Id}`,
     );
-  }
-
-  // Clear the graph
-  clear() {
-    this.devices.clear();
-    this.idCounter = 1;
   }
 }

@@ -178,28 +178,7 @@ function setDevice(
 
 // Function to save the current graph in JSON format
 export function saveGraph(ctx: GlobalContext) {
-  const datagraph: DataGraph = ctx.getDataGraph();
-
-  const graphData: {
-    id: number;
-    x: number;
-    y: number;
-    type: string;
-    connections: number[];
-  }[] = [];
-
-  // Serialize nodes
-  datagraph.getDevices().forEach((deviceInfo) => {
-    const id = deviceInfo[0];
-    const info = deviceInfo[1];
-    graphData.push({
-      id: id,
-      x: info.x,
-      y: info.y,
-      type: info.type, // Save the device type (Router, Server, PC)
-      connections: Array.from(info.connections.values()),
-    });
-  });
+  const graphData = ctx.getDataGraph().toData();
 
   // Convert to JSON and download
   const jsonString = JSON.stringify(graphData, null, 2);
@@ -217,29 +196,7 @@ export function saveGraph(ctx: GlobalContext) {
 // Function to load a graph from a JSON file
 export function loadGraph(jsonData: string, ctx: GlobalContext) {
   const graphData = JSON.parse(jsonData);
-  const viewgraph = ctx.getViewGraph();
-  const datagraph = ctx.getDataGraph();
-
-  // Clear current nodes and connections
-  viewgraph.clear();
-  datagraph.clear();
-
-  // Deserialize and recreate nodes
-  graphData.forEach(
-    (nodeData: {
-      id: number;
-      x: number;
-      y: number;
-      type: string;
-      connections: number[];
-    }) => {
-      // ADD DATAGRAPH AND EDGES
-      console.log(nodeData);
-      setDevice(datagraph, nodeData);
-    },
-  );
-
-  viewgraph.constructView();
+  ctx.load(DataGraph.fromData(graphData));
 
   console.log("Graph loaded successfully.");
 }
