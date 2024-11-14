@@ -62,7 +62,6 @@ export class GlobalContext {
   }
 
   private setupAutoSave() {
-    
     this.clearAutoSave();
 
     this.datagraph.subscribeChanges(() => {
