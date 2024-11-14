@@ -198,14 +198,16 @@ export function loadFromFile(ctx: GlobalContext) {
 const LOCAL_STORAGE_KEY = "graphData";
 
 export function saveToLocalStorage(ctx: GlobalContext) {
-  const graphData = JSON.stringify(ctx.getDataGraph().toData());
+  const dataGraph = ctx.getDataGraph();
+  const graphData = JSON.stringify(dataGraph.toData());
   localStorage.setItem(LOCAL_STORAGE_KEY, graphData);
 
   console.log("Graph saved in local storage.");
 }
 
 export function loadFromLocalStorage(ctx: GlobalContext) {
-  const graphData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
+  const jsonData = localStorage.getItem(LOCAL_STORAGE_KEY) || "[]";
+  const graphData = JSON.parse(jsonData);
   ctx.load(DataGraph.fromData(graphData));
 
   console.log("Graph loaded from local storage.");

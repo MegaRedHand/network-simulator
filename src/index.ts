@@ -387,8 +387,18 @@ export class RightBar {
   // TODO: load from local storage directly, without first generating a context
   loadFromLocalStorage(ctx);
 
-  // TODO: do this only when changes are made
-  setInterval(() => saveToLocalStorage(ctx), 5000);
+  let saveIntervalId: NodeJS.Timeout | null = null;
+
+  ctx.getDataGraph().subscribeChanges(() => {
+    // Wait a bit after the last change to save
+    if (saveIntervalId) {
+      clearInterval(saveIntervalId);
+    }
+    saveIntervalId = setInterval(() => {
+      saveToLocalStorage(ctx);
+      clearInterval(saveIntervalId);
+    }, 100);
+  });
 
   console.log("initialized!");
 })();
