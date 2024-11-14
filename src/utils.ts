@@ -1,4 +1,4 @@
-import { Graphics, GraphicsContext } from "pixi.js";
+import { GraphicsContext } from "pixi.js";
 
 export enum Colors {
   Violet = 0x4b0082,
