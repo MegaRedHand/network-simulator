@@ -15,7 +15,7 @@ export class Packet extends Graphics {
   sourceId: number;
   destinationId: number;
 
-  static animationPaused: boolean = false;
+  static animationPaused = false;
 
   static pauseAnimation() {
     Packet.animationPaused = true;
