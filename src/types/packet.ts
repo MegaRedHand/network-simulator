@@ -96,7 +96,6 @@ export class Packet extends Graphics {
     this.currentPath = path;
     this.currentEdge = this.currentPath.shift();
     this.currentStart = start;
-    // TODO: use global ticker, and add "shouldProgress" flag
     Ticker.shared.add(this.updateProgress, this);
   }
 
@@ -118,13 +117,8 @@ export class Packet extends Graphics {
     const current = this.currentEdge;
     const start = this.currentStart;
 
-    console.log("current: ", current);
-    console.log("start: ", start);
-
     const startPos = current.nodePosition(start);
-    console.log("startPos: ", startPos);
     const endPos = current.nodePosition(current.otherEnd(start));
-    console.log("endPos: ", endPos);
     this.setPositionAlongEdge(startPos, endPos, this.progress);
   }
 
