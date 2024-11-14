@@ -16,8 +16,10 @@ import {
   AddPc,
   AddRouter,
   AddServer,
-  loadGraph,
-  saveGraph,
+  loadFromFile,
+  loadFromLocalStorage,
+  saveToFile,
+  saveToLocalStorage,
   selectElement,
 } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
@@ -310,31 +312,13 @@ export class RightBar {
   RightBar.getInstance();
 
   // Add router button
-  leftBar.addButton(
-    RouterSvg,
-    () => {
-      AddRouter(ctx);
-    },
-    "Add Router",
-  );
+  leftBar.addButton(RouterSvg, () => AddRouter(ctx), "Add Router");
 
   // Add server button
-  leftBar.addButton(
-    ServerSvg,
-    () => {
-      AddServer(ctx);
-    },
-    "Add Server",
-  );
+  leftBar.addButton(ServerSvg, () => AddServer(ctx), "Add Server");
 
   // Add PC button
-  leftBar.addButton(
-    ComputerSvg,
-    () => {
-      AddPc(ctx);
-    },
-    "Add PC",
-  );
+  leftBar.addButton(ComputerSvg, () => AddPc(ctx), "Add PC");
 
   ctx.initialize(viewport);
 
@@ -361,13 +345,8 @@ export class RightBar {
   const loadButton = document.getElementById("load-button");
   const saveButton = document.getElementById("save-button");
 
-  saveButton.onclick = () => {
-    saveGraph(ctx);
-  };
-
-  loadButton.onclick = () => {
-    loadGraph(ctx);
-  };
+  saveButton.onclick = () => saveToFile(ctx);
+  loadButton.onclick = () => loadFromFile(ctx);
 
   const pauseButton = document.getElementById("pause-button");
   let paused = false;
@@ -394,9 +373,7 @@ export class RightBar {
     }
   };
 
-  pauseButton.onclick = () => {
-    triggerPause();
-  };
+  pauseButton.onclick = triggerPause;
 
   document.body.onkeyup = function (e) {
     if (e.key === " " || e.code === "Space") {
@@ -404,6 +381,12 @@ export class RightBar {
       e.preventDefault();
     }
   };
+
+  // TODO: load from local storage directly, without first generating a context
+  loadFromLocalStorage(ctx);
+
+  // TODO: do this only when changes are made
+  setInterval(() => saveToLocalStorage(ctx), 5000);
 
   console.log("initialized!");
 })();

@@ -156,7 +156,7 @@ export function AddServer(ctx: GlobalContext) {
 }
 
 // Function to save the current graph in JSON format
-export function saveGraph(ctx: GlobalContext) {
+export function saveToFile(ctx: GlobalContext) {
   const graphData = ctx.getDataGraph().toData();
 
   // Convert to JSON and download
@@ -173,7 +173,7 @@ export function saveGraph(ctx: GlobalContext) {
 }
 
 // Function to load a graph from a JSON file
-export function loadGraph(ctx: GlobalContext) {
+export function loadFromFile(ctx: GlobalContext) {
   const input = document.createElement("input");
   input.type = "file";
   input.accept = ".json";
@@ -193,4 +193,20 @@ export function loadGraph(ctx: GlobalContext) {
   };
 
   input.click();
+}
+
+const LOCAL_STORAGE_KEY = "graphData";
+
+export function saveToLocalStorage(ctx: GlobalContext) {
+  const graphData = JSON.stringify(ctx.getDataGraph().toData());
+  localStorage.setItem(LOCAL_STORAGE_KEY, graphData);
+
+  console.log("Graph saved in local storage.");
+}
+
+export function loadFromLocalStorage(ctx: GlobalContext) {
+  const graphData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
+  ctx.load(DataGraph.fromData(graphData));
+
+  console.log("Graph loaded from local storage.");
 }
