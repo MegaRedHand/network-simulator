@@ -22,7 +22,7 @@ export class Packet extends Graphics {
   }
 
   static unpauseAnimation() {
-    Packet.animationPaused = true;
+    Packet.animationPaused = false;
   }
 
   constructor(
