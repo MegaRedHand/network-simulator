@@ -118,7 +118,8 @@ canvas {
 
 /* Hover effect for save and load buttons */
 .save-button:hover,
-.load-button:hover {
+.load-button:hover,
+.new-button:hover {
   background-color: #0056b3; /* Darker background on hover */
 }
 
