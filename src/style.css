@@ -104,6 +104,7 @@ canvas {
 }
 
 /* Styles for save and load buttons */
+.new-button,
 .save-button,
 .load-button {
   background-color: #007bff; /* Blue background */

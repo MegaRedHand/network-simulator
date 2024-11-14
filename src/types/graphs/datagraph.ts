@@ -5,9 +5,53 @@ export interface GraphNode {
   connections: Set<number>;
 }
 
+export interface GraphDataNode {
+  id: number;
+  x: number;
+  y: number;
+  type: string;
+  connections: number[];
+}
+
+export type GraphData = GraphDataNode[];
+
 export class DataGraph {
   private devices = new Map<number, GraphNode>();
   private idCounter = 1;
+  private onChanges: (() => void)[] = [];
+
+  static fromData(data: GraphData): DataGraph {
+    const dataGraph = new DataGraph();
+    data.forEach((nodeData: GraphDataNode) => {
+      // ADD DATAGRAPH AND EDGES
+      console.log(nodeData);
+      const connections = new Set(nodeData.connections);
+      const graphNode: GraphNode = {
+        x: nodeData.x,
+        y: nodeData.y,
+        type: nodeData.type,
+        connections: connections,
+      };
+      dataGraph.addDevice(nodeData.id, graphNode);
+    });
+    return dataGraph;
+  }
+
+  toData(): GraphData {
+    const graphData: GraphData = [];
+
+    // Serialize nodes
+    this.getDevices().forEach(([id, info]) => {
+      graphData.push({
+        id: id,
+        x: info.x,
+        y: info.y,
+        type: info.type, // Save the device type (Router, Server, PC)
+        connections: Array.from(info.connections.values()),
+      });
+    });
+    return graphData;
+  }
 
   // Add a new device to the graph
   addNewDevice(deviceInfo: { x: number; y: number; type: string }): number {
@@ -18,20 +62,22 @@ export class DataGraph {
     };
     this.devices.set(id, graphnode);
     console.log(`Device added with ID ${id}`);
+    this.notifyChanges();
     return id;
   }
 
   // Add a device to the graph
   addDevice(idDevice: number, deviceInfo: GraphNode) {
-    if (!this.devices.has(idDevice)) {
-      this.devices.set(idDevice, deviceInfo);
-      if (this.idCounter <= idDevice) {
-        this.idCounter = idDevice + 1;
-      }
-      console.log(`Device added with ID ${idDevice}`);
-    } else {
+    if (this.devices.has(idDevice)) {
       console.warn(`Device with ID ${idDevice} already exists in the graph.`);
+      return;
     }
+    this.devices.set(idDevice, deviceInfo);
+    if (this.idCounter <= idDevice) {
+      this.idCounter = idDevice + 1;
+    }
+    console.log(`Device added with ID ${idDevice}`);
+    this.notifyChanges();
   }
 
   // Add a connection between two devices
@@ -40,23 +86,30 @@ export class DataGraph {
       console.warn(
         `Cannot create a connection between the same device (ID ${n1Id}).`,
       );
-    } else if (!this.devices.has(n1Id)) {
+      return;
+    }
+    if (!this.devices.has(n1Id)) {
       console.warn(`Device with ID ${n1Id} does not exist in devices.`);
-    } else if (!this.devices.has(n2Id)) {
+      return;
+    }
+    if (!this.devices.has(n2Id)) {
       console.warn(`Device with ID ${n2Id} does not exist in devices.`);
+      return;
       // Check if an edge already exists between these two devices
-    } else if (this.devices.get(n1Id).connections.has(n2Id)) {
+    }
+    if (this.devices.get(n1Id).connections.has(n2Id)) {
       console.warn(
         `Connection between ID ${n1Id} and ID ${n2Id} already exists.`,
       );
-    } else {
-      this.devices.get(n1Id).connections.add(n2Id);
-      this.devices.get(n2Id).connections.add(n1Id);
-
-      console.log(
-        `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,
-      );
+      return;
     }
+    this.devices.get(n1Id).connections.add(n2Id);
+    this.devices.get(n2Id).connections.add(n1Id);
+
+    console.log(
+      `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,
+    );
+    this.notifyChanges();
   }
 
   updateDevicePosition(id: number, newValues: { x?: number; y?: number }) {
@@ -66,6 +119,7 @@ export class DataGraph {
       return;
     }
     this.devices.set(id, { ...deviceGraphNode, ...newValues });
+    this.notifyChanges();
   }
 
   getDevice(id: number): GraphNode | undefined {
@@ -111,6 +165,7 @@ export class DataGraph {
     // Remove the node from the graph
     this.devices.delete(id);
     console.log(`Device with ID ${id} and its connections were removed.`);
+    this.notifyChanges();
   }
 
   // Method to remove a connection (edge) between two devices by their IDs
@@ -143,11 +198,14 @@ export class DataGraph {
     console.log(
       `Connection removed between devices ID: ${n1Id} and ID: ${n2Id}`,
     );
+    this.notifyChanges();
   }
 
-  // Clear the graph
-  clear() {
-    this.devices.clear();
-    this.idCounter = 1;
+  subscribeChanges(callback: () => void) {
+    this.onChanges.push(callback);
+  }
+
+  notifyChanges() {
+    this.onChanges.forEach((callback) => callback());
   }
 }

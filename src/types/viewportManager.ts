@@ -1,5 +1,5 @@
 import { GlobalContext } from "./../index";
-import { DataGraph, GraphNode } from "./graphs/datagraph";
+import { DataGraph } from "./graphs/datagraph";
 import { Device, Pc, Router, Server } from "./devices/index";
 import { Edge } from "./edge";
 import { RightBar } from "../index"; // Ensure the path is correct
@@ -155,51 +155,9 @@ export function AddServer(ctx: GlobalContext) {
   );
 }
 
-function setDevice(
-  datagraph: DataGraph,
-  nodeData: {
-    id: number;
-    x: number;
-    y: number;
-    type: string;
-    connections: number[];
-  },
-) {
-  const connections = new Set(nodeData.connections);
-  const graphNode: GraphNode = {
-    x: nodeData.x,
-    y: nodeData.y,
-    type: nodeData.type,
-    connections: connections,
-  };
-  datagraph.addDevice(nodeData.id, graphNode);
-  console.log(`Device set with ID ${nodeData.id}`);
-}
-
 // Function to save the current graph in JSON format
-export function saveGraph(ctx: GlobalContext) {
-  const datagraph: DataGraph = ctx.getDataGraph();
-
-  const graphData: {
-    id: number;
-    x: number;
-    y: number;
-    type: string;
-    connections: number[];
-  }[] = [];
-
-  // Serialize nodes
-  datagraph.getDevices().forEach((deviceInfo) => {
-    const id = deviceInfo[0];
-    const info = deviceInfo[1];
-    graphData.push({
-      id: id,
-      x: info.x,
-      y: info.y,
-      type: info.type, // Save the device type (Router, Server, PC)
-      connections: Array.from(info.connections.values()),
-    });
-  });
+export function saveToFile(ctx: GlobalContext) {
+  const graphData = ctx.getDataGraph().toData();
 
   // Convert to JSON and download
   const jsonString = JSON.stringify(graphData, null, 2);
@@ -215,31 +173,42 @@ export function saveGraph(ctx: GlobalContext) {
 }
 
 // Function to load a graph from a JSON file
-export function loadGraph(jsonData: string, ctx: GlobalContext) {
+export function loadFromFile(ctx: GlobalContext) {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json";
+
+  input.onchange = (event) => {
+    const file = (event.target as HTMLInputElement).files[0];
+    const reader = new FileReader();
+    reader.readAsText(file);
+
+    reader.onload = (readerEvent) => {
+      const jsonData = readerEvent.target.result as string;
+      const graphData = JSON.parse(jsonData);
+      ctx.load(DataGraph.fromData(graphData));
+
+      console.log("Graph loaded successfully.");
+    };
+  };
+
+  input.click();
+}
+
+const LOCAL_STORAGE_KEY = "graphData";
+
+export function saveToLocalStorage(ctx: GlobalContext) {
+  const dataGraph = ctx.getDataGraph();
+  const graphData = JSON.stringify(dataGraph.toData());
+  localStorage.setItem(LOCAL_STORAGE_KEY, graphData);
+
+  console.log("Graph saved in local storage.");
+}
+
+export function loadFromLocalStorage(ctx: GlobalContext) {
+  const jsonData = localStorage.getItem(LOCAL_STORAGE_KEY) || "[]";
   const graphData = JSON.parse(jsonData);
-  const viewgraph = ctx.getViewGraph();
-  const datagraph = ctx.getDataGraph();
+  ctx.load(DataGraph.fromData(graphData));
 
-  // Clear current nodes and connections
-  viewgraph.clear();
-  datagraph.clear();
-
-  // Deserialize and recreate nodes
-  graphData.forEach(
-    (nodeData: {
-      id: number;
-      x: number;
-      y: number;
-      type: string;
-      connections: number[];
-    }) => {
-      // ADD DATAGRAPH AND EDGES
-      console.log(nodeData);
-      setDevice(datagraph, nodeData);
-    },
-  );
-
-  viewgraph.constructView();
-
-  console.log("Graph loaded successfully.");
+  console.log("Graph loaded from local storage.");
 }

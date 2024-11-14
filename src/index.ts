@@ -16,8 +16,10 @@ import {
   AddPc,
   AddRouter,
   AddServer,
-  loadGraph,
-  saveGraph,
+  loadFromFile,
+  loadFromLocalStorage,
+  saveToFile,
+  saveToLocalStorage,
   selectElement,
 } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
@@ -36,6 +38,12 @@ export class GlobalContext {
   initialize(viewport: Viewport) {
     this.viewport = viewport;
     this.datagraph = new DataGraph();
+    this.viewgraph = new ViewGraph(this.datagraph, this.viewport);
+  }
+
+  load(datagraph: DataGraph) {
+    this.datagraph = datagraph;
+    this.viewport.clear();
     this.viewgraph = new ViewGraph(this.datagraph, this.viewport);
   }
 
@@ -88,6 +96,12 @@ export class Viewport extends pixi_viewport.Viewport {
         selectElement(null);
       }
     });
+  }
+
+  clear() {
+    this.removeChildren();
+    this.addChild(new Background());
+    this.moveCenter(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
   }
 
   private initializeMovement() {
@@ -298,31 +312,13 @@ export class RightBar {
   RightBar.getInstance();
 
   // Add router button
-  leftBar.addButton(
-    RouterSvg,
-    () => {
-      AddRouter(ctx);
-    },
-    "Add Router",
-  );
+  leftBar.addButton(RouterSvg, () => AddRouter(ctx), "Add Router");
 
   // Add server button
-  leftBar.addButton(
-    ServerSvg,
-    () => {
-      AddServer(ctx);
-    },
-    "Add Server",
-  );
+  leftBar.addButton(ServerSvg, () => AddServer(ctx), "Add Server");
 
   // Add PC button
-  leftBar.addButton(
-    ComputerSvg,
-    () => {
-      AddPc(ctx);
-    },
-    "Add PC",
-  );
+  leftBar.addButton(ComputerSvg, () => AddPc(ctx), "Add PC");
 
   ctx.initialize(viewport);
 
@@ -346,31 +342,13 @@ export class RightBar {
 
   window.addEventListener("resize", resize);
 
+  const newButton = document.getElementById("new-button");
   const loadButton = document.getElementById("load-button");
   const saveButton = document.getElementById("save-button");
 
-  saveButton.onclick = () => {
-    saveGraph(ctx);
-  };
-
-  loadButton.onclick = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json";
-
-    input.onchange = (event) => {
-      const file = (event.target as HTMLInputElement).files[0];
-      const reader = new FileReader();
-      reader.readAsText(file);
-
-      reader.onload = (readerEvent) => {
-        const jsonData = readerEvent.target.result as string;
-        loadGraph(jsonData, ctx);
-      };
-    };
-
-    input.click();
-  };
+  newButton.onclick = () => ctx.load(new DataGraph());
+  saveButton.onclick = () => saveToFile(ctx);
+  loadButton.onclick = () => loadFromFile(ctx);
 
   const pauseButton = document.getElementById("pause-button");
   let paused = false;
@@ -397,9 +375,7 @@ export class RightBar {
     }
   };
 
-  pauseButton.onclick = () => {
-    triggerPause();
-  };
+  pauseButton.onclick = triggerPause;
 
   document.body.onkeyup = function (e) {
     if (e.key === " " || e.code === "Space") {
@@ -407,6 +383,22 @@ export class RightBar {
       e.preventDefault();
     }
   };
+
+  // TODO: load from local storage directly, without first generating a context
+  loadFromLocalStorage(ctx);
+
+  let saveIntervalId: NodeJS.Timeout | null = null;
+
+  ctx.getDataGraph().subscribeChanges(() => {
+    // Wait a bit after the last change to save
+    if (saveIntervalId) {
+      clearInterval(saveIntervalId);
+    }
+    saveIntervalId = setInterval(() => {
+      saveToLocalStorage(ctx);
+      clearInterval(saveIntervalId);
+    }, 100);
+  });
 
   console.log("initialized!");
 })();
