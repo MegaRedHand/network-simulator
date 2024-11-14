@@ -1,4 +1,4 @@
-import { GraphicsContext } from "pixi.js";
+import { Graphics, GraphicsContext } from "pixi.js";
 
 export enum Colors {
   Violet = 0x4b0082,
@@ -8,6 +8,7 @@ export enum Colors {
   Red = 0xff0000,
   White = 0xffffff,
   Black = 0x000000,
+  Yellow = 0xffff00,
 }
 
 export function circleGraphicsContext(
