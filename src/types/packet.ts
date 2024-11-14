@@ -1,8 +1,20 @@
-import { FederatedPointerEvent, Graphics, Ticker } from "pixi.js";
+import {
+  FederatedPointerEvent,
+  Graphics,
+  GraphicsContext,
+  Ticker,
+} from "pixi.js";
 import { Edge, Position } from "./edge";
 import { selectElement } from "./viewportManager";
-import { Colors, drawCircle } from "../utils";
+import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar } from "../index";
+
+const contextPerPacketType: Record<string, GraphicsContext> = {
+  IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
+  ICMP: circleGraphicsContext(Colors.Red, 0, 0, 5),
+};
+
+const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
 
 export class Packet extends Graphics {
   speed: number;
@@ -35,14 +47,9 @@ export class Packet extends Graphics {
 
     this.type = type;
 
-    const packetColors: Record<string, number> = {
-      IP: Colors.Green, // Verde para paquetes IP
-      ICMP: Colors.Red, // Rojo para paquetes ICMP
-    };
+    this.context = contextPerPacketType[this.type];
+    this.zIndex = ZIndexLevels.Packet;
 
-    this.color = packetColors[this.type] || Colors.White; // Color por defecto blanco
-
-    drawCircle(this, this.color, 0, 0, 5);
     this.speed = speed;
     this.sourceId = sourceid;
     this.destinationId = destinationid;
@@ -78,11 +85,11 @@ export class Packet extends Graphics {
   }
 
   highlight() {
-    drawCircle(this, Colors.Violet, 0, 0, 5);
+    this.context = highlightedPacketContext;
   }
 
   removeHighlight() {
-    drawCircle(this, this.color, 0, 0, 5);
+    this.context = contextPerPacketType[this.type];
   }
 
   animateAlongPath(path: Edge[], start: number): void {
