@@ -46,6 +46,7 @@ export class GlobalContext {
     this.viewport.clear();
     this.viewgraph = new ViewGraph(this.datagraph, this.viewport);
     this.setupAutoSave();
+    saveToLocalStorage(this);
   }
 
   getViewport() {
