@@ -155,27 +155,6 @@ export function AddServer(ctx: GlobalContext) {
   );
 }
 
-function setDevice(
-  datagraph: DataGraph,
-  nodeData: {
-    id: number;
-    x: number;
-    y: number;
-    type: string;
-    connections: number[];
-  },
-) {
-  const connections = new Set(nodeData.connections);
-  const graphNode: GraphNode = {
-    x: nodeData.x,
-    y: nodeData.y,
-    type: nodeData.type,
-    connections: connections,
-  };
-  datagraph.addDevice(nodeData.id, graphNode);
-  console.log(`Device set with ID ${nodeData.id}`);
-}
-
 // Function to save the current graph in JSON format
 export function saveGraph(ctx: GlobalContext) {
   const graphData = ctx.getDataGraph().toData();
