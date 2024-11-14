@@ -1,4 +1,4 @@
-import { Graphics } from "pixi.js";
+import { Graphics, GraphicsContext } from "pixi.js";
 
 export enum Colors {
   Violet = 0x4b0082,
@@ -10,17 +10,16 @@ export enum Colors {
   Black = 0x000000,
 }
 
-export function drawCircle(
-  graphics: Graphics,
+export function circleGraphicsContext(
   color: number,
   x: number,
   y: number,
   radius: number,
-) {
-  graphics.clear();
-  graphics.circle(x, y, radius);
-  graphics.fill(color);
-  graphics.zIndex = ZIndexLevels.Packet;
+): GraphicsContext {
+  const graphicsCtx = new GraphicsContext();
+  graphicsCtx.circle(x, y, radius);
+  graphicsCtx.fill(color);
+  return graphicsCtx;
 }
 
 export enum ZIndexLevels {
