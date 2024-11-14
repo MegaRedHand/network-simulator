@@ -34,17 +34,18 @@ export class GlobalContext {
   private viewport: Viewport = null;
   private datagraph: DataGraph;
   private viewgraph: ViewGraph;
+  private saveIntervalId: NodeJS.Timeout | null = null;
 
   initialize(viewport: Viewport) {
     this.viewport = viewport;
-    this.datagraph = new DataGraph();
-    this.viewgraph = new ViewGraph(this.datagraph, this.viewport);
+    loadFromLocalStorage(this);
   }
 
   load(datagraph: DataGraph) {
     this.datagraph = datagraph;
     this.viewport.clear();
     this.viewgraph = new ViewGraph(this.datagraph, this.viewport);
+    this.setupAutoSave();
   }
 
   getViewport() {
@@ -57,6 +58,29 @@ export class GlobalContext {
 
   getDataGraph() {
     return this.datagraph;
+  }
+
+  private setupAutoSave() {
+    
+    this.clearAutoSave();
+
+    this.datagraph.subscribeChanges(() => {
+      if (this.saveIntervalId) {
+        clearInterval(this.saveIntervalId);
+      }
+      this.saveIntervalId = setInterval(() => {
+        saveToLocalStorage(this);
+        clearInterval(this.saveIntervalId);
+      }, 100);
+    });
+  }
+
+  private clearAutoSave() {
+    // Limpia el intervalo y evita duplicados
+    if (this.saveIntervalId) {
+      clearInterval(this.saveIntervalId);
+      this.saveIntervalId = null;
+    }
   }
 }
 
@@ -386,19 +410,6 @@ export class RightBar {
 
   // TODO: load from local storage directly, without first generating a context
   loadFromLocalStorage(ctx);
-
-  let saveIntervalId: NodeJS.Timeout | null = null;
-
-  ctx.getDataGraph().subscribeChanges(() => {
-    // Wait a bit after the last change to save
-    if (saveIntervalId) {
-      clearInterval(saveIntervalId);
-    }
-    saveIntervalId = setInterval(() => {
-      saveToLocalStorage(ctx);
-      clearInterval(saveIntervalId);
-    }, 100);
-  });
 
   console.log("initialized!");
 })();
