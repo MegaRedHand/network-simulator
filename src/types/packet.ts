@@ -90,30 +90,40 @@ export class Packet extends Graphics {
       console.error(
         "No se puede animar un paquete a lo largo de un camino vacío",
       );
+      this.destroy();
       return;
     }
     console.log(path);
     this.currentPath = path;
     this.currentEdge = this.currentPath.shift();
     this.currentStart = start;
-    Ticker.shared.add(this.updateProgress, this);
+    // Add packet as a child of the current edge
+    this.currentEdge.addChild(this);
+    this.updatePosition();
+    Ticker.shared.add(this.animationTick, this);
   }
 
-  updateProgress(ticker: Ticker) {
+  animationTick(ticker: Ticker) {
     if (this.progress >= 1) {
       this.progress = 0;
+      this.removeFromParent();
       if (this.currentPath.length == 0) {
-        ticker.remove(this.updateProgress, this);
-        this.removeFromParent();
+        ticker.remove(this.animationTick, this);
+        this.destroy();
         return;
       }
       this.currentStart = this.currentEdge.otherEnd(this.currentStart);
       this.currentEdge = this.currentPath.shift();
+      this.currentEdge.addChild(this);
     }
     if (!Packet.animationPaused) {
       this.progress += (ticker.deltaMS * this.speed) / 100000;
     }
 
+    this.updatePosition();
+  }
+
+  updatePosition() {
     const current = this.currentEdge;
     const start = this.currentStart;
 
