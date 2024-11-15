@@ -247,19 +247,19 @@ export class Device extends Sprite {
       // Create the square as a selection marker
       this.highlightMarker = new Graphics();
 
-      // Increase the square size
-      const size = this.width; // Side length of the square, now larger
-
-      // Draw a square using moveTo and lineTo
-      this.highlightMarker.moveTo(-size / 2, -size / 2); // Move to the top left corner of the centered square
-      this.highlightMarker.lineTo(size / 2, -size / 2); // Top line
-      this.highlightMarker.lineTo(size / 2, size / 2); // Right line
-      this.highlightMarker.lineTo(-size / 2, size / 2); // Bottom line
-      this.highlightMarker.lineTo(-size / 2, -size / 2); // Left line, closes the square
-
-      // Change color to red and increase line thickness
-      this.highlightMarker.stroke({ width: 3, color: Colors.Violet }); // Red and thicker
-
+      this.highlightMarker.roundRect(
+        -this.width / 2,
+        -this.height / 2,
+        this.width,
+        this.height,
+        5,
+      );
+      this.highlightMarker.stroke({
+        width: 3,
+        color: Colors.Violet,
+        alpha: 0.6,
+      });
+      this.highlightMarker.fill({ color: Colors.Violet, alpha: 0.1 });
       this.highlightMarker.zIndex = ZIndexLevels.Device;
 
       // Ensure the marker is in the same container as the viewport
