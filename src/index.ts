@@ -88,7 +88,7 @@ export class GlobalContext {
 
   // (!) For layer abstraction functionality
   // changeViewGraph(layer: string) {
-  //   this.setNetWork(this.datagraph, Layer.fromName(layer));
+  //   this.setNetWork(this.datagraph, layerFromName(layer));
   // }
 }
 

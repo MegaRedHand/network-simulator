@@ -15,9 +15,6 @@ import {
 } from "./../viewportManager";
 import { RightBar } from "../../index";
 import { Colors, ZIndexLevels } from "../../utils";
-import { Router } from "./router";
-import { Server } from "./server";
-import { Pc } from "./pc";
 
 export const DEVICE_SIZE = 20;
 
@@ -28,29 +25,6 @@ export enum Layer {
   Transport = 1,
   Network = 2,
   Link = 3,
-}
-
-export namespace Layer {
-  export function fromName(name: string): Layer {
-    switch (name) {
-      case "application":
-        // Lógica específica para la capa de aplicación
-        console.log("Application Layer selected");
-        return Layer.App;
-      case "transport":
-        // Lógica específica para la capa de transporte
-        console.log("Transport Layer selected");
-        return Layer.Transport;
-      case "network":
-        // Lógica específica para la capa de red
-        console.log("Network Layer selected");
-        return Layer.Network;
-      case "link":
-        // Lógica específica para la capa de enlace
-        console.log("Link Layer selected");
-        return Layer.Link;
-    }
-  }
 }
 
 export enum DeviceType {

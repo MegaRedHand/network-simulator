@@ -1,8 +1,8 @@
-import { Device, Pc, Router, Server } from "./../devices/index"; // Import the Device class
+import { Device } from "./../devices/index"; // Import the Device class
 import { Edge } from "./../edge";
 import { DataGraph } from "./datagraph";
 import { Viewport } from "../..";
-import { DeviceType, Layer } from "../devices/device";
+import { Layer } from "../devices/device";
 import { createDevice } from "../devices/utils";
 
 export class ViewGraph {
@@ -27,7 +27,7 @@ export class ViewGraph {
 
     this.datagraph.getDevices().forEach(([deviceId, graphNode]) => {
       const position = { x: graphNode.x, y: graphNode.y };
-      let device: Device = createDevice(
+      const device: Device = createDevice(
         graphNode.type,
         deviceId,
         this,
