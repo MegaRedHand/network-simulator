@@ -5,6 +5,7 @@ import { Edge } from "./edge";
 import { RightBar } from "../index"; // Ensure the path is correct
 import { Packet } from "./packet";
 import { DeviceType } from "./devices/device";
+import { createDevice } from "./devices/utils";
 
 let selectedElement: Device | Edge | Packet | null = null; // Global variable to store the selected element
 
@@ -58,6 +59,43 @@ document.addEventListener("keydown", (event) => {
     }
   }
 });
+
+// Function to add a device at the center of the viewport
+export function AddDevice(ctx: GlobalContext, deviceType: DeviceType) {
+  console.log(`Entered AddDevice with ${deviceType}`);
+  deselectElement();
+  const viewgraph = ctx.getViewGraph();
+  const datagraph = ctx.getDataGraph();
+  const viewport = ctx.getViewport();
+
+  // Get the center coordinates of the world after zoom
+  const worldCenter = viewport.toWorld(
+    viewport.screenWidth / 2,
+    viewport.screenHeight / 2,
+  );
+  const position = { x: worldCenter.x, y: worldCenter.y };
+
+  const idDevice = datagraph.addNewDevice({
+    x: position.x,
+    y: position.y,
+    type: deviceType,
+  });
+
+  const newDevice: Device = createDevice(
+    deviceType,
+    idDevice,
+    viewgraph,
+    position,
+  );
+
+  // Add the Device to the graph
+  viewgraph.addDevice(newDevice);
+  viewport.addChild(newDevice);
+
+  console.log(
+    `${DeviceType[newDevice.getType().valueOf()] !== undefined ? DeviceType[newDevice.getType().valueOf()] : "Unknown"} added with ID ${newDevice.id} at the center of the screen.`,
+  );
+}
 
 // Function to add a router at the center of the viewport
 export function AddRouter(ctx: GlobalContext) {

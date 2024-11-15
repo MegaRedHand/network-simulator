@@ -2,18 +2,21 @@ import { Device, Pc, Router, Server } from "./../devices/index"; // Import the D
 import { Edge } from "./../edge";
 import { DataGraph } from "./datagraph";
 import { Viewport } from "../..";
-import { DeviceType } from "../devices/device";
+import { DeviceType, Layer } from "../devices/device";
+import { createDevice } from "../devices/utils";
 
 export class ViewGraph {
   private devices: Map<number, Device> = new Map<number, Device>();
   private edges: Map<number, Edge> = new Map<number, Edge>();
   private idCounter = 1;
   private datagraph: DataGraph;
+  private layer: Layer;
   viewport: Viewport;
 
-  constructor(datagraph: DataGraph, viewport: Viewport) {
+  constructor(datagraph: DataGraph, viewport: Viewport, layer: Layer) {
     this.datagraph = datagraph;
     this.viewport = viewport;
+    this.layer = layer;
     this.constructView();
   }
 
@@ -23,24 +26,13 @@ export class ViewGraph {
     const connections = new Set<{ deviceId: number; adyacentId: number }>();
 
     this.datagraph.getDevices().forEach(([deviceId, graphNode]) => {
-      let device: Device;
-      switch (graphNode.type) {
-        case DeviceType.Router:
-          device = new Router(deviceId, this, {
-            x: graphNode.x,
-            y: graphNode.y,
-          });
-          break;
-        case DeviceType.Server:
-          device = new Server(deviceId, this, {
-            x: graphNode.x,
-            y: graphNode.y,
-          });
-          break;
-        case DeviceType.Pc:
-          device = new Pc(deviceId, this, { x: graphNode.x, y: graphNode.y });
-          break;
-      }
+      const position = { x: graphNode.x, y: graphNode.y };
+      let device: Device = createDevice(
+        graphNode.type,
+        deviceId,
+        this,
+        position,
+      );
 
       this.viewport.addChild(device);
 

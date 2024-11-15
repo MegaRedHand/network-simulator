@@ -13,9 +13,7 @@ import { Application, Graphics, EventSystem, Assets } from "pixi.js";
 import * as pixi_viewport from "pixi-viewport";
 import { ViewGraph } from "./types/graphs/viewgraph";
 import {
-  AddPc,
-  AddRouter,
-  AddServer,
+  AddDevice,
   loadFromFile,
   loadFromLocalStorage,
   saveToFile,
@@ -24,6 +22,7 @@ import {
 } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
 import { Packet } from "./types/packet";
+import { DeviceType, Layer } from "./types/devices/device";
 
 const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;
@@ -41,10 +40,14 @@ export class GlobalContext {
     loadFromLocalStorage(this);
   }
 
-  load(datagraph: DataGraph) {
+  private setNetWork(datagraph: DataGraph, layer: Layer) {
     this.datagraph = datagraph;
     this.viewport.clear();
-    this.viewgraph = new ViewGraph(this.datagraph, this.viewport);
+    this.viewgraph = new ViewGraph(this.datagraph, this.viewport, layer);
+  }
+
+  load(datagraph: DataGraph, layer: Layer = Layer.Link) {
+    this.setNetWork(datagraph, layer);
     this.setupAutoSave();
     saveToLocalStorage(this);
   }
@@ -82,6 +85,11 @@ export class GlobalContext {
       this.saveIntervalId = null;
     }
   }
+
+  // (!) For layer abstraction functionality
+  // changeViewGraph(layer: string) {
+  //   this.setNetWork(this.datagraph, Layer.fromName(layer));
+  // }
 }
 
 // > graphics.ts
@@ -336,13 +344,21 @@ export class RightBar {
   RightBar.getInstance();
 
   // Add router button
-  leftBar.addButton(RouterSvg, () => AddRouter(ctx), "Add Router");
+  leftBar.addButton(
+    RouterSvg,
+    () => AddDevice(ctx, DeviceType.Router),
+    "Add Router",
+  );
 
   // Add server button
-  leftBar.addButton(ServerSvg, () => AddServer(ctx), "Add Server");
+  leftBar.addButton(
+    ServerSvg,
+    () => AddDevice(ctx, DeviceType.Server),
+    "Add Server",
+  );
 
   // Add PC button
-  leftBar.addButton(ComputerSvg, () => AddPc(ctx), "Add PC");
+  leftBar.addButton(ComputerSvg, () => AddDevice(ctx, DeviceType.Pc), "Add PC");
 
   ctx.initialize(viewport);
 
@@ -400,6 +416,22 @@ export class RightBar {
   };
 
   pauseButton.onclick = triggerPause;
+
+  // (!) For layer abstraction functionality
+  // const layerSelect = document.getElementById(
+  //   "layer-select",
+  // ) as HTMLSelectElement;
+
+  // const selectNewLayer = (event: Event) => {
+  //   const selectedLayer = (event.target as HTMLSelectElement).value;
+  //   console.log(`Layer selected: ${selectedLayer}`);
+
+  //   if (selectElement) {
+  //     ctx.changeViewGraph(selectedLayer);
+  //   }
+  // };
+
+  // layerSelect.onchange = selectNewLayer;
 
   document.body.onkeyup = function (e) {
     if (e.key === " " || e.code === "Space") {

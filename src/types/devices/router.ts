@@ -8,7 +8,7 @@ export class Router extends Device {
   constructor(
     id: number,
     viewgraph: ViewGraph,
-    position: { x: number; y: number },
+    position: { x: number; y: number } | null = null,
   ) {
     super(id, RouterImage, viewgraph, position);
   }
