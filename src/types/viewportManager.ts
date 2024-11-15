@@ -1,9 +1,10 @@
 import { GlobalContext } from "./../index";
-import { DataGraph } from "./graphs/datagraph";
+import { DataGraph, GraphData } from "./graphs/datagraph";
 import { Device, Pc, Router, Server } from "./devices/index";
 import { Edge } from "./edge";
 import { RightBar } from "../index"; // Ensure the path is correct
 import { Packet } from "./packet";
+import { DeviceType } from "./devices/device";
 
 let selectedElement: Device | Edge | Packet | null = null; // Global variable to store the selected element
 
@@ -75,7 +76,7 @@ export function AddRouter(ctx: GlobalContext) {
   const idDevice = datagraph.addNewDevice({
     x: worldCenter.x,
     y: worldCenter.y,
-    type: "Router",
+    type: DeviceType.Router,
   });
   const device = datagraph.getDevice(idDevice);
 
@@ -109,7 +110,7 @@ export function AddPc(ctx: GlobalContext) {
   const idDevice = datagraph.addNewDevice({
     x: worldCenter.x,
     y: worldCenter.y,
-    type: "Pc",
+    type: DeviceType.Pc,
   });
   const device = datagraph.getDevice(idDevice);
 
@@ -141,7 +142,7 @@ export function AddServer(ctx: GlobalContext) {
   const idDevice = datagraph.addNewDevice({
     x: worldCenter.x,
     y: worldCenter.y,
-    type: "Server",
+    type: DeviceType.Server,
   });
   const device = datagraph.getDevice(idDevice);
 
@@ -189,7 +190,7 @@ export function loadFromFile(ctx: GlobalContext) {
 
     reader.onload = (readerEvent) => {
       const jsonData = readerEvent.target.result as string;
-      const graphData = JSON.parse(jsonData);
+      const graphData: GraphData = JSON.parse(jsonData);
       ctx.load(DataGraph.fromData(graphData));
 
       console.log("Graph loaded successfully.");
@@ -211,7 +212,7 @@ export function saveToLocalStorage(ctx: GlobalContext) {
 
 export function loadFromLocalStorage(ctx: GlobalContext) {
   const jsonData = localStorage.getItem(LOCAL_STORAGE_KEY) || "[]";
-  const graphData = JSON.parse(jsonData);
+  const graphData: GraphData = JSON.parse(jsonData);
   ctx.load(DataGraph.fromData(graphData));
 
   console.log("Graph loaded from local storage.");

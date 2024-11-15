@@ -1,6 +1,6 @@
 // src/devices/server.ts
 
-import { Device } from "./device";
+import { Device, DeviceType, Layer } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import ServerImage from "../../assets/server.svg";
 
@@ -26,5 +26,13 @@ export class Server extends Device {
     ]);
 
     this.addCommonButtons();
+  }
+
+  getLayer(): Layer {
+    return Layer.App;
+  }
+
+  getType(): DeviceType {
+    return DeviceType.Server;
   }
 }

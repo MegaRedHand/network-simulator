@@ -1,7 +1,9 @@
+import { DeviceType } from "../devices/device";
+
 export interface GraphNode {
   x: number;
   y: number;
-  type: string;
+  type: DeviceType;
   connections: Set<number>;
 }
 
@@ -9,7 +11,7 @@ export interface GraphDataNode {
   id: number;
   x: number;
   y: number;
-  type: string;
+  type: DeviceType;
   connections: number[];
 }
 
@@ -54,7 +56,7 @@ export class DataGraph {
   }
 
   // Add a new device to the graph
-  addNewDevice(deviceInfo: { x: number; y: number; type: string }): number {
+  addNewDevice(deviceInfo: { x: number; y: number; type: DeviceType }): number {
     const id = this.idCounter++;
     const graphnode: GraphNode = {
       ...deviceInfo,

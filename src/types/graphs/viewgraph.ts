@@ -2,6 +2,7 @@ import { Device, Pc, Router, Server } from "./../devices/index"; // Import the D
 import { Edge } from "./../edge";
 import { DataGraph } from "./datagraph";
 import { Viewport } from "../..";
+import { DeviceType } from "../devices/device";
 
 export class ViewGraph {
   private devices: Map<number, Device> = new Map<number, Device>();
@@ -24,19 +25,19 @@ export class ViewGraph {
     this.datagraph.getDevices().forEach(([deviceId, graphNode]) => {
       let device: Device;
       switch (graphNode.type) {
-        case "Router":
+        case DeviceType.Router:
           device = new Router(deviceId, this, {
             x: graphNode.x,
             y: graphNode.y,
           });
           break;
-        case "Server":
+        case DeviceType.Server:
           device = new Server(deviceId, this, {
             x: graphNode.x,
             y: graphNode.y,
           });
           break;
-        case "Pc":
+        case DeviceType.Pc:
           device = new Pc(deviceId, this, { x: graphNode.x, y: graphNode.y });
           break;
       }
