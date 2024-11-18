@@ -4,6 +4,7 @@ import { Device, DeviceType, Layer } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import RouterImage from "../../assets/router.svg";
 import { Position } from "../common";
+import { StyledInfo } from "../../graphics/right_bar";
 
 export class Router extends Device {
   constructor(id: number, viewgraph: ViewGraph, position: Position) {
@@ -11,16 +12,15 @@ export class Router extends Device {
   }
 
   showInfo() {
-    this.rightbar.renderInfo("Router Information", [
-      { label: "ID", value: this.id.toString() },
-      {
-        label: "Connected Devices",
-        value:
-          this.connections.size !== 0
-            ? "[" + Array.from(this.connections.values()).join(", ") + "]"
-            : "None",
-      },
-    ]);
+    // TODO: move to StyledInfo
+    const styledConnectedDevices =
+      this.connections.size !== 0
+        ? "[" + Array.from(this.connections.values()).join(", ") + "]"
+        : "None";
+    const info = new StyledInfo("Router Information");
+    info.addField("ID", this.id.toString());
+    info.addField("Connected Devices", styledConnectedDevices);
+    this.rightbar.renderInfo(info);
 
     this.addCommonButtons();
   }

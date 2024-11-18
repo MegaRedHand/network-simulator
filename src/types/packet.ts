@@ -7,7 +7,7 @@ import {
 import { Edge } from "./edge";
 import { deselectElement, isSelected, selectElement } from "./viewportManager";
 import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
-import { RightBar } from "../graphics/right_bar";
+import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
@@ -76,13 +76,12 @@ export class Packet extends Graphics {
 
   showInfo() {
     const rightbar = RightBar.getInstance();
-    const info = [
-      { label: "Type", value: this.type },
-      { label: "Source ID", value: this.sourceId.toString() },
-      { label: "Destination ID", value: this.destinationId.toString() },
-    ];
+    const info = new StyledInfo("Packet Information");
+    info.addField("Type", this.type);
+    info.addField("Source ID", this.sourceId.toString());
+    info.addField("Destination ID", this.destinationId.toString());
 
-    rightbar.renderInfo("Packet Information", info);
+    rightbar.renderInfo(info);
   }
 
   highlight() {

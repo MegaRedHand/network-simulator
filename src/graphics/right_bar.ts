@@ -1,5 +1,34 @@
+type Field = { label: string; value: string };
+
+export class StyledInfo {
+  title: string;
+  info: Field[];
+
+  constructor(title: string) {
+    this.title = title;
+  }
+
+  addField(label: string, value: string) {
+    this.info.push({ label, value });
+  }
+
+  toHTML() {
+    const container = document.createElement("h3");
+    const header = document.createElement("h3");
+    header.textContent = this.title;
+    container.appendChild(header);
+
+    this.info.forEach((item) => {
+      const p = document.createElement("p");
+      p.innerHTML = `<strong>${item.label}:</strong> ${item.value}`;
+      container.appendChild(p);
+    });
+    return container;
+  }
+}
+
 export class RightBar {
-  private static instance: RightBar | null = null; // Unique instance
+  private static instance: RightBar | null = null; // Singleton
   private rightBar: HTMLElement;
 
   private constructor(rightBar: HTMLElement) {
@@ -41,20 +70,12 @@ export class RightBar {
   }
 
   // Shows specific information of an element in info-content
-  renderInfo(title: string, info: { label: string; value: string }[]) {
+  renderInfo(info: StyledInfo) {
     this.clearContent(); // Clears before adding new content
 
     const infoContent = document.getElementById("info-content");
     if (infoContent) {
-      const header = document.createElement("h3");
-      header.textContent = title;
-      infoContent.appendChild(header);
-
-      info.forEach((item) => {
-        const p = document.createElement("p");
-        p.innerHTML = `<strong>${item.label}:</strong> ${item.value}`;
-        infoContent.appendChild(p);
-      });
+      infoContent.replaceWith(info.toHTML());
     }
   }
 
