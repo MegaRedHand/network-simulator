@@ -1,14 +1,14 @@
 import { Device, Pc, Router, Server } from "./../devices/index"; // Import the Device class
 import { Edge } from "./../edge";
 import { DataGraph } from "./datagraph";
-import { Viewport } from "../..";
+import { Viewport } from "../../viewport";
 
 export class ViewGraph {
   private devices: Map<number, Device> = new Map<number, Device>();
   private edges: Map<number, Edge> = new Map<number, Edge>();
   private idCounter = 1;
   private datagraph: DataGraph;
-  viewport: Viewport;
+  private viewport: Viewport;
 
   constructor(datagraph: DataGraph, viewport: Viewport) {
     this.datagraph = datagraph;
