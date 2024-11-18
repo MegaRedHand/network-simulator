@@ -1,5 +1,3 @@
-// src/devices/pc.ts
-
 import { Device, DeviceType, Layer } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";

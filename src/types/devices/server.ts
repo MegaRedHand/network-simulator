@@ -1,5 +1,3 @@
-// src/devices/server.ts
-
 import { Device, DeviceType, Layer } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import ServerImage from "../../assets/server.svg";
