@@ -18,14 +18,14 @@ export class GlobalContext {
     loadFromLocalStorage(this);
   }
 
-  private setNetWork(datagraph: DataGraph, layer: Layer) {
+  private setNetwork(datagraph: DataGraph, layer: Layer) {
     this.datagraph = datagraph;
     this.viewport.clear();
     this.viewgraph = new ViewGraph(this.datagraph, this.viewport, layer);
   }
 
   load(datagraph: DataGraph, layer: Layer = Layer.Link) {
-    this.setNetWork(datagraph, layer);
+    this.setNetwork(datagraph, layer);
     this.setupAutoSave();
     saveToLocalStorage(this);
   }
