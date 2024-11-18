@@ -26,13 +26,8 @@ export class ViewGraph {
     const connections = new Set<{ deviceId: number; adyacentId: number }>();
 
     this.datagraph.getDevices().forEach(([deviceId, graphNode]) => {
-      const position = { x: graphNode.x, y: graphNode.y };
-      const device: Device = createDevice(
-        graphNode.type,
-        deviceId,
-        this,
-        position,
-      );
+      const deviceInfo = { ...graphNode, id: deviceId };
+      const device: Device = createDevice(deviceInfo, this);
 
       this.viewport.addChild(device);
 

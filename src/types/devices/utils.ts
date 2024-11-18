@@ -4,19 +4,27 @@ import { Pc } from "./pc";
 import { Router } from "./router";
 import { Server } from "./server";
 
+export interface CreateDevice {
+  id: number;
+  type: DeviceType;
+  x: number;
+  y: number;
+}
+
 export function createDevice(
-  type: DeviceType,
-  id: number,
+  deviceInfo: CreateDevice,
   viewgraph: ViewGraph,
-  position: { x: number; y: number } | null = null,
 ): Device {
-  switch (type) {
+  const { x, y } = deviceInfo;
+  const position = { x, y };
+
+  switch (deviceInfo.type) {
     case DeviceType.Router:
-      return new Router(id, viewgraph, position);
+      return new Router(deviceInfo.id, viewgraph, position);
     case DeviceType.Server:
-      return new Server(id, viewgraph, position);
+      return new Server(deviceInfo.id, viewgraph, position);
     case DeviceType.Pc:
-      return new Pc(id, viewgraph, position);
+      return new Pc(deviceInfo.id, viewgraph, position);
   }
 }
 

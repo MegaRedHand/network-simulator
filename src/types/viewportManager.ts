@@ -63,115 +63,30 @@ document.addEventListener("keydown", (event) => {
 });
 
 // Function to add a device at the center of the viewport
-export function AddDevice(ctx: GlobalContext, deviceType: DeviceType) {
-  console.log(`Entered AddDevice with ${deviceType}`);
+export function AddDevice(ctx: GlobalContext, type: DeviceType) {
+  console.log(`Entered AddDevice with ${type}`);
   deselectElement();
   const viewgraph = ctx.getViewGraph();
   const datagraph = ctx.getDataGraph();
   const viewport = ctx.getViewport();
 
   // Get the center coordinates of the world after zoom
-  const worldCenter = viewport.toWorld(
+  const { x, y } = viewport.toWorld(
     viewport.screenWidth / 2,
     viewport.screenHeight / 2,
   );
-  const position = { x: worldCenter.x, y: worldCenter.y };
 
-  const idDevice = datagraph.addNewDevice({
-    x: position.x,
-    y: position.y,
-    type: deviceType,
-  });
+  const deviceInfo = { x, y, type };
 
-  const newDevice: Device = createDevice(
-    deviceType,
-    idDevice,
-    viewgraph,
-    position,
-  );
+  const id = datagraph.addNewDevice(deviceInfo);
+  const newDevice: Device = createDevice({ ...deviceInfo, id }, viewgraph);
 
   // Add the Device to the graph
   viewgraph.addDevice(newDevice);
   viewport.addChild(newDevice);
 
   console.log(
-    `${DeviceType[newDevice.getType().valueOf()] !== undefined ? DeviceType[newDevice.getType().valueOf()] : "Unknown"} added with ID ${newDevice.id} at the center of the screen.`,
-  );
-}
-
-// Function to add a router at the center of the viewport
-export function AddRouter(ctx: GlobalContext) {
-  console.log("Entered AddRouter");
-  deselectElement();
-  const viewgraph = ctx.getViewGraph();
-  const datagraph = ctx.getDataGraph();
-  const viewport = ctx.getViewport();
-
-  // Get the center coordinates of the world after zoom
-  const { x, y } = viewport.toWorld(
-    viewport.screenWidth / 2,
-    viewport.screenHeight / 2,
-  );
-
-  const idDevice = datagraph.addNewDevice({ x, y, type: DeviceType.Router });
-
-  const newRouter: Device = new Router(idDevice, viewgraph, { x, y });
-
-  // Add the RouterNode to the graph
-  viewgraph.addDevice(newRouter);
-  viewport.addChild(newRouter);
-
-  console.log(
-    `Router added with ID ${newRouter.id} at the center of the screen.`,
-  );
-}
-
-// Function to add a PC at the center of the viewport
-export function AddPc(ctx: GlobalContext) {
-  deselectElement();
-  const viewgraph = ctx.getViewGraph();
-  const datagraph = ctx.getDataGraph();
-  const viewport = ctx.getViewport();
-
-  // Get the center coordinates of the world after zoom
-  const { x: x, y: y } = viewport.toWorld(
-    viewport.screenWidth / 2,
-    viewport.screenHeight / 2,
-  );
-
-  const idDevice = datagraph.addNewDevice({ x, y, type: DeviceType.Pc });
-
-  const newPC: Device = new Pc(idDevice, viewgraph, { x, y });
-
-  // Add the PCNode to the graph
-  viewgraph.addDevice(newPC);
-  viewport.addChild(newPC);
-
-  console.log(`PC added with ID ${newPC.id} at the center of the screen.`);
-}
-
-// Function to add a server at the center of the viewport (assuming there is a ServerNode type)
-export function AddServer(ctx: GlobalContext) {
-  deselectElement();
-  const viewgraph = ctx.getViewGraph();
-  const datagraph = ctx.getDataGraph();
-  const viewport = ctx.getViewport();
-
-  // Get the center coordinates of the world after zoom
-  const { x, y } = viewport.toWorld(
-    viewport.screenWidth / 2,
-    viewport.screenHeight / 2,
-  );
-
-  const idDevice = datagraph.addNewDevice({ x, y, type: DeviceType.Server });
-
-  const newServer: Device = new Server(idDevice, viewgraph, { x, y });
-  // Add the ServerNode to the graph
-  viewgraph.addDevice(newServer);
-  viewport.addChild(newServer);
-
-  console.log(
-    `Server added with ID ${newServer.id} at the center of the screen.`,
+    `${DeviceType[newDevice.getType()]} added with ID ${newDevice.id} at the center of the screen.`,
   );
 }
 

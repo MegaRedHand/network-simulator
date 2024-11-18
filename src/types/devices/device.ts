@@ -33,11 +33,10 @@ export enum DeviceType {
   Pc = 2,
 }
 
-export class Device extends Sprite {
-  id: number;
-  viewgraph: ViewGraph;
+export abstract class Device extends Sprite {
+  readonly id: number;
+  readonly viewgraph: ViewGraph;
   connections = new Map<number, number>();
-  formatter: DeviceInfo;
 
   highlightMarker: Graphics | null = null; // Marker to indicate selection
 
@@ -47,14 +46,12 @@ export class Device extends Sprite {
   constructor(
     id: number,
     svg: string,
-    formatter: DeviceInfo,
     viewgraph: ViewGraph,
     position: Position,
   ) {
     super(Texture.from(svg));
     this.id = id;
     this.viewgraph = viewgraph;
-    this.formatter = formatter;
 
     this.anchor.set(0.5);
 
@@ -251,17 +248,7 @@ export class Device extends Sprite {
     });
   }
 
-  showInfo() {
-    const info = this.formatter.clear();
-    info.addField("ID", this.id.toString());
-    info.addListField(
-      "Connected Devices",
-      Array.from(this.connections.values()),
-    );
-    RightBar.getInstance().renderInfo(info);
-
-    this.addCommonButtons();
-  }
+  abstract showInfo(): void;
 
   select() {
     this.highlight(); // Calls highlight on select
@@ -273,17 +260,11 @@ export class Device extends Sprite {
     Device.connectionTarget = null;
   }
 
-  getType(): DeviceType {
-    // Return the device’s type.
-    // For the superclass, the type returned is Router.
-    return DeviceType.Router;
-  }
+  // Return the device’s type.
+  abstract getType(): DeviceType;
 
-  getLayer(): Layer {
-    // Return the device’s layer.
-    // For the superclass, the layer returned is Link.
-    return Layer.Link;
-  }
+  // Return the device’s layer.
+  abstract getLayer(): Layer;
 }
 
 function onPointerMove(event: FederatedPointerEvent): void {
