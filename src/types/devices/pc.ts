@@ -4,7 +4,7 @@ import { Device, DeviceType, Layer } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
-import { StyledInfo } from "../../graphics/right_bar";
+import { RightBar, StyledInfo } from "../../graphics/right_bar";
 
 export class Pc extends Device {
   constructor(id: number, viewgraph: ViewGraph, position: Position) {
@@ -18,7 +18,7 @@ export class Pc extends Device {
       "Connected Devices",
       Array.from(this.connections.values()),
     );
-    this.rightbar.renderInfo(info);
+    RightBar.getInstance().renderInfo(info);
 
     this.addCommonButtons();
   }

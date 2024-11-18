@@ -7,9 +7,11 @@ import { Packet } from "./packet";
 import { DeviceType } from "./devices/device";
 import { createDevice } from "./devices/utils";
 
-let selectedElement: Device | Edge | Packet | null = null; // Global variable to store the selected element
+type Selectable = Device | Edge | Packet;
 
-export function selectElement(element: Device | Edge | Packet | null) {
+let selectedElement: Selectable | null = null; // Global variable to store the selected element
+
+export function selectElement(element: Selectable) {
   deselectElement();
 
   if (element) {
@@ -37,7 +39,7 @@ export function refreshElement() {
   }
 }
 
-export function isSelected(element: Device | Edge | Packet) {
+export function isSelected(element: Selectable) {
   return element === selectedElement;
 }
 

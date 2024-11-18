@@ -45,7 +45,6 @@ export class Device extends Sprite {
   connections = new Map<number, number>();
   offsetX = 0;
   offsetY = 0;
-  rightbar: RightBar;
   highlightMarker: Graphics | null = null; // Marker to indicate selection
 
   static dragTarget: Device | null = null;
@@ -57,8 +56,6 @@ export class Device extends Sprite {
     position: Position,
   ) {
     super(Texture.from(svg));
-
-    this.rightbar = RightBar.getInstance();
     this.id = id;
     this.viewgraph = viewgraph;
 
@@ -112,27 +109,6 @@ export class Device extends Sprite {
   resize(sprite: Sprite): void {
     sprite.width = sprite.width / 70;
     sprite.height = sprite.height / DEVICE_SIZE;
-  }
-
-  sendPacket(packetType: string, destinationId: number): void {
-    console.log(
-      `Sending ${packetType} packet from ${this.id} to ${destinationId}`,
-    );
-    const speed = 200; // Velocidad en píxeles por segundo
-
-    const pathEdgeIds = this.viewgraph.getPathBetween(this.id, destinationId);
-
-    if (pathEdgeIds.length === 0) {
-      console.warn(
-        `No se encontró un camino entre ${this.id} y ${destinationId}.`,
-      );
-      return;
-    }
-
-    const pathEdges = pathEdgeIds.map((id) => this.viewgraph.getEdge(id));
-
-    const packet = new Packet(packetType, speed, this.id, destinationId);
-    packet.animateAlongPath(pathEdges, this.id);
   }
 
   delete(): void {
@@ -206,28 +182,29 @@ export class Device extends Sprite {
   }
 
   highlight() {
-    if (!this.highlightMarker) {
-      // Create the square as a selection marker
-      this.highlightMarker = new Graphics();
-
-      this.highlightMarker.roundRect(
-        -this.width / 2,
-        -this.height / 2,
-        this.width,
-        this.height,
-        5,
-      );
-      this.highlightMarker.stroke({
-        width: 3,
-        color: Colors.Violet,
-        alpha: 0.6,
-      });
-      this.highlightMarker.fill({ color: Colors.Violet, alpha: 0.1 });
-      this.highlightMarker.zIndex = ZIndexLevels.Device;
-
-      // Ensure the marker is in the same container as the viewport
-      this.addChild(this.highlightMarker);
+    if (this.highlightMarker) {
+      return;
     }
+    // Create the square as a selection marker
+    this.highlightMarker = new Graphics();
+
+    this.highlightMarker.roundRect(
+      -this.width / 2,
+      -this.height / 2,
+      this.width,
+      this.height,
+      5,
+    );
+    this.highlightMarker.stroke({
+      width: 3,
+      color: Colors.Violet,
+      alpha: 0.6,
+    });
+    this.highlightMarker.fill({ color: Colors.Violet, alpha: 0.1 });
+    this.highlightMarker.zIndex = ZIndexLevels.Device;
+
+    // Ensure the marker is in the same container as the viewport
+    this.addChild(this.highlightMarker);
   }
 
   removeHighlight() {
@@ -240,20 +217,22 @@ export class Device extends Sprite {
   }
 
   addCommonButtons() {
-    this.rightbar.addButton(
+    const { id, viewgraph } = this;
+    const rightbar = RightBar.getInstance();
+    rightbar.addButton(
       "Connect device",
-      () => this.selectToConnect(this.id),
+      () => this.selectToConnect(id),
       "right-bar-button right-bar-connect-button",
       true,
     );
-    this.rightbar.addButton(
+    rightbar.addButton(
       "Delete device",
       () => this.delete(),
       "right-bar-button right-bar-delete-button",
     );
 
     // Dropdown for selecting packet type
-    this.rightbar.addDropdown(
+    rightbar.addDropdown(
       "Packet Type",
       [
         { value: "IP", text: "IP" },
@@ -263,15 +242,15 @@ export class Device extends Sprite {
     );
 
     // Dropdown for selecting destination
-    const adjacentDevices = this.viewgraph
+    const adjacentDevices = viewgraph
       .getDeviceIds()
-      .filter((id) => id !== this.id)
+      .filter((adjId) => adjId !== id)
       .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
 
-    this.rightbar.addDropdown("Destination", adjacentDevices, "destination");
+    rightbar.addDropdown("Destination", adjacentDevices, "destination");
 
     // Button to send the packet
-    this.rightbar.addButton("Send Packet", () => {
+    rightbar.addButton("Send Packet", () => {
       // Get the selected packet type and destination ID
       const packetType = (
         document.getElementById("packet-type") as HTMLSelectElement
@@ -282,7 +261,7 @@ export class Device extends Sprite {
 
       // Call the sendPacket method with the selected values
       if (packetType && !isNaN(destinationId)) {
-        this.sendPacket(packetType, destinationId);
+        sendPacket(viewgraph, packetType, id, destinationId);
       } else {
         console.warn("Please select both a packet type and a destination.");
       }
@@ -338,4 +317,30 @@ function onPointerUp(): void {
     Device.dragTarget.parent.off("pointerup", onPointerUp);
     Device.dragTarget = null;
   }
+}
+
+function sendPacket(
+  viewgraph: ViewGraph,
+  packetType: string,
+  originId: number,
+  destinationId: number,
+) {
+  console.log(
+    `Sending ${packetType} packet from ${originId} to ${destinationId}`,
+  );
+  const speed = 200; // Velocidad en píxeles por segundo
+
+  const pathEdgeIds = viewgraph.getPathBetween(originId, destinationId);
+
+  if (pathEdgeIds.length === 0) {
+    console.warn(
+      `No se encontró un camino entre ${originId} y ${destinationId}.`,
+    );
+    return;
+  }
+
+  const pathEdges = pathEdgeIds.map((id) => viewgraph.getEdge(id));
+
+  const packet = new Packet(packetType, speed, originId, destinationId);
+  packet.animateAlongPath(pathEdges, originId);
 }
