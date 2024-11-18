@@ -196,59 +196,12 @@ export abstract class Device extends Sprite {
     }
   }
 
-  addCommonButtons() {
-    const { id, viewgraph } = this;
-    const rightbar = RightBar.getInstance();
-    rightbar.addButton(
-      "Connect device",
-      () => this.selectToConnect(),
-      "right-bar-button right-bar-connect-button",
-      true,
-    );
-    rightbar.addButton(
-      "Delete device",
-      () => this.delete(),
-      "right-bar-button right-bar-delete-button",
-    );
-
-    // Dropdown for selecting packet type
-    rightbar.addDropdown(
-      "Packet Type",
-      [
-        { value: "IP", text: "IP" },
-        { value: "ICMP", text: "ICMP" },
-      ],
-      "packet-type",
-    );
-
-    // Dropdown for selecting destination
-    const adjacentDevices = viewgraph
-      .getDeviceIds()
-      .filter((adjId) => adjId !== id)
-      .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
-
-    rightbar.addDropdown("Destination", adjacentDevices, "destination");
-
-    // Button to send the packet
-    rightbar.addButton("Send Packet", () => {
-      // Get the selected packet type and destination ID
-      const packetType = (
-        document.getElementById("packet-type") as HTMLSelectElement
-      )?.value;
-      const destinationId = Number(
-        (document.getElementById("destination") as HTMLSelectElement)?.value,
-      );
-
-      // Call the sendPacket method with the selected values
-      if (packetType && !isNaN(destinationId)) {
-        sendPacket(viewgraph, packetType, id, destinationId);
-      } else {
-        console.warn("Please select both a packet type and a destination.");
-      }
-    });
+  showInfo(): void {
+    const info = new DeviceInfo(this);
+    RightBar.getInstance().renderInfo(info);
+    // TODO: this shouldn't modify the right bar directly
+    info.addCommonButtons();
   }
-
-  abstract showInfo(): void;
 
   select() {
     this.highlight(); // Calls highlight on select
@@ -289,30 +242,4 @@ function onPointerUp(): void {
     Device.dragTarget.parent.off("pointerup", onPointerUp);
     Device.dragTarget = null;
   }
-}
-
-function sendPacket(
-  viewgraph: ViewGraph,
-  packetType: string,
-  originId: number,
-  destinationId: number,
-) {
-  console.log(
-    `Sending ${packetType} packet from ${originId} to ${destinationId}`,
-  );
-  const speed = 200; // Velocidad en píxeles por segundo
-
-  const pathEdgeIds = viewgraph.getPathBetween(originId, destinationId);
-
-  if (pathEdgeIds.length === 0) {
-    console.warn(
-      `No se encontró un camino entre ${originId} y ${destinationId}.`,
-    );
-    return;
-  }
-
-  const pathEdges = pathEdgeIds.map((id) => viewgraph.getEdge(id));
-
-  const packet = new Packet(packetType, speed, originId, destinationId);
-  packet.animateAlongPath(pathEdges, originId);
 }

@@ -9,6 +9,7 @@ import { deselectElement, isSelected, selectElement } from "./viewportManager";
 import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
+import { ViewGraph } from "./graphs/viewgraph";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
@@ -155,4 +156,30 @@ export class Packet extends Graphics {
   delete() {
     // TODO: Implement delete functionality
   }
+}
+
+export function sendPacket(
+  viewgraph: ViewGraph,
+  packetType: string,
+  originId: number,
+  destinationId: number,
+) {
+  console.log(
+    `Sending ${packetType} packet from ${originId} to ${destinationId}`,
+  );
+  const speed = 200; // Velocidad en píxeles por segundo
+
+  const pathEdgeIds = viewgraph.getPathBetween(originId, destinationId);
+
+  if (pathEdgeIds.length === 0) {
+    console.warn(
+      `No se encontró un camino entre ${originId} y ${destinationId}.`,
+    );
+    return;
+  }
+
+  const pathEdges = pathEdgeIds.map((id) => viewgraph.getEdge(id));
+
+  const packet = new Packet(packetType, speed, originId, destinationId);
+  packet.animateAlongPath(pathEdges, originId);
 }

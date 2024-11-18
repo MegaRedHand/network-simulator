@@ -9,18 +9,6 @@ export class Pc extends Device {
     super(id, PcImage, viewgraph, position);
   }
 
-  showInfo() {
-    const info = new DeviceInfo("PC");
-    info.addField("ID", this.id.toString());
-    info.addListField(
-      "Connected Devices",
-      Array.from(this.connections.values()),
-    );
-    RightBar.getInstance().renderInfo(info);
-
-    this.addCommonButtons();
-  }
-
   getLayer(): Layer {
     return Layer.App;
   }
