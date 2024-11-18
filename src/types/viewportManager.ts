@@ -67,22 +67,14 @@ export function AddRouter(ctx: GlobalContext) {
   const viewport = ctx.getViewport();
 
   // Get the center coordinates of the world after zoom
-  const worldCenter = viewport.toWorld(
+  const { x, y } = viewport.toWorld(
     viewport.screenWidth / 2,
     viewport.screenHeight / 2,
   );
 
-  const idDevice = datagraph.addNewDevice({
-    x: worldCenter.x,
-    y: worldCenter.y,
-    type: "Router",
-  });
-  const device = datagraph.getDevice(idDevice);
+  const idDevice = datagraph.addNewDevice({ x, y, type: "Router" });
 
-  const newRouter: Device = new Router(idDevice, viewgraph, {
-    x: device.x,
-    y: device.y,
-  });
+  const newRouter: Device = new Router(idDevice, viewgraph, { x, y });
 
   // Add the RouterNode to the graph
   viewgraph.addDevice(newRouter);
@@ -101,22 +93,14 @@ export function AddPc(ctx: GlobalContext) {
   const viewport = ctx.getViewport();
 
   // Get the center coordinates of the world after zoom
-  const worldCenter = viewport.toWorld(
+  const { x: x, y: y } = viewport.toWorld(
     viewport.screenWidth / 2,
     viewport.screenHeight / 2,
   );
 
-  const idDevice = datagraph.addNewDevice({
-    x: worldCenter.x,
-    y: worldCenter.y,
-    type: "Pc",
-  });
-  const device = datagraph.getDevice(idDevice);
+  const idDevice = datagraph.addNewDevice({ x, y, type: "Pc" });
 
-  const newPC: Device = new Pc(idDevice, viewgraph, {
-    x: device.x,
-    y: device.y,
-  });
+  const newPC: Device = new Pc(idDevice, viewgraph, { x, y });
 
   // Add the PCNode to the graph
   viewgraph.addDevice(newPC);
@@ -133,22 +117,14 @@ export function AddServer(ctx: GlobalContext) {
   const viewport = ctx.getViewport();
 
   // Get the center coordinates of the world after zoom
-  const worldCenter = viewport.toWorld(
+  const { x, y } = viewport.toWorld(
     viewport.screenWidth / 2,
     viewport.screenHeight / 2,
   );
 
-  const idDevice = datagraph.addNewDevice({
-    x: worldCenter.x,
-    y: worldCenter.y,
-    type: "Server",
-  });
-  const device = datagraph.getDevice(idDevice);
+  const idDevice = datagraph.addNewDevice({ x, y, type: "Server" });
 
-  const newServer: Device = new Server(idDevice, viewgraph, {
-    x: device.x,
-    y: device.y,
-  });
+  const newServer: Device = new Server(idDevice, viewgraph, { x, y });
 
   // Add the ServerNode to the graph
   viewgraph.addDevice(newServer);

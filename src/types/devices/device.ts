@@ -15,6 +15,7 @@ import {
 } from "./../viewportManager";
 import { RightBar } from "../../index";
 import { Colors, ZIndexLevels } from "../../utils";
+import { Position } from "../common";
 
 export const DEVICE_SIZE = 20;
 
@@ -40,7 +41,7 @@ export class Device extends Sprite {
     id: number,
     svg: string,
     viewgraph: ViewGraph,
-    position: { x: number; y: number } | null = null,
+    position: Position | null = null,
   ) {
     super(Texture.from(svg));
 

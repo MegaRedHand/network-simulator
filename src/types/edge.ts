@@ -1,4 +1,4 @@
-import { Graphics } from "pixi.js";
+import { Graphics, Point } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
 import { Device } from "./devices/index"; // Import the Device class
 import { deselectElement, selectElement } from "./viewportManager";
@@ -6,22 +6,22 @@ import { RightBar } from "..";
 import { Colors, ZIndexLevels } from "../utils";
 import { Packet } from "./packet";
 
-export interface Position {
-  x: number;
-  y: number;
+export interface EdgeEdges {
+  n1: number;
+  n2: number;
 }
 
 export class Edge extends Graphics {
   id: number;
   connectedNodes: { n1: number; n2: number };
-  startPos: Position;
-  endPos: Position;
+  startPos: Point;
+  endPos: Point;
   viewgraph: ViewGraph;
   rightbar: RightBar;
 
   constructor(
     id: number,
-    connectedNodes: { n1: number; n2: number },
+    connectedNodes: EdgeEdges,
     device1: Device,
     device2: Device,
     viewgraph: ViewGraph,
@@ -41,7 +41,7 @@ export class Edge extends Graphics {
     this.on("click", () => selectElement(this));
   }
 
-  nodePosition(nodeId: number): Position | undefined {
+  nodePosition(nodeId: number): Point | undefined {
     return this.connectedNodes.n1 === nodeId
       ? this.startPos
       : this.connectedNodes.n2 === nodeId
@@ -58,7 +58,7 @@ export class Edge extends Graphics {
   }
 
   // Method to draw the line
-  public drawEdge(startPos: Position, endPos: Position, color: number) {
+  public drawEdge(startPos: Point, endPos: Point, color: number) {
     this.clear();
     this.moveTo(startPos.x, startPos.y);
     this.lineTo(endPos.x, endPos.y);
@@ -139,14 +139,14 @@ export class Edge extends Graphics {
     const offsetX2 = ((device2.width + 5) / 2) * Math.cos(angle);
     const offsetY2 = ((device2.height + 5) / 2) * Math.sin(angle);
 
-    const newStartPos: Position = {
-      x: device1.x + offsetX1,
-      y: device1.y + offsetY1,
-    };
-    const newEndPos: Position = {
-      x: device2.x - offsetX2,
-      y: device2.y - offsetY2,
-    };
+    const newStartPos: Point = new Point(
+      device1.x + offsetX1,
+      device1.y + offsetY1,
+    );
+    const newEndPos: Point = new Point(
+      device2.x - offsetX2,
+      device2.y - offsetY2,
+    );
 
     this.drawEdge(newStartPos, newEndPos, Colors.Lightblue);
   }

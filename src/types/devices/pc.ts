@@ -3,13 +3,10 @@
 import { Device } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
+import { Position } from "../common";
 
 export class Pc extends Device {
-  constructor(
-    id: number,
-    viewgraph: ViewGraph,
-    position: { x: number; y: number },
-  ) {
+  constructor(id: number, viewgraph: ViewGraph, position: Position) {
     super(id, PcImage, viewgraph, position);
   }
 
