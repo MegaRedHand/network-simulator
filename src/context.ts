@@ -5,7 +5,7 @@ import {
   loadFromLocalStorage,
   saveToLocalStorage,
 } from "./types/viewportManager";
-import { Layer } from "./types/devices/device;
+import { Layer } from "./types/devices/device";
 
 export class GlobalContext {
   private viewport: Viewport = null;
