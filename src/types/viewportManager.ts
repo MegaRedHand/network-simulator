@@ -225,8 +225,14 @@ export function saveToLocalStorage(ctx: GlobalContext) {
 
 export function loadFromLocalStorage(ctx: GlobalContext) {
   const jsonData = localStorage.getItem(LOCAL_STORAGE_KEY) || "[]";
-  const graphData: GraphData = JSON.parse(jsonData);
-  ctx.load(DataGraph.fromData(graphData));
-
+  try {
+    const graphData: GraphData = JSON.parse(jsonData);
+    ctx.load(DataGraph.fromData(graphData));
+  } catch (error) {
+    const extraData = { jsonData, error };
+    console.error("Failed to load graph from local storage.", extraData);
+    ctx.load(new DataGraph());
+    return;
+  }
   console.log("Graph loaded from local storage.");
 }
