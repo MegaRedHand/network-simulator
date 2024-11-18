@@ -19,8 +19,6 @@ import { Position } from "../common";
 
 export const DEVICE_SIZE = 20;
 
-let selectedDeviceId: number | null = null; // Stores only the ID instead of 'this'
-
 export enum Layer {
   App = 0,
   Transport = 1,
@@ -34,20 +32,14 @@ export enum DeviceType {
   Pc = 2,
 }
 
-export function setSelectedDeviceId(value: number | null) {
-  selectedDeviceId = value;
-}
-
 export class Device extends Sprite {
   id: number;
-  dragging = false;
   viewgraph: ViewGraph;
   connections = new Map<number, number>();
-  offsetX = 0;
-  offsetY = 0;
   highlightMarker: Graphics | null = null; // Marker to indicate selection
 
   static dragTarget: Device | null = null;
+  static connectionTarget: Device | null = null;
 
   constructor(
     id: number,
@@ -120,20 +112,11 @@ export class Device extends Sprite {
 
   onPointerDown(event: FederatedPointerEvent): void {
     console.log("Entered onPointerDown");
-    if (!selectedDeviceId) {
+    if (!Device.connectionTarget) {
       selectElement(this);
     }
     Device.dragTarget = this;
     event.stopPropagation();
-
-    // Get the pointer position in world (viewport) coordinates
-    const worldPosition = this.viewgraph
-      .getViewport()
-      .toWorld(event.clientX, event.clientY);
-
-    // Calculate the offset between the pointer and the sprite
-    this.offsetX = worldPosition.x - this.x;
-    this.offsetY = worldPosition.y - this.y;
 
     // Listen to global pointermove and pointerup events
     this.parent.on("pointermove", onPointerMove);
@@ -157,28 +140,23 @@ export class Device extends Sprite {
   onClick(e: FederatedPointerEvent) {
     e.stopPropagation();
 
-    if (selectedDeviceId) {
-      // If the stored ID is the same as this device's, reset it
-      if (selectedDeviceId === this.id) {
-        return;
-      }
-      // The "LineStart" device ends up as the end of the drawing but it's the same
-      if (this.connectTo(selectedDeviceId)) {
-        // selectElement(this.viewgraph.getDevice(selectedDeviceId));
-        refreshElement();
-        selectedDeviceId = null;
-      }
-    } else {
+    if (!Device.connectionTarget) {
       selectElement(this);
+      return;
+    }
+    // If the stored device is this, reset it
+    if (Device.connectionTarget === this) {
+      return;
+    }
+    // The "LineStart" device ends up as the end of the drawing but it's the same
+    if (this.connectTo(Device.connectionTarget.id)) {
+      refreshElement();
+      Device.connectionTarget = null;
     }
   }
 
-  selectToConnect(id: number) {
-    if (selectedDeviceId === id) {
-      setSelectedDeviceId(null);
-    } else {
-      setSelectedDeviceId(id);
-    }
+  selectToConnect() {
+    Device.connectionTarget = this;
   }
 
   highlight() {
@@ -221,7 +199,7 @@ export class Device extends Sprite {
     const rightbar = RightBar.getInstance();
     rightbar.addButton(
       "Connect device",
-      () => this.selectToConnect(id),
+      () => this.selectToConnect(),
       "right-bar-button right-bar-connect-button",
       true,
     );
@@ -279,7 +257,7 @@ export class Device extends Sprite {
 
   deselect() {
     this.removeHighlight(); // Calls removeHighlight on deselect
-    setSelectedDeviceId(null);
+    Device.connectionTarget = null;
   }
 
   getType(): DeviceType {
