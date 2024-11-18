@@ -4,10 +4,11 @@ import {
   GraphicsContext,
   Ticker,
 } from "pixi.js";
-import { Edge, Position } from "./edge";
+import { Edge } from "./edge";
 import { deselectElement, isSelected, selectElement } from "./viewportManager";
 import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
-import { RightBar } from "../index";
+import { RightBar } from "../graphics/right_bar";
+import { Position } from "./common";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),

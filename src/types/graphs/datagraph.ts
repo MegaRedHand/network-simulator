@@ -17,6 +17,12 @@ export interface GraphDataNode {
 
 export type GraphData = GraphDataNode[];
 
+export interface DeviceInfo {
+  x: number;
+  y: number;
+  type: DeviceType;
+}
+
 export class DataGraph {
   private devices = new Map<number, GraphNode>();
   private idCounter = 1;
@@ -56,7 +62,7 @@ export class DataGraph {
   }
 
   // Add a new device to the graph
-  addNewDevice(deviceInfo: { x: number; y: number; type: DeviceType }): number {
+  addNewDevice(deviceInfo: DeviceInfo): number {
     const id = this.idCounter++;
     const graphnode: GraphNode = {
       ...deviceInfo,

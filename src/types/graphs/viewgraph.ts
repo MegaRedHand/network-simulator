@@ -1,7 +1,7 @@
 import { Device } from "./../devices/index"; // Import the Device class
 import { Edge } from "./../edge";
 import { DataGraph } from "./datagraph";
-import { Viewport } from "../..";
+import { Viewport } from "../../graphics/viewport";
 import { Layer } from "../devices/device";
 import { createDevice } from "../devices/utils";
 

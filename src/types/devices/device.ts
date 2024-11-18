@@ -13,8 +13,9 @@ import {
   refreshElement,
   selectElement,
 } from "./../viewportManager";
-import { RightBar } from "../../index";
+import { RightBar } from "../../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../../utils";
+import { Position } from "../common";
 
 export const DEVICE_SIZE = 20;
 
@@ -53,10 +54,9 @@ export class Device extends Sprite {
     id: number,
     svg: string,
     viewgraph: ViewGraph,
-    position: { x: number; y: number } | null = null,
+    position: Position,
   ) {
-    const texture = Texture.from(svg);
-    super(texture);
+    super(Texture.from(svg));
 
     this.rightbar = RightBar.getInstance();
     this.id = id;
@@ -64,19 +64,8 @@ export class Device extends Sprite {
 
     this.anchor.set(0.5);
 
-    // Use specified coordinates or center of the world
-    const stage = this.viewgraph.getViewport();
-    if (position) {
-      this.x = position.x;
-      this.y = position.y;
-    } else {
-      const worldCenter = stage.toWorld(
-        stage.screenWidth / 2,
-        stage.screenHeight / 2,
-      );
-      this.x = worldCenter.x;
-      this.y = worldCenter.y;
-    }
+    this.x = position.x;
+    this.y = position.y;
 
     this.eventMode = "static";
     this.interactive = true;

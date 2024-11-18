@@ -3,13 +3,10 @@
 import { Device, DeviceType, Layer } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import ServerImage from "../../assets/server.svg";
+import { Position } from "../common";
 
 export class Server extends Device {
-  constructor(
-    id: number,
-    viewgraph: ViewGraph,
-    position: { x: number; y: number } | null = null,
-  ) {
+  constructor(id: number, viewgraph: ViewGraph, position: Position) {
     super(id, ServerImage, viewgraph, position);
   }
 
