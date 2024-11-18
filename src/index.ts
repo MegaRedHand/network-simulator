@@ -40,7 +40,7 @@ export class GlobalContext {
     loadFromLocalStorage(this);
   }
 
-  private setNetwork(datagraph: DataGraph, layer: Layer) {
+  private setNetWork(datagraph: DataGraph, layer: Layer) {
     this.datagraph = datagraph;
     this.viewport.clear();
     this.viewgraph = new ViewGraph(this.datagraph, this.viewport, layer);
