@@ -117,7 +117,7 @@ export class Edge extends Graphics {
     this.rightbar.addButton(
       "Delete Edge",
       () => this.delete(),
-      "right-bar-button right-bar-delete-button",
+      "right-bar-delete-button",
     );
   }
 

@@ -53,7 +53,7 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "c" || event.key === "C") {
     if (selectedElement instanceof Device) {
       selectedElement.selectToConnect();
-      const connectButton = document.querySelector(".right-bar-button");
+      const connectButton = document.querySelector(".right-bar-connect-button");
 
       if (connectButton) {
         connectButton.classList.toggle("selected-button");

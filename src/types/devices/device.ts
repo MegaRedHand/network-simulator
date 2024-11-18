@@ -196,10 +196,7 @@ export abstract class Device extends Sprite {
   }
 
   showInfo(): void {
-    const info = new DeviceInfo(this);
-    RightBar.getInstance().renderInfo(info);
-    // TODO: this shouldn't modify the right bar directly
-    info.addCommonButtons();
+    RightBar.getInstance().renderInfo(new DeviceInfo(this));
   }
 
   select() {

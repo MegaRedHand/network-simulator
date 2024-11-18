@@ -1,16 +1,19 @@
 import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
+import { ViewGraph } from "../../types/graphs/viewgraph";
 import { sendPacket } from "../../types/packet";
-import { RightBar } from "../right_bar";
+import { createDropdown, createRightBarButton, RightBar } from "../right_bar";
 import { StyledInfo } from "./styled_info";
 
 export class DeviceInfo extends StyledInfo {
   readonly device: Device;
+  inputFields: Node[] = [];
 
   constructor(device: Device) {
     super(getTypeName(device) + " Information");
     this.device = device;
     this.addCommonInfoFields();
+    this.addCommonButtons();
   }
 
   private addCommonInfoFields(): void {
@@ -19,60 +22,46 @@ export class DeviceInfo extends StyledInfo {
     super.addListField("Connected Devices", Array.from(connections.values()));
   }
 
-  addCommonButtons(): void {
+  private addCommonButtons(): void {
     const { id, viewgraph } = this.device;
-    const rightbar = RightBar.getInstance();
-    rightbar.addButton(
-      "Connect device",
-      () => this.device.selectToConnect(),
-      "right-bar-button right-bar-connect-button",
-      true,
-    );
-    rightbar.addButton(
-      "Delete device",
-      () => this.device.delete(),
-      "right-bar-button right-bar-delete-button",
-    );
 
-    // Dropdown for selecting packet type
-    rightbar.addDropdown(
-      "Packet Type",
-      [
-        { value: "IP", text: "IP" },
-        { value: "ICMP", text: "ICMP" },
-      ],
-      "packet-type",
-    );
-
-    // Dropdown for selecting destination
     const adjacentDevices = viewgraph
       .getDeviceIds()
       .filter((adjId) => adjId !== id)
       .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
 
-    rightbar.addDropdown("Destination", adjacentDevices, "destination");
-
-    // Button to send the packet
-    rightbar.addButton("Send Packet", () => {
-      // Get the selected packet type and destination ID
-      const packetType = (
-        document.getElementById("packet-type") as HTMLSelectElement
-      )?.value;
-      const destinationId = Number(
-        (document.getElementById("destination") as HTMLSelectElement)?.value,
-      );
-
-      // Call the sendPacket method with the selected values
-      if (packetType && !isNaN(destinationId)) {
-        sendPacket(viewgraph, packetType, id, destinationId);
-      } else {
-        console.warn("Please select both a packet type and a destination.");
-      }
-    });
+    this.inputFields.push(
+      createRightBarButton(
+        "Connect device",
+        () => this.device.selectToConnect(),
+        "right-bar-connect-button",
+        true,
+      ),
+      createRightBarButton(
+        "Delete device",
+        () => this.device.delete(),
+        "right-bar-delete-button",
+      ),
+      // Dropdown for selecting packet type
+      createDropdown(
+        "Packet Type",
+        [
+          { value: "IP", text: "IP" },
+          { value: "ICMP", text: "ICMP" },
+        ],
+        "packet-type",
+      ),
+      // Dropdown for selecting destination
+      createDropdown("Destination", adjacentDevices, "destination"),
+      // Button to send a packet
+      createRightBarButton("Send Packet", () =>
+        sendSelectedPacket(viewgraph, id),
+      ),
+    );
   }
 
   toHTML(): Node[] {
-    return super.toHTML();
+    return super.toHTML().concat(this.inputFields);
   }
 }
 
@@ -84,5 +73,22 @@ function getTypeName(device: Device): string {
       return "Server";
     case DeviceType.Pc:
       return "PC";
+  }
+}
+
+function sendSelectedPacket(viewgraph: ViewGraph, id: number): void {
+  // Get the selected packet type and destination ID
+  const packetType = (
+    document.getElementById("packet-type") as HTMLSelectElement
+  )?.value;
+  const destinationId = Number(
+    (document.getElementById("destination") as HTMLSelectElement)?.value,
+  );
+
+  // Call the sendPacket method with the selected values
+  if (packetType && !isNaN(destinationId)) {
+    sendPacket(viewgraph, packetType, id, destinationId);
+  } else {
+    console.warn("Please select both a packet type and a destination.");
   }
 }

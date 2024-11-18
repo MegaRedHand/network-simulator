@@ -59,20 +59,17 @@ export class RightBar {
   addButton(
     text: string,
     onClick: () => void,
-    buttonClass = "right-bar-button",
+    buttonClass = "",
     toggleSelected = false,
   ) {
+    const button = createRightBarButton(
+      text,
+      onClick,
+      buttonClass,
+      toggleSelected,
+    );
     const infoContent = document.getElementById("info-content");
     if (infoContent) {
-      const button = document.createElement("button");
-      button.classList.add(...buttonClass.split(" "));
-      button.textContent = text;
-      button.onclick = () => {
-        onClick();
-        if (toggleSelected) {
-          button.classList.toggle("selected-button"); // Changes color on click
-        }
-      };
       infoContent.appendChild(button);
     }
   }
@@ -83,32 +80,64 @@ export class RightBar {
     options: { value: string; text: string }[],
     selectId?: string,
   ) {
+    const container = createDropdown(label, options, selectId);
     const infoContent = document.getElementById("info-content");
-    const container = document.createElement("div");
-    container.classList.add("dropdown-container");
-
-    const labelElement = document.createElement("label");
-    labelElement.textContent = label;
-    labelElement.classList.add("right-bar-label");
-
-    const select = document.createElement("select");
-    select.classList.add("right-bar-select");
-    if (selectId) select.id = selectId;
-
-    options.forEach((optionData) => {
-      const option = document.createElement("option");
-      option.value = optionData.value;
-      option.textContent = optionData.text;
-      select.appendChild(option);
-    });
-
-    // Default onchange behavior: logs the selected value
-    select.onchange = () => {
-      console.log(`Selected ${label}:`, select.value);
-    };
-
-    container.appendChild(labelElement);
-    container.appendChild(select);
-    infoContent.appendChild(container);
+    if (infoContent) {
+      infoContent.appendChild(container);
+    }
   }
+}
+
+export function createRightBarButton(
+  text: string,
+  onClick: () => void,
+  buttonClass = "",
+  toggleSelected = false,
+) {
+  const button = document.createElement("button");
+  button.classList.add("right-bar-button");
+  if (buttonClass) {
+    button.classList.add(...buttonClass.split(" "));
+  }
+  button.textContent = text;
+  button.onclick = () => {
+    onClick();
+    if (toggleSelected) {
+      button.classList.toggle("selected-button"); // Changes color on click
+    }
+  };
+  return button;
+}
+
+export function createDropdown(
+  label: string,
+  options: { value: string; text: string }[],
+  selectId?: string,
+) {
+  const container = document.createElement("div");
+  container.classList.add("dropdown-container");
+
+  const labelElement = document.createElement("label");
+  labelElement.textContent = label;
+  labelElement.classList.add("right-bar-label");
+
+  const select = document.createElement("select");
+  select.classList.add("right-bar-select");
+  if (selectId) select.id = selectId;
+
+  options.forEach((optionData) => {
+    const option = document.createElement("option");
+    option.value = optionData.value;
+    option.textContent = optionData.text;
+    select.appendChild(option);
+  });
+
+  // Default onchange behavior: logs the selected value
+  select.onchange = () => {
+    console.log(`Selected ${label}:`, select.value);
+  };
+
+  container.appendChild(labelElement);
+  container.appendChild(select);
+  return container;
 }
