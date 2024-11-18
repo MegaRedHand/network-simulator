@@ -20,7 +20,7 @@ export type GraphData = GraphDataNode[];
 export interface DeviceInfo {
   x: number;
   y: number;
-  type: NodeType;
+  type: DeviceType;
 }
 
 export class DataGraph {
