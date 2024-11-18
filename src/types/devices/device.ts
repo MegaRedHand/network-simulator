@@ -6,7 +6,6 @@ import {
   TextStyle,
   Text,
 } from "pixi.js";
-import { Packet } from "./../packet";
 import { ViewGraph } from "./../graphs/viewgraph";
 import {
   deselectElement,

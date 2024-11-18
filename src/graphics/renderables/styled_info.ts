@@ -1,6 +1,9 @@
 import { Renderable } from "../right_bar";
 
-export type Field = { label: string; value: string };
+export interface Field {
+  label: string;
+  value: string;
+}
 
 export class StyledInfo implements Renderable {
   title: string;
