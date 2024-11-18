@@ -41,7 +41,7 @@ export class Device extends Sprite {
     id: number,
     svg: string,
     viewgraph: ViewGraph,
-    position: Position | null = null,
+    position: Position,
   ) {
     super(Texture.from(svg));
 
@@ -51,19 +51,8 @@ export class Device extends Sprite {
 
     this.anchor.set(0.5);
 
-    // Use specified coordinates or center of the world
-    const stage = this.viewgraph.getViewport();
-    if (position) {
-      this.x = position.x;
-      this.y = position.y;
-    } else {
-      const worldCenter = stage.toWorld(
-        stage.screenWidth / 2,
-        stage.screenHeight / 2,
-      );
-      this.x = worldCenter.x;
-      this.y = worldCenter.y;
-    }
+    this.x = position.x;
+    this.y = position.y;
 
     this.eventMode = "static";
     this.interactive = true;
