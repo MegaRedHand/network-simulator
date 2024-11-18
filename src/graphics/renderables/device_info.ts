@@ -14,22 +14,16 @@ export class DeviceInfo extends StyledInfo {
     this.device = device;
     this.addCommonInfoFields();
     this.addCommonButtons();
+    this.addSendPacketButton();
   }
 
-  private addCommonInfoFields(): void {
+  private addCommonInfoFields() {
     const { id, connections } = this.device;
     super.addField("ID", id.toString());
     super.addListField("Connected Devices", Array.from(connections.values()));
   }
 
-  private addCommonButtons(): void {
-    const { id, viewgraph } = this.device;
-
-    const adjacentDevices = viewgraph
-      .getDeviceIds()
-      .filter((adjId) => adjId !== id)
-      .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
-
+  private addCommonButtons() {
     this.inputFields.push(
       createRightBarButton(
         "Connect device",
@@ -42,6 +36,17 @@ export class DeviceInfo extends StyledInfo {
         () => this.device.delete(),
         "right-bar-delete-button",
       ),
+    );
+  }
+
+  private addSendPacketButton() {
+    const { id, viewgraph } = this.device;
+
+    const adjacentDevices = viewgraph
+      .getDeviceIds()
+      .filter((adjId) => adjId !== id)
+      .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
+    this.inputFields.push(
       // Dropdown for selecting packet type
       createDropdown(
         "Packet Type",
