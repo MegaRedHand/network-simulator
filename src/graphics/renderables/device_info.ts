@@ -2,7 +2,7 @@ import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { sendPacket } from "../../types/packet";
-import { createDropdown, createRightBarButton, RightBar } from "../right_bar";
+import { createDropdown, createRightBarButton } from "../right_bar";
 import { StyledInfo } from "./styled_info";
 
 export class DeviceInfo extends StyledInfo {
