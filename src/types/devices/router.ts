@@ -12,14 +12,12 @@ export class Router extends Device {
   }
 
   showInfo() {
-    // TODO: move to StyledInfo
-    const styledConnectedDevices =
-      this.connections.size !== 0
-        ? "[" + Array.from(this.connections.values()).join(", ") + "]"
-        : "None";
     const info = new StyledInfo("Router Information");
     info.addField("ID", this.id.toString());
-    info.addField("Connected Devices", styledConnectedDevices);
+    info.addListField(
+      "Connected Devices",
+      Array.from(this.connections.values()),
+    );
     this.rightbar.renderInfo(info);
 
     this.addCommonButtons();

@@ -2,7 +2,7 @@ type Field = { label: string; value: string };
 
 export class StyledInfo {
   title: string;
-  info: Field[];
+  info: Field[] = [];
 
   constructor(title: string) {
     this.title = title;
@@ -12,18 +12,23 @@ export class StyledInfo {
     this.info.push({ label, value });
   }
 
+  addListField(label: string, values: number[]) {
+    const value = values.length !== 0 ? "[" + values.join(", ") + "]" : "None";
+    this.info.push({ label, value });
+  }
+
   toHTML() {
-    const container = document.createElement("h3");
+    const childNodes: Node[] = [];
     const header = document.createElement("h3");
     header.textContent = this.title;
-    container.appendChild(header);
+    childNodes.push(header);
 
     this.info.forEach((item) => {
       const p = document.createElement("p");
       p.innerHTML = `<strong>${item.label}:</strong> ${item.value}`;
-      container.appendChild(p);
+      childNodes.push(p);
     });
-    return container;
+    return childNodes;
   }
 }
 
@@ -71,11 +76,9 @@ export class RightBar {
 
   // Shows specific information of an element in info-content
   renderInfo(info: StyledInfo) {
-    this.clearContent(); // Clears before adding new content
-
     const infoContent = document.getElementById("info-content");
     if (infoContent) {
-      infoContent.replaceWith(info.toHTML());
+      infoContent.replaceChildren(...info.toHTML());
     }
   }
 
