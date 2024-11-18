@@ -5,6 +5,7 @@ import {
   loadFromLocalStorage,
   saveToLocalStorage,
 } from "./types/viewportManager";
+import { Layer } from "./types/devices/device;
 
 export class GlobalContext {
   private viewport: Viewport = null;
@@ -17,10 +18,14 @@ export class GlobalContext {
     loadFromLocalStorage(this);
   }
 
-  load(datagraph: DataGraph) {
+  private setNetWork(datagraph: DataGraph, layer: Layer) {
     this.datagraph = datagraph;
     this.viewport.clear();
-    this.viewgraph = new ViewGraph(this.datagraph, this.viewport);
+    this.viewgraph = new ViewGraph(this.datagraph, this.viewport, layer);
+  }
+
+  load(datagraph: DataGraph, layer: Layer) {
+    this.setNetWork(datagraph, layer);
     this.setupAutoSave();
     saveToLocalStorage(this);
   }
