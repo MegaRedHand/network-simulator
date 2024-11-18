@@ -1,9 +1,9 @@
-export type NodeType = "Router" | "Server" | "Pc";
+import { DeviceType } from "../devices/device";
 
 export interface GraphNode {
   x: number;
   y: number;
-  type: NodeType;
+  type: DeviceType;
   connections: Set<number>;
 }
 
@@ -11,7 +11,7 @@ export interface GraphDataNode {
   id: number;
   x: number;
   y: number;
-  type: NodeType;
+  type: DeviceType;
   connections: number[];
 }
 

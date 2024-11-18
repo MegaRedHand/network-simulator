@@ -1,9 +1,7 @@
 import { Application, Assets } from "pixi.js";
 
 import {
-  AddPc,
-  AddRouter,
-  AddServer,
+  AddDevice,
   loadFromFile,
   loadFromLocalStorage,
   saveToFile,
@@ -23,8 +21,6 @@ import ServerSvg from "./assets/server.svg";
 import ComputerSvg from "./assets/pc.svg";
 import PlaySvg from "./assets/play-icon.svg";
 import PauseSvg from "./assets/pause-icon.svg";
-
-// > index.ts
 
 // IIFE to avoid errors
 (async () => {
@@ -55,13 +51,21 @@ import PauseSvg from "./assets/pause-icon.svg";
   RightBar.getInstance();
 
   // Add router button
-  leftBar.addButton(RouterSvg, () => AddRouter(ctx), "Add Router");
+  leftBar.addButton(
+    RouterSvg,
+    () => AddDevice(ctx, DeviceType.Router),
+    "Add Router",
+  );
 
   // Add server button
-  leftBar.addButton(ServerSvg, () => AddServer(ctx), "Add Server");
+  leftBar.addButton(
+    ServerSvg,
+    () => AddDevice(ctx, DeviceType.Server),
+    "Add Server",
+  );
 
   // Add PC button
-  leftBar.addButton(ComputerSvg, () => AddPc(ctx), "Add PC");
+  leftBar.addButton(ComputerSvg, () => AddDevice(ctx, DeviceType.Pc), "Add PC");
 
   ctx.initialize(viewport);
 
@@ -123,6 +127,22 @@ import PauseSvg from "./assets/pause-icon.svg";
   };
 
   pauseButton.onclick = triggerPause;
+
+  // (!) For layer abstraction functionality
+  // const layerSelect = document.getElementById(
+  //   "layer-select",
+  // ) as HTMLSelectElement;
+
+  // const selectNewLayer = (event: Event) => {
+  //   const selectedLayer = (event.target as HTMLSelectElement).value;
+  //   console.log(`Layer selected: ${selectedLayer}`);
+
+  //   if (selectElement) {
+  //     ctx.changeViewGraph(selectedLayer);
+  //   }
+  // };
+
+  // layerSelect.onchange = selectNewLayer;
 
   document.body.onkeyup = function (e) {
     if (e.key === " " || e.code === "Space") {

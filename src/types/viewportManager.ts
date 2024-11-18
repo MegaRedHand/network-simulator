@@ -1,9 +1,11 @@
-import { GlobalContext } from "./../context";
-import { DataGraph } from "./graphs/datagraph";
+import { GlobalContext } from "./../index";
+import { DataGraph, GraphData } from "./graphs/datagraph";
 import { Device, Pc, Router, Server } from "./devices/index";
 import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
 import { Packet } from "./packet";
+import { DeviceType } from "./devices/device";
+import { createDevice } from "./devices/utils";
 
 let selectedElement: Device | Edge | Packet | null = null; // Global variable to store the selected element
 
@@ -58,6 +60,43 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+// Function to add a device at the center of the viewport
+export function AddDevice(ctx: GlobalContext, deviceType: DeviceType) {
+  console.log(`Entered AddDevice with ${deviceType}`);
+  deselectElement();
+  const viewgraph = ctx.getViewGraph();
+  const datagraph = ctx.getDataGraph();
+  const viewport = ctx.getViewport();
+
+  // Get the center coordinates of the world after zoom
+  const worldCenter = viewport.toWorld(
+    viewport.screenWidth / 2,
+    viewport.screenHeight / 2,
+  );
+  const position = { x: worldCenter.x, y: worldCenter.y };
+
+  const idDevice = datagraph.addNewDevice({
+    x: position.x,
+    y: position.y,
+    type: deviceType,
+  });
+
+  const newDevice: Device = createDevice(
+    deviceType,
+    idDevice,
+    viewgraph,
+    position,
+  );
+
+  // Add the Device to the graph
+  viewgraph.addDevice(newDevice);
+  viewport.addChild(newDevice);
+
+  console.log(
+    `${DeviceType[newDevice.getType().valueOf()] !== undefined ? DeviceType[newDevice.getType().valueOf()] : "Unknown"} added with ID ${newDevice.id} at the center of the screen.`,
+  );
+}
+
 // Function to add a router at the center of the viewport
 export function AddRouter(ctx: GlobalContext) {
   console.log("Entered AddRouter");
@@ -72,7 +111,7 @@ export function AddRouter(ctx: GlobalContext) {
     viewport.screenHeight / 2,
   );
 
-  const idDevice = datagraph.addNewDevice({ x, y, type: "Router" });
+  const idDevice = datagraph.addNewDevice({ x, y, type: DeviceType.Router });
 
   const newRouter: Device = new Router(idDevice, viewgraph, { x, y });
 
@@ -98,7 +137,7 @@ export function AddPc(ctx: GlobalContext) {
     viewport.screenHeight / 2,
   );
 
-  const idDevice = datagraph.addNewDevice({ x, y, type: "Pc" });
+  const idDevice = datagraph.addNewDevice({ x, y, type: DeviceType.Pc });
 
   const newPC: Device = new Pc(idDevice, viewgraph, { x, y });
 
@@ -122,10 +161,9 @@ export function AddServer(ctx: GlobalContext) {
     viewport.screenHeight / 2,
   );
 
-  const idDevice = datagraph.addNewDevice({ x, y, type: "Server" });
+  const idDevice = datagraph.addNewDevice({ x, y, type: DeviceType.Server });
 
   const newServer: Device = new Server(idDevice, viewgraph, { x, y });
-
   // Add the ServerNode to the graph
   viewgraph.addDevice(newServer);
   viewport.addChild(newServer);
@@ -165,7 +203,7 @@ export function loadFromFile(ctx: GlobalContext) {
 
     reader.onload = (readerEvent) => {
       const jsonData = readerEvent.target.result as string;
-      const graphData = JSON.parse(jsonData);
+      const graphData: GraphData = JSON.parse(jsonData);
       ctx.load(DataGraph.fromData(graphData));
 
       console.log("Graph loaded successfully.");
@@ -187,7 +225,7 @@ export function saveToLocalStorage(ctx: GlobalContext) {
 
 export function loadFromLocalStorage(ctx: GlobalContext) {
   const jsonData = localStorage.getItem(LOCAL_STORAGE_KEY) || "[]";
-  const graphData = JSON.parse(jsonData);
+  const graphData: GraphData = JSON.parse(jsonData);
   ctx.load(DataGraph.fromData(graphData));
 
   console.log("Graph loaded from local storage.");

@@ -1,6 +1,6 @@
 // src/devices/pc.ts
 
-import { Device } from "./device";
+import { Device, DeviceType, Layer } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
@@ -23,5 +23,13 @@ export class Pc extends Device {
     ]);
 
     this.addCommonButtons();
+  }
+
+  getLayer(): Layer {
+    return Layer.App;
+  }
+
+  getType(): DeviceType {
+    return DeviceType.Pc;
   }
 }

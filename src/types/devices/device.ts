@@ -21,6 +21,19 @@ export const DEVICE_SIZE = 20;
 
 let selectedDeviceId: number | null = null; // Stores only the ID instead of 'this'
 
+export enum Layer {
+  App = 0,
+  Transport = 1,
+  Network = 2,
+  Link = 3,
+}
+
+export enum DeviceType {
+  Router = 0,
+  Server = 1,
+  Pc = 2,
+}
+
 export function setSelectedDeviceId(value: number | null) {
   selectedDeviceId = value;
 }
@@ -288,6 +301,18 @@ export class Device extends Sprite {
   deselect() {
     this.removeHighlight(); // Calls removeHighlight on deselect
     setSelectedDeviceId(null);
+  }
+
+  getType(): DeviceType {
+    // Return the device’s type.
+    // For the superclass, the type returned is Router.
+    return DeviceType.Router;
+  }
+
+  getLayer(): Layer {
+    // Return the device’s layer.
+    // For the superclass, the layer returned is Link.
+    return Layer.Link;
   }
 }
 
