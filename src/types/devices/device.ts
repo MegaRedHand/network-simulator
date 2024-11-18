@@ -13,7 +13,7 @@ import {
   refreshElement,
   selectElement,
 } from "./../viewportManager";
-import { RightBar } from "../../index";
+import { RightBar } from "../../right_bar";
 import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
 

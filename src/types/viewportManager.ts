@@ -2,7 +2,7 @@ import { GlobalContext } from "./../index";
 import { DataGraph } from "./graphs/datagraph";
 import { Device, Pc, Router, Server } from "./devices/index";
 import { Edge } from "./edge";
-import { RightBar } from "../index"; // Ensure the path is correct
+import { RightBar } from "../right_bar";
 import { Packet } from "./packet";
 
 let selectedElement: Device | Edge | Packet | null = null; // Global variable to store the selected element
