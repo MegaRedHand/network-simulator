@@ -1,6 +1,6 @@
 // src/devices/router.ts
 
-import { Device } from "./device";
+import { Device, DeviceType, Layer } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import RouterImage from "../../assets/router.svg";
 
@@ -8,7 +8,7 @@ export class Router extends Device {
   constructor(
     id: number,
     viewgraph: ViewGraph,
-    position: { x: number; y: number },
+    position: { x: number; y: number } | null = null,
   ) {
     super(id, RouterImage, viewgraph, position);
   }
@@ -26,5 +26,13 @@ export class Router extends Device {
     ]);
 
     this.addCommonButtons();
+  }
+
+  getLayer(): Layer {
+    return Layer.Network;
+  }
+
+  getType(): DeviceType {
+    return DeviceType.Router;
   }
 }
