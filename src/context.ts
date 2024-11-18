@@ -24,7 +24,7 @@ export class GlobalContext {
     this.viewgraph = new ViewGraph(this.datagraph, this.viewport, layer);
   }
 
-  load(datagraph: DataGraph, layer: Layer) {
+  load(datagraph: DataGraph, layer: Layer = Layer.Link) {
     this.setNetWork(datagraph, layer);
     this.setupAutoSave();
     saveToLocalStorage(this);
