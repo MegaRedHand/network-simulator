@@ -1,16 +1,5 @@
-// Doing this includes the file in the build
-import "./style.css";
-
-// Assets
-import RouterSvg from "./assets/router.svg";
-import ServerSvg from "./assets/server.svg";
-import ComputerSvg from "./assets/pc.svg";
-import PlaySvg from "./assets/play-icon.svg";
-import PauseSvg from "./assets/pause-icon.svg";
-
 import { Application, Assets } from "pixi.js";
 
-import { ViewGraph } from "./types/graphs/viewgraph";
 import {
   AddPc,
   AddRouter,
@@ -18,69 +7,22 @@ import {
   loadFromFile,
   loadFromLocalStorage,
   saveToFile,
-  saveToLocalStorage,
 } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
 import { Packet } from "./types/packet";
 import { LeftBar } from "./graphics/left_bar";
 import { RightBar } from "./graphics/right_bar";
 import { Viewport } from "./graphics/viewport";
+import { GlobalContext } from "./context";
 
-// > context.ts
-
-export class GlobalContext {
-  private viewport: Viewport = null;
-  private datagraph: DataGraph;
-  private viewgraph: ViewGraph;
-  private saveIntervalId: NodeJS.Timeout | null = null;
-
-  initialize(viewport: Viewport) {
-    this.viewport = viewport;
-    loadFromLocalStorage(this);
-  }
-
-  load(datagraph: DataGraph) {
-    this.datagraph = datagraph;
-    this.viewport.clear();
-    this.viewgraph = new ViewGraph(this.datagraph, this.viewport);
-    this.setupAutoSave();
-    saveToLocalStorage(this);
-  }
-
-  getViewport() {
-    return this.viewport;
-  }
-
-  getViewGraph() {
-    return this.viewgraph;
-  }
-
-  getDataGraph() {
-    return this.datagraph;
-  }
-
-  private setupAutoSave() {
-    this.clearAutoSave();
-
-    this.datagraph.subscribeChanges(() => {
-      if (this.saveIntervalId) {
-        clearInterval(this.saveIntervalId);
-      }
-      this.saveIntervalId = setInterval(() => {
-        saveToLocalStorage(this);
-        clearInterval(this.saveIntervalId);
-      }, 100);
-    });
-  }
-
-  private clearAutoSave() {
-    // Limpia el intervalo y evita duplicados
-    if (this.saveIntervalId) {
-      clearInterval(this.saveIntervalId);
-      this.saveIntervalId = null;
-    }
-  }
-}
+// Assets
+// Doing this includes the file in the build
+import "./style.css";
+import RouterSvg from "./assets/router.svg";
+import ServerSvg from "./assets/server.svg";
+import ComputerSvg from "./assets/pc.svg";
+import PlaySvg from "./assets/play-icon.svg";
+import PauseSvg from "./assets/pause-icon.svg";
 
 // > index.ts
 

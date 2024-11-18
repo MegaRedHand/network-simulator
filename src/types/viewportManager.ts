@@ -1,4 +1,4 @@
-import { GlobalContext } from "./../index";
+import { GlobalContext } from "./../context";
 import { DataGraph } from "./graphs/datagraph";
 import { Device, Pc, Router, Server } from "./devices/index";
 import { Edge } from "./edge";
