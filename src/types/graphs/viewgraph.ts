@@ -1,7 +1,7 @@
 import { Device, Pc, Router, Server } from "./../devices/index"; // Import the Device class
 import { Edge } from "./../edge";
 import { DataGraph } from "./datagraph";
-import { Viewport } from "../../viewport";
+import { Viewport } from "../../graphics/viewport";
 
 export class ViewGraph {
   private devices: Map<number, Device> = new Map<number, Device>();

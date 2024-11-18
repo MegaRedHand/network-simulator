@@ -22,9 +22,9 @@ import {
 } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
 import { Packet } from "./types/packet";
-import { LeftBar } from "./left_bar";
-import { RightBar } from "./right_bar";
-import { Viewport } from "./viewport";
+import { LeftBar } from "./graphics/left_bar";
+import { RightBar } from "./graphics/right_bar";
+import { Viewport } from "./graphics/viewport";
 
 // > context.ts
 

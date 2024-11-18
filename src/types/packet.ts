@@ -7,7 +7,7 @@ import {
 import { Edge } from "./edge";
 import { deselectElement, isSelected, selectElement } from "./viewportManager";
 import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
-import { RightBar } from "../right_bar";
+import { RightBar } from "../graphics/right_bar";
 import { Position } from "./common";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {

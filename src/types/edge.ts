@@ -2,7 +2,7 @@ import { Graphics, Point } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
 import { Device } from "./devices/index"; // Import the Device class
 import { deselectElement, selectElement } from "./viewportManager";
-import { RightBar } from "../right_bar";
+import { RightBar } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils";
 import { Packet } from "./packet";
 

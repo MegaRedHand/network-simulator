@@ -1,6 +1,6 @@
 import { Graphics, EventSystem } from "pixi.js";
 import * as pixi_viewport from "pixi-viewport";
-import { selectElement } from "./types/viewportManager";
+import { selectElement } from "../types/viewportManager";
 
 const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;
