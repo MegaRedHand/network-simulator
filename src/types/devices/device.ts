@@ -16,7 +16,7 @@ import {
 import { RightBar } from "../../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
-import { DeviceInfo } from "../../graphics/formatters/device_info";
+import { DeviceInfo } from "../../graphics/renderables/device_info";
 
 export const DEVICE_SIZE = 20;
 
