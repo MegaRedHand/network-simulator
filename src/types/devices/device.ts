@@ -16,6 +16,7 @@ import {
 import { RightBar } from "../../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
+import { DeviceInfo } from "../../graphics/formatters/device_info";
 
 export const DEVICE_SIZE = 20;
 
@@ -36,6 +37,8 @@ export class Device extends Sprite {
   id: number;
   viewgraph: ViewGraph;
   connections = new Map<number, number>();
+  formatter: DeviceInfo;
+
   highlightMarker: Graphics | null = null; // Marker to indicate selection
 
   static dragTarget: Device | null = null;
@@ -44,12 +47,14 @@ export class Device extends Sprite {
   constructor(
     id: number,
     svg: string,
+    formatter: DeviceInfo,
     viewgraph: ViewGraph,
     position: Position,
   ) {
     super(Texture.from(svg));
     this.id = id;
     this.viewgraph = viewgraph;
+    this.formatter = formatter;
 
     this.anchor.set(0.5);
 
@@ -247,7 +252,15 @@ export class Device extends Sprite {
   }
 
   showInfo() {
-    throw new Error("Method not implemented.");
+    const info = this.formatter.clear();
+    info.addField("ID", this.id.toString());
+    info.addListField(
+      "Connected Devices",
+      Array.from(this.connections.values()),
+    );
+    RightBar.getInstance().renderInfo(info);
+
+    this.addCommonButtons();
   }
 
   select() {

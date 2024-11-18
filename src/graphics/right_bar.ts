@@ -1,4 +1,5 @@
 export { StyledInfo } from "./formatters/styled_info";
+export { DeviceInfo } from "./formatters/device_info";
 
 export interface Renderable {
   toHTML(): Node[];

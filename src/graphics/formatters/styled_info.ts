@@ -10,15 +10,24 @@ export class StyledInfo implements Renderable {
     this.title = title;
   }
 
+  // Clears previous calls to addX methods
+  clear() {
+    this.info = [];
+    return this;
+  }
+
+  // Adds a new field to show on the info list
   addField(label: string, value: string) {
     this.info.push({ label, value });
   }
 
+  // Adds a new field to show on the info list, which has a list of values
   addListField(label: string, values: number[]) {
     const value = values.length !== 0 ? "[" + values.join(", ") + "]" : "None";
     this.info.push({ label, value });
   }
 
+  // Returns a list of HTML nodes with the info to show
   toHTML() {
     const childNodes: Node[] = [];
     const header = document.createElement("h3");
