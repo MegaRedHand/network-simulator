@@ -42,8 +42,7 @@ export class Device extends Sprite {
     viewgraph: ViewGraph,
     position: { x: number; y: number } | null = null,
   ) {
-    const texture = Texture.from(svg);
-    super(texture);
+    super(Texture.from(svg));
 
     this.rightbar = RightBar.getInstance();
     this.id = id;

@@ -1,7 +1,9 @@
+export type NodeType = "Router" | "Server" | "Pc";
+
 export interface GraphNode {
   x: number;
   y: number;
-  type: string;
+  type: NodeType;
   connections: Set<number>;
 }
 
@@ -9,11 +11,17 @@ export interface GraphDataNode {
   id: number;
   x: number;
   y: number;
-  type: string;
+  type: NodeType;
   connections: number[];
 }
 
 export type GraphData = GraphDataNode[];
+
+export interface DeviceInfo {
+  x: number;
+  y: number;
+  type: NodeType;
+}
 
 export class DataGraph {
   private devices = new Map<number, GraphNode>();
@@ -54,7 +62,7 @@ export class DataGraph {
   }
 
   // Add a new device to the graph
-  addNewDevice(deviceInfo: { x: number; y: number; type: string }): number {
+  addNewDevice(deviceInfo: DeviceInfo): number {
     const id = this.idCounter++;
     const graphnode: GraphNode = {
       ...deviceInfo,
