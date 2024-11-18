@@ -1,35 +1,7 @@
-type Field = { label: string; value: string };
+export { StyledInfo } from "./formatters/styled_info";
 
-export class StyledInfo {
-  title: string;
-  info: Field[] = [];
-
-  constructor(title: string) {
-    this.title = title;
-  }
-
-  addField(label: string, value: string) {
-    this.info.push({ label, value });
-  }
-
-  addListField(label: string, values: number[]) {
-    const value = values.length !== 0 ? "[" + values.join(", ") + "]" : "None";
-    this.info.push({ label, value });
-  }
-
-  toHTML() {
-    const childNodes: Node[] = [];
-    const header = document.createElement("h3");
-    header.textContent = this.title;
-    childNodes.push(header);
-
-    this.info.forEach((item) => {
-      const p = document.createElement("p");
-      p.innerHTML = `<strong>${item.label}:</strong> ${item.value}`;
-      childNodes.push(p);
-    });
-    return childNodes;
-  }
+export interface Renderable {
+  toHTML(): Node[];
 }
 
 export class RightBar {
@@ -75,7 +47,7 @@ export class RightBar {
   }
 
   // Shows specific information of an element in info-content
-  renderInfo(info: StyledInfo) {
+  renderInfo(info: Renderable) {
     const infoContent = document.getElementById("info-content");
     if (infoContent) {
       infoContent.replaceChildren(...info.toHTML());
