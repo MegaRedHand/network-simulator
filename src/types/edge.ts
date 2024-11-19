@@ -2,7 +2,7 @@ import { Graphics, Point } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
 import { Device } from "./devices/index"; // Import the Device class
 import { deselectElement, selectElement } from "./viewportManager";
-import { RightBar } from "../graphics/right_bar";
+import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils";
 import { Packet } from "./packet";
 
@@ -95,28 +95,29 @@ export class Edge extends Graphics {
 
   // Method to show the Edge information
   showInfo() {
+    const info = new StyledInfo("Edge Information");
+    info.addField("Edge ID", this.id.toString());
+    info.addField(
+      "Connected Devices",
+      `${this.connectedNodes.n1} <=> ${this.connectedNodes.n2}`,
+    );
+    info.addField(
+      "Start Position",
+      `x=${this.startPos.x.toFixed(2)}, y=${this.startPos.y.toFixed(2)}`,
+    );
+    info.addField(
+      "End Position",
+      `x=${this.endPos.x.toFixed(2)}, y=${this.endPos.y.toFixed(2)}`,
+    );
+
     // Calls renderInfo to display Edge information
-    this.rightbar.renderInfo("Edge Information", [
-      { label: "Edge ID", value: this.id.toString() },
-      {
-        label: "Connected Devices",
-        value: `${this.connectedNodes.n1} <=> ${this.connectedNodes.n2}`,
-      },
-      {
-        label: "Start Position",
-        value: `x=${this.startPos.x.toFixed(2)}, y=${this.startPos.y.toFixed(2)}`,
-      },
-      {
-        label: "End Position",
-        value: `x=${this.endPos.x.toFixed(2)}, y=${this.endPos.y.toFixed(2)}`,
-      },
-    ]);
+    this.rightbar.renderInfo(info);
 
     // Adds the delete button using addButton
     this.rightbar.addButton(
       "Delete Edge",
       () => this.delete(),
-      "right-bar-button right-bar-delete-button",
+      "right-bar-delete-button",
     );
   }
 

@@ -6,7 +6,6 @@ import {
   TextStyle,
   Text,
 } from "pixi.js";
-import { Packet } from "./../packet";
 import { ViewGraph } from "./../graphs/viewgraph";
 import {
   deselectElement,
@@ -16,10 +15,9 @@ import {
 import { RightBar } from "../../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
+import { DeviceInfo } from "../../graphics/renderables/device_info";
 
 export const DEVICE_SIZE = 20;
-
-let selectedDeviceId: number | null = null; // Stores only the ID instead of 'this'
 
 export enum Layer {
   App = 0,
@@ -34,21 +32,15 @@ export enum DeviceType {
   Pc = 2,
 }
 
-export function setSelectedDeviceId(value: number | null) {
-  selectedDeviceId = value;
-}
-
-export class Device extends Sprite {
-  id: number;
-  dragging = false;
-  viewgraph: ViewGraph;
+export abstract class Device extends Sprite {
+  readonly id: number;
+  readonly viewgraph: ViewGraph;
   connections = new Map<number, number>();
-  offsetX = 0;
-  offsetY = 0;
-  rightbar: RightBar;
+
   highlightMarker: Graphics | null = null; // Marker to indicate selection
 
   static dragTarget: Device | null = null;
+  static connectionTarget: Device | null = null;
 
   constructor(
     id: number,
@@ -57,8 +49,6 @@ export class Device extends Sprite {
     position: Position,
   ) {
     super(Texture.from(svg));
-
-    this.rightbar = RightBar.getInstance();
     this.id = id;
     this.viewgraph = viewgraph;
 
@@ -114,27 +104,6 @@ export class Device extends Sprite {
     sprite.height = sprite.height / DEVICE_SIZE;
   }
 
-  sendPacket(packetType: string, destinationId: number): void {
-    console.log(
-      `Sending ${packetType} packet from ${this.id} to ${destinationId}`,
-    );
-    const speed = 200; // Velocidad en píxeles por segundo
-
-    const pathEdgeIds = this.viewgraph.getPathBetween(this.id, destinationId);
-
-    if (pathEdgeIds.length === 0) {
-      console.warn(
-        `No se encontró un camino entre ${this.id} y ${destinationId}.`,
-      );
-      return;
-    }
-
-    const pathEdges = pathEdgeIds.map((id) => this.viewgraph.getEdge(id));
-
-    const packet = new Packet(packetType, speed, this.id, destinationId);
-    packet.animateAlongPath(pathEdges, this.id);
-  }
-
   delete(): void {
     this.viewgraph.removeDevice(this.id);
     // Clear connections
@@ -144,20 +113,11 @@ export class Device extends Sprite {
 
   onPointerDown(event: FederatedPointerEvent): void {
     console.log("Entered onPointerDown");
-    if (!selectedDeviceId) {
+    if (!Device.connectionTarget) {
       selectElement(this);
     }
     Device.dragTarget = this;
     event.stopPropagation();
-
-    // Get the pointer position in world (viewport) coordinates
-    const worldPosition = this.viewgraph
-      .getViewport()
-      .toWorld(event.clientX, event.clientY);
-
-    // Calculate the offset between the pointer and the sprite
-    this.offsetX = worldPosition.x - this.x;
-    this.offsetY = worldPosition.y - this.y;
 
     // Listen to global pointermove and pointerup events
     this.parent.on("pointermove", onPointerMove);
@@ -181,53 +141,49 @@ export class Device extends Sprite {
   onClick(e: FederatedPointerEvent) {
     e.stopPropagation();
 
-    if (selectedDeviceId) {
-      // If the stored ID is the same as this device's, reset it
-      if (selectedDeviceId === this.id) {
-        return;
-      }
-      // The "LineStart" device ends up as the end of the drawing but it's the same
-      if (this.connectTo(selectedDeviceId)) {
-        // selectElement(this.viewgraph.getDevice(selectedDeviceId));
-        refreshElement();
-        selectedDeviceId = null;
-      }
-    } else {
+    if (!Device.connectionTarget) {
       selectElement(this);
+      return;
+    }
+    // If the stored device is this, reset it
+    if (Device.connectionTarget === this) {
+      return;
+    }
+    // The "LineStart" device ends up as the end of the drawing but it's the same
+    if (this.connectTo(Device.connectionTarget.id)) {
+      refreshElement();
+      Device.connectionTarget = null;
     }
   }
 
-  selectToConnect(id: number) {
-    if (selectedDeviceId === id) {
-      setSelectedDeviceId(null);
-    } else {
-      setSelectedDeviceId(id);
-    }
+  selectToConnect() {
+    Device.connectionTarget = this;
   }
 
   highlight() {
-    if (!this.highlightMarker) {
-      // Create the square as a selection marker
-      this.highlightMarker = new Graphics();
-
-      this.highlightMarker.roundRect(
-        -this.width / 2,
-        -this.height / 2,
-        this.width,
-        this.height,
-        5,
-      );
-      this.highlightMarker.stroke({
-        width: 3,
-        color: Colors.Violet,
-        alpha: 0.6,
-      });
-      this.highlightMarker.fill({ color: Colors.Violet, alpha: 0.1 });
-      this.highlightMarker.zIndex = ZIndexLevels.Device;
-
-      // Ensure the marker is in the same container as the viewport
-      this.addChild(this.highlightMarker);
+    if (this.highlightMarker) {
+      return;
     }
+    // Create the square as a selection marker
+    this.highlightMarker = new Graphics();
+
+    this.highlightMarker.roundRect(
+      -this.width / 2,
+      -this.height / 2,
+      this.width,
+      this.height,
+      5,
+    );
+    this.highlightMarker.stroke({
+      width: 3,
+      color: Colors.Violet,
+      alpha: 0.6,
+    });
+    this.highlightMarker.fill({ color: Colors.Violet, alpha: 0.1 });
+    this.highlightMarker.zIndex = ZIndexLevels.Device;
+
+    // Ensure the marker is in the same container as the viewport
+    this.addChild(this.highlightMarker);
   }
 
   removeHighlight() {
@@ -239,58 +195,8 @@ export class Device extends Sprite {
     }
   }
 
-  addCommonButtons() {
-    this.rightbar.addButton(
-      "Connect device",
-      () => this.selectToConnect(this.id),
-      "right-bar-button right-bar-connect-button",
-      true,
-    );
-    this.rightbar.addButton(
-      "Delete device",
-      () => this.delete(),
-      "right-bar-button right-bar-delete-button",
-    );
-
-    // Dropdown for selecting packet type
-    this.rightbar.addDropdown(
-      "Packet Type",
-      [
-        { value: "IP", text: "IP" },
-        { value: "ICMP", text: "ICMP" },
-      ],
-      "packet-type",
-    );
-
-    // Dropdown for selecting destination
-    const adjacentDevices = this.viewgraph
-      .getDeviceIds()
-      .filter((id) => id !== this.id)
-      .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
-
-    this.rightbar.addDropdown("Destination", adjacentDevices, "destination");
-
-    // Button to send the packet
-    this.rightbar.addButton("Send Packet", () => {
-      // Get the selected packet type and destination ID
-      const packetType = (
-        document.getElementById("packet-type") as HTMLSelectElement
-      )?.value;
-      const destinationId = Number(
-        (document.getElementById("destination") as HTMLSelectElement)?.value,
-      );
-
-      // Call the sendPacket method with the selected values
-      if (packetType && !isNaN(destinationId)) {
-        this.sendPacket(packetType, destinationId);
-      } else {
-        console.warn("Please select both a packet type and a destination.");
-      }
-    });
-  }
-
-  showInfo() {
-    throw new Error("Method not implemented.");
+  showInfo(): void {
+    RightBar.getInstance().renderInfo(new DeviceInfo(this));
   }
 
   select() {
@@ -300,20 +206,14 @@ export class Device extends Sprite {
 
   deselect() {
     this.removeHighlight(); // Calls removeHighlight on deselect
-    setSelectedDeviceId(null);
+    Device.connectionTarget = null;
   }
 
-  getType(): DeviceType {
-    // Return the device’s type.
-    // For the superclass, the type returned is Router.
-    return DeviceType.Router;
-  }
+  // Return the device’s type.
+  abstract getType(): DeviceType;
 
-  getLayer(): Layer {
-    // Return the device’s layer.
-    // For the superclass, the layer returned is Link.
-    return Layer.Link;
-  }
+  // Return the device’s layer.
+  abstract getLayer(): Layer;
 }
 
 function onPointerMove(event: FederatedPointerEvent): void {

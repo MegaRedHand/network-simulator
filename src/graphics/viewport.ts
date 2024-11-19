@@ -1,6 +1,6 @@
 import { Graphics, EventSystem } from "pixi.js";
 import * as pixi_viewport from "pixi-viewport";
-import { selectElement } from "../types/viewportManager";
+import { deselectElement } from "../types/viewportManager";
 
 const WORLD_WIDTH = 10000;
 const WORLD_HEIGHT = 10000;
@@ -36,7 +36,7 @@ export class Viewport extends pixi_viewport.Viewport {
     this.on("click", (event) => {
       // If the click target is the viewport itself, deselect any selected element
       if (event.target === this) {
-        selectElement(null);
+        deselectElement();
       }
     });
   }
