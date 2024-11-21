@@ -247,3 +247,17 @@ canvas {
 .dropdown-container {
   margin-bottom: 8px; /* Reduce bottom margin */
 }
+
+.routing-table {
+  width: 100%;
+  text-align: center;
+  border: 1px solid #cccccc;
+  border-collapse: collapse;
+  background-color: #ffffff;
+}
+
+.routing-table-entry {
+  text-align: inherit;
+  border: inherit;
+  border-collapse: inherit;
+}

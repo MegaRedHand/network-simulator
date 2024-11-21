@@ -65,6 +65,37 @@ export class DeviceInfo extends StyledInfo {
     );
   }
 
+  addRoutingTable() {
+    const table = document.createElement("table");
+    table.classList.add("routing-table");
+
+    const caption = document.createElement("caption");
+    caption.innerHTML = "<b>Routing Table</b>";
+    table.appendChild(caption);
+
+    const entry = document.createElement("tr");
+    entry.classList.add("routing-table-entry");
+
+    const entryKey = document.createElement("td");
+    entryKey.textContent = "192.168.1.1";
+    entryKey.classList.add("routing-table-entry");
+    entry.appendChild(entryKey);
+
+    const entryValue = document.createElement("td");
+    entryValue.textContent = "192.168.1.1";
+    entryValue.classList.add("routing-table-entry");
+    entry.appendChild(entryValue);
+
+    const entryButton = document.createElement("td");
+    entryButton.textContent = "192.168.1.1";
+    entryButton.classList.add("routing-table-entry");
+    entry.appendChild(entryButton);
+
+    table.appendChild(entry);
+
+    this.inputFields.push(table);
+  }
+
   toHTML(): Node[] {
     return super.toHTML().concat(this.inputFields);
   }

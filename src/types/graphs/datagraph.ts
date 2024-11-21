@@ -2,12 +2,18 @@ import { DeviceType } from "../devices/device";
 
 export type DeviceId = number;
 
-export interface GraphNode {
+interface CommonGraphNode {
   x: number;
   y: number;
   type: DeviceType;
   connections: Set<DeviceId>;
 }
+
+interface RouterGraphNode extends CommonGraphNode {
+  type: DeviceType.Router;
+}
+
+export type GraphNode = CommonGraphNode | RouterGraphNode;
 
 export interface GraphDataNode {
   id: DeviceId;
