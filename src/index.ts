@@ -18,7 +18,6 @@ import { GlobalContext } from "./context";
 // Doing this includes the file in the build
 import "./style.css";
 import RouterSvg from "./assets/router.svg";
-import ServerSvg from "./assets/server.svg";
 import ComputerSvg from "./assets/pc.svg";
 import PlaySvg from "./assets/play-icon.svg";
 import PauseSvg from "./assets/pause-icon.svg";
@@ -37,7 +36,6 @@ import PauseSvg from "./assets/pause-icon.svg";
   const canvasPlaceholder = document.getElementById("canvas");
   canvasPlaceholder.replaceWith(app.canvas);
   await Assets.load(RouterSvg);
-  await Assets.load(ServerSvg);
   await Assets.load(ComputerSvg);
 
   // Context initialization
@@ -58,15 +56,12 @@ import PauseSvg from "./assets/pause-icon.svg";
     "Add Router",
   );
 
-  // Add server button
+  // Add Host button
   leftBar.addButton(
-    ServerSvg,
-    () => AddDevice(ctx, DeviceType.Server),
-    "Add Server",
+    ComputerSvg,
+    () => AddDevice(ctx, DeviceType.Host),
+    "Add Host",
   );
-
-  // Add PC button
-  leftBar.addButton(ComputerSvg, () => AddDevice(ctx, DeviceType.Pc), "Add PC");
 
   ctx.initialize(viewport);
 
