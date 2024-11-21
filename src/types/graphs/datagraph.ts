@@ -54,7 +54,7 @@ export class DataGraph {
         id: id,
         x: info.x,
         y: info.y,
-        type: info.type, // Save the device type (Router, Server, PC)
+        type: info.type, // Save the device type (Router, Host)
         connections: Array.from(info.connections.values()),
       });
     });

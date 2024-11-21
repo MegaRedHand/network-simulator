@@ -1,11 +1,11 @@
 import { Device, DeviceType, Layer } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
-import ServerImage from "../../assets/server.svg";
+import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
 
-export class Server extends Device {
+export class Host extends Device {
   constructor(id: number, viewgraph: ViewGraph, position: Position) {
-    super(id, ServerImage, viewgraph, position);
+    super(id, PcImage, viewgraph, position);
   }
 
   getLayer(): Layer {
@@ -13,6 +13,6 @@ export class Server extends Device {
   }
 
   getType(): DeviceType {
-    return DeviceType.Server;
+    return DeviceType.Host;
   }
 }

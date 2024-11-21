@@ -74,10 +74,8 @@ function getTypeName(device: Device): string {
   switch (device.getType()) {
     case DeviceType.Router:
       return "Router";
-    case DeviceType.Server:
-      return "Server";
-    case DeviceType.Pc:
-      return "PC";
+    case DeviceType.Host:
+      return "Host";
   }
 }
 

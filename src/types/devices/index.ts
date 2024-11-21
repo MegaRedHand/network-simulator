@@ -2,6 +2,5 @@
 
 export { Device } from "./device";
 export { Router } from "./router";
-export { Server } from "./server";
-export { Pc } from "./pc";
+export { Host } from "./host";
 export { createDevice } from "./utils";

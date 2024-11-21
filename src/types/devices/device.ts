@@ -28,8 +28,7 @@ export enum Layer {
 
 export enum DeviceType {
   Router = 0,
-  Server = 1,
-  Pc = 2,
+  Host = 1,
 }
 
 export abstract class Device extends Sprite {

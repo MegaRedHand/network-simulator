@@ -1,8 +1,7 @@
 import { ViewGraph } from "../graphs/viewgraph";
 import { Device, DeviceType, Layer } from "./device";
-import { Pc } from "./pc";
+import { Host } from "./host";
 import { Router } from "./router";
-import { Server } from "./server";
 
 export interface CreateDevice {
   id: number;
@@ -21,10 +20,8 @@ export function createDevice(
   switch (deviceInfo.type) {
     case DeviceType.Router:
       return new Router(deviceInfo.id, viewgraph, position);
-    case DeviceType.Server:
-      return new Server(deviceInfo.id, viewgraph, position);
-    case DeviceType.Pc:
-      return new Pc(deviceInfo.id, viewgraph, position);
+    case DeviceType.Host:
+      return new Host(deviceInfo.id, viewgraph, position);
   }
 }
 
