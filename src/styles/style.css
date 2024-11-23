@@ -150,9 +150,29 @@ canvas {
   height: 60%;
 }
 
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
 /* Style for the right sidebar */
 .right-bar {
-  flex: 0 0 250px; /* Fixed width of 250px for the right bar */
+  flex: 0 0 300px; /* Fixed width of 250px for the right bar */
   background-color: #f1f1f1; /* Light background for the bar */
   box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.2); /* Left shadow to highlight the bar */
   padding: 20px; /* Internal space around content */
@@ -192,10 +212,14 @@ canvas {
   border-radius: 4px;
   width: 100%; /* Occupies 100% of the right-bar width */
   box-sizing: border-box; /* Includes padding in the total width */
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
 }
 
 .right-bar-button:hover {
   background-color: #0056b3;
+  transform: scale(1.02); /* Small scale effect on hover */
 }
 
 .right-bar-button.selected-button {
@@ -248,4 +272,116 @@ canvas {
 /* Optional: Style to make the entire dropdown area compact */
 .dropdown-container {
   margin-bottom: 8px; /* Reduce bottom margin */
+}
+
+/* Container for button and table */
+.toggle-table-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px; /* Spacing between button and table */
+  width: 100%;
+}
+
+/* Style for buttons in the right bar with green background */
+.right-bar-toggle-button {
+  background-color: #1d7437; /* Dark green */
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  text-align: center; /* Center text horizontally */
+  text-decoration: none;
+  display: flex; /* Use flexbox to organize text and arrow */
+  justify-content: center; /* Center content horizontally */
+  align-items: center; /* Center content vertically */
+  font-size: 14px;
+  margin: 5px 0; /* Adjust margin between buttons */
+  cursor: pointer;
+  border-radius: 4px; /* Rounded borders */
+  width: 100%;
+  box-sizing: border-box; /* Include padding on all length */
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
+  position: relative; /* To position internal elements like the arrow */
+}
+
+/* Hover for the button */
+.right-bar-toggle-button:hover {
+  background-color: #135025; /* Change to a darker green */
+  transform: scale(1.02); /* Small scale effect */
+}
+
+/* Triangle icon */
+.right-bar-toggle-button::after {
+  content: "";
+  display: inline-block;
+  position: absolute; /* Position the triangle on the right */
+  right: 12px; /* Right margin for the triangle */
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid white; /* White triangle */
+  transition: transform 0.3s ease;
+}
+
+/* Rotate triangle when opening */
+.right-bar-toggle-button.open::after {
+  transform: rotate(180deg); /* Rotate triangle upwards */
+}
+
+/* Table style */
+.toggle-table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  text-align: center;
+  transition: opacity 0.5s ease-out; /* Make transition smoother */
+  border-radius: 8px; /* Rounded borders */
+  overflow: hidden; /* Avoid content spilling */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Table headers */
+.toggle-table-container th {
+  background-color: #1d7437;
+  color: white;
+  padding: 8px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+/* Table rows */
+.toggle-table-container td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+/* Alternate between row colors */
+.toggle-table-container tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.toggle-table-container tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+/* Hover on rows */
+.toggle-table-container tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Compatibility adjustments */
+.toggle-table-container caption {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333333;
+  text-align: center;
+}
+
+/* Hidden table */
+.toggle-table-container table.hidden {
+  display: none; /* Hides table */
 }

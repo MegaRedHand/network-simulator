@@ -16,6 +16,7 @@ import { RightBar } from "../../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
+import { IpAddress } from "../../packets/ip";
 
 export const DEVICE_SIZE = 20;
 
@@ -41,15 +42,22 @@ export abstract class Device extends Sprite {
   static dragTarget: Device | null = null;
   static connectionTarget: Device | null = null;
 
+  ip: IpAddress;
+  ipMask: IpAddress;
+
   constructor(
     id: number,
     svg: string,
     viewgraph: ViewGraph,
     position: Position,
+    ip: IpAddress,
+    ipMask: IpAddress,
   ) {
     super(Texture.from(svg));
     this.id = id;
     this.viewgraph = viewgraph;
+    this.ip = ip;
+    this.ipMask = ipMask;
 
     this.anchor.set(0.5);
 
