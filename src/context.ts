@@ -18,8 +18,8 @@ export class GlobalContext {
   initialize(viewport: Viewport) {
     this.viewport = viewport;
 
-    let baseIp: string = "192.168.1.0",
-      mask: string = "255.255.255.0";
+    const baseIp = "192.168.1.0";
+    const mask = "255.255.255.0";
     this.ipGenerator = new IpAddressGenerator(baseIp, mask);
     loadFromLocalStorage(this);
   }

@@ -1,5 +1,5 @@
 import { Device, DeviceType, Layer } from "./device";
-import { EdgeId, ViewGraph } from "../graphs/viewgraph";
+import { ViewGraph } from "../graphs/viewgraph";
 import RouterImage from "../../assets/router.svg";
 import { Position } from "../common";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";

@@ -83,10 +83,6 @@ export class DeviceInfo extends StyledInfo {
     );
 
     this.inputFields.push(dynamicTable);
-    this.inputFields.push(
-      createRightBarButton("Boton de prueba", () => {}, "right-bar-button"),
-      createRightBarButton("Boton de prueba", () => {}, "right-bar-button"),
-    );
   }
 
   toHTML(): Node[] {
