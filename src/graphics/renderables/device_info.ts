@@ -70,16 +70,14 @@ export class DeviceInfo extends StyledInfo {
   }
 
   addRoutingTable(entries: { ip: string; mask: string; iface: string }[]) {
-    // Convertir las entradas en filas
     const rows = entries.map((entry) => [entry.ip, entry.mask, entry.iface]);
 
-    // Crear tabla dinámica y añadirla a los campos de entrada
     const dynamicTable = createToggleTable(
-      "Routing Table", // Título del botón
-      ["IP Address", "Mask", "Interface"], // Encabezados
-      rows, // Filas generadas
-      "right-bar-toggle-button", // Clase del botón
-      "right-bar-table", // Clase de la tabla
+      "Routing Table", // Title
+      ["IP Address", "Mask", "Interface"], // Headers
+      rows, // Generated files
+      "right-bar-toggle-button", // Button class
+      "right-bar-table", // Table class
     );
 
     this.inputFields.push(dynamicTable);

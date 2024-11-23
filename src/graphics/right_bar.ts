@@ -98,16 +98,16 @@ export function createToggleTable(
   const container = document.createElement("div");
   container.classList.add("toggle-table-container");
 
-  // Crear botón toggle
+  // Create toggle button
   const button = document.createElement("button");
   button.classList.add(buttonClass);
   button.textContent = title;
 
-  // Crear tabla
+  // Create table
   const table = document.createElement("table");
   table.classList.add(tableClass, "hidden");
 
-  // Agregar encabezados
+  // Add headers
   const headerRow = document.createElement("tr");
   headers.forEach((header) => {
     const th = document.createElement("th");
@@ -116,7 +116,7 @@ export function createToggleTable(
   });
   table.appendChild(headerRow);
 
-  // Agregar filas
+  // Add rows
   rows.forEach((row) => {
     const rowElement = document.createElement("tr");
     row.forEach((cellData) => {
@@ -127,7 +127,7 @@ export function createToggleTable(
     table.appendChild(rowElement);
   });
 
-  // Toggle al hacer clic en el botón
+  // Toggle when clicking on button
   button.onclick = () => {
     const isHidden = table.classList.contains("hidden");
     table.classList.toggle("hidden", !isHidden);
@@ -137,7 +137,7 @@ export function createToggleTable(
     button.classList.toggle("open", isHidden);
   };
 
-  // Añadir botón y tabla al contenedor
+  // Add button and table to container
   container.appendChild(button);
   container.appendChild(table);
 

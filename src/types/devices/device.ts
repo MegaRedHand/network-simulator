@@ -42,7 +42,6 @@ export abstract class Device extends Sprite {
   static dragTarget: Device | null = null;
   static connectionTarget: Device | null = null;
 
-  // Propiedades de red
   ip: IpAddress;
   ip_mask: IpAddress;
 

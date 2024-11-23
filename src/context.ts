@@ -13,7 +13,7 @@ export class GlobalContext {
   private datagraph: DataGraph;
   private viewgraph: ViewGraph;
   private saveIntervalId: NodeJS.Timeout | null = null;
-  private ipGenerator: IpAddressGenerator; // Agregar el generador
+  private ipGenerator: IpAddressGenerator;
 
   initialize(viewport: Viewport) {
     this.viewport = viewport;
@@ -24,7 +24,6 @@ export class GlobalContext {
     loadFromLocalStorage(this);
   }
 
-  // Nuevo método para obtener la siguiente IP
   getNextIp(): { ip: string; mask: string } {
     return this.ipGenerator.getNextIp();
   }
