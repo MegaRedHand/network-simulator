@@ -58,16 +58,6 @@ export class IpAddress {
     const maskedBase = baseIp.applyMask(mask);
     return maskedThis.equals(maskedBase);
   }
-
-  // Validar que la dirección es una IP válida
-  static isValid(addrString: string): boolean {
-    try {
-      this.parse(addrString);
-      return true;
-    } catch {
-      return false;
-    }
-  }
 }
 
 export class IpAddressGenerator {
