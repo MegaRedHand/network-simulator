@@ -47,7 +47,7 @@ export class IpAddress {
   // Aplicar una máscara a la IP (bitwise AND)
   applyMask(mask: IpAddress): IpAddress {
     const maskedOctets = new Uint8Array(
-      this.octets.map((octet, i) => octet & mask.octets[i])
+      this.octets.map((octet, i) => octet & mask.octets[i]),
     );
     return new IpAddress(maskedOctets);
   }
@@ -105,8 +105,6 @@ export class IpAddressGenerator {
     ].join(".");
   }
 }
-
-
 
 export interface IpPayload {
   toBytes(): Uint8Array;

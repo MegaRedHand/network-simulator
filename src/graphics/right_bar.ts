@@ -93,7 +93,7 @@ export function createToggleTable(
   headers: string[],
   rows: string[][],
   buttonClass = "right-bar-toggle-button",
-  tableClass = "right-bar-table"
+  tableClass = "right-bar-table",
 ) {
   const container = document.createElement("div");
   container.classList.add("toggle-table-container");
@@ -143,7 +143,6 @@ export function createToggleTable(
 
   return container;
 }
-
 
 export function createRightBarButton(
   text: string,

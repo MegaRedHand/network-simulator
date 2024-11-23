@@ -6,8 +6,13 @@ import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { IpAddress } from "../../packets/ip";
 
 export class Router extends Device {
-
-  constructor(id: number, viewgraph: ViewGraph, position: Position, ip: IpAddress, mask: IpAddress) {
+  constructor(
+    id: number,
+    viewgraph: ViewGraph,
+    position: Position,
+    ip: IpAddress,
+    mask: IpAddress,
+  ) {
     super(id, RouterImage, viewgraph, position, ip, mask);
   }
 
@@ -20,7 +25,8 @@ export class Router extends Device {
   }
 
   generate_routing_table(): { ip: string; mask: string; iface: string }[] {
-    const routingTableEntries: { ip: string; mask: string; iface: string }[] = [];
+    const routingTableEntries: { ip: string; mask: string; iface: string }[] =
+      [];
 
     this.getConnections().forEach(({ edgeId, adyacentId }) => {
       const connectedDevice = this.viewgraph.getDevice(adyacentId);

@@ -52,7 +52,7 @@ export abstract class Device extends Sprite {
     viewgraph: ViewGraph,
     position: Position,
     ip: IpAddress,
-    ip_mask: IpAddress
+    ip_mask: IpAddress,
   ) {
     super(Texture.from(svg));
     this.id = id;

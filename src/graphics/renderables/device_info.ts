@@ -2,7 +2,11 @@ import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { sendPacket } from "../../types/packet";
-import { createDropdown, createToggleTable, createRightBarButton } from "../right_bar";
+import {
+  createDropdown,
+  createToggleTable,
+  createRightBarButton,
+} from "../right_bar";
 import { StyledInfo } from "./styled_info";
 
 export class DeviceInfo extends StyledInfo {
@@ -68,31 +72,22 @@ export class DeviceInfo extends StyledInfo {
   addRoutingTable(entries: { ip: string; mask: string; iface: string }[]) {
     // Convertir las entradas en filas
     const rows = entries.map((entry) => [entry.ip, entry.mask, entry.iface]);
-  
+
     // Crear tabla dinámica y añadirla a los campos de entrada
     const dynamicTable = createToggleTable(
       "Routing Table", // Título del botón
       ["IP Address", "Mask", "Interface"], // Encabezados
       rows, // Filas generadas
       "right-bar-toggle-button", // Clase del botón
-      "right-bar-table" // Clase de la tabla
+      "right-bar-table", // Clase de la tabla
     );
-  
+
     this.inputFields.push(dynamicTable);
     this.inputFields.push(
-      createRightBarButton(
-        "Boton de prueba",
-        () => {},
-        "right-bar-button",
-      ),
-      createRightBarButton(
-        "Boton de prueba",
-        () => {},
-        "right-bar-button",
-      ),
+      createRightBarButton("Boton de prueba", () => {}, "right-bar-button"),
+      createRightBarButton("Boton de prueba", () => {}, "right-bar-button"),
     );
   }
-  
 
   toHTML(): Node[] {
     return super.toHTML().concat(this.inputFields);

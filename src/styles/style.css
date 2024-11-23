@@ -212,7 +212,9 @@ canvas {
   border-radius: 4px;
   width: 100%; /* Occupies 100% of the right-bar width */
   box-sizing: border-box; /* Includes padding in the total width */
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
 }
 
 .right-bar-button:hover {
@@ -301,7 +303,9 @@ canvas {
   border-radius: 4px; /* Bordes redondeados */
   width: 100%; /* Botón ocupa todo el ancho */
   box-sizing: border-box; /* Incluye padding en el ancho total */
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
   position: relative; /* Posiciona elementos internos como la flecha */
 }
 

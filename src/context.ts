@@ -6,7 +6,7 @@ import {
   saveToLocalStorage,
 } from "./types/viewportManager";
 import { Layer } from "./types/devices/device";
-import { IpAddressGenerator } from "./packets/ip"
+import { IpAddressGenerator } from "./packets/ip";
 
 export class GlobalContext {
   private viewport: Viewport = null;
@@ -18,7 +18,8 @@ export class GlobalContext {
   initialize(viewport: Viewport) {
     this.viewport = viewport;
 
-    let baseIp: string = "192.168.1.0", mask: string = "255.255.255.0"
+    let baseIp: string = "192.168.1.0",
+      mask: string = "255.255.255.0";
     this.ipGenerator = new IpAddressGenerator(baseIp, mask);
     loadFromLocalStorage(this);
   }
