@@ -1,3 +1,4 @@
+import { IpAddress } from "../../packets/ip";
 import { ViewGraph } from "../graphs/viewgraph";
 import { Device, DeviceType, Layer } from "./device";
 import { Host } from "./host";
@@ -8,20 +9,22 @@ export interface CreateDevice {
   type: DeviceType;
   x: number;
   y: number;
+  ip: string;
+  mask: string;
 }
 
 export function createDevice(
   deviceInfo: CreateDevice,
   viewgraph: ViewGraph,
 ): Device {
-  const { x, y } = deviceInfo;
+  const { x, y, ip, mask } = deviceInfo;
   const position = { x, y };
 
   switch (deviceInfo.type) {
     case DeviceType.Router:
-      return new Router(deviceInfo.id, viewgraph, position);
+      return new Router(deviceInfo.id, viewgraph, position, IpAddress.parse(ip), IpAddress.parse(mask));
     case DeviceType.Host:
-      return new Host(deviceInfo.id, viewgraph, position);
+      return new Host(deviceInfo.id, viewgraph, position, IpAddress.parse(ip), IpAddress.parse(mask));
   }
 }
 

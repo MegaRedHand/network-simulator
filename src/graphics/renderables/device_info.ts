@@ -2,7 +2,7 @@ import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { sendPacket } from "../../types/packet";
-import { createDropdown, createRightBarButton } from "../right_bar";
+import { createDropdown, createToggleTable, createRightBarButton } from "../right_bar";
 import { StyledInfo } from "./styled_info";
 
 export class DeviceInfo extends StyledInfo {
@@ -65,36 +65,34 @@ export class DeviceInfo extends StyledInfo {
     );
   }
 
-  addRoutingTable() {
-    const table = document.createElement("table");
-    table.classList.add("routing-table");
-
-    const caption = document.createElement("caption");
-    caption.innerHTML = "<b>Routing Table</b>";
-    table.appendChild(caption);
-
-    const entry = document.createElement("tr");
-    entry.classList.add("routing-table-entry");
-
-    const entryKey = document.createElement("td");
-    entryKey.textContent = "192.168.1.1";
-    entryKey.classList.add("routing-table-entry");
-    entry.appendChild(entryKey);
-
-    const entryValue = document.createElement("td");
-    entryValue.textContent = "192.168.1.1";
-    entryValue.classList.add("routing-table-entry");
-    entry.appendChild(entryValue);
-
-    const entryButton = document.createElement("td");
-    entryButton.textContent = "192.168.1.1";
-    entryButton.classList.add("routing-table-entry");
-    entry.appendChild(entryButton);
-
-    table.appendChild(entry);
-
-    this.inputFields.push(table);
+  addRoutingTable(entries: { ip: string; mask: string; iface: string }[]) {
+    // Convertir las entradas en filas
+    const rows = entries.map((entry) => [entry.ip, entry.mask, entry.iface]);
+  
+    // Crear tabla dinámica y añadirla a los campos de entrada
+    const dynamicTable = createToggleTable(
+      "Routing Table", // Título del botón
+      ["IP Address", "Mask", "Interface"], // Encabezados
+      rows, // Filas generadas
+      "right-bar-toggle-button", // Clase del botón
+      "right-bar-table" // Clase de la tabla
+    );
+  
+    this.inputFields.push(dynamicTable);
+    this.inputFields.push(
+      createRightBarButton(
+        "Boton de prueba",
+        () => {},
+        "right-bar-button",
+      ),
+      createRightBarButton(
+        "Boton de prueba",
+        () => {},
+        "right-bar-button",
+      ),
+    );
   }
+  
 
   toHTML(): Node[] {
     return super.toHTML().concat(this.inputFields);

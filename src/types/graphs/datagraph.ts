@@ -6,6 +6,8 @@ interface CommonGraphNode {
   x: number;
   y: number;
   type: DeviceType;
+  ip: string;
+  mask: string;
   connections: Set<DeviceId>;
 }
 
@@ -20,6 +22,8 @@ export interface GraphDataNode {
   x: number;
   y: number;
   type: DeviceType;
+  ip: string;
+  mask: string;
   connections: DeviceId[];
 }
 
@@ -29,6 +33,8 @@ export interface NewDevice {
   x: number;
   y: number;
   type: DeviceType;
+  ip: string;
+  mask: string;
 }
 
 export class DataGraph {
@@ -46,6 +52,8 @@ export class DataGraph {
         x: nodeData.x,
         y: nodeData.y,
         type: nodeData.type,
+        ip: nodeData.ip,
+        mask: nodeData.mask,
         connections: connections,
       };
       dataGraph.addDevice(nodeData.id, graphNode);
@@ -63,6 +71,8 @@ export class DataGraph {
         x: info.x,
         y: info.y,
         type: info.type, // Save the device type (Router, Host)
+        ip: info.ip,
+        mask: info.mask,
         connections: Array.from(info.connections.values()),
       });
     });

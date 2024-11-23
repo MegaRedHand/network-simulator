@@ -21,18 +21,92 @@ export class IpAddress {
     this.octets = octets;
   }
 
-  static parse(addrString: string) {
+  // Parsear una dirección IP desde un string
+  static parse(addrString: string): IpAddress {
     const octets = new Uint8Array(4);
-    addrString.split(".").map((octet, i) => {
+    addrString.split(".").forEach((octet, i) => {
       const octetInt = parseInt(octet);
-      if (octetInt < 0 || octetInt > 255) {
-        throw new Error("Invalid IP address");
+      if (isNaN(octetInt) || octetInt < 0 || octetInt > 255) {
+        throw new Error(`Invalid IP address: ${addrString}`);
       }
       octets[i] = octetInt;
     });
     return new this(octets);
   }
+
+  // Convertir a string (e.g., "192.168.1.1")
+  toString(): string {
+    return Array.from(this.octets).join(".");
+  }
+
+  // Comparar dos direcciones IP
+  equals(other: IpAddress): boolean {
+    return this.octets.every((octet, index) => octet === other.octets[index]);
+  }
+
+  // Aplicar una máscara a la IP (bitwise AND)
+  applyMask(mask: IpAddress): IpAddress {
+    const maskedOctets = new Uint8Array(
+      this.octets.map((octet, i) => octet & mask.octets[i])
+    );
+    return new IpAddress(maskedOctets);
+  }
+
+  // Verificar si la IP pertenece a una red dada (IP base + máscara)
+  isInSubnet(baseIp: IpAddress, mask: IpAddress): boolean {
+    const maskedThis = this.applyMask(mask);
+    const maskedBase = baseIp.applyMask(mask);
+    return maskedThis.equals(maskedBase);
+  }
+
+  // Validar que la dirección es una IP válida
+  static isValid(addrString: string): boolean {
+    try {
+      this.parse(addrString);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }
+
+export class IpAddressGenerator {
+  private baseIp: number;
+  private currentIp: number;
+  private mask: string;
+
+  constructor(baseIp: string, mask: string) {
+    this.baseIp = IpAddressGenerator.ipToNumber(baseIp);
+    this.currentIp = this.baseIp + 1; // Empezar desde la primera IP disponible
+    this.mask = mask;
+  }
+
+  // Generar la siguiente IP disponible
+  getNextIp(): { ip: string; mask: string } {
+    const nextIp = IpAddressGenerator.numberToIp(this.currentIp);
+    this.currentIp++;
+    return { ip: nextIp, mask: this.mask };
+  }
+
+  // Convertir IP string a número
+  static ipToNumber(ip: string): number {
+    return ip
+      .split(".")
+      .reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0);
+  }
+
+  // Convertir número a IP string
+  static numberToIp(num: number): string {
+    return [
+      (num >> 24) & 0xff,
+      (num >> 16) & 0xff,
+      (num >> 8) & 0xff,
+      num & 0xff,
+    ].join(".");
+  }
+}
+
+
 
 export interface IpPayload {
   toBytes(): Uint8Array;

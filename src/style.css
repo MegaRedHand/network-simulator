@@ -150,12 +150,34 @@ canvas {
   height: 60%;
 }
 
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
 /* Style for the right sidebar */
 .right-bar {
-  flex: 0 0 250px; /* Fixed width of 250px for the right bar */
+  flex: 0 0 300px; /* Fixed width of 250px for the right bar */
   background-color: #f1f1f1; /* Light background for the bar */
   box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.2); /* Left shadow to highlight the bar */
   padding: 20px; /* Internal space around content */
+  overflow-y:auto; /* vertical scroll */
+  max-height: calc(100vh - 40px);
 }
 
 /* Title of the information section in the right bar */
@@ -190,10 +212,12 @@ canvas {
   border-radius: 4px;
   width: 100%; /* Occupies 100% of the right-bar width */
   box-sizing: border-box; /* Includes padding in the total width */
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .right-bar-button:hover {
   background-color: #0056b3;
+  transform: scale(1.02); /* Pequeño efecto de escala */
 }
 
 .right-bar-button.selected-button {
@@ -248,16 +272,116 @@ canvas {
   margin-bottom: 8px; /* Reduce bottom margin */
 }
 
-.routing-table {
+/* #1d7437
+#135025
+*/
+
+/* Contenedor para el botón y la tabla */
+.toggle-table-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px; /* Espaciado entre el botón y la tabla */
   width: 100%;
-  text-align: center;
-  border: 1px solid #cccccc;
+}
+
+/* Style for buttons in the right bar with green background */
+.right-bar-toggle-button {
+  background-color: #1d7437; /* Verde oscuro */
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  text-align: center; /* Centra el texto horizontalmente */
+  text-decoration: none;
+  display: flex; /* Usar flexbox para organizar texto y flecha */
+  justify-content: center; /* Centrar contenido horizontalmente */
+  align-items: center; /* Centrar contenido verticalmente */
+  font-size: 14px;
+  margin: 5px 0; /* Ajusta margen entre botones */
+  cursor: pointer;
+  border-radius: 4px; /* Bordes redondeados */
+  width: 100%; /* Botón ocupa todo el ancho */
+  box-sizing: border-box; /* Incluye padding en el ancho total */
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  position: relative; /* Posiciona elementos internos como la flecha */
+}
+
+/* Hover para el botón */
+.right-bar-toggle-button:hover {
+  background-color: #135025; /* Cambiar a verde más oscuro */
+  transform: scale(1.02); /* Efecto de escala */
+}
+
+/* Icono de triángulo */
+.right-bar-toggle-button::after {
+  content: "";
+  display: inline-block;
+  position: absolute; /* Posiciona el triángulo en el extremo derecho */
+  right: 12px; /* Margen derecho para el triángulo */
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid white; /* Triángulo blanco */
+  transition: transform 0.3s ease;
+}
+
+/* Rotar el triángulo al abrir */
+.right-bar-toggle-button.open::after {
+  transform: rotate(180deg); /* Rotar el triángulo hacia arriba */
+}
+
+/* Estilo de la tabla */
+.toggle-table-container table {
+  width: 100%;
   border-collapse: collapse;
+  font-size: 14px;
+  text-align: center;
+  transition: opacity 0.5s ease-out; /* Hacer la transición más suave */
+  border-radius: 8px; /* Bordes redondeados */
+  overflow: hidden; /* Evitar que sobresalgan elementos */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para un diseño más elegante */
+}
+
+/* Encabezados de la tabla */
+.toggle-table-container th {
+  background-color: #1d7437;
+  color: white;
+  padding: 8px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+/* Filas de la tabla */
+.toggle-table-container td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+/* Alternar colores de las filas */
+.toggle-table-container tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.toggle-table-container tr:nth-child(odd) {
   background-color: #ffffff;
 }
 
-.routing-table-entry {
-  text-align: inherit;
-  border: inherit;
-  border-collapse: inherit;
+/* Hover en filas */
+.toggle-table-container tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Ajustes adicionales para compatibilidad */
+.toggle-table-container caption {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333333;
+  text-align: center;
+}
+
+/* Tabla oculta */
+.toggle-table-container table.hidden {
+  display: none; /* Oculta completamente la tabla */
 }
