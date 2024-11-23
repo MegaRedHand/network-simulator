@@ -6,8 +6,13 @@ import { IpAddress } from "../../packets/ip";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 
 export class Host extends Device {
-
-  constructor(id: number, viewgraph: ViewGraph, position: Position, ip: IpAddress, mask: IpAddress) {
+  constructor(
+    id: number,
+    viewgraph: ViewGraph,
+    position: Position,
+    ip: IpAddress,
+    mask: IpAddress,
+  ) {
     super(id, PcImage, viewgraph, position, ip, mask);
   }
 

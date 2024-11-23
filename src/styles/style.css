@@ -176,7 +176,7 @@ canvas {
   background-color: #f1f1f1; /* Light background for the bar */
   box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.2); /* Left shadow to highlight the bar */
   padding: 20px; /* Internal space around content */
-  overflow-y:auto; /* vertical scroll */
+  overflow-y: auto; /* vertical scroll */
   max-height: calc(100vh - 40px);
 }
 

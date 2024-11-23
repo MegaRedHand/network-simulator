@@ -22,9 +22,21 @@ export function createDevice(
 
   switch (deviceInfo.type) {
     case DeviceType.Router:
-      return new Router(deviceInfo.id, viewgraph, position, IpAddress.parse(ip), IpAddress.parse(mask));
+      return new Router(
+        deviceInfo.id,
+        viewgraph,
+        position,
+        IpAddress.parse(ip),
+        IpAddress.parse(mask),
+      );
     case DeviceType.Host:
-      return new Host(deviceInfo.id, viewgraph, position, IpAddress.parse(ip), IpAddress.parse(mask));
+      return new Host(
+        deviceInfo.id,
+        viewgraph,
+        position,
+        IpAddress.parse(ip),
+        IpAddress.parse(mask),
+      );
   }
 }
 
