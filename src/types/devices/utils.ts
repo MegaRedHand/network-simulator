@@ -17,26 +17,16 @@ export function createDevice(
   deviceInfo: CreateDevice,
   viewgraph: ViewGraph,
 ): Device {
-  const { x, y, ip, mask } = deviceInfo;
+  const { x, y } = deviceInfo;
   const position = { x, y };
+  const ip = IpAddress.parse(deviceInfo.ip);
+  const mask = IpAddress.parse(deviceInfo.mask);
 
   switch (deviceInfo.type) {
     case DeviceType.Router:
-      return new Router(
-        deviceInfo.id,
-        viewgraph,
-        position,
-        IpAddress.parse(ip),
-        IpAddress.parse(mask),
-      );
+      return new Router(deviceInfo.id, viewgraph, position, ip, mask);
     case DeviceType.Host:
-      return new Host(
-        deviceInfo.id,
-        viewgraph,
-        position,
-        IpAddress.parse(ip),
-        IpAddress.parse(mask),
-      );
+      return new Host(deviceInfo.id, viewgraph, position, ip, mask);
   }
 }
 

@@ -43,7 +43,7 @@ export abstract class Device extends Sprite {
   static connectionTarget: Device | null = null;
 
   ip: IpAddress;
-  ip_mask: IpAddress;
+  ipMask: IpAddress;
 
   constructor(
     id: number,
@@ -51,13 +51,13 @@ export abstract class Device extends Sprite {
     viewgraph: ViewGraph,
     position: Position,
     ip: IpAddress,
-    ip_mask: IpAddress,
+    ipMask: IpAddress,
   ) {
     super(Texture.from(svg));
     this.id = id;
     this.viewgraph = viewgraph;
     this.ip = ip;
-    this.ip_mask = ip_mask;
+    this.ipMask = ipMask;
 
     this.anchor.set(0.5);
 

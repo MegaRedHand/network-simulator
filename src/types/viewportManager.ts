@@ -77,8 +77,7 @@ export function AddDevice(ctx: GlobalContext, type: DeviceType) {
   );
 
   const { ip, mask } = ctx.getNextIp();
-
-  const deviceInfo = { x, y, type, ip: ip, mask: mask };
+  const deviceInfo = { x, y, type, ip, mask };
 
   const id = datagraph.addNewDevice(deviceInfo);
   const newDevice: Device = createDevice({ ...deviceInfo, id }, viewgraph);

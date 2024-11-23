@@ -19,7 +19,6 @@ export class Router extends Device {
   showInfo(): void {
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
-    // Añadir la tabla de enrutamiento al panel de información
     info.addRoutingTable(this.generate_routing_table());
     RightBar.getInstance().renderInfo(info);
   }
@@ -31,11 +30,11 @@ export class Router extends Device {
     this.getConnections().forEach(({ edgeId, adyacentId }) => {
       const connectedDevice = this.viewgraph.getDevice(adyacentId);
       if (connectedDevice) {
-        routingTableEntries.push({
-          ip: connectedDevice.ip.toString(), // Obtener la IP del dispositivo conectado
-          mask: connectedDevice.ip_mask.toString(), // Obtener la máscara del dispositivo conectado
-          iface: `eth${edgeId}`, // Generar nombre de la interfaz basado en el ID de la edge
-        });
+        const ip = connectedDevice.ip.toString();
+        const mask = connectedDevice.ipMask.toString();
+        // Generate interface name based on edge ID
+        const iface = `eth${edgeId}`;
+        routingTableEntries.push({ ip, mask, iface });
       }
     });
     return routingTableEntries;
