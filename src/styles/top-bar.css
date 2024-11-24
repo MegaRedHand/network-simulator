@@ -1,0 +1,25 @@
+/* top-bar.css */
+
+/* Styles for the top navigation bar */
+#top-bar {
+    padding: 5px; /* Adds internal spacing around the content */
+    background-color: #333333; /* Dark gray background for the bar */
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2); /* Adds a subtle shadow for depth */
+    display: flex; /* Uses flexbox to align items in a row */
+    align-items: center; /* Vertically centers the content */
+    position: relative; /* Positions the content relative to the bar */
+    z-index: 10; /* Ensures the bar appears above other elements */
+    height: 40px; /* Fixed height for the bar */
+  }
+  
+  /* Styles for the title in the top bar */
+  #app-title {
+    position: absolute; /* Positions the title relative to the bar */
+    left: 50%; /* Centers the title horizontally */
+    transform: translateX(-50%); /* Shifts the title to be exactly centered */
+    margin: 0; /* Removes default margins of the title */
+    font-size: 25px; /* Sets the font size of the title */
+    font-weight: bold; /* Makes the title text bold */
+    color: #ffffff; /* White text color for the title */
+  }
+  
