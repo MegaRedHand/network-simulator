@@ -19,28 +19,27 @@
     background-color 0.3s ease,
     transform 0.2s ease;
 }
-  
-  /* Hover effect for right sidebar buttons */
-  .right-bar-button:hover {
-    background-color: #162a6d; /* Darker blue on hover */
-    transform: scale(1.02); /* Slight enlargement on hover */
-  }
-  
-  /* Selected button style */
-  .right-bar-button.selected-button {
-    background-color: #162a6d; /* Darker blue background */
-    color: white; /* White text */
-  }
-  
-  /* Delete button in the right sidebar */
-  .right-bar-delete-button {
-    background-color: #f44336; /* Red background for delete button */
-  }
-  
-  .right-bar-delete-button:hover {
-    background-color: #d32f2f; /* Darker red on hover */
-  }
 
+/* Hover effect for right sidebar buttons */
+.right-bar-button:hover {
+  background-color: #162a6d; /* Darker blue on hover */
+  transform: scale(1.02); /* Slight enlargement on hover */
+}
+
+/* Selected button style */
+.right-bar-button.selected-button {
+  background-color: #162a6d; /* Darker blue background */
+  color: white; /* White text */
+}
+
+/* Delete button in the right sidebar */
+.right-bar-delete-button {
+  background-color: #f44336; /* Red background for delete button */
+}
+
+.right-bar-delete-button:hover {
+  background-color: #d32f2f; /* Darker red on hover */
+}
 
 /* Container for packet options */
 .packet-options-container {
@@ -80,7 +79,7 @@
 .dropdown-container {
   margin-bottom: 8px; /* Reduce bottom margin */
 }
-  
+
 /* Style for buttons in the right bar*/
 .right-bar-toggle-button {
   background-color: #007bff;
@@ -103,28 +102,28 @@
     transform 0.2s ease;
   position: relative; /* To position internal elements like the arrow */
 }
-  
-  /* Hover effect for toggle buttons */
-  .right-bar-toggle-button:hover {
-    background-color: #162a6d;
-    transform: scale(1.02); /* Slight enlargement on hover */
-  }
-  
-  /* Arrow icon on toggle buttons */
-  .right-bar-toggle-button::after {
-    content: ""; /* Adds an empty content box for the icon */
-    display: inline-block; /* Ensures it's displayed properly */
-    position: absolute; /* Positions the arrow relative to the button */
-    right: 12px; /* Positions it 12px from the right edge */
-    width: 0;
-    height: 0;
-    border-left: 6px solid transparent; /* Transparent left side of the triangle */
-    border-right: 6px solid transparent; /* Transparent right side of the triangle */
-    border-top: 6px solid white; /* White triangle */
-    transition: transform 0.3s ease; /* Smooth rotation on toggle */
-  }
-  
-  /* Rotated arrow for open state */
-  .right-bar-toggle-button.open::after {
-    transform: rotate(180deg); /* Rotates the arrow upward */
-  }
+
+/* Hover effect for toggle buttons */
+.right-bar-toggle-button:hover {
+  background-color: #162a6d;
+  transform: scale(1.02); /* Slight enlargement on hover */
+}
+
+/* Arrow icon on toggle buttons */
+.right-bar-toggle-button::after {
+  content: ""; /* Adds an empty content box for the icon */
+  display: inline-block; /* Ensures it's displayed properly */
+  position: absolute; /* Positions the arrow relative to the button */
+  right: 12px; /* Positions it 12px from the right edge */
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent; /* Transparent left side of the triangle */
+  border-right: 6px solid transparent; /* Transparent right side of the triangle */
+  border-top: 6px solid white; /* White triangle */
+  transition: transform 0.3s ease; /* Smooth rotation on toggle */
+}
+
+/* Rotated arrow for open state */
+.right-bar-toggle-button.open::after {
+  transform: rotate(180deg); /* Rotates the arrow upward */
+}

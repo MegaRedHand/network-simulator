@@ -36,7 +36,8 @@ body {
 /* Main flexbox container for the layout of sidebars and canvas */
 .container {
   display: flex; /* Uses flexbox to organize child elements in a row */
-  height: calc(100vh - 40px); /* Full viewport height minus the top bar's height (40px) */
+  height: calc(
+    100vh - 40px
+  ); /* Full viewport height minus the top bar's height (40px) */
   width: 100%; /* Makes the container span the entire width of the viewport */
 }
-
