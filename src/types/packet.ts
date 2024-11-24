@@ -21,7 +21,7 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
 
 export class Packet extends Graphics {
-  speed: number = 200;
+  speed = 200;
   progress = 0;
   currentPath: Edge[];
   currentEdge: Edge;
