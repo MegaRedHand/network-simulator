@@ -85,6 +85,11 @@ export class Packet extends Graphics {
     info.addField("Type", this.type);
     info.addField("Source ID", this.sourceId.toString());
     info.addField("Destination ID", this.destinationId.toString());
+    info.addField("Source IP Address", this.rawPacket.sourceAddress.toString());
+    info.addField(
+      "Destination IP Address",
+      this.rawPacket.destinationAddress.toString(),
+    );
 
     rightbar.renderInfo(info);
   }
