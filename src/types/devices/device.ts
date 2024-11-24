@@ -6,7 +6,7 @@ import {
   TextStyle,
   Text,
 } from "pixi.js";
-import { ViewGraph } from "./../graphs/viewgraph";
+import { EdgeId, ViewGraph } from "./../graphs/viewgraph";
 import {
   deselectElement,
   refreshElement,
@@ -17,6 +17,7 @@ import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
+import { DeviceId } from "../graphs/datagraph";
 
 export const DEVICE_SIZE = 20;
 
@@ -33,7 +34,7 @@ export enum DeviceType {
 }
 
 export abstract class Device extends Sprite {
-  readonly id: number;
+  readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
   connections = new Map<number, number>();
 
@@ -90,7 +91,7 @@ export abstract class Device extends Sprite {
     this.addChild(idText); // Add the ID text as a child of the device
   }
 
-  getConnections(): { edgeId: number; adyacentId: number }[] {
+  getConnections(): { edgeId: EdgeId; adyacentId: DeviceId }[] {
     return Array.from(this.connections.entries()).map(
       ([edgeId, adyacentId]) => {
         return { edgeId, adyacentId };
@@ -98,11 +99,11 @@ export abstract class Device extends Sprite {
     );
   }
 
-  addConnection(edgeId: number, adyacentId: number) {
+  addConnection(edgeId: EdgeId, adyacentId: DeviceId) {
     this.connections.set(edgeId, adyacentId);
   }
 
-  removeConnection(id: number) {
+  removeConnection(id: EdgeId) {
     this.connections.delete(id);
   }
 

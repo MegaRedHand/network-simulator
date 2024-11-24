@@ -1,5 +1,6 @@
 import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
+import { RoutingTableEntry } from "../../types/graphs/datagraph";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { sendPacket } from "../../types/packet";
 import {
@@ -69,7 +70,7 @@ export class DeviceInfo extends StyledInfo {
     );
   }
 
-  addRoutingTable(entries: { ip: string; mask: string; iface: string }[]) {
+  addRoutingTable(entries: RoutingTableEntry[]) {
     const rows = entries.map((entry) => [entry.ip, entry.mask, entry.iface]);
 
     const dynamicTable = createToggleTable(
