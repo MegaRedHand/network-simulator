@@ -19,25 +19,8 @@ export class Router extends Device {
   showInfo(): void {
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
-    info.addRoutingTable(this.generate_routing_table());
+    info.addRoutingTable(this.viewgraph.getRoutingTable(this.id));
     RightBar.getInstance().renderInfo(info);
-  }
-
-  generate_routing_table(): { ip: string; mask: string; iface: string }[] {
-    const routingTableEntries: { ip: string; mask: string; iface: string }[] =
-      [];
-
-    this.getConnections().forEach(({ edgeId, adyacentId }) => {
-      const connectedDevice = this.viewgraph.getDevice(adyacentId);
-      if (connectedDevice) {
-        const ip = connectedDevice.ip.toString();
-        const mask = connectedDevice.ipMask.toString();
-        // Generate interface name based on edge ID
-        const iface = `eth${edgeId}`;
-        routingTableEntries.push({ ip, mask, iface });
-      }
-    });
-    return routingTableEntries;
   }
 
   getLayer(): Layer {

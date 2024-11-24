@@ -13,11 +13,25 @@ interface CommonGraphNode {
 
 interface RouterGraphNode extends CommonGraphNode {
   type: DeviceType.Router;
+  routingTable: RoutingTableEntry[];
+}
+
+export interface RoutingTableEntry {
+  ip: string;
+  mask: string;
+  iface: string;
+}
+
+// Typescript type guard
+export function isRouter(node: GraphNode): node is RouterGraphNode {
+  return node.type === DeviceType.Router;
 }
 
 export type GraphNode = CommonGraphNode | RouterGraphNode;
 
-export interface GraphDataNode {
+export type GraphDataNode = CommonDataNode | RouterDataNode;
+
+interface CommonDataNode {
   id: DeviceId;
   x: number;
   y: number;
@@ -25,6 +39,11 @@ export interface GraphDataNode {
   ip: string;
   mask: string;
   connections: DeviceId[];
+}
+
+interface RouterDataNode extends CommonDataNode {
+  type: DeviceType.Router;
+  routingTable: RoutingTableEntry[];
 }
 
 export type GraphData = GraphDataNode[];
@@ -49,11 +68,7 @@ export class DataGraph {
       console.log(nodeData);
       const connections = new Set(nodeData.connections);
       const graphNode: GraphNode = {
-        x: nodeData.x,
-        y: nodeData.y,
-        type: nodeData.type,
-        ip: nodeData.ip,
-        mask: nodeData.mask,
+        ...nodeData,
         connections: connections,
       };
       dataGraph.addDevice(nodeData.id, graphNode);
@@ -66,15 +81,20 @@ export class DataGraph {
 
     // Serialize nodes
     this.getDevices().forEach(([id, info]) => {
-      graphData.push({
-        id: id,
+      const graphNode: GraphDataNode = {
+        id,
         x: info.x,
         y: info.y,
         type: info.type, // Save the device type (Router, Host)
         ip: info.ip,
         mask: info.mask,
         connections: Array.from(info.connections.values()),
-      });
+      };
+      if (isRouter(info)) {
+        graphData.push({ ...graphNode, routingTable: info.routingTable });
+      } else {
+        graphData.push(graphNode);
+      }
     });
     return graphData;
   }
@@ -85,6 +105,7 @@ export class DataGraph {
     const graphnode: GraphNode = {
       ...deviceInfo,
       connections: new Set<number>(),
+      routingTable: [],
     };
     this.devices.set(id, graphnode);
     console.log(`Device added with ID ${id}`);
@@ -114,23 +135,47 @@ export class DataGraph {
       );
       return;
     }
-    if (!this.devices.has(n1Id)) {
+    const device1 = this.devices.get(n1Id);
+    const device2 = this.devices.get(n2Id);
+    if (!device1) {
       console.warn(`Device with ID ${n1Id} does not exist in devices.`);
       return;
     }
-    if (!this.devices.has(n2Id)) {
+    if (!device2) {
       console.warn(`Device with ID ${n2Id} does not exist in devices.`);
       return;
       // Check if an edge already exists between these two devices
     }
-    if (this.devices.get(n1Id).connections.has(n2Id)) {
+    if (device1.connections.has(n2Id)) {
       console.warn(
         `Connection between ID ${n1Id} and ID ${n2Id} already exists.`,
       );
       return;
     }
-    this.devices.get(n1Id).connections.add(n2Id);
-    this.devices.get(n2Id).connections.add(n1Id);
+    device1.connections.add(n2Id);
+    device2.connections.add(n1Id);
+
+    if (isRouter(device1)) {
+      if (!device1.routingTable) {
+        device1.routingTable = [];
+      }
+      device1.routingTable.push({
+        ip: device2.ip.toString(),
+        mask: device2.mask,
+        iface: `eth${n2Id}`,
+      });
+    }
+
+    if (isRouter(device2)) {
+      if (!device2.routingTable) {
+        device2.routingTable = [];
+      }
+      device2.routingTable.push({
+        ip: device1.ip.toString(),
+        mask: device1.mask,
+        iface: `eth${n1Id}`,
+      });
+    }
 
     console.log(
       `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,
