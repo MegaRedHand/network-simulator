@@ -1,0 +1,30 @@
+/* right-bar.css */
+
+/* Styles for the right sidebar */
+.right-bar {
+  flex: 0 0 300px; /* Fixed width of 300px */
+  background-color: #f1f1f1; /* Light gray background for the sidebar */
+  box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.2); /* Adds a shadow on the left for depth */
+  padding: 20px; /* Adds internal spacing */
+  overflow-y: auto; /* Enables vertical scrolling if content overflows */
+  max-height: calc(
+    100vh - 40px
+  ); /* Ensures the sidebar fits within the viewport */
+}
+
+/* Title inside the right sidebar */
+.right-bar h2 {
+  text-align: center; /* Centers the title horizontally */
+  margin: 0; /* Removes default margins */
+  padding-bottom: 15px; /* Adds space below the title */
+  font-size: 22px; /* Sets the font size */
+  font-weight: bold; /* Makes the title text bold */
+  color: #333333; /* Dark gray color for the title */
+}
+
+/* Style for the information content in the right bar */
+.info-content {
+  font-size: 15px; /* Adjust font size */
+  font-weight: bold; /* Makes the text thicker */
+  color: #333333; /* Dark gray text color */
+}
