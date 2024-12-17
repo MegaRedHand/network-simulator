@@ -24,7 +24,7 @@ export interface NewDevice {
 }
 
 export class DataGraph {
-  private devices = new Map<number, GraphNode>();
+  devices = new Map<number, GraphNode>();
   private idCounter = 1;
   private onChanges: (() => void)[] = [];
 

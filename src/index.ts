@@ -125,20 +125,20 @@ import PauseSvg from "./assets/pause-icon.svg";
   pauseButton.onclick = triggerPause;
 
   // (!) For layer abstraction functionality
-  // const layerSelect = document.getElementById(
-  //   "layer-select",
-  // ) as HTMLSelectElement;
+  const layerSelect = document.getElementById(
+    "layer-select",
+  ) as HTMLSelectElement;
 
-  // const selectNewLayer = (event: Event) => {
-  //   const selectedLayer = (event.target as HTMLSelectElement).value;
-  //   console.log(`Layer selected: ${selectedLayer}`);
+  const selectNewLayer = (event: Event) => {
+    const selectedLayer = (event.target as HTMLSelectElement).value;
+    console.log(`Layer selected: ${selectedLayer}`);
 
-  //   if (selectElement) {
-  //     ctx.changeViewGraph(selectedLayer);
-  //   }
-  // };
+    if (selectedLayer) {
+      ctx.changeViewGraph(selectedLayer);
+    }
+  };
 
-  // layerSelect.onchange = selectNewLayer;
+  layerSelect.onchange = selectNewLayer;
 
   document.body.onkeyup = function (e) {
     if (e.key === " " || e.code === "Space") {
