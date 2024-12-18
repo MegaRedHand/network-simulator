@@ -45,7 +45,9 @@ export class ViewGraph {
     connections.forEach(({ deviceId, adyacentId }) => {
       const device1 = this.getDevice(deviceId);
       const device2 = this.getDevice(adyacentId);
-      device1.connectTo(device2.id);
+      const edge = this.drawEdge(device1, device2);
+      device1.addConnection(edge.id, device2.id);
+      device2.addConnection(edge.id, device1.id);
     });
     console.log("Finished constructing ViewGraph");
   }
@@ -58,6 +60,19 @@ export class ViewGraph {
     } else {
       console.warn(`Device with ID ${device.id} already exists in the graph.`);
     }
+  }
+
+  drawEdge(device1: Device, device2: Device): Edge {
+    const edge = new Edge(
+      this.idCounter++,
+      { n1: device1.id, n2: device2.id },
+      device1,
+      device2,
+      this,
+    );
+    this.edges.set(edge.id, edge);
+    this.viewport.addChild(edge);
+    return edge;
   }
 
   // Add a connection between two devices
@@ -92,17 +107,9 @@ export class ViewGraph {
       const device2 = this.devices.get(device2Id);
 
       if (device1 && device2) {
-        const edge = new Edge(
-          this.idCounter++,
-          { n1: device1Id, n2: device2Id },
-          device1,
-          device2,
-          this,
-        );
-        this.edges.set(edge.id, edge);
+        const edge = this.drawEdge(device1, device2);
 
         this.datagraph.addEdge(device1Id, device2Id);
-        this.viewport.addChild(edge);
 
         console.log(
           `Connection created between devices ID: ${device1Id} and ID: ${device2Id}`,
