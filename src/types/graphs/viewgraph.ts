@@ -1,13 +1,13 @@
 import { Device } from "./../devices/index"; // Import the Device class
 import { Edge } from "./../edge";
-import { DataGraph, DeviceId, isRouter } from "./datagraph";
+import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer } from "../devices/device";
 import { createDevice, layerFromType, layerIncluded } from "../devices/utils";
 
 interface Connection {
-  id1: number;
-  id2: number;
+  id1: DeviceId;
+  id2: DeviceId;
 }
 
 export type EdgeId = number;
@@ -32,7 +32,7 @@ export class ViewGraph {
     console.log("Constructing ViewGraph from DataGraph");
     const connections = new Set<Connection>();
 
-    this.datagraph.getDevices().forEach(([deviceId, graphNode]) => {
+    this.datagraph.getDevices().forEach((graphNode, deviceId) => {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
         const deviceInfo = { ...graphNode, id: deviceId };
         const device: Device = createDevice(deviceInfo, this);
@@ -42,7 +42,7 @@ export class ViewGraph {
         this.addDevice(device);
 
         this.layer_dfs(
-          this.datagraph.devices,
+          this.datagraph.getDevices(),
           deviceId,
           deviceId,
           new Set([deviceId]),
@@ -294,7 +294,7 @@ export class ViewGraph {
   }
 
   private layer_dfs(
-    graph: Map<number, GraphNode>,
+    graph: Map<DeviceId, GraphNode>,
     s: number, // source node
     v: number,
     visited: Set<number>,
