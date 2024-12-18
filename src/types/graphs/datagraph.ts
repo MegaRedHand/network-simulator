@@ -1,18 +1,49 @@
 import { DeviceType } from "../devices/device";
 
-export interface GraphNode {
+export type DeviceId = number;
+
+interface CommonGraphNode {
   x: number;
   y: number;
   type: DeviceType;
-  connections: Set<number>;
+  ip: string;
+  mask: string;
+  connections: Set<DeviceId>;
 }
 
-export interface GraphDataNode {
-  id: number;
+interface RouterGraphNode extends CommonGraphNode {
+  type: DeviceType.Router;
+  routingTable: RoutingTableEntry[];
+}
+
+export interface RoutingTableEntry {
+  ip: string;
+  mask: string;
+  iface: string;
+}
+
+// Typescript type guard
+export function isRouter(node: GraphNode): node is RouterGraphNode {
+  return node.type === DeviceType.Router;
+}
+
+export type GraphNode = CommonGraphNode | RouterGraphNode;
+
+export type GraphDataNode = CommonDataNode | RouterDataNode;
+
+interface CommonDataNode {
+  id: DeviceId;
   x: number;
   y: number;
   type: DeviceType;
-  connections: number[];
+  ip: string;
+  mask: string;
+  connections: DeviceId[];
+}
+
+interface RouterDataNode extends CommonDataNode {
+  type: DeviceType.Router;
+  routingTable: RoutingTableEntry[];
 }
 
 export type GraphData = GraphDataNode[];
@@ -21,11 +52,13 @@ export interface NewDevice {
   x: number;
   y: number;
   type: DeviceType;
+  ip: string;
+  mask: string;
 }
 
 export class DataGraph {
-  devices = new Map<number, GraphNode>();
-  private idCounter = 1;
+  private devices = new Map<DeviceId, GraphNode>();
+  private idCounter: DeviceId = 1;
   private onChanges: (() => void)[] = [];
 
   static fromData(data: GraphData): DataGraph {
@@ -35,9 +68,7 @@ export class DataGraph {
       console.log(nodeData);
       const connections = new Set(nodeData.connections);
       const graphNode: GraphNode = {
-        x: nodeData.x,
-        y: nodeData.y,
-        type: nodeData.type,
+        ...nodeData,
         connections: connections,
       };
       dataGraph.addDevice(nodeData.id, graphNode);
@@ -50,23 +81,31 @@ export class DataGraph {
 
     // Serialize nodes
     this.getDevices().forEach(([id, info]) => {
-      graphData.push({
-        id: id,
+      const graphNode: GraphDataNode = {
+        id,
         x: info.x,
         y: info.y,
         type: info.type, // Save the device type (Router, Host)
+        ip: info.ip,
+        mask: info.mask,
         connections: Array.from(info.connections.values()),
-      });
+      };
+      if (isRouter(info)) {
+        graphData.push({ ...graphNode, routingTable: info.routingTable });
+      } else {
+        graphData.push(graphNode);
+      }
     });
     return graphData;
   }
 
   // Add a new device to the graph
-  addNewDevice(deviceInfo: NewDevice): number {
+  addNewDevice(deviceInfo: NewDevice): DeviceId {
     const id = this.idCounter++;
     const graphnode: GraphNode = {
       ...deviceInfo,
       connections: new Set<number>(),
+      routingTable: [],
     };
     this.devices.set(id, graphnode);
     console.log(`Device added with ID ${id}`);
@@ -75,7 +114,7 @@ export class DataGraph {
   }
 
   // Add a device to the graph
-  addDevice(idDevice: number, deviceInfo: GraphNode) {
+  addDevice(idDevice: DeviceId, deviceInfo: GraphNode) {
     if (this.devices.has(idDevice)) {
       console.warn(`Device with ID ${idDevice} already exists in the graph.`);
       return;
@@ -89,30 +128,54 @@ export class DataGraph {
   }
 
   // Add a connection between two devices
-  addEdge(n1Id: number, n2Id: number) {
+  addEdge(n1Id: DeviceId, n2Id: DeviceId) {
     if (n1Id === n2Id) {
       console.warn(
         `Cannot create a connection between the same device (ID ${n1Id}).`,
       );
       return;
     }
-    if (!this.devices.has(n1Id)) {
+    const device1 = this.devices.get(n1Id);
+    const device2 = this.devices.get(n2Id);
+    if (!device1) {
       console.warn(`Device with ID ${n1Id} does not exist in devices.`);
       return;
     }
-    if (!this.devices.has(n2Id)) {
+    if (!device2) {
       console.warn(`Device with ID ${n2Id} does not exist in devices.`);
       return;
       // Check if an edge already exists between these two devices
     }
-    if (this.devices.get(n1Id).connections.has(n2Id)) {
+    if (device1.connections.has(n2Id)) {
       console.warn(
         `Connection between ID ${n1Id} and ID ${n2Id} already exists.`,
       );
       return;
     }
-    this.devices.get(n1Id).connections.add(n2Id);
-    this.devices.get(n2Id).connections.add(n1Id);
+    device1.connections.add(n2Id);
+    device2.connections.add(n1Id);
+
+    if (isRouter(device1)) {
+      if (!device1.routingTable) {
+        device1.routingTable = [];
+      }
+      device1.routingTable.push({
+        ip: device2.ip.toString(),
+        mask: device2.mask,
+        iface: `eth${n2Id}`,
+      });
+    }
+
+    if (isRouter(device2)) {
+      if (!device2.routingTable) {
+        device2.routingTable = [];
+      }
+      device2.routingTable.push({
+        ip: device1.ip.toString(),
+        mask: device1.mask,
+        iface: `eth${n1Id}`,
+      });
+    }
 
     console.log(
       `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,
@@ -120,7 +183,7 @@ export class DataGraph {
     this.notifyChanges();
   }
 
-  updateDevicePosition(id: number, newValues: { x?: number; y?: number }) {
+  updateDevicePosition(id: DeviceId, newValues: { x?: number; y?: number }) {
     const deviceGraphNode = this.devices.get(id);
     if (!deviceGraphNode) {
       console.warn("Device’s id is not registered");
@@ -130,12 +193,12 @@ export class DataGraph {
     this.notifyChanges();
   }
 
-  getDevice(id: number): GraphNode | undefined {
+  getDevice(id: DeviceId): GraphNode | undefined {
     return this.devices.get(id);
   }
 
   // Get all connections of a device
-  getConnections(id: number): number[] {
+  getConnections(id: DeviceId): DeviceId[] {
     const deviceInfo = this.devices.get(id);
     return deviceInfo.connections
       ? Array.from(deviceInfo.connections.values())
@@ -143,7 +206,7 @@ export class DataGraph {
   }
 
   // Get all devices in the graph
-  getDevices(): [number, GraphNode][] {
+  getDevices(): [DeviceId, GraphNode][] {
     return Array.from(this.devices.entries());
   }
 
@@ -153,7 +216,7 @@ export class DataGraph {
   }
 
   // Method to remove a device and all its connections
-  removeDevice(id: number): void {
+  removeDevice(id: DeviceId): void {
     const device = this.devices.get(id);
 
     if (!device) {
@@ -177,7 +240,7 @@ export class DataGraph {
   }
 
   // Method to remove a connection (edge) between two devices by their IDs
-  removeConnection(n1Id: number, n2Id: number): void {
+  removeConnection(n1Id: DeviceId, n2Id: DeviceId): void {
     const device1 = this.devices.get(n1Id);
     const device2 = this.devices.get(n2Id);
 

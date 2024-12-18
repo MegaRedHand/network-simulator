@@ -1,0 +1,57 @@
+/* table.css */
+
+/* Styles for tables in the right sidebar */
+.toggle-table-container table {
+  width: 100%; /* Makes the table occupy the full width of its container */
+  border-collapse: collapse; /* Removes spacing between table cells */
+  font-size: 14px; /* Sets the font size for table content */
+  text-align: center; /* Centers the content inside cells */
+  transition: opacity 0.5s ease-out; /* Smooth transition for opacity changes */
+  border-radius: 8px; /* Adds rounded corners to the table */
+  overflow: hidden; /* Prevents content from overflowing */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Adds a subtle shadow for depth */
+}
+
+/* Header cells in the table */
+.toggle-table-container th {
+  background-color: #333333;
+  color: white; /* White text color */
+  padding: 8px; /* Adds internal spacing */
+  border: 1px solid #ddd; /* Light gray border between cells */
+  text-align: center; /* Centers the text horizontally */
+}
+
+/* Data cells in the table */
+.toggle-table-container td {
+  padding: 8px; /* Adds internal spacing */
+  border: 1px solid #ddd; /* Light gray border between cells */
+  text-align: center; /* Centers the text horizontally */
+}
+
+/* Alternating row colors for better readability */
+.toggle-table-container tr:nth-child(even) {
+  background-color: #f9f9f9; /* Light gray for even rows */
+}
+
+.toggle-table-container tr:nth-child(odd) {
+  background-color: #ffffff; /* White for odd rows */
+}
+
+/* Hover effect for rows */
+.toggle-table-container tr:hover {
+  background-color: #f1f1f1; /* Light gray background on hover */
+}
+
+/* Table caption styles */
+.toggle-table-container caption {
+  font-size: 16px; /* Slightly larger font for the caption */
+  font-weight: bold; /* Bold text for the caption */
+  margin-bottom: 5px; /* Adds space below the caption */
+  color: #333333; /* Dark gray text color */
+  text-align: center; /* Centers the caption */
+}
+
+/* Hidden table (used for toggling visibility) */
+.toggle-table-container table.hidden {
+  display: none; /* Hides the table when this class is applied */
+}

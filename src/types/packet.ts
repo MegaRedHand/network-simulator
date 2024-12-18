@@ -10,6 +10,8 @@ import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
+import { EmptyPayload, IPv4Packet } from "../packets/ip";
+import { EchoRequest } from "../packets/icmp";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
@@ -19,7 +21,7 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
 
 export class Packet extends Graphics {
-  speed: number;
+  speed = 200;
   progress = 0;
   currentPath: Edge[];
   currentEdge: Edge;
@@ -28,6 +30,8 @@ export class Packet extends Graphics {
   type: string;
   sourceId: number;
   destinationId: number;
+
+  rawPacket: IPv4Packet;
 
   static animationPaused = false;
 
@@ -41,7 +45,7 @@ export class Packet extends Graphics {
 
   constructor(
     type: string,
-    speed: number,
+    rawPacket: IPv4Packet,
     sourceid: number,
     destinationid: number,
   ) {
@@ -52,7 +56,7 @@ export class Packet extends Graphics {
     this.context = contextPerPacketType[this.type];
     this.zIndex = ZIndexLevels.Packet;
 
-    this.speed = speed;
+    this.rawPacket = rawPacket;
     this.sourceId = sourceid;
     this.destinationId = destinationid;
 
@@ -81,6 +85,11 @@ export class Packet extends Graphics {
     info.addField("Type", this.type);
     info.addField("Source ID", this.sourceId.toString());
     info.addField("Destination ID", this.destinationId.toString());
+    info.addField("Source IP Address", this.rawPacket.sourceAddress.toString());
+    info.addField(
+      "Destination IP Address",
+      this.rawPacket.destinationAddress.toString(),
+    );
 
     rightbar.renderInfo(info);
   }
@@ -167,7 +176,6 @@ export function sendPacket(
   console.log(
     `Sending ${packetType} packet from ${originId} to ${destinationId}`,
   );
-  const speed = 200; // Velocidad en píxeles por segundo
 
   const pathEdgeIds = viewgraph.getPathBetween(originId, destinationId);
 
@@ -178,8 +186,29 @@ export function sendPacket(
     return;
   }
 
+  const originDevice = viewgraph.getDevice(originId);
+  const destinationDevice = viewgraph.getDevice(destinationId);
+
   const pathEdges = pathEdgeIds.map((id) => viewgraph.getEdge(id));
 
-  const packet = new Packet(packetType, speed, originId, destinationId);
+  // TODO: allow user to choose which payload to send
+  let payload;
+  switch (packetType) {
+    case "IP":
+      payload = new EmptyPayload();
+      break;
+    case "ICMP":
+      payload = new EchoRequest(0);
+      break;
+    default:
+      console.warn("Tipo de paquete no reconocido");
+      return;
+  }
+  const rawPacket = new IPv4Packet(
+    originDevice.ip,
+    destinationDevice.ip,
+    payload,
+  );
+  const packet = new Packet(packetType, rawPacket, originId, destinationId);
   packet.animateAlongPath(pathEdges, originId);
 }

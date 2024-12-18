@@ -1,8 +1,13 @@
 import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
+import { RoutingTableEntry } from "../../types/graphs/datagraph";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { sendPacket } from "../../types/packet";
-import { createDropdown, createRightBarButton } from "../right_bar";
+import {
+  createDropdown,
+  createToggleTable,
+  createRightBarButton,
+} from "../right_bar";
 import { StyledInfo } from "./styled_info";
 
 export class DeviceInfo extends StyledInfo {
@@ -63,6 +68,20 @@ export class DeviceInfo extends StyledInfo {
         sendSelectedPacket(viewgraph, id),
       ),
     );
+  }
+
+  addRoutingTable(entries: RoutingTableEntry[]) {
+    const rows = entries.map((entry) => [entry.ip, entry.mask, entry.iface]);
+
+    const dynamicTable = createToggleTable(
+      "Routing Table", // Title
+      ["IP Address", "Mask", "Interface"], // Headers
+      rows, // Generated files
+      "right-bar-toggle-button", // Button class
+      "right-bar-table", // Table class
+    );
+
+    this.inputFields.push(dynamicTable);
   }
 
   toHTML(): Node[] {

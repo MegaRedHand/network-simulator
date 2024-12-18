@@ -1,6 +1,6 @@
 import { Device } from "./../devices/index"; // Import the Device class
 import { Edge } from "./../edge";
-import { DataGraph, GraphNode } from "./datagraph";
+import { DataGraph, DeviceId, isRouter } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer } from "../devices/device";
 import { createDevice, layerFromType, layerIncluded } from "../devices/utils";
@@ -10,10 +10,12 @@ interface Connection {
   id2: number;
 }
 
+export type EdgeId = number;
+
 export class ViewGraph {
-  private devices: Map<number, Device> = new Map<number, Device>();
-  private edges: Map<number, Edge> = new Map<number, Edge>();
-  private idCounter = 1;
+  private devices: Map<DeviceId, Device> = new Map<DeviceId, Device>();
+  private edges: Map<EdgeId, Edge> = new Map<EdgeId, Edge>();
+  private idCounter: EdgeId = 1;
   private datagraph: DataGraph;
   private layer: Layer;
   viewport: Viewport;
@@ -76,7 +78,7 @@ export class ViewGraph {
   }
 
   // Add a connection between two devices
-  addEdge(device1Id: number, device2Id: number): number | null {
+  addEdge(device1Id: DeviceId, device2Id: DeviceId): EdgeId | null {
     if (device1Id === device2Id) {
       console.warn(
         `Cannot create a connection between the same device (ID ${device1Id}).`,
@@ -129,7 +131,7 @@ export class ViewGraph {
     return null;
   }
 
-  deviceMoved(deviceId: number) {
+  deviceMoved(deviceId: DeviceId) {
     const device: Device = this.devices.get(deviceId);
     device.getConnections().forEach((connection) => {
       const edge = this.edges.get(connection.edgeId);
@@ -160,13 +162,13 @@ export class ViewGraph {
   }
 
   // Get all connections of a device
-  getConnections(id: number): Edge[] {
+  getConnections(id: DeviceId): Edge[] {
     const device = this.devices.get(id);
     return device ? Array.from(this.edges.values()) : [];
   }
 
   // Get a specific device by its ID
-  getDevice(id: number): Device | undefined {
+  getDevice(id: DeviceId): Device | undefined {
     return this.devices.get(id);
   }
 
@@ -176,7 +178,7 @@ export class ViewGraph {
   }
 
   // Devuelve un array con solo los IDs de los dispositivos
-  getDeviceIds(): number[] {
+  getDeviceIds(): DeviceId[] {
     return Array.from(this.devices.keys());
   }
 
@@ -216,7 +218,7 @@ export class ViewGraph {
   }
 
   // Method to remove a specific edge by its ID
-  removeEdge(edgeId: number) {
+  removeEdge(edgeId: EdgeId) {
     const edge = this.edges.get(edgeId);
 
     if (!edge) {
@@ -241,13 +243,21 @@ export class ViewGraph {
     return this.viewport;
   }
 
+  getRoutingTable(id: DeviceId) {
+    const device = this.datagraph.getDevice(id);
+    if (!device || !isRouter(device)) {
+      return [];
+    }
+    return device.routingTable;
+  }
+
   // En ViewGraph
-  getEdge(edgeId: number): Edge | undefined {
+  getEdge(edgeId: EdgeId): Edge | undefined {
     return this.edges.get(edgeId);
   }
 
   /// Returns the IDs of the edges connecting the two devices
-  getPathBetween(idA: number, idB: number): number[] {
+  getPathBetween(idA: DeviceId, idB: DeviceId): number[] {
     if (idA === idB) {
       return [];
     }
@@ -258,7 +268,7 @@ export class ViewGraph {
     }
     let current = a;
     const unvisitedNodes = [];
-    const connectingEdges = new Map<number, number>([[a.id, null]]);
+    const connectingEdges = new Map<DeviceId, EdgeId>([[a.id, null]]);
     while (current.id !== idB) {
       for (const [edgeId, adyacentId] of current.connections) {
         const edge = this.edges.get(edgeId);

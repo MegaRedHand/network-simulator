@@ -21,16 +21,78 @@ export class IpAddress {
     this.octets = octets;
   }
 
-  static parse(addrString: string) {
+  // Parse IP address from a string representation (10.25.34.42)
+  static parse(addrString: string): IpAddress {
     const octets = new Uint8Array(4);
-    addrString.split(".").map((octet, i) => {
+    addrString.split(".").forEach((octet, i) => {
       const octetInt = parseInt(octet);
-      if (octetInt < 0 || octetInt > 255) {
-        throw new Error("Invalid IP address");
+      if (isNaN(octetInt) || octetInt < 0 || octetInt > 255) {
+        throw new Error(`Invalid IP address: ${addrString}`);
       }
       octets[i] = octetInt;
     });
     return new this(octets);
+  }
+
+  // Turn to string
+  toString(): string {
+    return Array.from(this.octets).join(".");
+  }
+
+  // Check if two IP addresses are equal.
+  equals(other: IpAddress): boolean {
+    return this.octets.every((octet, index) => octet === other.octets[index]);
+  }
+
+  // Apply a bitmask to the address (bitwise AND) and return the result.
+  applyMask(mask: IpAddress): IpAddress {
+    const maskedOctets = new Uint8Array(
+      this.octets.map((octet, i) => octet & mask.octets[i]),
+    );
+    return new IpAddress(maskedOctets);
+  }
+
+  // Return true if the two IP addresses are in the same subnet specified by the mask.
+  isInSubnet(baseIp: IpAddress, mask: IpAddress): boolean {
+    const maskedThis = this.applyMask(mask);
+    const maskedBase = baseIp.applyMask(mask);
+    return maskedThis.equals(maskedBase);
+  }
+}
+
+export class IpAddressGenerator {
+  private baseIp: number;
+  private currentIp: number;
+  private mask: string;
+
+  constructor(baseIp: string, mask: string) {
+    this.baseIp = IpAddressGenerator.ipToNumber(baseIp);
+    this.currentIp = this.baseIp + 1; // Start on first valid IP
+    this.mask = mask;
+  }
+
+  // Generate next valid IP
+  getNextIp(): { ip: string; mask: string } {
+    const nextIp = IpAddressGenerator.numberToIp(this.currentIp);
+    this.currentIp++;
+    return { ip: nextIp, mask: this.mask };
+  }
+
+  // Turn IP into a number
+  static ipToNumber(ip: string): number {
+    return ip
+      .split(".")
+      .reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0);
+  }
+
+  // Turn number into IP
+  static numberToIp(num: number): string {
+    return [
+      (num >> 24) & 0xff,
+      (num >> 16) & 0xff,
+      (num >> 8) & 0xff,
+      num & 0xff,
+    ].join(".");
   }
 }
 

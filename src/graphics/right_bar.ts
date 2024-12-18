@@ -88,6 +88,62 @@ export class RightBar {
   }
 }
 
+export function createToggleTable(
+  title: string,
+  headers: string[],
+  rows: string[][],
+  buttonClass = "right-bar-toggle-button",
+  tableClass = "right-bar-table",
+) {
+  const container = document.createElement("div");
+  container.classList.add("toggle-table-container");
+
+  // Create toggle button
+  const button = document.createElement("button");
+  button.classList.add(buttonClass);
+  button.textContent = title;
+
+  // Create table
+  const table = document.createElement("table");
+  table.classList.add(tableClass, "hidden");
+
+  // Add headers
+  const headerRow = document.createElement("tr");
+  headers.forEach((header) => {
+    const th = document.createElement("th");
+    th.textContent = header;
+    headerRow.appendChild(th);
+  });
+  table.appendChild(headerRow);
+
+  // Add rows
+  rows.forEach((row) => {
+    const rowElement = document.createElement("tr");
+    row.forEach((cellData) => {
+      const cell = document.createElement("td");
+      cell.textContent = cellData;
+      rowElement.appendChild(cell);
+    });
+    table.appendChild(rowElement);
+  });
+
+  // Toggle when clicking on button
+  button.onclick = () => {
+    const isHidden = table.classList.contains("hidden");
+    table.classList.toggle("hidden", !isHidden);
+    table.classList.toggle("open", isHidden);
+    container.classList.toggle("hidden", !isHidden);
+    container.classList.toggle("open", isHidden);
+    button.classList.toggle("open", isHidden);
+  };
+
+  // Add button and table to container
+  container.appendChild(button);
+  container.appendChild(table);
+
+  return container;
+}
+
 export function createRightBarButton(
   text: string,
   onClick: () => void,

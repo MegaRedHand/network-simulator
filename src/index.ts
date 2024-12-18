@@ -16,7 +16,7 @@ import { GlobalContext } from "./context";
 
 // Assets
 // Doing this includes the file in the build
-import "./style.css";
+import "./styles";
 import RouterSvg from "./assets/router.svg";
 import ComputerSvg from "./assets/pc.svg";
 import PlaySvg from "./assets/play-icon.svg";
