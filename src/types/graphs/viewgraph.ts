@@ -5,12 +5,18 @@ import { Viewport } from "../../graphics/viewport";
 import { Layer } from "../devices/device";
 import { createDevice, layerFromType, layerIncluded } from "../devices/utils";
 
-interface Connection {
-  id1: DeviceId;
-  id2: DeviceId;
+export type EdgeId = number;
+
+function generateConnectionKey(id1: number, id2: number): string {
+  return [id1, id2].sort().join(",");
 }
 
-export type EdgeId = number;
+function parseConnectionKey(key: string): { id1: number; id2: number } {
+  const connection: number[] = key
+    .split(",")
+    .map((value) => parseInt(value.trim()));
+  return { id1: connection[0], id2: connection[1] };
+}
 
 export class ViewGraph {
   private devices: Map<DeviceId, Device> = new Map<DeviceId, Device>();
@@ -30,7 +36,7 @@ export class ViewGraph {
   private constructView() {
     // TODO: Adjust construction based on the selected layer in the future
     console.log("Constructing ViewGraph from DataGraph");
-    const connections = new Set<Connection>();
+    const connections = new Set<string>();
 
     this.datagraph.getDevices().forEach((graphNode, deviceId) => {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
@@ -48,21 +54,17 @@ export class ViewGraph {
           new Set([deviceId]),
           connections,
         );
-        // graphNode.connections.forEach((adyacentId) => {
-        //   if (!connections.has({ id1: adyacentId, id2: deviceId })) {
-        //     connections.add({ id1: deviceId, id2: adyacentId });
-        //   }
-        // });
       }
     });
 
-    console.log("Finished creating devices in ViewGraph, connections are");
-    console.log(connections);
-    connections.forEach(({ id1, id2 }) => {
-      console.log(`${id1}, ${id2}`);
-      const device1 = this.getDevice(id1);
-      const device2 = this.getDevice(id2);
-      device1.connectTo(device2.id);
+    console.log("Finished creating devices in ViewGraph");
+    connections.forEach((key) => {
+      const connection = parseConnectionKey(key);
+      const device1 = this.getDevice(connection.id1);
+      const device2 = this.getDevice(connection.id2);
+      const edge = this.drawEdge(device1, device2);
+      device1.addConnection(edge.id, device2.id);
+      device2.addConnection(edge.id, device1.id);
     });
     console.log("Finished constructing ViewGraph");
   }
@@ -75,6 +77,19 @@ export class ViewGraph {
     } else {
       console.warn(`Device with ID ${device.id} already exists in the graph.`);
     }
+  }
+
+  drawEdge(device1: Device, device2: Device): Edge {
+    const edge = new Edge(
+      this.idCounter++,
+      { n1: device1.id, n2: device2.id },
+      device1,
+      device2,
+      this,
+    );
+    this.edges.set(edge.id, edge);
+    this.viewport.addChild(edge);
+    return edge;
   }
 
   // Add a connection between two devices
@@ -109,17 +124,9 @@ export class ViewGraph {
       const device2 = this.devices.get(device2Id);
 
       if (device1 && device2) {
-        const edge = new Edge(
-          this.idCounter++,
-          { n1: device1Id, n2: device2Id },
-          device1,
-          device2,
-          this,
-        );
-        this.edges.set(edge.id, edge);
+        const edge = this.drawEdge(device1, device2);
 
         this.datagraph.addEdge(device1Id, device2Id);
-        this.viewport.addChild(edge);
 
         console.log(
           `Connection created between devices ID: ${device1Id} and ID: ${device2Id}`,
@@ -298,9 +305,8 @@ export class ViewGraph {
     s: number, // source node
     v: number,
     visited: Set<number>,
-    connections: Set<Connection>,
+    connections: Set<string>,
   ) {
-    const node = this.datagraph.getDevice(v);
     graph.get(v).connections.forEach((w) => {
       console.log(`Se accede a ${w} desde ${v}`);
       if (!visited.has(w)) {
@@ -310,10 +316,10 @@ export class ViewGraph {
         visited.add(w);
         if (layerIncluded(layerFromType(adyacent.type), this.layer)) {
           // add connection between v and w
-          const connection: Connection = { id1: w, id2: s };
-          if (!connections.has(connection)) {
+          const connectionKey: string = generateConnectionKey(w, s);
+          if (!connections.has(connectionKey)) {
             console.log(`Dispositivos agregados a conexion`);
-            connections.add({ id1: s, id2: w });
+            connections.add(connectionKey);
           }
         } else {
           // continue with recursive search
