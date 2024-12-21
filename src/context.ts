@@ -7,6 +7,7 @@ import {
 } from "./types/viewportManager";
 import { Layer } from "./types/devices/device";
 import { IpAddressGenerator } from "./packets/ip";
+import { layerFromName } from "./types/devices/utils";
 
 export class GlobalContext {
   private viewport: Viewport = null;
@@ -50,6 +51,11 @@ export class GlobalContext {
 
   getDataGraph() {
     return this.datagraph;
+  }
+
+  changeViewGraph(selectedLayer: string) {
+    const layer = layerFromName(selectedLayer);
+    this.setNetwork(this.datagraph, layer);
   }
 
   private setupAutoSave() {

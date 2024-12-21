@@ -80,7 +80,7 @@ export class DataGraph {
     const graphData: GraphData = [];
 
     // Serialize nodes
-    this.getDevices().forEach(([id, info]) => {
+    this.getDevices().forEach((info, id) => {
       const graphNode: GraphDataNode = {
         id,
         x: info.x,
@@ -206,8 +206,8 @@ export class DataGraph {
   }
 
   // Get all devices in the graph
-  getDevices(): [DeviceId, GraphNode][] {
-    return Array.from(this.devices.entries());
+  getDevices(): Map<DeviceId, GraphNode> {
+    return this.devices;
   }
 
   // Get the number of devices in the graph

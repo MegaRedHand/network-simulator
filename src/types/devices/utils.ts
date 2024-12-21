@@ -50,3 +50,18 @@ export function layerFromName(name: string): Layer {
       return Layer.Link;
   }
 }
+
+export function layerIncluded(layer1: Layer, layer2: Layer) {
+  // Determines whether layer1 is included within layer2’s abstraction.
+  console.log(`${layer1.valueOf()} <= ${layer2.valueOf()}`);
+  return layer1.valueOf() <= layer2.valueOf();
+}
+
+export function layerFromType(type: DeviceType) {
+  switch (type) {
+    case DeviceType.Router:
+      return Layer.Network;
+    case DeviceType.Host:
+      return Layer.App;
+  }
+}
