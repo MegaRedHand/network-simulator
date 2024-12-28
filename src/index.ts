@@ -31,6 +31,7 @@ import PauseSvg from "./assets/pause-icon.svg";
     height: window.innerHeight,
     resolution: window.devicePixelRatio || 1,
     autoDensity: true,
+    antialias: true,
   });
 
   const canvasPlaceholder = document.getElementById("canvas");
