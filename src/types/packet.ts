@@ -189,8 +189,6 @@ export function sendPacket(
   const originDevice = viewgraph.getDevice(originId);
   const destinationDevice = viewgraph.getDevice(destinationId);
 
-  const pathEdges = pathEdgeIds.map((id) => viewgraph.getEdge(id));
-
   // TODO: allow user to choose which payload to send
   let payload;
   switch (packetType) {
@@ -210,5 +208,6 @@ export function sendPacket(
     payload,
   );
   const packet = new Packet(packetType, rawPacket, originId, destinationId);
+  const pathEdges = pathEdgeIds.map((id) => viewgraph.getEdge(id));
   packet.animateAlongPath(pathEdges, originId);
 }
