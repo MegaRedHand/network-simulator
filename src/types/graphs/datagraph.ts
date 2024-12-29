@@ -19,7 +19,7 @@ interface RouterGraphNode extends CommonGraphNode {
 export interface RoutingTableEntry {
   ip: string;
   mask: string;
-  iface: string;
+  iface: number;
 }
 
 // Typescript type guard
@@ -162,7 +162,7 @@ export class DataGraph {
       device1.routingTable.push({
         ip: device2.ip.toString(),
         mask: device2.mask,
-        iface: `eth${n2Id}`,
+        iface: n2Id,
       });
     }
 
@@ -173,7 +173,7 @@ export class DataGraph {
       device2.routingTable.push({
         ip: device1.ip.toString(),
         mask: device1.mask,
-        iface: `eth${n1Id}`,
+        iface: n1Id,
       });
     }
 

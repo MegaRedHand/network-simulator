@@ -11,7 +11,7 @@ export class ViewGraph {
   private devices: Map<DeviceId, Device> = new Map<DeviceId, Device>();
   private edges: Map<EdgeId, Edge> = new Map<EdgeId, Edge>();
   private idCounter: EdgeId = 1;
-  private datagraph: DataGraph;
+  datagraph: DataGraph;
   private layer: Layer;
   viewport: Viewport;
 
