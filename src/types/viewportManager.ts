@@ -4,7 +4,7 @@ import { Device } from "./devices/index";
 import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
 import { Packet } from "./packet";
-import { DeviceType, Layer } from "./devices/device";
+import { DeviceType } from "./devices/device";
 import { createDevice, layerFromName } from "./devices/utils";
 
 type Selectable = Device | Edge | Packet;
