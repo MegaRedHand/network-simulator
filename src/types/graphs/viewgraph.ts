@@ -1,11 +1,22 @@
 import { Device } from "./../devices/index"; // Import the Device class
 import { Edge } from "./../edge";
-import { DataGraph, DeviceId, isRouter } from "./datagraph";
+import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer } from "../devices/device";
-import { createDevice } from "../devices/utils";
+import { createDevice, layerFromType, layerIncluded } from "../devices/utils";
 
 export type EdgeId = number;
+
+function generateConnectionKey(id1: number, id2: number): string {
+  return [id1, id2].sort().join(",");
+}
+
+function parseConnectionKey(key: string): { id1: number; id2: number } {
+  const connection: number[] = key
+    .split(",")
+    .map((value) => parseInt(value.trim()));
+  return { id1: connection[0], id2: connection[1] };
+}
 
 export class ViewGraph {
   private devices: Map<DeviceId, Device> = new Map<DeviceId, Device>();
@@ -25,27 +36,35 @@ export class ViewGraph {
   private constructView() {
     // TODO: Adjust construction based on the selected layer in the future
     console.log("Constructing ViewGraph from DataGraph");
-    const connections = new Set<{ deviceId: DeviceId; adyacentId: DeviceId }>();
+    const connections = new Set<string>();
 
-    this.datagraph.getDevices().forEach(([deviceId, graphNode]) => {
-      const deviceInfo = { ...graphNode, id: deviceId };
-      const device: Device = createDevice(deviceInfo, this);
+    this.datagraph.getDevices().forEach((graphNode, deviceId) => {
+      if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
+        const deviceInfo = { ...graphNode, id: deviceId };
+        const device: Device = createDevice(deviceInfo, this);
 
-      this.viewport.addChild(device);
+        this.viewport.addChild(device);
 
-      this.addDevice(device);
-      graphNode.connections.forEach((adyacentId) => {
-        if (!connections.has({ deviceId: adyacentId, adyacentId: deviceId })) {
-          connections.add({ deviceId, adyacentId });
-        }
-      });
+        this.addDevice(device);
+
+        this.layer_dfs(
+          this.datagraph.getDevices(),
+          deviceId,
+          deviceId,
+          new Set([deviceId]),
+          connections,
+        );
+      }
     });
 
     console.log("Finished creating devices in ViewGraph");
-    connections.forEach(({ deviceId, adyacentId }) => {
-      const device1 = this.getDevice(deviceId);
-      const device2 = this.getDevice(adyacentId);
-      device1.connectTo(device2.id);
+    connections.forEach((key) => {
+      const connection = parseConnectionKey(key);
+      const device1 = this.getDevice(connection.id1);
+      const device2 = this.getDevice(connection.id2);
+      const edge = this.drawEdge(device1, device2);
+      device1.addConnection(edge.id, device2.id);
+      device2.addConnection(edge.id, device1.id);
     });
     console.log("Finished constructing ViewGraph");
   }
@@ -58,6 +77,19 @@ export class ViewGraph {
     } else {
       console.warn(`Device with ID ${device.id} already exists in the graph.`);
     }
+  }
+
+  drawEdge(device1: Device, device2: Device): Edge {
+    const edge = new Edge(
+      this.idCounter++,
+      { n1: device1.id, n2: device2.id },
+      device1,
+      device2,
+      this,
+    );
+    this.edges.set(edge.id, edge);
+    this.viewport.addChild(edge);
+    return edge;
   }
 
   // Add a connection between two devices
@@ -92,17 +124,9 @@ export class ViewGraph {
       const device2 = this.devices.get(device2Id);
 
       if (device1 && device2) {
-        const edge = new Edge(
-          this.idCounter++,
-          { n1: device1Id, n2: device2Id },
-          device1,
-          device2,
-          this,
-        );
-        this.edges.set(edge.id, edge);
+        const edge = this.drawEdge(device1, device2);
 
         this.datagraph.addEdge(device1Id, device2Id);
-        this.viewport.addChild(edge);
 
         console.log(
           `Connection created between devices ID: ${device1Id} and ID: ${device2Id}`,
@@ -278,5 +302,34 @@ export class ViewGraph {
       current = this.devices.get(parentId);
     }
     return path.reverse();
+  }
+
+  private layer_dfs(
+    graph: Map<DeviceId, GraphNode>,
+    s: number, // source node
+    v: number,
+    visited: Set<number>,
+    connections: Set<string>,
+  ) {
+    graph.get(v).connections.forEach((w) => {
+      console.log(`Se accede a ${w} desde ${v}`);
+      if (!visited.has(w)) {
+        console.log(`Se visita ${w}`);
+        const adyacent = this.datagraph.getDevice(w);
+        // mark node as visited
+        visited.add(w);
+        if (layerIncluded(layerFromType(adyacent.type), this.layer)) {
+          // add connection between v and w
+          const connectionKey: string = generateConnectionKey(w, s);
+          if (!connections.has(connectionKey)) {
+            console.log(`Dispositivos agregados a conexion`);
+            connections.add(connectionKey);
+          }
+        } else {
+          // continue with recursive search
+          this.layer_dfs(graph, s, w, visited, connections);
+        }
+      }
+    });
   }
 }
