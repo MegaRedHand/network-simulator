@@ -16,13 +16,13 @@ export class GlobalContext {
   private saveIntervalId: NodeJS.Timeout | null = null;
   private ipGenerator: IpAddressGenerator;
 
-  initialize(viewport: Viewport) {
+  initialize(viewport: Viewport, layer: string) {
     this.viewport = viewport;
 
     const baseIp = "192.168.1.0";
     const mask = "255.255.255.0";
     this.ipGenerator = new IpAddressGenerator(baseIp, mask);
-    loadFromLocalStorage(this);
+    loadFromLocalStorage(this, layer);
   }
 
   getNextIp(): { ip: string; mask: string } {
