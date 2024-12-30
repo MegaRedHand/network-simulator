@@ -122,8 +122,10 @@ export class Packet extends Graphics {
       const result = device.routingTable.find((entry) => {
         const ip = IpAddress.parse(entry.ip);
         const mask = IpAddress.parse(entry.mask);
+        console.log("considering entry:", entry);
         return this.rawPacket.destinationAddress.isInSubnet(ip, mask);
       });
+      console.log("result:", result);
       return result === undefined ? null : result.iface;
     }
     return null;
