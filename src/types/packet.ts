@@ -10,8 +10,9 @@ import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
-import { EmptyPayload, IPv4Packet } from "../packets/ip";
+import { EmptyPayload, IpAddress, IPv4Packet } from "../packets/ip";
 import { EchoRequest } from "../packets/icmp";
+import { DataGraph, DeviceId, isRouter } from "./graphs/datagraph";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
@@ -23,6 +24,7 @@ const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
 export class Packet extends Graphics {
   speed = 200;
   progress = 0;
+  viewgraph: ViewGraph;
   currentPath: Edge[];
   currentEdge: Edge;
   currentStart: number;
@@ -44,6 +46,7 @@ export class Packet extends Graphics {
   }
 
   constructor(
+    viewgraph: ViewGraph,
     type: string,
     rawPacket: IPv4Packet,
     sourceid: number,
@@ -51,6 +54,7 @@ export class Packet extends Graphics {
   ) {
     super();
 
+    this.viewgraph = viewgraph;
     this.type = type;
 
     this.context = contextPerPacketType[this.type];
@@ -102,17 +106,9 @@ export class Packet extends Graphics {
     this.context = contextPerPacketType[this.type];
   }
 
-  animateAlongPath(path: Edge[], start: number): void {
-    if (path.length === 0) {
-      console.error(
-        "No se puede animar un paquete a lo largo de un camino vacío",
-      );
-      this.destroy();
-      return;
-    }
-    console.log(path);
-    this.currentPath = path;
-    this.currentEdge = this.currentPath.shift();
+  traverseEdge(edge: Edge, start: DeviceId): void {
+    this.progress = 0;
+    this.currentEdge = edge;
     this.currentStart = start;
     // Add packet as a child of the current edge
     this.currentEdge.addChild(this);
@@ -120,20 +116,48 @@ export class Packet extends Graphics {
     Ticker.shared.add(this.animationTick, this);
   }
 
+  routePacket(id: DeviceId): DeviceId | null {
+    const device = this.viewgraph.datagraph.getDevice(id);
+    if (isRouter(device)) {
+      const result = device.routingTable.find((entry) => {
+        const ip = IpAddress.parse(entry.ip);
+        const mask = IpAddress.parse(entry.mask);
+        return this.rawPacket.destinationAddress.isInSubnet(ip, mask);
+      });
+      return result === undefined ? null : result.iface;
+    }
+    return null;
+  }
+
   animationTick(ticker: Ticker) {
     if (this.progress >= 1) {
       this.progress = 0;
       this.removeFromParent();
-      if (this.currentPath.length == 0) {
+      const newStart = this.currentEdge.otherEnd(this.currentStart);
+      this.currentStart = newStart;
+      const newEdgeId = this.routePacket(newStart);
+
+      const deleteSelf = () => {
+        this.destroy();
         ticker.remove(this.animationTick, this);
         if (isSelected(this)) {
           deselectElement();
         }
-        this.destroy();
+      };
+
+      if (newEdgeId === null) {
+        deleteSelf();
         return;
       }
-      this.currentStart = this.currentEdge.otherEnd(this.currentStart);
-      this.currentEdge = this.currentPath.shift();
+      this.currentEdge = this.viewgraph
+        .getConnections(newStart)
+        .find((edge) => {
+          return edge.otherEnd(newStart) === newEdgeId;
+        });
+      if (this.currentEdge === undefined) {
+        deleteSelf();
+        return;
+      }
       this.currentEdge.addChild(this);
     }
     if (!Packet.animationPaused) {
@@ -177,15 +201,6 @@ export function sendPacket(
     `Sending ${packetType} packet from ${originId} to ${destinationId}`,
   );
 
-  const pathEdgeIds = viewgraph.getPathBetween(originId, destinationId);
-
-  if (pathEdgeIds.length === 0) {
-    console.warn(
-      `No se encontró un camino entre ${originId} y ${destinationId}.`,
-    );
-    return;
-  }
-
   const originDevice = viewgraph.getDevice(originId);
   const destinationDevice = viewgraph.getDevice(destinationId);
 
@@ -207,7 +222,17 @@ export function sendPacket(
     destinationDevice.ip,
     payload,
   );
-  const packet = new Packet(packetType, rawPacket, originId, destinationId);
-  const pathEdges = pathEdgeIds.map((id) => viewgraph.getEdge(id));
-  packet.animateAlongPath(pathEdges, originId);
+  const packet = new Packet(
+    viewgraph,
+    packetType,
+    rawPacket,
+    originId,
+    destinationId,
+  );
+  const originConnections = viewgraph.getConnections(originId);
+  if (originConnections.length === 0) {
+    console.warn(`No se encontró un dispositivo con ID ${originId}.`);
+    return;
+  }
+  packet.traverseEdge(originConnections[0], originId);
 }

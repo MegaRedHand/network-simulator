@@ -147,7 +147,11 @@ export class ViewGraph {
   // Get all connections of a device
   getConnections(id: DeviceId): Edge[] {
     const device = this.devices.get(id);
-    return device ? Array.from(this.edges.values()) : [];
+    return device
+      ? Array.from(device.connections.keys()).map((edgeId) =>
+          this.edges.get(edgeId),
+        )
+      : [];
   }
 
   // Get a specific device by its ID
