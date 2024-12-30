@@ -135,6 +135,32 @@ import PauseSvg from "./assets/pause-icon.svg";
 
     if (selectedLayer) {
       ctx.changeViewGraph(selectedLayer);
+
+      // LeftBar is reset
+      leftBar.clear();
+      switch (selectedLayer) {
+        case "application":
+        case "transport":
+          leftBar.addButton(
+            ComputerSvg,
+            () => AddDevice(ctx, DeviceType.Host),
+            "Add Host",
+          );
+          break;
+        case "network":
+        case "link":
+          leftBar.addButton(
+            RouterSvg,
+            () => AddDevice(ctx, DeviceType.Router),
+            "Add Router",
+          );
+          leftBar.addButton(
+            ComputerSvg,
+            () => AddDevice(ctx, DeviceType.Host),
+            "Add Host",
+          );
+          break;
+      }
     }
   };
 
