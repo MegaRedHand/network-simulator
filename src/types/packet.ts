@@ -12,7 +12,7 @@ import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
 import { EmptyPayload, IpAddress, IPv4Packet } from "../packets/ip";
 import { EchoRequest } from "../packets/icmp";
-import { DataGraph, DeviceId, isRouter } from "./graphs/datagraph";
+import { DeviceId, isRouter } from "./graphs/datagraph";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
