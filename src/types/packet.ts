@@ -25,7 +25,6 @@ export class Packet extends Graphics {
   speed = 200;
   progress = 0;
   viewgraph: ViewGraph;
-  currentPath: Edge[];
   currentEdge: Edge;
   currentStart: number;
   color: number;
@@ -75,12 +74,12 @@ export class Packet extends Graphics {
   }
 
   select() {
-    this.highlight(); // Calls highlight on select
+    this.highlight();
     this.showInfo();
   }
 
   deselect() {
-    this.removeHighlight(); // Calls removeHighlight on deselect
+    this.removeHighlight();
   }
 
   showInfo() {
@@ -151,11 +150,10 @@ export class Packet extends Graphics {
         deleteSelf();
         return;
       }
-      this.currentEdge = this.viewgraph
-        .getConnections(newStart)
-        .find((edge) => {
-          return edge.otherEnd(newStart) === newEdgeId;
-        });
+      const currentNodeEdges = this.viewgraph.getConnections(newStart);
+      this.currentEdge = currentNodeEdges.find((edge) => {
+        return edge.otherEnd(newStart) === newEdgeId;
+      });
       if (this.currentEdge === undefined) {
         deleteSelf();
         return;
@@ -183,7 +181,6 @@ export class Packet extends Graphics {
     const dx = end.x - start.x;
     const dy = end.y - start.y;
 
-    // Mover el paquete
     this.x = start.x + progress * dx;
     this.y = start.y + progress * dy;
   }
