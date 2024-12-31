@@ -92,14 +92,14 @@ export class Packet extends Graphics {
     );
 
     rightbar.renderInfo(info);
-  
+
     // Add a delete packet button with the delete button style
     rightbar.addButton(
       "Delete Packet",
       () => {
         this.delete();
       },
-      "right-bar-delete-button" 
+      "right-bar-delete-button",
     );
   }
 
@@ -174,10 +174,10 @@ export class Packet extends Graphics {
   delete() {
     // Remove packet from Ticker to stop animation
     Ticker.shared.remove(this.animationTick, this);
-  
+
     // Remove all event listeners
     this.removeAllListeners();
-  
+
     // Remove packet from parent edge
     this.removeFromParent();
 
@@ -185,7 +185,7 @@ export class Packet extends Graphics {
     if (isSelected(this)) {
       deselectElement();
     }
-  
+
     // Destroy the packet
     this.destroy();
   }
