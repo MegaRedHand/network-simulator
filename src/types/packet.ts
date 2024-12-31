@@ -193,8 +193,8 @@ export class Packet extends Graphics {
 export function sendPacket(
   viewgraph: ViewGraph,
   packetType: string,
-  originId: number,
-  destinationId: number,
+  originId: DeviceId,
+  destinationId: DeviceId,
 ) {
   console.log(
     `Sending ${packetType} packet from ${originId} to ${destinationId}`,
@@ -233,5 +233,11 @@ export function sendPacket(
     console.warn(`No se encontró un dispositivo con ID ${originId}.`);
     return;
   }
-  packet.traverseEdge(originConnections[0], originId);
+  let firstEdge = originConnections.find((edge) => {
+    return edge.otherEnd(originId) === destinationId;
+  });
+  if (firstEdge === undefined) {
+    firstEdge = originConnections[0];
+  }
+  packet.traverseEdge(firstEdge, originId);
 }
