@@ -263,6 +263,12 @@ export class ViewGraph {
     return this.edges.get(edgeId);
   }
 
+  // Para que las usen los moves de undo/redo
+  // (la otra es tener dos funciones para agregar un dispositivo, una que avise al datagraph y otra que no)
+  getDataGraph(): DataGraph {
+    return this.datagraph;
+  }
+
   /// Returns the IDs of the edges connecting the two devices
   getPathBetween(idA: DeviceId, idB: DeviceId): number[] {
     if (idA === idB) {

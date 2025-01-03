@@ -5,6 +5,7 @@ import {
   loadFromFile,
   loadFromLocalStorage,
   saveToFile,
+  urManager,
 } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
 import { Packet } from "./types/packet";
@@ -21,6 +22,8 @@ import RouterSvg from "./assets/router.svg";
 import ComputerSvg from "./assets/pc.svg";
 import PlaySvg from "./assets/play-icon.svg";
 import PauseSvg from "./assets/pause-icon.svg";
+import UndoSvg from "./assets/left-curve-arrow.svg";
+import RedoSvg from "./assets/right-curve-arrow.svg";
 
 // IIFE to avoid errors
 (async () => {
@@ -98,6 +101,62 @@ import PauseSvg from "./assets/pause-icon.svg";
   saveButton.onclick = () => saveToFile(ctx);
   loadButton.onclick = () => loadFromFile(ctx);
 
+  // Undo button’s logic
+  const undoButton = document.getElementById(
+    "undo-button",
+  ) as HTMLButtonElement;
+
+  // Parte de otro intento para poder cambiar el color del icono
+  // undoButton.innerHTML = UndoSvg;
+  // const undoIcon = undoButton.querySelector("path") as SVGPathElement;
+
+  const undoIcon = document.createElement("img");
+  undoIcon.src = UndoSvg;
+  undoIcon.alt = "Undo Icon";
+  undoButton.appendChild(undoIcon);
+
+  urManager.suscribe(() => {
+    console.log("Entre a la funcion suscribe de undo");
+    undoButton.disabled = !urManager.canUndo();
+    console.log(`canUdo da ${urManager.canUndo()}`);
+    // no funciona
+    undoIcon.style.fill = urManager.canUndo() ? "#3a3a3a" : "#a09f9f";
+  });
+
+  const triggerUndo = () => {
+    if (urManager.canUndo()) {
+      urManager.undo(ctx.getViewGraph());
+    }
+  };
+
+  undoButton.onclick = triggerUndo;
+
+  // Redo button’s logic
+  const redoButton = document.getElementById(
+    "redo-button",
+  ) as HTMLButtonElement;
+  const redoIcon = document.createElement("img");
+  redoIcon.src = RedoSvg;
+  redoIcon.alt = "Redo Icon";
+  redoButton.appendChild(redoIcon);
+
+  urManager.suscribe(() => {
+    console.log("Entre a la funcion suscribe de undo");
+    redoButton.disabled = !urManager.canRedo();
+    console.log(`canRedo da ${urManager.canRedo()}`);
+    // no funciona
+    redoIcon.style.fill = urManager.canRedo() ? "#3a3a3a" : "#a09f9f";
+  });
+
+  const triggerRedo = () => {
+    if (urManager.canRedo()) {
+      urManager.redo(ctx.getViewGraph());
+    }
+  };
+
+  redoButton.onclick = triggerRedo;
+
+  // Pause button’s logic
   const pauseButton = document.getElementById("pause-button");
   let paused = false;
 

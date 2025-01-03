@@ -5,11 +5,15 @@ import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
 import { Packet } from "./packet";
 import { DeviceType } from "./devices/device";
-import { createDevice } from "./devices/utils";
+import { CreateDevice, createDevice } from "./devices/utils";
+import { UndoRedoManager } from "./undo-redo/undoRedoManager";
+import { AddDeviceMove } from "./undo-redo/move";
 
 type Selectable = Device | Edge | Packet;
 
 let selectedElement: Selectable | null = null; // Global variable to store the selected element
+
+export const urManager = new UndoRedoManager();
 
 export function selectElement(element: Selectable) {
   deselectElement();
@@ -78,13 +82,17 @@ export function AddDevice(ctx: GlobalContext, type: DeviceType) {
 
   const { ip, mask } = ctx.getNextIp();
   const deviceInfo = { x, y, type, ip, mask };
-
   const id = datagraph.addNewDevice(deviceInfo);
-  const newDevice: Device = createDevice({ ...deviceInfo, id }, viewgraph);
+
+  const deviceData: CreateDevice = { id, ...deviceInfo };
+  const newDevice: Device = createDevice(deviceData, viewgraph);
 
   // Add the Device to the graph
   viewgraph.addDevice(newDevice);
   viewport.addChild(newDevice);
+
+  const move = new AddDeviceMove(deviceData);
+  urManager.push(move);
 
   console.log(
     `${DeviceType[newDevice.getType()]} added with ID ${newDevice.id} at the center of the screen.`,

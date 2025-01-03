@@ -17,8 +17,7 @@ export function createDevice(
   deviceInfo: CreateDevice,
   viewgraph: ViewGraph,
 ): Device {
-  const { x, y } = deviceInfo;
-  const position = { x, y };
+  const position: { x: number; y: number } = deviceInfo;
   const ip = IpAddress.parse(deviceInfo.ip);
   const mask = IpAddress.parse(deviceInfo.mask);
 
