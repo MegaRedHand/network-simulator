@@ -5,7 +5,7 @@ import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
 import { Packet } from "./packet";
 import { DeviceType } from "./devices/device";
-import { createDevice } from "./devices/utils";
+import { createDevice, layerFromName } from "./devices/utils";
 
 type Selectable = Device | Edge | Packet;
 
@@ -141,15 +141,15 @@ export function saveToLocalStorage(ctx: GlobalContext) {
   console.log("Graph saved in local storage.");
 }
 
-export function loadFromLocalStorage(ctx: GlobalContext) {
+export function loadFromLocalStorage(ctx: GlobalContext, currLayer: string) {
   const jsonData = localStorage.getItem(LOCAL_STORAGE_KEY) || "[]";
   try {
     const graphData: GraphData = JSON.parse(jsonData);
-    ctx.load(DataGraph.fromData(graphData));
+    ctx.load(DataGraph.fromData(graphData), layerFromName(currLayer));
   } catch (error) {
     const extraData = { jsonData, error };
     console.error("Failed to load graph from local storage.", extraData);
-    ctx.load(new DataGraph());
+    ctx.load(new DataGraph(), layerFromName(currLayer));
     return;
   }
   console.log("Graph loaded from local storage.");
