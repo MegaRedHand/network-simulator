@@ -19,7 +19,7 @@ interface RouterGraphNode extends CommonGraphNode {
 export interface RoutingTableEntry {
   ip: string;
   mask: string;
-  iface: string;
+  iface: DeviceId;
 }
 
 // Typescript type guard
@@ -162,7 +162,7 @@ export class DataGraph {
       device1.routingTable.push({
         ip: device2.ip.toString(),
         mask: device2.mask,
-        iface: `eth${n2Id}`,
+        iface: n2Id,
       });
     }
 
@@ -173,7 +173,7 @@ export class DataGraph {
       device2.routingTable.push({
         ip: device1.ip.toString(),
         mask: device1.mask,
-        iface: `eth${n1Id}`,
+        iface: n1Id,
       });
     }
 
@@ -181,12 +181,13 @@ export class DataGraph {
       `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,
     );
     this.notifyChanges();
+    this.regenerateAllRoutingTables();
   }
 
   updateDevicePosition(id: DeviceId, newValues: { x?: number; y?: number }) {
     const deviceGraphNode = this.devices.get(id);
     if (!deviceGraphNode) {
-      console.warn("Device’s id is not registered");
+      console.warn("Device's id is not registered");
       return;
     }
     this.devices.set(id, { ...deviceGraphNode, ...newValues });
@@ -237,6 +238,7 @@ export class DataGraph {
     this.devices.delete(id);
     console.log(`Device with ID ${id} and its connections were removed.`);
     this.notifyChanges();
+    this.regenerateAllRoutingTables();
   }
 
   // Method to remove a connection (edge) between two devices by their IDs
@@ -270,6 +272,7 @@ export class DataGraph {
       `Connection removed between devices ID: ${n1Id} and ID: ${n2Id}`,
     );
     this.notifyChanges();
+    this.regenerateAllRoutingTables();
   }
 
   subscribeChanges(callback: () => void) {
@@ -278,5 +281,57 @@ export class DataGraph {
 
   notifyChanges() {
     this.onChanges.forEach((callback) => callback());
+  }
+
+  regenerateAllRoutingTables() {
+    console.log("Regenerating all routing tables");
+    this.devices.forEach((_, id) => this.regenerateRoutingTable(id));
+  }
+
+  regenerateRoutingTable(id: DeviceId) {
+    const router = this.devices.get(id);
+    if (!isRouter(router)) {
+      return;
+    }
+    console.log(`Regenerating routing table for ID ${id}`);
+    const parents = new Map<DeviceId, DeviceId>();
+    parents.set(id, id);
+    const queue = Array.from([id]);
+    while (queue.length > 0) {
+      const currentId = queue.shift();
+      const current = this.devices.get(currentId);
+      if (!isRouter(current)) {
+        // Don't route packets on hosts
+        continue;
+      }
+      current.connections.forEach((connectedId) => {
+        if (!parents.has(connectedId)) {
+          parents.set(connectedId, currentId);
+          queue.push(connectedId);
+        }
+      });
+    }
+
+    console.log(parents);
+
+    const table: RoutingTableEntry[] = [];
+    parents.forEach((currentId, childId) => {
+      const dstId = childId;
+      if (dstId === id) {
+        return;
+      }
+
+      while (currentId !== id) {
+        const parentId = parents.get(currentId);
+        childId = currentId;
+        currentId = parentId;
+      }
+      // Here the currentId is the router, and the childId
+      // is the first step towards dstId
+      const dst = this.devices.get(dstId);
+      const entry = { ip: dst.ip, mask: dst.mask, iface: childId };
+      table.push(entry);
+    });
+    router.routingTable = table;
   }
 }

@@ -10,8 +10,9 @@ import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
-import { EmptyPayload, IPv4Packet } from "../packets/ip";
+import { EmptyPayload, IpAddress, IPv4Packet } from "../packets/ip";
 import { EchoRequest } from "../packets/icmp";
+import { DeviceId, isRouter } from "./graphs/datagraph";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
@@ -23,7 +24,7 @@ const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
 export class Packet extends Graphics {
   speed = 200;
   progress = 0;
-  currentPath: Edge[];
+  viewgraph: ViewGraph;
   currentEdge: Edge;
   currentStart: number;
   color: number;
@@ -44,6 +45,7 @@ export class Packet extends Graphics {
   }
 
   constructor(
+    viewgraph: ViewGraph,
     type: string,
     rawPacket: IPv4Packet,
     sourceid: number,
@@ -51,6 +53,7 @@ export class Packet extends Graphics {
   ) {
     super();
 
+    this.viewgraph = viewgraph;
     this.type = type;
 
     this.context = contextPerPacketType[this.type];
@@ -71,12 +74,12 @@ export class Packet extends Graphics {
   }
 
   select() {
-    this.highlight(); // Calls highlight on select
+    this.highlight();
     this.showInfo();
   }
 
   deselect() {
-    this.removeHighlight(); // Calls removeHighlight on deselect
+    this.removeHighlight();
   }
 
   showInfo() {
@@ -111,17 +114,9 @@ export class Packet extends Graphics {
     this.context = contextPerPacketType[this.type];
   }
 
-  animateAlongPath(path: Edge[], start: number): void {
-    if (path.length === 0) {
-      console.error(
-        "No se puede animar un paquete a lo largo de un camino vacío",
-      );
-      this.destroy();
-      return;
-    }
-    console.log(path);
-    this.currentPath = path;
-    this.currentEdge = this.currentPath.shift();
+  traverseEdge(edge: Edge, start: DeviceId): void {
+    this.progress = 0;
+    this.currentEdge = edge;
     this.currentStart = start;
     // Add packet as a child of the current edge
     this.currentEdge.addChild(this);
@@ -129,20 +124,49 @@ export class Packet extends Graphics {
     Ticker.shared.add(this.animationTick, this);
   }
 
+  routePacket(id: DeviceId): DeviceId | null {
+    const device = this.viewgraph.datagraph.getDevice(id);
+    if (isRouter(device)) {
+      const result = device.routingTable.find((entry) => {
+        const ip = IpAddress.parse(entry.ip);
+        const mask = IpAddress.parse(entry.mask);
+        console.log("considering entry:", entry);
+        return this.rawPacket.destinationAddress.isInSubnet(ip, mask);
+      });
+      console.log("result:", result);
+      return result === undefined ? null : result.iface;
+    }
+    return null;
+  }
+
   animationTick(ticker: Ticker) {
     if (this.progress >= 1) {
       this.progress = 0;
       this.removeFromParent();
-      if (this.currentPath.length == 0) {
+      const newStart = this.currentEdge.otherEnd(this.currentStart);
+      this.currentStart = newStart;
+      const newEdgeId = this.routePacket(newStart);
+
+      const deleteSelf = () => {
+        this.destroy();
         ticker.remove(this.animationTick, this);
         if (isSelected(this)) {
           deselectElement();
         }
-        this.destroy();
+      };
+
+      if (newEdgeId === null) {
+        deleteSelf();
         return;
       }
-      this.currentStart = this.currentEdge.otherEnd(this.currentStart);
-      this.currentEdge = this.currentPath.shift();
+      const currentNodeEdges = this.viewgraph.getConnections(newStart);
+      this.currentEdge = currentNodeEdges.find((edge) => {
+        return edge.otherEnd(newStart) === newEdgeId;
+      });
+      if (this.currentEdge === undefined) {
+        deleteSelf();
+        return;
+      }
       this.currentEdge.addChild(this);
     }
     if (!Packet.animationPaused) {
@@ -166,7 +190,6 @@ export class Packet extends Graphics {
     const dx = end.x - start.x;
     const dy = end.y - start.y;
 
-    // Move packet
     this.x = start.x + progress * dx;
     this.y = start.y + progress * dy;
   }
@@ -194,26 +217,15 @@ export class Packet extends Graphics {
 export function sendPacket(
   viewgraph: ViewGraph,
   packetType: string,
-  originId: number,
-  destinationId: number,
+  originId: DeviceId,
+  destinationId: DeviceId,
 ) {
   console.log(
     `Sending ${packetType} packet from ${originId} to ${destinationId}`,
   );
 
-  const pathEdgeIds = viewgraph.getPathBetween(originId, destinationId);
-
-  if (pathEdgeIds.length === 0) {
-    console.warn(
-      `No se encontró un camino entre ${originId} y ${destinationId}.`,
-    );
-    return;
-  }
-
   const originDevice = viewgraph.getDevice(originId);
   const destinationDevice = viewgraph.getDevice(destinationId);
-
-  const pathEdges = pathEdgeIds.map((id) => viewgraph.getEdge(id));
 
   // TODO: allow user to choose which payload to send
   let payload;
@@ -233,6 +245,23 @@ export function sendPacket(
     destinationDevice.ip,
     payload,
   );
-  const packet = new Packet(packetType, rawPacket, originId, destinationId);
-  packet.animateAlongPath(pathEdges, originId);
+  const packet = new Packet(
+    viewgraph,
+    packetType,
+    rawPacket,
+    originId,
+    destinationId,
+  );
+  const originConnections = viewgraph.getConnections(originId);
+  if (originConnections.length === 0) {
+    console.warn(`No se encontró un dispositivo con ID ${originId}.`);
+    return;
+  }
+  let firstEdge = originConnections.find((edge) => {
+    return edge.otherEnd(originId) === destinationId;
+  });
+  if (firstEdge === undefined) {
+    firstEdge = originConnections[0];
+  }
+  packet.traverseEdge(firstEdge, originId);
 }
