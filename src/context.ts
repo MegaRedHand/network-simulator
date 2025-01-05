@@ -6,7 +6,7 @@ import {
   saveToLocalStorage,
 } from "./types/viewportManager";
 import { Layer } from "./types/devices/device";
-import { IpAddressGenerator } from "./packets/ip";
+import { IpAddress, IpAddressGenerator } from "./packets/ip";
 import { layerFromName } from "./types/devices/utils";
 
 export class GlobalContext {
@@ -19,10 +19,18 @@ export class GlobalContext {
   initialize(viewport: Viewport) {
     this.viewport = viewport;
 
-    const baseIp = "10.0.0.0";
+    // Sets the initial datagraph and viewgraph
+    loadFromLocalStorage(this);
+    let maxIp = IpAddress.parse("10.0.0.0");
+    this.datagraph.getDevices().forEach((device) => {
+      const ip = IpAddress.parse(device.ip);
+      if (maxIp.octets < ip.octets) {
+        maxIp = ip;
+      }
+    });
+    const baseIp = maxIp.toString();
     const mask = "255.255.255.255";
     this.ipGenerator = new IpAddressGenerator(baseIp, mask);
-    loadFromLocalStorage(this);
   }
 
   getNextIp(): { ip: string; mask: string } {
