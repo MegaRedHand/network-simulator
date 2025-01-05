@@ -22,17 +22,7 @@ export class GlobalContext {
     // Sets the initial datagraph and viewgraph
     loadFromLocalStorage(this);
 
-    let maxIp = IpAddress.parse("10.0.0.0");
-    this.datagraph.getDevices().forEach((device) => {
-      const ip = IpAddress.parse(device.ip);
-      if (maxIp.octets < ip.octets) {
-        maxIp = ip;
-      }
-    });
-    // TODO: we should use IpAddress instead of string here and in Datagraph
-    const baseIp = maxIp.toString();
-    const mask = "255.255.255.255";
-    this.ipGenerator = new IpAddressGenerator(baseIp, mask);
+    this.setIpGenerator();
   }
 
   getNextIp(): { ip: string; mask: string } {
@@ -43,6 +33,7 @@ export class GlobalContext {
     this.datagraph = datagraph;
     this.viewport.clear();
     this.viewgraph = new ViewGraph(this.datagraph, this.viewport, layer);
+    this.setIpGenerator();
   }
 
   load(datagraph: DataGraph, layer: Layer = Layer.Link) {
@@ -88,5 +79,19 @@ export class GlobalContext {
       clearInterval(this.saveIntervalId);
       this.saveIntervalId = null;
     }
+  }
+
+  private setIpGenerator() {
+    let maxIp = IpAddress.parse("10.0.0.0");
+    this.datagraph.getDevices().forEach((device) => {
+      const ip = IpAddress.parse(device.ip);
+      if (maxIp.octets < ip.octets) {
+        maxIp = ip;
+      }
+    });
+    // TODO: we should use IpAddress instead of string here and in Datagraph
+    const baseIp = maxIp.toString();
+    const mask = "255.255.255.255";
+    this.ipGenerator = new IpAddressGenerator(baseIp, mask);
   }
 }
