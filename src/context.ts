@@ -21,6 +21,7 @@ export class GlobalContext {
 
     // Sets the initial datagraph and viewgraph
     loadFromLocalStorage(this);
+
     let maxIp = IpAddress.parse("10.0.0.0");
     this.datagraph.getDevices().forEach((device) => {
       const ip = IpAddress.parse(device.ip);
@@ -28,6 +29,7 @@ export class GlobalContext {
         maxIp = ip;
       }
     });
+    // TODO: we should use IpAddress instead of string here and in Datagraph
     const baseIp = maxIp.toString();
     const mask = "255.255.255.255";
     this.ipGenerator = new IpAddressGenerator(baseIp, mask);
