@@ -11,7 +11,7 @@ import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
 import { EmptyPayload, IpAddress, IPv4Packet } from "../packets/ip";
-import { EchoRequest } from "../packets/icmp";
+import { EchoRequest, EchoReply } from "../packets/icmp";
 import { DeviceId, isRouter } from "./graphs/datagraph";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
@@ -82,6 +82,50 @@ export class Packet extends Graphics {
     this.removeHighlight();
   }
 
+  private getPacketDetails(packet: IPv4Packet) {
+    // Creates a dictionary with the data of the packet
+    const packetDetails: Record<string, string | number | object> = {
+      version: packet.version,
+      internetHeaderLength: packet.internetHeaderLength,
+      typeOfService: packet.typeOfService,
+      totalLength: packet.totalLength,
+      identification: packet.identification,
+      flags: packet.flags,
+      fragmentOffset: packet.fragmentOffset,
+      timeToLive: packet.timeToLive,
+      protocol: packet.protocol,
+      headerChecksum: packet.headerChecksum,
+      sourceAddress: packet.sourceAddress.toString(),
+      destinationAddress: packet.destinationAddress.toString(),
+    };
+  
+    // Add payload details if available
+    if (packet.payload instanceof EchoRequest) {
+      const echoRequest = packet.payload as EchoRequest;
+      packetDetails.payload = {
+        type: 'EchoRequest',
+        identifier: echoRequest.identifier,
+        sequenceNumber: echoRequest.sequenceNumber,
+        data: Array.from(echoRequest.data),
+      };
+    } else if (packet.payload instanceof EchoReply) {
+      const echoReply = packet.payload as EchoReply;
+      packetDetails.payload = {
+        type: 'EchoReply',
+        identifier: echoReply.identifier,
+        sequenceNumber: echoReply.sequenceNumber,
+        data: Array.from(echoReply.data),
+      };
+    } else {
+      packetDetails.payload = {
+        type: 'Unknown',
+        protocol: packet.payload.protocol(),
+      };
+    }
+  
+    return packetDetails;
+  }
+
   showInfo() {
     const rightbar = RightBar.getInstance();
     const info = new StyledInfo("Packet Information");
@@ -93,6 +137,10 @@ export class Packet extends Graphics {
       "Destination IP Address",
       this.rawPacket.destinationAddress.toString(),
     );
+
+    const packetDetails = this.getPacketDetails(this.rawPacket);
+
+    console.log("Packet details:", packetDetails);
 
     rightbar.renderInfo(info);
 
