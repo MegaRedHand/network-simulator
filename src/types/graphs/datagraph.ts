@@ -155,28 +155,6 @@ export class DataGraph {
     device1.connections.add(n2Id);
     device2.connections.add(n1Id);
 
-    if (isRouter(device1)) {
-      if (!device1.routingTable) {
-        device1.routingTable = [];
-      }
-      device1.routingTable.push({
-        ip: device2.ip.toString(),
-        mask: device2.mask,
-        iface: n2Id,
-      });
-    }
-
-    if (isRouter(device2)) {
-      if (!device2.routingTable) {
-        device2.routingTable = [];
-      }
-      device2.routingTable.push({
-        ip: device1.ip.toString(),
-        mask: device1.mask,
-        iface: n1Id,
-      });
-    }
-
     console.log(
       `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,
     );
