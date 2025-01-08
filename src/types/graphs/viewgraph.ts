@@ -178,6 +178,11 @@ export class ViewGraph {
    * @param endPosition - Posición final después del movimiento.
    */
   registerMove(did: DeviceId, startPosition: Position, endPosition: Position) {
+    // Verifica si hay un cambio en la posición
+    if (startPosition.x === endPosition.x && startPosition.y === endPosition.y) {
+      console.log(`No movement detected for device ID ${did}. Move not registered.`);
+      return;
+    }
     const move = new MoveDevice(did, startPosition, endPosition);
     urManager.push(move);
   }
