@@ -1,3 +1,4 @@
+import { Position } from "../common";
 import { createDevice } from "../devices";
 import { CreateDevice } from "../devices/utils";
 import { DeviceId } from "../graphs/datagraph";
@@ -48,3 +49,39 @@ export class AddDeviceMove implements Move {
     viewgraph.viewport.addChild(device);
   }
 }
+
+export class MoveDevice {
+  type: TypeMove = TypeMove.MoveDevice;
+  did: DeviceId;
+  startPosition: Position;
+  endPosition: Position;
+
+  constructor(did: DeviceId, startPosition: Position, endPosition: Position) {
+    this.did = did;
+    this.startPosition = startPosition;
+    this.endPosition = endPosition;
+  }
+
+  undo(viewgraph: ViewGraph): void {
+    const device = viewgraph.getDevice(this.did);
+    if (!device) {
+      throw new Error(`Device with ID ${this.did} not found.`);
+    }
+
+    device.x = this.startPosition.x;
+    device.y = this.startPosition.y;
+    viewgraph.deviceMoved(this.did);
+  }
+
+  redo(viewgraph: ViewGraph): void {
+    const device = viewgraph.getDevice(this.did);
+    if (!device) {
+      throw new Error(`Device with ID ${this.did} not found.`);
+    }
+
+    device.x = this.endPosition.x;
+    device.y = this.endPosition.y;
+    viewgraph.deviceMoved(this.did);
+  }
+}
+

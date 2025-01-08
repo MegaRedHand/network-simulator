@@ -10,7 +10,7 @@ import { EdgeId, ViewGraph } from "./../graphs/viewgraph";
 import {
   deselectElement,
   refreshElement,
-  selectElement,
+  selectElement
 } from "./../viewportManager";
 import { RightBar } from "../../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../../utils";
@@ -42,6 +42,8 @@ export abstract class Device extends Sprite {
 
   static dragTarget: Device | null = null;
   static connectionTarget: Device | null = null;
+  static startPosition: Position | null = null;
+
 
   ip: IpAddress;
   ipMask: IpAddress;
@@ -125,6 +127,9 @@ export abstract class Device extends Sprite {
       selectElement(this);
     }
     Device.dragTarget = this;
+
+    // Guardar posición inicial
+    Device.startPosition = { x: this.x, y: this.y };
     event.stopPropagation();
 
     // Listen to global pointermove and pointerup events
@@ -240,10 +245,33 @@ function onPointerMove(event: FederatedPointerEvent): void {
 
 function onPointerUp(): void {
   console.log("Entered onPointerUp");
-  if (Device.dragTarget) {
+  if (Device.dragTarget && Device.startPosition) {
+    const endPosition: Position = { x: Device.dragTarget.x, y: Device.dragTarget.y };
+    console.log("Finalizing move for device:", {
+      id: Device.dragTarget.id,
+      startPosition: Device.startPosition,
+      endPosition,
+    });
+
+    // Notifica al ViewGraph sobre el movimiento
+    try {
+      Device.dragTarget.viewgraph.registerMove(
+        Device.dragTarget.id,
+        Device.startPosition,
+        endPosition
+      );
+      console.log("Move registered successfully.");
+    } catch (error) {
+      console.error("Error registering move:", error);
+    }
+
+    // Resetear variables estáticas
+    Device.startPosition = null;
+
     // Remove global pointermove and pointerup events
     Device.dragTarget.parent.off("pointermove", onPointerMove);
     Device.dragTarget.parent.off("pointerup", onPointerUp);
     Device.dragTarget = null;
   }
 }
+

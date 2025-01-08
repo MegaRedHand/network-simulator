@@ -4,6 +4,9 @@ import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer } from "../devices/device";
 import { createDevice, layerFromType, layerIncluded } from "../devices/utils";
+import { Position } from "../common";
+import { MoveDevice } from "../undo-redo/move";
+import { urManager } from "../viewportManager";
 
 export type EdgeId = number;
 
@@ -166,6 +169,17 @@ export class ViewGraph {
       }
     });
     this.datagraph.updateDevicePosition(deviceId, { x: device.x, y: device.y });
+  }
+
+  /**
+   * Registra un movimiento de dispositivo en el `urManager`.
+   * @param did - ID del dispositivo que se movió.
+   * @param startPosition - Posición inicial antes del movimiento.
+   * @param endPosition - Posición final después del movimiento.
+   */
+  registerMove(did: DeviceId, startPosition: Position, endPosition: Position) {
+    const move = new MoveDevice(did, startPosition, endPosition);
+    urManager.push(move);
   }
 
   // Get all connections of a device
