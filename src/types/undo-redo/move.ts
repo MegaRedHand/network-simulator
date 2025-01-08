@@ -1,7 +1,8 @@
 import { Position } from "../common";
 import { createDevice } from "../devices";
+import { DeviceType } from "../devices/device";
 import { CreateDevice } from "../devices/utils";
-import { DeviceId } from "../graphs/datagraph";
+import { DeviceId, GraphNode } from "../graphs/datagraph";
 import { ViewGraph } from "../graphs/viewgraph";
 
 enum TypeMove {
@@ -32,11 +33,12 @@ export class AddDeviceMove implements Move {
   }
 
   redo(viewgraph: ViewGraph): void {
-    // Lo lleva a la posicion original, para tener el movimiento de cambio de posicion esta el MoveDevice
+    // Crear el dispositivo nuevamente
     const device = createDevice(this.data, viewgraph);
-    viewgraph.addDevice(device);
+  
     const datagraph = viewgraph.getDataGraph();
-    // esto queda feo, tal vez que CreateData y GraphNode sean los mismo
+  
+    // Construir el deviceInfo con la lógica para manejar los routers
     const deviceInfo = {
       type: this.data.type,
       x: this.data.x,
@@ -44,10 +46,15 @@ export class AddDeviceMove implements Move {
       ip: this.data.ip,
       mask: this.data.mask,
       connections: new Set<DeviceId>(),
+      ...(this.data.type === DeviceType.Router && { routingTable: [] }), // Agregar routingTable si es un router
     };
-    datagraph.addDevice(this.data.id, deviceInfo);
+  
+    // Agregar el dispositivo al datagraph y al viewgraph
+    datagraph.addDevice(this.data.id, deviceInfo as GraphNode);
+    viewgraph.addDevice(device);
     viewgraph.viewport.addChild(device);
   }
+  
 }
 
 export class MoveDevice {
