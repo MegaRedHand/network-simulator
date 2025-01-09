@@ -29,7 +29,12 @@ export class AddDeviceMove implements Move {
   }
 
   undo(viewgraph: ViewGraph): void {
-    viewgraph.removeDevice(this.data.id);
+    const device = viewgraph.getDevice(this.data.id);
+    if (!device) {
+      throw new Error(`Device with ID ${this.data.id} not found.`);
+    }
+    viewgraph.removeDevice(this.data.id, false);
+
   }
 
   redo(viewgraph: ViewGraph): void {
@@ -89,6 +94,54 @@ export class MoveDevice {
     device.x = this.endPosition.x;
     device.y = this.endPosition.y;
     viewgraph.deviceMoved(this.did);
+  }
+}
+
+export class RemoveDeviceMove implements Move {
+  type: TypeMove = TypeMove.RemoveDevice;
+  data: CreateDevice; // Datos del dispositivo eliminado
+  connections: { edgeId: number; adyacentId: DeviceId }[]; // Conexiones del dispositivo
+
+  constructor(data: CreateDevice, connections: { edgeId: number; adyacentId: DeviceId }[]) {
+    this.data = data;
+    this.connections = connections;
+  }
+
+  undo(viewgraph: ViewGraph): void {
+    // Restaurar el dispositivo eliminado
+    const device = createDevice(this.data, viewgraph);
+
+    const datagraph = viewgraph.getDataGraph();
+
+    // Construir el deviceInfo con la lógica para manejar los routers
+    const deviceInfo = {
+      type: this.data.type,
+      x: this.data.x,
+      y: this.data.y,
+      ip: this.data.ip,
+      mask: this.data.mask,
+      connections: new Set<DeviceId>(this.connections.map((conn) => conn.adyacentId)),
+      ...(this.data.type === DeviceType.Router && { routingTable: [] }), // Agregar routingTable si es un router
+    };
+
+    // Agregar el dispositivo al datagraph y al viewgraph
+    datagraph.addDevice(this.data.id, deviceInfo as GraphNode);
+    viewgraph.addDevice(device);
+    viewgraph.viewport.addChild(device);
+
+    // Restaurar conexiones
+    this.connections.forEach(({ edgeId, adyacentId }) => {
+      viewgraph.addEdge(this.data.id, adyacentId);
+    });
+  }
+
+  redo(viewgraph: ViewGraph): void {
+    // Eliminar nuevamente el dispositivo
+    const device = viewgraph.getDevice(this.data.id);
+    if (!device) {
+      throw new Error(`Device with ID ${this.data.id} not found.`);
+    }
+    viewgraph.removeDevice(this.data.id, false);
   }
 }
 

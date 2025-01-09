@@ -26,6 +26,8 @@ export class UndoRedoManager {
       this.redoBuf.push(move); // tal vez hay que guardar otra cosa
     }
     this.notifyListeners();
+    console.log(this.redoBuf)
+    console.log(this.undoBuf)
   }
 
   redo(viewgraph: ViewGraph) {
@@ -33,9 +35,11 @@ export class UndoRedoManager {
       const move = this.redoBuf.pop();
       // rehacer el movimineto con move
       move.redo(viewgraph);
-      this.undoBuf.push(move); // tal ves hay que guardar otra cosa
+      this.undoBuf.push(move); // tal vez hay que guardar otra cosa
     }
     this.notifyListeners();
+    console.log(this.redoBuf)
+    console.log(this.undoBuf)
   }
 
   canUndo(): boolean {
@@ -48,5 +52,15 @@ export class UndoRedoManager {
 
   suscribe(listener: () => void) {
     this.listeners.push(listener);
+  }
+
+  /**
+   * Resets the UndoRedoManager by clearing both undo and redo buffers.
+   */
+  reset() {
+    this.undoBuf = [];
+    this.redoBuf = [];
+    this.notifyListeners();
+    console.log("UndoRedoManager has been reset.");
   }
 }

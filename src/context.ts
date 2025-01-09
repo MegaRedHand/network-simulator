@@ -39,6 +39,7 @@ export class GlobalContext {
     this.setNetwork(datagraph, layer);
     this.setupAutoSave();
     saveToLocalStorage(this);
+    this.viewgraph.reseturmanager();
   }
 
   getViewport() {
