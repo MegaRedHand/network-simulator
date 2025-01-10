@@ -115,13 +115,13 @@ export class RemoveDeviceMove implements Move {
 
     // Construir el deviceInfo con la lógica para manejar los routers
     const deviceInfo = {
-      type: this.data.type,
-      x: this.data.x,
-      y: this.data.y,
-      ip: this.data.ip,
-      mask: this.data.mask,
-      connections: new Set<DeviceId>(this.connections.map((conn) => conn.adyacentId)),
-      ...(this.data.type === DeviceType.Router && { routingTable: [] }), // Agregar routingTable si es un router
+        type: this.data.type,
+        x: this.data.x,
+        y: this.data.y,
+        ip: this.data.ip,
+        mask: this.data.mask,
+        connections: new Set(),
+        ...(this.data.type === DeviceType.Router && { routingTable: [] }), // Agregar routingTable si es un router
     };
 
     // Agregar el dispositivo al datagraph y al viewgraph
@@ -129,11 +129,26 @@ export class RemoveDeviceMove implements Move {
     viewgraph.addDevice(device);
     viewgraph.viewport.addChild(device);
 
-    // Restaurar conexiones
+    // Restaurar conexiones usando connectTo
     this.connections.forEach(({ edgeId, adyacentId }) => {
-      viewgraph.addEdge(this.data.id, adyacentId);
+        const adyacentDevice = viewgraph.getDevice(adyacentId);
+
+        if (adyacentDevice) {
+            const connected = device.connectTo(adyacentId);
+
+            if (!connected) {
+                console.warn(
+                    `Failed to reconnect Device ${device.id} to Device ${adyacentId}`
+                );
+            }
+        } else {
+            console.warn(
+                `Adjacent Device ${adyacentId} not found while reconnecting Device ${device.id}`
+            );
+        }
     });
   }
+
 
   redo(viewgraph: ViewGraph): void {
     // Eliminar nuevamente el dispositivo

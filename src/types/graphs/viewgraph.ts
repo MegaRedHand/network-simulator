@@ -377,7 +377,7 @@ removeDevice(id: number, registerMove: boolean = true) {
     });
   }
 
-  reseturmanager() {
+  reseturmanager( ) {
     urManager.reset();
   }
 }
