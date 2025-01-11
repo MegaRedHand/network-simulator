@@ -159,8 +159,12 @@ export class Packet extends Graphics {
   }
 
   removeHighlight() {
+    if (!this.context || !contextPerPacketType[this.type]) {
+        console.warn('Context or packet type context is null');
+        return;
+    }
     this.context = contextPerPacketType[this.type];
-  }
+}
 
   traverseEdge(edge: Edge, start: DeviceId): void {
     this.progress = 0;
