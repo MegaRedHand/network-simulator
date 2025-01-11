@@ -71,7 +71,11 @@ export class DeviceInfo extends StyledInfo {
   }
 
   addRoutingTable(entries: RoutingTableEntry[]) {
-    const rows = entries.map((entry) => [entry.ip, entry.mask, entry.iface]);
+    const rows = entries.map((entry) => [
+      entry.ip,
+      entry.mask,
+      `eth${entry.iface}`,
+    ]);
 
     const dynamicTable = createToggleTable(
       "Routing Table", // Title

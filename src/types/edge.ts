@@ -1,26 +1,27 @@
 import { Graphics, Point } from "pixi.js";
-import { ViewGraph } from "./graphs/viewgraph";
+import { EdgeId, ViewGraph } from "./graphs/viewgraph";
 import { Device } from "./devices/index"; // Import the Device class
 import { deselectElement, selectElement } from "./viewportManager";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils";
 import { Packet } from "./packet";
+import { DeviceId } from "./graphs/datagraph";
 
 export interface EdgeEdges {
-  n1: number;
-  n2: number;
+  n1: DeviceId;
+  n2: DeviceId;
 }
 
 export class Edge extends Graphics {
-  id: number;
-  connectedNodes: { n1: number; n2: number };
+  id: EdgeId;
+  connectedNodes: { n1: DeviceId; n2: DeviceId };
   startPos: Point;
   endPos: Point;
   viewgraph: ViewGraph;
   rightbar: RightBar;
 
   constructor(
-    id: number,
+    id: EdgeId,
     connectedNodes: EdgeEdges,
     device1: Device,
     device2: Device,
@@ -41,7 +42,7 @@ export class Edge extends Graphics {
     this.on("click", () => selectElement(this));
   }
 
-  nodePosition(nodeId: number): Point | undefined {
+  nodePosition(nodeId: DeviceId): Point | undefined {
     return this.connectedNodes.n1 === nodeId
       ? this.startPos
       : this.connectedNodes.n2 === nodeId
@@ -49,7 +50,7 @@ export class Edge extends Graphics {
         : undefined;
   }
 
-  otherEnd(nodeId: number): number | undefined {
+  otherEnd(nodeId: DeviceId): DeviceId | undefined {
     return this.connectedNodes.n1 === nodeId
       ? this.connectedNodes.n2
       : this.connectedNodes.n2 === nodeId
