@@ -11,7 +11,10 @@ export class EmptyPayload implements IpPayload {
   }
 }
 
+/// Internet Protocol (IP) address
+// TODO: support IPv6?
 export class IpAddress {
+  // 4 bytes
   octets: Uint8Array;
 
   constructor(octets: Uint8Array) {
