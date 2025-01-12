@@ -12,7 +12,6 @@
     "@eslint/js": "^9.14.0",
     "@types/eslint__js": "^8.42.3",
     "@types/jest": "^29.5.14",
-    "@types/pixi.js": "^5.0.0",
     "css-loader": "7.1.2",
     "eslint": "^9.14.0",
     "html-webpack-plugin": "^5.6.0",
