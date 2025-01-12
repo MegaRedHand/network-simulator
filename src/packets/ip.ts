@@ -192,7 +192,7 @@ export class IPv4Packet {
   }: {
     withChecksum?: boolean;
     withPayload?: boolean;
-  }) {
+  } = {}) {
     let checksum = 0;
     if (withChecksum) {
       checksum = this.headerChecksum;

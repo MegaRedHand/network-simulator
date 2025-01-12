@@ -1,3 +1,5 @@
+import { CRC32 } from "@tsxper/crc32";
+
 // From https://en.wikipedia.org/wiki/EtherType
 export const IP_PROTOCOL_TYPE = 0x0800;
 export const ARP_PROTOCOL_TYPE = 0x0806;
@@ -41,6 +43,8 @@ export class MacAddress {
   }
 }
 
+const crc32 = new CRC32();
+
 export class EthernetFrame {
   // Info taken from Computer Networking: A Top-Down Approach
   // 8 bytes
@@ -63,8 +67,42 @@ export class EthernetFrame {
   // If the payload is smaller than 46 bytes, it is padded.
   // TODO: make this an interface
   // The payload
-  payload: Uint8Array;
+  payload: FramePayload;
   // 4 bytes
   // Cyclic Redundancy Check (CRC)
-  crc: number;
+  get crc(): number {
+    return crc32.forBytes(this.toBytes({ withChecksum: false }));
+  }
+
+  constructor(
+    source: MacAddress,
+    destination: MacAddress,
+    payload: FramePayload,
+  ) {
+    this.destination = destination;
+    this.source = source;
+    this.type = payload.type();
+    this.payload = payload;
+  }
+
+  toBytes({ withChecksum = true }: { withChecksum?: boolean } = {}) {
+    let checksum = [];
+    if (withChecksum) {
+      const crc = this.crc;
+      checksum = [crc >> 24, (crc >> 16) & 0xff, (crc >> 8) & 0xff, crc & 0xff];
+    }
+    return Uint8Array.from([
+      ...this.preamble,
+      ...this.destination.octets,
+      ...this.source.octets,
+      this.type >> 8,
+      this.type & 0xff,
+      ...this.payload.toBytes(),
+    ]);
+  }
+}
+
+export interface FramePayload {
+  toBytes(): Uint8Array;
+  type(): number;
 }
