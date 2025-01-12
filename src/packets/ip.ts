@@ -1,5 +1,6 @@
 import { FramePayload, IP_PROTOCOL_TYPE } from "./ethernet";
 
+// Taken from here: https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
 export const ICMP_PROTOCOL_NUMBER = 1;
 export const TCP_PROTOCOL_NUMBER = 6;
 export const UDP_PROTOCOL_NUMBER = 17;
@@ -9,6 +10,7 @@ export class EmptyPayload implements IpPayload {
     return new Uint8Array(0);
   }
   protocol() {
+    // This number is reserved for experimental protocols
     return 0xfd;
   }
 }
@@ -102,7 +104,9 @@ export class IpAddressGenerator {
 }
 
 export interface IpPayload {
+  // The bytes equivalent of the payload
   toBytes(): Uint8Array;
+  // The number of the protocol
   protocol(): number;
 }
 
