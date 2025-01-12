@@ -86,7 +86,7 @@ export class EthernetFrame {
   }
 
   toBytes({ withChecksum = true }: { withChecksum?: boolean } = {}) {
-    let checksum = [];
+    let checksum: number[] = [];
     if (withChecksum) {
       const crc = this.crc;
       checksum = [crc >> 24, (crc >> 16) & 0xff, (crc >> 8) & 0xff, crc & 0xff];
@@ -98,6 +98,7 @@ export class EthernetFrame {
       this.type >> 8,
       this.type & 0xff,
       ...this.payload.toBytes(),
+      ...checksum,
     ]);
   }
 }
