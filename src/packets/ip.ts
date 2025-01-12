@@ -1,3 +1,5 @@
+import { FramePayload, IP_PROTOCOL_TYPE } from "./ethernet";
+
 export const ICMP_PROTOCOL_NUMBER = 1;
 export const TCP_PROTOCOL_NUMBER = 6;
 export const UDP_PROTOCOL_NUMBER = 17;
@@ -120,7 +122,7 @@ export interface IpPayload {
 //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //  |                    Options                    |    Padding    |
 //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-export class IPv4Packet {
+export class IPv4Packet implements FramePayload {
   // IP version field
   // 4 bits
   readonly version = 4;
@@ -230,6 +232,10 @@ export class IPv4Packet {
     const octets = this.toBytes({ withPayload: false });
     const result = computeIpChecksum(octets);
     return result === 0;
+  }
+
+  type(): number {
+    return IP_PROTOCOL_TYPE;
   }
 }
 
