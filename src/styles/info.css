@@ -1,0 +1,31 @@
+/* Estilos base para el contenedor */
+.toggle-info-container {
+    overflow: hidden;
+    text-align: left;
+    margin: 0; /* Elimina márgenes adicionales */
+    padding: 0; /* Elimina rellenos adicionales */
+  }
+  
+  /* Ajustes para el texto de la lista */
+  .toggle-info-container .right-bar-info {
+    margin: 0;
+    padding: 0;
+    list-style: none; /* Elimina los puntos de lista */
+  }
+  
+  .toggle-info-container .right-bar-info p {
+    margin: 5;
+    padding: 0;
+    text-align: left;
+  }
+  
+  /* Elementos abiertos */
+  .toggle-info-container .right-bar-info.open {
+    display: block;
+  }
+  
+  /* Transiciones para una experiencia más fluida */
+  .toggle-info-container .hidden {
+    display: none;
+  }
+  

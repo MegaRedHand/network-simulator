@@ -74,6 +74,20 @@ export class RightBar {
     }
   }
 
+  addToggleButton(
+    title: string,
+    details: Record<string, string | number | object>,
+    buttonClass = "right-bar-toggle-button",
+    infoClass = "right-bar-info",
+  ) {
+    const container = createToggleInfo(title, details, buttonClass, infoClass);
+    const infoContent = document.getElementById("info-content");
+
+    if (infoContent) {
+      infoContent.appendChild(container);
+    }
+  }
+
   // Adds a select dropdown to the right-bar
   addDropdown(
     label: string,
@@ -143,6 +157,51 @@ export function createToggleTable(
 
   return container;
 }
+
+export function createToggleInfo(
+  title: string,
+  details: Record<string, string | number | object>,
+  buttonClass = "right-bar-toggle-button",
+  infoClass = "right-bar-info",
+) {
+  const container = document.createElement("div");
+  container.classList.add("toggle-info-container");
+
+  // Create toggle button
+  const button = document.createElement("button");
+  button.classList.add(buttonClass);
+  button.textContent = title;
+
+  // Create info list
+  const list = document.createElement("ul");
+  list.classList.add(infoClass, "hidden");
+
+  // Add details (Except source and destination addresses)
+  Object.entries(details).forEach(([key, value]) => {
+    if (key !== "sourceAddress" && key !== "destinationAddress") {
+      const listItem = document.createElement("li");
+      listItem.textContent = `${key}: ${value}`;
+      list.appendChild(listItem);
+    }
+  });
+
+  // Toggle when clicking on button
+  button.onclick = () => {
+    const isHidden = list.classList.contains("hidden");
+    list.classList.toggle("hidden", !isHidden);
+    list.classList.toggle("open", isHidden);
+    container.classList.toggle("hidden", !isHidden);
+    container.classList.toggle("open", isHidden);
+    button.classList.toggle("open", isHidden);
+  };
+
+  // Add button and list to container
+  container.appendChild(button);
+  container.appendChild(list);
+
+  return container;
+}
+
 
 export function createRightBarButton(
   text: string,

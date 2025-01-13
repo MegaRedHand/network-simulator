@@ -155,58 +155,11 @@ export class Packet extends Graphics {
       "right-bar-delete-button",
     );
 
-    // Add a "Show/Hide Details" button
-    rightbar.addButton(
-      this.detailsVisible ? "Hide Details" : "Show Details",
-      () => {
-        this.detailsVisible = !this.detailsVisible;
-        this.togglePacketDetails();
-      },
-      "right-bar-toggle-button"
-    );
-  }
-
-  togglePacketDetails() {
-    const rightbar = RightBar.getInstance();
-    if (!rightbar) {
-      console.error("RightBar instance not found.");
-      return;
-    }
-
-    // Clear the right bar and re-render the information
-    rightbar.clearContent();
-    this.showInfo(); // Re-render the basic info
-
-    if (this.detailsVisible) {
-      // Create a container for the packet details
-      const packetDetails = this.getPacketDetails(this.rawPacket);
-      const detailsContainer = document.createElement("div");
-      detailsContainer.classList.add("packet-details-container");
-
-      // Populate the container with packet details
-      Object.entries(packetDetails).forEach(([key, value]) => {
-        const detailElement = document.createElement("div");
-        detailElement.classList.add("detail-item");
-
-        const label = document.createElement("span");
-        label.classList.add("detail-label");
-        label.textContent = `${key}: `;
-
-        const valueElement = document.createElement("span");
-        valueElement.classList.add("detail-value");
-        valueElement.textContent = typeof value === "object" ? JSON.stringify(value, null, 2) : value.toString();
-
-        detailElement.appendChild(label);
-        detailElement.appendChild(valueElement);
-        detailsContainer.appendChild(detailElement);
-      });
-
-      // Append the details container to the right bar
-      const infoContent = document.getElementById("info-content");
-      if (infoContent) {
-        infoContent.appendChild(detailsContainer);
-      }
-    }
+    // Add a toggle info section for packet details
+    const packetDetails = this.getPacketDetails(this.rawPacket);
+    
+    rightbar.addToggleButton("Packet Details", packetDetails);
+  
   }
 
   highlight() {
