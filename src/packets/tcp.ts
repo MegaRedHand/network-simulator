@@ -1,5 +1,34 @@
 import { IpPayload, TCP_PROTOCOL_NUMBER } from "./ip";
 
+class Flags {
+  // Urgent Pointer field significant
+  readonly urg = false;
+  // Acknowledgment field significant
+  public ack: boolean;
+  // Push function
+  readonly psh = false;
+  // Reset the connection
+  readonly rst = false;
+  // Synchronize sequence numbers
+  public syn: boolean;
+  // No more data from sender
+  public fin: boolean;
+
+  // 6 bits
+  toByte(): number {
+    return [this.urg, this.ack, this.psh, this.rst, this.syn, this.fin].reduce(
+      (acc, flag, index) => {
+        return acc | bitSet(flag, 5 - index);
+      },
+      0,
+    );
+  }
+}
+
+function bitSet(value: boolean, bit: number): number {
+  return value ? 1 << bit : 0;
+}
+
 export class TcpSegment implements IpPayload {
   // Info taken from the original RFC: https://www.ietf.org/rfc/rfc793.txt
   //  0                   1                   2                   3
@@ -41,32 +70,21 @@ export class TcpSegment implements IpPayload {
 
   // 4 bits
   // 4-byte offset from the start of the TCP segment to the start of the data
-  dataOffset: number;
+  readonly dataOffset: number = 5;
 
   // 6 bits
   // Reserved for future use.  Must be zero.
-  // reserved: number = 0;
+  readonly reserved: number = 0;
 
-  // Flags
+  // Control bits
   // 6 bits
-  // Urgent Pointer field significant
-  urg: boolean;
-  // Acknowledgment field significant
-  ack: boolean;
-  // Push function
-  psh: boolean;
-  // Reset the connection
-  rst: boolean;
-  // Synchronize sequence numbers
-  syn: boolean;
-  // No more data from sender
-  fin: boolean;
+  flags: Flags;
 
   // 2 bytes
   // The number of data octets beginning with the one indicated in the
   // acknowledgment field which the sender of this segment is willing to
   // accept.
-  window: number;
+  readonly window: number = 0xffff;
 
   // 2 bytes
   get checksum(): number {
@@ -74,7 +92,7 @@ export class TcpSegment implements IpPayload {
   }
 
   // 2 bytes
-  urgentPointer: number;
+  readonly urgentPointer = 0;
 
   // 0-40 bytes
   // TODO: implement options
@@ -83,13 +101,58 @@ export class TcpSegment implements IpPayload {
   // Variable size
   data: Uint8Array;
 
+  constructor(
+    srcPort: number,
+    dstPort: number,
+    seqNum: number,
+    ackNum: number,
+    flags: Flags,
+    data: Uint8Array,
+  ) {
+    checkPort(srcPort);
+    checkPort(dstPort);
+    this.sourcePort = srcPort;
+    this.destinationPort = dstPort;
+    this.sequenceNumber = seqNum;
+    this.acknowledgementNumber = ackNum;
+    this.flags = flags;
+    this.data = data;
+  }
+
   // ### IpPayload ###
   toBytes(): Uint8Array {
-    return new Uint8Array(0);
+    const checksum = this.checksum;
+    return Uint8Array.from([
+      ...numberTobytes(this.sourcePort, 2),
+      ...numberTobytes(this.destinationPort, 2),
+      ...numberTobytes(this.sequenceNumber, 4),
+      ...numberTobytes(this.acknowledgementNumber, 4),
+      (this.dataOffset << 4) | this.reserved,
+      ((this.reserved & 0b11) << 6) | this.flags.toByte(),
+      ...numberTobytes(this.window, 2),
+      ...numberTobytes(checksum, 2),
+      ...numberTobytes(this.urgentPointer, 2),
+      ...this.data,
+    ]);
   }
 
   protocol(): number {
     return TCP_PROTOCOL_NUMBER;
   }
   // ### IpPayload ###
+}
+
+function checkPort(port: number): void {
+  if (port < 0 || port > 0xffff) {
+    throw new Error("Invalid port");
+  }
+}
+
+function numberTobytes(n: number, numBytes: number): Uint8Array {
+  const bytes = new Uint8Array(numBytes);
+  for (let i = 0; i < numBytes; i++) {
+    bytes[numBytes - i - 1] = n & 0xff;
+    n >>= 8;
+  }
+  return bytes;
 }
