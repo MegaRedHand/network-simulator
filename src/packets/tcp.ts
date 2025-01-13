@@ -1,6 +1,6 @@
 import { IpPayload, TCP_PROTOCOL_NUMBER } from "./ip";
 
-class Flags {
+export class Flags {
   // Urgent Pointer field significant
   readonly urg = false;
   // Acknowledgment field significant
@@ -109,8 +109,11 @@ export class TcpSegment implements IpPayload {
     flags: Flags,
     data: Uint8Array,
   ) {
-    checkPort(srcPort);
-    checkPort(dstPort);
+    checkUint(srcPort, 16);
+    checkUint(dstPort, 16);
+    checkUint(seqNum, 32);
+    checkUint(ackNum, 32);
+
     this.sourcePort = srcPort;
     this.destinationPort = dstPort;
     this.sequenceNumber = seqNum;
@@ -123,15 +126,15 @@ export class TcpSegment implements IpPayload {
   toBytes(): Uint8Array {
     const checksum = this.checksum;
     return Uint8Array.from([
-      ...numberTobytes(this.sourcePort, 2),
-      ...numberTobytes(this.destinationPort, 2),
-      ...numberTobytes(this.sequenceNumber, 4),
-      ...numberTobytes(this.acknowledgementNumber, 4),
+      ...uintToBytes(this.sourcePort, 2),
+      ...uintToBytes(this.destinationPort, 2),
+      ...uintToBytes(this.sequenceNumber, 4),
+      ...uintToBytes(this.acknowledgementNumber, 4),
       (this.dataOffset << 4) | this.reserved,
       ((this.reserved & 0b11) << 6) | this.flags.toByte(),
-      ...numberTobytes(this.window, 2),
-      ...numberTobytes(checksum, 2),
-      ...numberTobytes(this.urgentPointer, 2),
+      ...uintToBytes(this.window, 2),
+      ...uintToBytes(checksum, 2),
+      ...uintToBytes(this.urgentPointer, 2),
       ...this.data,
     ]);
   }
@@ -142,17 +145,27 @@ export class TcpSegment implements IpPayload {
   // ### IpPayload ###
 }
 
-function checkPort(port: number): void {
-  if (port < 0 || port > 0xffff) {
-    throw new Error("Invalid port");
+function checkUint(n: number, numBits: number): void {
+  if (numBits > 32) {
+    throw new Error("Bitwidth more than 32 not supported");
+  }
+  // >>> 0 is to turn this into an unsigned integer again
+  // https://stackoverflow.com/a/34897012
+  const max = numBits === 32 ? 0xffffffff : ((1 << numBits) >>> 0) - 1;
+  if (n < 0 || n > max) {
+    throw new Error("Invalid value for uint" + numBits + ": " + n);
   }
 }
 
-function numberTobytes(n: number, numBytes: number): Uint8Array {
+function uintToBytes(n: number, numBytes: number): Uint8Array {
+  const original = n;
   const bytes = new Uint8Array(numBytes);
   for (let i = 0; i < numBytes; i++) {
     bytes[numBytes - i - 1] = n & 0xff;
     n >>= 8;
+  }
+  if (n !== 0) {
+    throw new Error("Value too large for " + numBytes + " bytes: " + original);
   }
   return bytes;
 }
