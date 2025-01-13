@@ -88,7 +88,8 @@ export class TcpSegment implements IpPayload {
 
   // 2 bytes
   get checksum(): number {
-    return 0;
+    // TODO: compute
+    return Math.random();
   }
 
   // 2 bytes
