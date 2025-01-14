@@ -116,9 +116,9 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
   undoButton.appendChild(undoIcon);
 
   urManager.suscribe(() => {
-    console.log("Entre a la funcion suscribe de undo");
+    // console.log("Entre a la funcion suscribe de undo");
     undoButton.disabled = !urManager.canUndo();
-    console.log(`canUdo da ${urManager.canUndo()}`);
+    // console.log(`canUdo da ${urManager.canUndo()}`);
     // no funciona
     undoIcon.style.fill = urManager.canUndo() ? "#3a3a3a" : "#a09f9f";
   });
@@ -141,9 +141,9 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
   redoButton.appendChild(redoIcon);
 
   urManager.suscribe(() => {
-    console.log("Entre a la funcion suscribe de undo");
+    // console.log("Entre a la funcion suscribe de undo");
     redoButton.disabled = !urManager.canRedo();
-    console.log(`canRedo da ${urManager.canRedo()}`);
+    // console.log(`canRedo da ${urManager.canRedo()}`);
     // no funciona
     redoIcon.style.fill = urManager.canRedo() ? "#3a3a3a" : "#a09f9f";
   });
@@ -155,6 +155,22 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
   };
 
   redoButton.onclick = triggerRedo;
+
+  // Add keyboard shortcuts for Undo (Ctrl+Z) and Redo (Ctrl+Y)
+  document.addEventListener("keydown", (event) => {
+    if (event.ctrlKey) {
+      switch (event.key) {
+        case "z": // Ctrl+Z for Undo
+          event.preventDefault(); // Prevent default browser action (like undo in text inputs)
+          triggerUndo();
+          break;
+        case "y": // Ctrl+Y for Redo
+          event.preventDefault(); // Prevent default browser action
+          triggerRedo();
+          break;
+      }
+    }
+  });
 
   // Pause button’s logic
   const pauseButton = document.getElementById("pause-button");

@@ -7,7 +7,7 @@ import { Packet } from "./packet";
 import { DeviceType } from "./devices/device";
 import { CreateDevice, createDevice } from "./devices/utils";
 import { UndoRedoManager } from "./undo-redo/undoRedoManager";
-import { AddDeviceMove } from "./undo-redo/move";
+import { AddDeviceMove } from "./undo-redo/addDevice";
 
 type Selectable = Device | Edge | Packet;
 

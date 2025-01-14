@@ -3,9 +3,15 @@ import { Edge } from "./../edge";
 import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer } from "../devices/device";
-import { CreateDevice, createDevice, layerFromType, layerIncluded } from "../devices/utils";
+import {
+  CreateDevice,
+  createDevice,
+  layerFromType,
+  layerIncluded,
+} from "../devices/utils";
 import { Position } from "../common";
-import { MoveDevice, RemoveDeviceMove } from "../undo-redo/move";
+import { DragDeviceMove } from "../undo-redo/dragDevice";
+import { RemoveDeviceMove } from "../undo-redo/removeDevice";
 import { urManager } from "../viewportManager";
 
 export type EdgeId = number;
@@ -179,12 +185,9 @@ export class ViewGraph {
    */
   registerMove(did: DeviceId, startPosition: Position, endPosition: Position) {
     // Verifica si hay un cambio en la posición
-    if (startPosition.x === endPosition.x && startPosition.y === endPosition.y) {
-      console.log(`No movement detected for device ID ${did}. Move not registered.`);
-      return;
-    }
-    const move = new MoveDevice(did, startPosition, endPosition);
+    const move = new DragDeviceMove(did, startPosition, endPosition);
     urManager.push(move);
+    console.log("Move registered successfully.");
   }
 
   // Get all connections of a device
@@ -213,58 +216,52 @@ export class ViewGraph {
     return this.devices.size;
   }
 
-// Method to remove a device and its connections (edges)
-removeDevice(id: number, registerMove: boolean = true) {
-  const device = this.devices.get(id);
+  // Method to remove a device and its connections (edges)
+  removeDevice(id: number, registerMove: boolean = true) {
+    const device = this.devices.get(id);
 
-  if (!device) {
-    console.warn(`Device with ID ${id} does not exist in the graph.`);
-    return;
-  }
-
-  // Recolectar información para undo/redo si es necesario
-  if (registerMove) {
-    const connections = device.getConnections().map((connection) => ({
-      edgeId: connection.edgeId,
-      adyacentId: connection.adyacentId,
-    }));
-
-    const data: CreateDevice = {
-      id: device.id,
-      x: device.x,
-      y: device.y,
-      type: device.getType(),
-      ip: device.ip.toString(),
-      mask: device.ipMask.toString(),
-    };
-
-    const move = new RemoveDeviceMove(data, connections);
-    urManager.push(move);
-  }
-
-  // Proceder con la eliminación del dispositivo
-  device.getConnections().forEach((connection) => {
-    const adyacentDevice = this.devices.get(connection.adyacentId);
-    const edge = this.edges.get(connection.edgeId);
-    if (edge) {
-      if (adyacentDevice) {
-        adyacentDevice.removeConnection(edge.id);
-      }
-      edge.delete();
+    if (!device) {
+      console.warn(`Device with ID ${id} does not exist in the graph.`);
+      return;
     }
-  });
 
-  // Remove the device from the viewport and destroy it
-  this.viewport.removeChild(device);
-  device.destroy();
+    // Recolectar información para undo/redo si es necesario
+    if (registerMove) {
+      const data: CreateDevice = {
+        id: device.id,
+        x: device.x,
+        y: device.y,
+        type: device.getType(),
+        ip: device.ip.toString(),
+        mask: device.ipMask.toString(),
+      };
 
-  // Finally, remove the device from the graph
-  this.datagraph.removeDevice(id);
-  this.devices.delete(id);
+      const move = new RemoveDeviceMove(data, device.getConnections());
+      urManager.push(move);
+    }
 
-  console.log(`Device with ID ${id} and all its connections were removed.`);
-}
+    // Proceder con la eliminación del dispositivo
+    device.getConnections().forEach((connection) => {
+      const adyacentDevice = this.devices.get(connection.adyacentId);
+      const edge = this.edges.get(connection.edgeId);
+      if (edge) {
+        if (adyacentDevice) {
+          adyacentDevice.removeConnection(edge.id);
+        }
+        edge.delete();
+      }
+    });
 
+    // Remove the device from the viewport and destroy it
+    this.viewport.removeChild(device);
+    device.destroy();
+
+    // Finally, remove the device from the graph
+    this.datagraph.removeDevice(id);
+    this.devices.delete(id);
+
+    console.log(`Device with ID ${id} and all its connections were removed.`);
+  }
 
   // Method to remove a specific edge by its ID
   removeEdge(edgeId: EdgeId) {
@@ -375,9 +372,5 @@ removeDevice(id: number, registerMove: boolean = true) {
         }
       }
     });
-  }
-
-  reseturmanager( ) {
-    urManager.reset();
   }
 }
