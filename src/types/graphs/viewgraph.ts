@@ -57,7 +57,6 @@ export class ViewGraph {
       }
     });
 
-    console.log("Finished creating devices in ViewGraph");
     connections.forEach((key) => {
       const connection = parseConnectionKey(key);
       const device1 = this.getDevice(connection.id1);
@@ -312,9 +311,7 @@ export class ViewGraph {
     connections: Set<string>,
   ) {
     graph.get(v).connections.forEach((w) => {
-      console.log(`Se accede a ${w} desde ${v}`);
       if (!visited.has(w)) {
-        console.log(`Se visita ${w}`);
         const adyacent = this.datagraph.getDevice(w);
         // mark node as visited
         visited.add(w);
@@ -322,7 +319,6 @@ export class ViewGraph {
           // add connection between v and w
           const connectionKey: string = generateConnectionKey(w, s);
           if (!connections.has(connectionKey)) {
-            console.log(`Dispositivos agregados a conexion`);
             connections.add(connectionKey);
           }
         } else {

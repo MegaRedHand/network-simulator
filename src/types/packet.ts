@@ -318,7 +318,15 @@ export function sendPacket(
     return edge.otherEnd(originId) === destinationId;
   });
   if (firstEdge === undefined) {
-    firstEdge = originConnections[0];
+    firstEdge = originConnections.find((edge) => {
+      return isRouter(viewgraph.datagraph.getDevice(edge.otherEnd(originId)));
+    });
+  }
+  if (firstEdge === undefined) {
+    console.warn(
+      "El dispositivo de origen no está conectado al destino o a un router.",
+    );
+    return;
   }
   packet.traverseEdge(firstEdge, originId);
 }
