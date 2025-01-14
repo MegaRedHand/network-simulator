@@ -176,13 +176,19 @@ export function createToggleInfo(
   const list = document.createElement("ul");
   list.classList.add(infoClass, "hidden");
 
-  // Add details (Except source and destination addresses)
+  // Add details to the list
   Object.entries(details).forEach(([key, value]) => {
-    if (key !== "sourceAddress" && key !== "destinationAddress") {
-      const listItem = document.createElement("li");
-      listItem.textContent = `${key}: ${value}`;
-      list.appendChild(listItem);
+    const listItem = document.createElement("li");
+    if (key === "Payload") {
+      // Format the payload as JSON
+      const pre = document.createElement("pre");
+      pre.textContent = JSON.stringify(value, null, 2); // Pretty-print JSON
+      listItem.innerHTML = `<strong>${key}:</strong>`;
+      listItem.appendChild(pre);
+    } else {
+      listItem.innerHTML = `<strong>${key}:</strong> ${value}`;
     }
+    list.appendChild(listItem);
   });
 
   // Toggle when clicking on button

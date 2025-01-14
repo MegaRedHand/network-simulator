@@ -86,24 +86,22 @@ export class Packet extends Graphics {
   private getPacketDetails(packet: IPv4Packet) {
     // Creates a dictionary with the data of the packet
     const packetDetails: Record<string, string | number | object> = {
-      version: packet.version,
-      internetHeaderLength: packet.internetHeaderLength,
-      typeOfService: packet.typeOfService,
-      totalLength: packet.totalLength,
-      identification: packet.identification,
-      flags: packet.flags,
-      fragmentOffset: packet.fragmentOffset,
-      timeToLive: packet.timeToLive,
-      protocol: packet.protocol,
-      headerChecksum: packet.headerChecksum,
-      sourceAddress: packet.sourceAddress.toString(),
-      destinationAddress: packet.destinationAddress.toString(),
+      "Version": packet.version,
+      "Internet Header Length": packet.internetHeaderLength,
+      "Type of Service": packet.typeOfService,
+      "Total Length": packet.totalLength,
+      "Identification": packet.identification,
+      "Flags": packet.flags,
+      "Fragment Offset": packet.fragmentOffset,
+      "Time to Live": packet.timeToLive,
+      "Protocol": packet.protocol,
+      "Header Checksum": packet.headerChecksum,
     };
   
     // Add payload details if available
     if (packet.payload instanceof EchoRequest) {
       const echoRequest = packet.payload as EchoRequest;
-      packetDetails.payload = {
+      packetDetails.Payload = {
         type: 'EchoRequest',
         identifier: echoRequest.identifier,
         sequenceNumber: echoRequest.sequenceNumber,
@@ -111,14 +109,14 @@ export class Packet extends Graphics {
       };
     } else if (packet.payload instanceof EchoReply) {
       const echoReply = packet.payload as EchoReply;
-      packetDetails.payload = {
+      packetDetails.Payload = {
         type: 'EchoReply',
         identifier: echoReply.identifier,
         sequenceNumber: echoReply.sequenceNumber,
         data: Array.from(echoReply.data),
       };
     } else {
-      packetDetails.payload = {
+      packetDetails.Payload = {
         type: 'Unknown',
         protocol: packet.payload.protocol(),
       };
