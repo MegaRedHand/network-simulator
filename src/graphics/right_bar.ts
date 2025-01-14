@@ -172,6 +172,11 @@ export function createToggleInfo(
   button.classList.add(buttonClass);
   button.textContent = title;
 
+  // Create Packet Details title
+  const header = document.createElement("h3");
+  header.classList.toggle("hidden", true);
+  header.textContent = title;
+
   // Create info list
   const list = document.createElement("ul");
   list.classList.add(infoClass, "hidden");
@@ -199,10 +204,12 @@ export function createToggleInfo(
     container.classList.toggle("hidden", !isHidden);
     container.classList.toggle("open", isHidden);
     button.classList.toggle("open", isHidden);
+    header.classList.toggle("hidden", !isHidden);
   };
 
-  // Add button and list to container
+  // Add elements to container
   container.appendChild(button);
+  container.appendChild(header);
   container.appendChild(list);
 
   return container;
