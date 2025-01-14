@@ -122,10 +122,10 @@ export class Edge extends Graphics {
   }
 
   // Method to delete the edge
-  delete() {
+  delete(registerMove: boolean = true) {
     // Remove the edge from the viewgraph and datagraph
     deselectElement();
-    this.viewgraph.removeEdge(this.id);
+    this.viewgraph.removeEdge(this.id, registerMove);
 
     console.log(`Edge with ID ${this.id} deleted.`);
   }

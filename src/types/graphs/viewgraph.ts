@@ -13,6 +13,7 @@ import { Position } from "../common";
 import { DragDeviceMove } from "../undo-redo/dragDevice";
 import { RemoveDeviceMove } from "../undo-redo/removeDevice";
 import { urManager } from "../viewportManager";
+import { RemoveEdgeMove } from "../undo-redo/removeEdge";
 
 export type EdgeId = number;
 
@@ -240,7 +241,7 @@ export class ViewGraph {
       urManager.push(move);
     }
 
-    // Proceder con la eliminación del dispositivo
+    // Remove connection from adyacent’s devices
     device.getConnections().forEach((connection) => {
       const adyacentDevice = this.devices.get(connection.adyacentId);
       const edge = this.edges.get(connection.edgeId);
@@ -248,7 +249,7 @@ export class ViewGraph {
         if (adyacentDevice) {
           adyacentDevice.removeConnection(edge.id);
         }
-        edge.delete();
+        edge.delete(false);
       }
     });
 
@@ -264,12 +265,24 @@ export class ViewGraph {
   }
 
   // Method to remove a specific edge by its ID
-  removeEdge(edgeId: EdgeId) {
+  removeEdge(edgeId: EdgeId, registerMove: boolean = true) {
     const edge = this.edges.get(edgeId);
 
     if (!edge) {
       console.warn(`Edge with ID ${edgeId} does not exist in the graph.`);
       return;
+    }
+
+    // Recolectar información para undo/redo si es necesario
+    if (registerMove) {
+      const move = new RemoveEdgeMove({
+        edgeId: edgeId,
+        connectedNodes: {
+          n1: edge.connectedNodes.n1,
+          n2: edge.connectedNodes.n2,
+        },
+      });
+      urManager.push(move);
     }
 
     this.datagraph.removeConnection(

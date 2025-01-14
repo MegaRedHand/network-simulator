@@ -26,8 +26,8 @@ export class UndoRedoManager {
       this.redoBuf.push(move); // tal vez hay que guardar otra cosa
     }
     this.notifyListeners();
-    console.log(this.redoBuf)
-    console.log(this.undoBuf)
+    console.log(this.redoBuf);
+    console.log(this.undoBuf);
   }
 
   redo(viewgraph: ViewGraph) {
@@ -38,8 +38,8 @@ export class UndoRedoManager {
       this.undoBuf.push(move); // tal vez hay que guardar otra cosa
     }
     this.notifyListeners();
-    console.log(this.redoBuf)
-    console.log(this.undoBuf)
+    console.log(this.redoBuf);
+    console.log(this.undoBuf);
   }
 
   canUndo(): boolean {

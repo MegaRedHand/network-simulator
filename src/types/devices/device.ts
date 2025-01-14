@@ -11,6 +11,7 @@ import {
   deselectElement,
   refreshElement,
   selectElement,
+  urManager,
 } from "./../viewportManager";
 import { RightBar } from "../../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../../utils";
@@ -18,6 +19,8 @@ import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
+import { DragDeviceMove } from "../undo-redo/dragDevice";
+import { AddEdgeData, AddEdgeMove } from "../undo-redo/addEdge";
 
 export const DEVICE_SIZE = 20;
 
@@ -145,6 +148,15 @@ export abstract class Device extends Sprite {
       const adyacentDevice = this.viewgraph.getDevice(adyacentId);
       this.addConnection(edgeId, adyacentId);
       adyacentDevice.addConnection(edgeId, this.id);
+
+      // Register move
+      const moveData: AddEdgeData = {
+        edgeId,
+        connectedNodes: { n1: this.id, n2: adyacentId },
+      };
+      const move = new AddEdgeMove(moveData);
+      urManager.push(move);
+
       return true;
     }
     return false;
@@ -263,12 +275,12 @@ function onPointerUp(): void {
         `No movement detected for device ID ${Device.dragTarget.id}. Move not registered.`,
       );
     } else {
-      // Notifica al ViewGraph sobre el movimiento
-      Device.dragTarget.viewgraph.registerMove(
+      const move = new DragDeviceMove(
         Device.dragTarget.id,
         Device.startPosition,
         endPosition,
       );
+      urManager.push(move);
     }
 
     // Resetear variables estáticas
