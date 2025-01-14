@@ -86,23 +86,23 @@ export class Packet extends Graphics {
   private getPacketDetails(packet: IPv4Packet) {
     // Creates a dictionary with the data of the packet
     const packetDetails: Record<string, string | number | object> = {
-      "Version": packet.version,
+      Version: packet.version,
       "Internet Header Length": packet.internetHeaderLength,
       "Type of Service": packet.typeOfService,
       "Total Length": packet.totalLength,
-      "Identification": packet.identification,
-      "Flags": packet.flags,
+      Identification: packet.identification,
+      Flags: packet.flags,
       "Fragment Offset": packet.fragmentOffset,
       "Time to Live": packet.timeToLive,
-      "Protocol": packet.protocol,
+      Protocol: packet.protocol,
       "Header Checksum": packet.headerChecksum,
     };
-  
+
     // Add payload details if available
     if (packet.payload instanceof EchoRequest) {
       const echoRequest = packet.payload as EchoRequest;
       packetDetails.Payload = {
-        type: 'EchoRequest',
+        type: "EchoRequest",
         identifier: echoRequest.identifier,
         sequenceNumber: echoRequest.sequenceNumber,
         data: Array.from(echoRequest.data),
@@ -110,18 +110,18 @@ export class Packet extends Graphics {
     } else if (packet.payload instanceof EchoReply) {
       const echoReply = packet.payload as EchoReply;
       packetDetails.Payload = {
-        type: 'EchoReply',
+        type: "EchoReply",
         identifier: echoReply.identifier,
         sequenceNumber: echoReply.sequenceNumber,
         data: Array.from(echoReply.data),
       };
     } else {
       packetDetails.Payload = {
-        type: 'Unknown',
+        type: "Unknown",
         protocol: packet.payload.protocol(),
       };
     }
-  
+
     return packetDetails;
   }
 
@@ -155,9 +155,8 @@ export class Packet extends Graphics {
 
     // Add a toggle info section for packet details
     const packetDetails = this.getPacketDetails(this.rawPacket);
-    
+
     rightbar.addToggleButton("Packet Details", packetDetails);
-  
   }
 
   highlight() {
@@ -166,11 +165,11 @@ export class Packet extends Graphics {
 
   removeHighlight() {
     if (!this.context || !contextPerPacketType[this.type]) {
-        console.warn('Context or packet type context is null');
-        return;
+      console.warn("Context or packet type context is null");
+      return;
     }
     this.context = contextPerPacketType[this.type];
-}
+  }
 
   traverseEdge(edge: Edge, start: DeviceId): void {
     this.progress = 0;

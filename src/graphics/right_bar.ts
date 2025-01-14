@@ -216,7 +216,6 @@ export function createToggleInfo(
   return container;
 }
 
-
 export function createRightBarButton(
   text: string,
   onClick: () => void,
