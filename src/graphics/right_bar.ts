@@ -170,7 +170,7 @@ export function createToggleInfo(
   // Create toggle button
   const button = document.createElement("button");
   button.classList.add(buttonClass);
-  button.textContent = title;
+  button.textContent = "Show Details";
 
   // Create Packet Details title
   const header = document.createElement("h3");
@@ -205,6 +205,7 @@ export function createToggleInfo(
     container.classList.toggle("open", isHidden);
     button.classList.toggle("open", isHidden);
     header.classList.toggle("hidden", !isHidden);
+    button.textContent = isHidden ? "Hide Details" : "Show Details";
   };
 
   // Add elements to container
