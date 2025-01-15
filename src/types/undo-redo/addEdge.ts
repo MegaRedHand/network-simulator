@@ -16,7 +16,7 @@ export class AddEdgeMove implements Move {
   }
 
   undo(viewgraph: ViewGraph): void {
-    viewgraph.removeEdge(this.data.edgeId, false);
+    viewgraph.removeEdge(this.data.edgeId);
   }
 
   redo(viewgraph: ViewGraph): void {

@@ -30,6 +30,6 @@ export class RemoveEdgeMove implements Move {
   }
 
   redo(viewgraph: ViewGraph): void {
-    viewgraph.removeEdge(this.data.edgeId, false);
+    viewgraph.removeEdge(this.data.edgeId);
   }
 }

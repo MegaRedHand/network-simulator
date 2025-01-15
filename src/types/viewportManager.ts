@@ -8,6 +8,7 @@ import { DeviceType } from "./devices/device";
 import { CreateDevice, createDevice } from "./devices/utils";
 import { UndoRedoManager } from "./undo-redo/undoRedoManager";
 import { AddDeviceMove } from "./undo-redo/addDevice";
+import { RemoveDeviceMove, RemoveEdgeMove } from "./undo-redo";
 
 type Selectable = Device | Edge | Packet;
 
@@ -47,10 +48,44 @@ export function isSelected(element: Selectable) {
   return element === selectedElement;
 }
 
+function isDevice(selectable: Selectable): selectable is Device {
+  return selectable instanceof Device;
+}
+
+function isEdge(selectable: Selectable): selectable is Edge {
+  return selectable instanceof Edge;
+}
+
 document.addEventListener("keydown", (event) => {
   if (event.key === "Delete" || event.key === "Backspace") {
     if (selectedElement) {
-      selectedElement.delete();
+      let data;
+      if (isDevice(selectedElement)) {
+        data = {
+          id: selectedElement.id,
+          type: selectedElement.getType(),
+          x: selectedElement.x,
+          y: selectedElement.y,
+          ip: selectedElement.ip.toString(),
+          mask: selectedElement.ipMask.toString(),
+        };
+        const move = new RemoveDeviceMove(
+          data,
+          selectedElement.getConnections(),
+        );
+        selectedElement.delete();
+        urManager.push(move);
+      } else if (isEdge(selectedElement)) {
+        const move = new RemoveEdgeMove({
+          edgeId: selectedElement.id,
+          connectedNodes: selectedElement.connectedNodes,
+        });
+        selectedElement.delete();
+        urManager.push(move);
+      } else {
+        // se cambia esto
+        selectedElement.delete();
+      }
     }
   }
 
@@ -85,11 +120,9 @@ export function AddDevice(ctx: GlobalContext, type: DeviceType) {
   const id = datagraph.addNewDevice(deviceInfo);
 
   const deviceData: CreateDevice = { id, ...deviceInfo };
-  const newDevice: Device = createDevice(deviceData, viewgraph);
 
   // Add the Device to the graph
-  viewgraph.addDevice(newDevice);
-  viewport.addChild(newDevice);
+  const newDevice = viewgraph.addDevice(deviceData);
 
   const move = new AddDeviceMove(deviceData);
   urManager.push(move);

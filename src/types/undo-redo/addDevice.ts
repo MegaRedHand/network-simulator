@@ -18,13 +18,11 @@ export class AddDeviceMove implements Move {
     if (!device) {
       throw new Error(`Device with ID ${this.data.id} not found.`);
     }
-    viewgraph.removeDevice(this.data.id, false);
+    device.delete();
   }
 
   redo(viewgraph: ViewGraph): void {
     // Crear el dispositivo nuevamente
-    const device = createDevice(this.data, viewgraph);
-
     const datagraph = viewgraph.getDataGraph();
 
     // Construir el deviceInfo con la lógica para manejar los routers
@@ -40,7 +38,6 @@ export class AddDeviceMove implements Move {
 
     // Agregar el dispositivo al datagraph y al viewgraph
     datagraph.addDevice(this.data.id, deviceInfo as GraphNode);
-    viewgraph.addDevice(device);
-    viewgraph.viewport.addChild(device);
+    viewgraph.addDevice(this.data);
   }
 }

@@ -230,6 +230,8 @@ export class DataGraph {
       const connectedDevice = this.devices.get(connectedId);
       if (connectedDevice) {
         connectedDevice.connections.delete(id);
+      } else {
+        console.warn(`Connected device ${connectedId} does not exist`);
       }
     });
 

@@ -121,6 +121,8 @@ export abstract class Device extends Sprite {
     // Clear connections
     this.connections.clear();
     deselectElement();
+    console.log(`Device ${this.id} deleted`);
+    this.destroy();
   }
 
   onPointerDown(event: FederatedPointerEvent): void {
@@ -241,7 +243,6 @@ export abstract class Device extends Sprite {
 }
 
 function onPointerMove(event: FederatedPointerEvent): void {
-  console.log("Entered onPointerMove");
   if (Device.dragTarget) {
     Device.dragTarget.parent.toLocal(
       event.global,
@@ -255,7 +256,6 @@ function onPointerMove(event: FederatedPointerEvent): void {
 }
 
 function onPointerUp(): void {
-  console.log("Entered onPointerUp");
   if (Device.dragTarget && Device.startPosition) {
     const endPosition: Position = {
       x: Device.dragTarget.x,

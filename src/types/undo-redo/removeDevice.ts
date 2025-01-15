@@ -20,7 +20,6 @@ export class RemoveDeviceMove implements Move {
 
   undo(viewgraph: ViewGraph): void {
     // Restaurar el dispositivo eliminado
-    const device = createDevice(this.data, viewgraph);
 
     const datagraph = viewgraph.getDataGraph();
 
@@ -37,8 +36,7 @@ export class RemoveDeviceMove implements Move {
 
     // Agregar el dispositivo al datagraph y al viewgraph
     datagraph.addDevice(this.data.id, deviceInfo as GraphNode);
-    viewgraph.addDevice(device);
-    viewgraph.viewport.addChild(device);
+    const device = viewgraph.addDevice(this.data);
 
     // Restaurar conexiones usando connectTo
     this.connections.forEach(({ edgeId, adyacentId }) => {
@@ -66,6 +64,6 @@ export class RemoveDeviceMove implements Move {
     if (!device) {
       throw new Error(`Device with ID ${this.data.id} not found.`);
     }
-    viewgraph.removeDevice(this.data.id, false);
+    device.delete();
   }
 }
