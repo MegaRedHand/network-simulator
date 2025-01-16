@@ -22,7 +22,7 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
 
 export class Packet extends Graphics {
-  speed = 200;
+  speed = 100;
   progress = 0;
   viewgraph: ViewGraph;
   currentEdge: Edge;
@@ -31,10 +31,11 @@ export class Packet extends Graphics {
   type: string;
   sourceId: number;
   destinationId: number;
-
   rawPacket: IPv4Packet;
 
+
   static animationPaused = false;
+  static speedMultiplier = 1;
 
   static pauseAnimation() {
     Packet.animationPaused = true;
@@ -42,6 +43,10 @@ export class Packet extends Graphics {
 
   static unpauseAnimation() {
     Packet.animationPaused = false;
+  }
+
+  static setSpeedMultiplier(speed: number) {
+    Packet.speedMultiplier = speed;
   }
 
   constructor(
@@ -139,14 +144,17 @@ export class Packet extends Graphics {
     return null;
   }
 
+  
+
   animationTick(ticker: Ticker) {
     if (this.progress >= 1) {
       this.progress = 0;
       this.removeFromParent();
+  
       const newStart = this.currentEdge.otherEnd(this.currentStart);
       this.currentStart = newStart;
       const newEdgeId = this.routePacket(newStart);
-
+  
       const deleteSelf = () => {
         this.destroy();
         ticker.remove(this.animationTick, this);
@@ -154,27 +162,31 @@ export class Packet extends Graphics {
           deselectElement();
         }
       };
-
+  
       if (newEdgeId === null) {
         deleteSelf();
         return;
       }
+  
       const currentNodeEdges = this.viewgraph.getConnections(newStart);
       this.currentEdge = currentNodeEdges.find((edge) => {
         return edge.otherEnd(newStart) === newEdgeId;
       });
+  
       if (this.currentEdge === undefined) {
         deleteSelf();
         return;
       }
       this.currentEdge.addChild(this);
     }
+  
+    // Ajustar el progreso según el multiplicador de velocidad.
     if (!Packet.animationPaused) {
-      this.progress += (ticker.deltaMS * this.speed) / 100000;
+      this.progress += (ticker.deltaMS * this.speed * Packet.speedMultiplier) / 100000;
     }
-
+  
     this.updatePosition();
-  }
+  }  
 
   updatePosition() {
     const current = this.currentEdge;

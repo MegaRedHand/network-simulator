@@ -169,5 +169,18 @@ import PauseSvg from "./assets/pause-icon.svg";
   // TODO: load from local storage directly, without first generating a context
   loadFromLocalStorage(ctx, layerSelect.value);
 
+  // Speed selector logic
+  let speedMultiplier = 1; // Valor predeterminado del multiplicador de velocidad.
+
+  const speedSelect = document.getElementById("speed-select");
+  speedSelect?.addEventListener("change", (event) => {
+    const selectElement = event.target as HTMLSelectElement;
+    speedMultiplier = parseFloat(selectElement.value);
+    console.log(`Velocidad actualizada: ${speedMultiplier}x`);
+
+    // Si el multiplicador afecta a la animación de los paquetes
+    Packet.setSpeedMultiplier(speedMultiplier);
+  });
+
   console.log("initialized!");
 })();

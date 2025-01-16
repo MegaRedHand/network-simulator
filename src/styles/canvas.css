@@ -90,3 +90,56 @@
   width: 60%; /* Scales the icon to fit the button */
   height: 60%; /* Scales the icon to fit the button */
 }
+
+/* Speed Selector Styles */
+#speed-select {
+  position: absolute; /* Posiciona el selector sobre el canvas */
+  top: 10px; /* Separación desde el borde superior */
+  right: 190px; /* Separación desde el borde derecho */
+  width: 150px; /* Ancho ajustado para un diseño compacto */
+  height: 30px; /* Altura estándar */
+  padding: 0 10px; /* Espaciado interno horizontal */
+  font-size: 14px; /* Tamaño de fuente consistente */
+  font-family: "Arial", sans-serif; /* Fuente limpia */
+  color: #ffffff; /* Texto blanco */
+  background-color: #333333; /* Fondo oscuro */
+  border: 1px solid #666666; /* Borde gris */
+  border-radius: 6px; /* Bordes redondeados */
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+  cursor: pointer; /* Cursor interactivo */
+  transition: all 0.3s ease; /* Transiciones suaves */
+  appearance: none; /* Oculta el estilo nativo */
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iNSIgdmlld0JveD0iMCAwIDEwIDUiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEgMUw1IDRMMTAgMUgxWiIgZmlsbD0iI0NDQ0NDQyIvPjwvc3ZnPg=="); /* Icono de flecha personalizada */
+  background-repeat: no-repeat; /* Evita repetir el icono */
+  background-position: right 10px center; /* Posiciona la flecha */
+  background-size: 10px; /* Tamaño de la flecha */
+}
+
+/* Hover para el selector de velocidad */
+#speed-select:hover {
+  background-color: #444444; /* Fondo ligeramente más claro */
+  border-color: #888888; /* Borde más claro */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4); /* Sombra más pronunciada */
+}
+
+/* Focus para el selector de velocidad */
+#speed-select:focus {
+  outline: none; /* Elimina el contorno predeterminado */
+  box-shadow: 0 0 8px 2px rgba(136, 136, 136, 0.5); /* Resplandor gris */
+}
+
+/* Opciones del selector */
+#speed-select option {
+  font-size: 13px; /* Texto más compacto */
+  color: #ffffff; /* Texto blanco */
+  background-color: #292b2c; /* Fondo oscuro para las opciones */
+  border: none; /* Sin bordes */
+  padding: 5px; /* Espaciado interno */
+  cursor: pointer; /* Interactividad */
+}
+
+/* Hover en las opciones */
+#speed-select option:hover {
+  background-color: #444444; /* Fondo más claro en hover */
+}
+
