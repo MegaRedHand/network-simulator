@@ -24,6 +24,11 @@ describe("TCP module", () => {
     Uint8Array.of(),
   );
 
+  test("Checksum works", () => {
+    const expectedChecksum = 0x45a7;
+    expect(testSegment.checksum).toBe(expectedChecksum);
+  });
+
   test("toBytes works", () => {
     const bytes = Uint8Array.from([
       // Source port
