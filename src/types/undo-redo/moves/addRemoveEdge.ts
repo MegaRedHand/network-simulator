@@ -39,10 +39,6 @@ export class AddEdgeMove extends AddRemoveEdgeMove {
   type: TypeMove = TypeMove.AddEdge;
   data: EdgeData;
 
-  constructor(data: EdgeData) {
-    super(data);
-  }
-
   undo(viewgraph: ViewGraph): void {
     this.removeEdge(viewgraph);
   }
@@ -55,10 +51,6 @@ export class AddEdgeMove extends AddRemoveEdgeMove {
 export class RemoveEdgeMove extends AddRemoveEdgeMove {
   type: TypeMove = TypeMove.RemoveEdge;
   data: EdgeData;
-
-  constructor(data: EdgeData) {
-    super(data);
-  }
 
   undo(viewgraph: ViewGraph): void {
     this.addEdge(viewgraph);

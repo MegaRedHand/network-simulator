@@ -47,10 +47,6 @@ export class AddDeviceMove extends AddRemoveDeviceMove {
   type = TypeMove.AddDevice;
   data: CreateDevice;
 
-  constructor(data: CreateDevice) {
-    super(data);
-  }
-
   undo(viewgraph: ViewGraph): void {
     this.removeDevice(viewgraph);
   }

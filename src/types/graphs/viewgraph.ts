@@ -9,9 +9,6 @@ import {
   layerFromType,
   layerIncluded,
 } from "../devices/utils";
-import { Position } from "../common";
-import { DragDeviceMove } from "../undo-redo/moves/dragDevice";
-import { urManager } from "../viewportManager";
 
 export type EdgeId = number;
 
