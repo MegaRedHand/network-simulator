@@ -1,4 +1,4 @@
-import { IpPayload, TCP_PROTOCOL_NUMBER } from "./ip";
+import { computeIpChecksum, IpPayload, TCP_PROTOCOL_NUMBER } from "./ip";
 
 export class Flags {
   // Urgent Pointer field significant
@@ -114,12 +114,11 @@ export class TcpSegment implements IpPayload {
   // The number of data octets beginning with the one indicated in the
   // acknowledgment field which the sender of this segment is willing to
   // accept.
-  readonly window: number = 0xffff;
+  public window: number = 0xffff;
 
   // 2 bytes
   get checksum(): number {
-    // TODO: compute
-    return Math.random();
+    return this.computeChecksum();
   }
 
   // 2 bytes
@@ -153,9 +152,16 @@ export class TcpSegment implements IpPayload {
     this.data = data;
   }
 
+  computeChecksum(): number {
+    const octets = this.toBytes({ withChecksum: false });
+    return computeIpChecksum(octets);
+  }
+
   // ### IpPayload ###
-  toBytes(): Uint8Array {
-    const checksum = this.checksum;
+  toBytes({
+    withChecksum = true,
+  }: { withChecksum?: boolean } = {}): Uint8Array {
+    let checksum = withChecksum ? this.checksum : 0;
     return Uint8Array.from([
       ...uintToBytes(this.sourcePort, 2),
       ...uintToBytes(this.destinationPort, 2),

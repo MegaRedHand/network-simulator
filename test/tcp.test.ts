@@ -15,7 +15,7 @@ describe("TCP module", () => {
 
   const flags = new Flags().withAck().withRst();
 
-  const testSegment = new TcpSegment(
+  let testSegment = new TcpSegment(
     0x4e0,
     0x9690,
     0,
@@ -23,6 +23,7 @@ describe("TCP module", () => {
     flags,
     Uint8Array.of(),
   );
+  testSegment.window = 0;
 
   test("Checksum works", () => {
     const expectedChecksum = 0x45a7;
