@@ -2,17 +2,17 @@ import { IpPayload, TCP_PROTOCOL_NUMBER } from "./ip";
 
 export class Flags {
   // Urgent Pointer field significant
-  readonly urg = false;
+  public urg = false;
   // Acknowledgment field significant
-  public ack: boolean;
+  public ack = false;
   // Push function
-  readonly psh = false;
+  public psh = false;
   // Reset the connection
-  readonly rst = false;
+  public rst = false;
   // Synchronize sequence numbers
-  public syn: boolean;
+  public syn = false;
   // No more data from sender
-  public fin: boolean;
+  public fin = false;
 
   // 6 bits
   toByte(): number {
@@ -163,7 +163,7 @@ function uintToBytes(n: number, numBytes: number): Uint8Array {
   const bytes = new Uint8Array(numBytes);
   for (let i = 0; i < numBytes; i++) {
     bytes[numBytes - i - 1] = n & 0xff;
-    n >>= 8;
+    n >>>= 8;
   }
   if (n !== 0) {
     throw new Error("Value too large for " + numBytes + " bytes: " + original);
