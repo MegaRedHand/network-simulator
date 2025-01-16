@@ -27,9 +27,8 @@ export class AddEdgeMove implements Move {
       console.warn("Edge’s devices does not exist");
       return;
     }
-    const newId = viewgraph.addEdge(n1, n2);
-    device1.addConnection(newId, n2);
-    device2.addConnection(newId, n1);
-    this.data.edgeId = newId;
+    viewgraph.addEdge(n1, n2, this.data.edgeId);
+    device1.addConnection(this.data.edgeId, n2);
+    device2.addConnection(this.data.edgeId, n1);
   }
 }

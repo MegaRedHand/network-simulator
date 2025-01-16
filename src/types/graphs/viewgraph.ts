@@ -89,64 +89,81 @@ export class ViewGraph {
     return this.devices.get(deviceData.id);
   }
 
-  drawEdge(device1: Device, device2: Device): Edge {
+  drawEdge(device1: Device, device2: Device, edgeId?: EdgeId): Edge {
+    // Usa el ID proporcionado o genera uno nuevo si no se especifica
+    const id = edgeId ?? this.idCounter++;
+  
+    if (this.edges.has(id)) {
+      console.warn(`Edge with ID ${id} already exists.`);
+      return this.edges.get(id);
+    }
+  
     const edge = new Edge(
-      this.idCounter++,
+      id,
       { n1: device1.id, n2: device2.id },
       device1,
       device2,
       this,
     );
-    this.edges.set(edge.id, edge);
+  
+    this.edges.set(id, edge);
     this.viewport.addChild(edge);
+  
     return edge;
   }
+  
 
-  // Add a connection between two devices
-  addEdge(device1Id: DeviceId, device2Id: DeviceId): EdgeId | null {
+  addEdge(device1Id: DeviceId, device2Id: DeviceId, edgeId?: EdgeId): EdgeId | null {
     if (device1Id === device2Id) {
       console.warn(
         `Cannot create a connection between the same device (ID ${device1Id}).`,
       );
       return null;
     }
-
+  
     if (!this.devices.has(device1Id)) {
       console.warn(`Device with ID ${device1Id} does not exist in devices.`);
-    } else if (!this.devices.has(device2Id)) {
+      return null;
+    }
+  
+    if (!this.devices.has(device2Id)) {
       console.warn(`Device with ID ${device2Id} does not exist in devices.`);
-    } else {
-      // Check if an edge already exists between these two devices
-      for (const edge of this.edges.values()) {
-        const { n1, n2 } = edge.connectedNodes;
-        if (
-          (n1 === device1Id && n2 === device2Id) ||
-          (n1 === device2Id && n2 === device1Id)
-        ) {
-          console.warn(
-            `Connection between ID ${device1Id} and ID ${device2Id} already exists.`,
-          );
-          return null;
-        }
-      }
-
-      const device1 = this.devices.get(device1Id);
-      const device2 = this.devices.get(device2Id);
-
-      if (device1 && device2) {
-        const edge = this.drawEdge(device1, device2);
-
-        this.datagraph.addEdge(device1Id, device2Id);
-
-        console.log(
-          `Connection created between devices ID: ${device1Id} and ID: ${device2Id}`,
+      return null;
+    }
+  
+    // Check if an edge already exists between these two devices
+    for (const edge of this.edges.values()) {
+      const { n1, n2 } = edge.connectedNodes;
+      if (
+        (n1 === device1Id && n2 === device2Id) ||
+        (n1 === device2Id && n2 === device1Id)
+      ) {
+        console.warn(
+          `Connection between ID ${device1Id} and ID ${device2Id} already exists.`,
         );
-
-        return edge.id;
+        return null;
       }
     }
+  
+    const device1 = this.devices.get(device1Id);
+    const device2 = this.devices.get(device2Id);
+  
+    if (device1 && device2) {
+      // Use the provided edgeId if available, otherwise auto-generate one
+      const edge = this.drawEdge(device1, device2, edgeId);
+  
+      this.datagraph.addEdge(device1Id, device2Id);
+  
+      console.log(
+        `Connection created between devices ID: ${device1Id} and ID: ${device2Id} with Edge ID: ${edge.id}`,
+      );
+  
+      return edge.id;
+    }
+  
     return null;
   }
+  
 
   deviceMoved(deviceId: DeviceId) {
     const device: Device = this.devices.get(deviceId);

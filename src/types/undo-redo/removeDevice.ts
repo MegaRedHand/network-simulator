@@ -43,13 +43,9 @@ export class RemoveDeviceMove implements Move {
       const adyacentDevice = viewgraph.getDevice(adyacentId);
 
       if (adyacentDevice) {
-        const connected = device.connectTo(adyacentId);
-
-        if (!connected) {
-          console.warn(
-            `Failed to reconnect Device ${device.id} to Device ${adyacentId}`,
-          );
-        }
+        viewgraph.addEdge(this.data.id, adyacentId, edgeId);
+        device.addConnection(edgeId, adyacentId);
+        adyacentDevice.addConnection(edgeId, this.data.id);
       } else {
         console.warn(
           `Adjacent Device ${adyacentId} not found while reconnecting Device ${device.id}`,
