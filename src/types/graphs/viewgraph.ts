@@ -10,10 +10,8 @@ import {
   layerIncluded,
 } from "../devices/utils";
 import { Position } from "../common";
-import { DragDeviceMove } from "../undo-redo/dragDevice";
-import { RemoveDeviceMove } from "../undo-redo/removeDevice";
+import { DragDeviceMove } from "../undo-redo/moves/dragDevice";
 import { urManager } from "../viewportManager";
-import { RemoveEdgeMove } from "../undo-redo/removeEdge";
 
 export type EdgeId = number;
 
@@ -92,12 +90,12 @@ export class ViewGraph {
   drawEdge(device1: Device, device2: Device, edgeId?: EdgeId): Edge {
     // Usa el ID proporcionado o genera uno nuevo si no se especifica
     const id = edgeId ?? this.idCounter++;
-  
+
     if (this.edges.has(id)) {
       console.warn(`Edge with ID ${id} already exists.`);
       return this.edges.get(id);
     }
-  
+
     const edge = new Edge(
       id,
       { n1: device1.id, n2: device2.id },
@@ -105,32 +103,35 @@ export class ViewGraph {
       device2,
       this,
     );
-  
+
     this.edges.set(id, edge);
     this.viewport.addChild(edge);
-  
+
     return edge;
   }
-  
 
-  addEdge(device1Id: DeviceId, device2Id: DeviceId, edgeId?: EdgeId): EdgeId | null {
+  addEdge(
+    device1Id: DeviceId,
+    device2Id: DeviceId,
+    edgeId?: EdgeId,
+  ): EdgeId | null {
     if (device1Id === device2Id) {
       console.warn(
         `Cannot create a connection between the same device (ID ${device1Id}).`,
       );
       return null;
     }
-  
+
     if (!this.devices.has(device1Id)) {
       console.warn(`Device with ID ${device1Id} does not exist in devices.`);
       return null;
     }
-  
+
     if (!this.devices.has(device2Id)) {
       console.warn(`Device with ID ${device2Id} does not exist in devices.`);
       return null;
     }
-  
+
     // Check if an edge already exists between these two devices
     for (const edge of this.edges.values()) {
       const { n1, n2 } = edge.connectedNodes;
@@ -144,26 +145,25 @@ export class ViewGraph {
         return null;
       }
     }
-  
+
     const device1 = this.devices.get(device1Id);
     const device2 = this.devices.get(device2Id);
-  
+
     if (device1 && device2) {
       // Use the provided edgeId if available, otherwise auto-generate one
       const edge = this.drawEdge(device1, device2, edgeId);
-  
+
       this.datagraph.addEdge(device1Id, device2Id);
-  
+
       console.log(
         `Connection created between devices ID: ${device1Id} and ID: ${device2Id} with Edge ID: ${edge.id}`,
       );
-  
+
       return edge.id;
     }
-  
+
     return null;
   }
-  
 
   deviceMoved(deviceId: DeviceId) {
     const device: Device = this.devices.get(deviceId);
@@ -195,19 +195,6 @@ export class ViewGraph {
       }
     });
     this.datagraph.updateDevicePosition(deviceId, { x: device.x, y: device.y });
-  }
-
-  /**
-   * Registra un movimiento de dispositivo en el `urManager`.
-   * @param did - ID del dispositivo que se movió.
-   * @param startPosition - Posición inicial antes del movimiento.
-   * @param endPosition - Posición final después del movimiento.
-   */
-  registerMove(did: DeviceId, startPosition: Position, endPosition: Position) {
-    // Verifica si hay un cambio en la posición
-    const move = new DragDeviceMove(did, startPosition, endPosition);
-    urManager.push(move);
-    console.log("Move registered successfully.");
   }
 
   // Get all connections of a device

@@ -106,21 +106,15 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
     "undo-button",
   ) as HTMLButtonElement;
 
-  // Parte de otro intento para poder cambiar el color del icono
-  // undoButton.innerHTML = UndoSvg;
-  // const undoIcon = undoButton.querySelector("path") as SVGPathElement;
-
   const undoIcon = document.createElement("img");
   undoIcon.src = UndoSvg;
   undoIcon.alt = "Undo Icon";
   undoButton.appendChild(undoIcon);
 
+  console.log(undoIcon.style.filter);
   urManager.suscribe(() => {
-    // console.log("Entre a la funcion suscribe de undo");
     undoButton.disabled = !urManager.canUndo();
-    // console.log(`canUdo da ${urManager.canUndo()}`);
-    // no funciona
-    undoIcon.style.fill = urManager.canUndo() ? "#3a3a3a" : "#a09f9f";
+    undoIcon.style.opacity = urManager.canUndo() ? "1" : "0.5"; // Full opacity for active, reduced for inactive
   });
 
   const triggerUndo = () => {
@@ -141,11 +135,8 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
   redoButton.appendChild(redoIcon);
 
   urManager.suscribe(() => {
-    // console.log("Entre a la funcion suscribe de undo");
     redoButton.disabled = !urManager.canRedo();
-    // console.log(`canRedo da ${urManager.canRedo()}`);
-    // no funciona
-    redoIcon.style.fill = urManager.canRedo() ? "#3a3a3a" : "#a09f9f";
+    redoIcon.style.opacity = urManager.canRedo() ? "1" : "0.5"; // Full opacity for active, reduced for inactive
   });
 
   const triggerRedo = () => {

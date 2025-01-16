@@ -5,10 +5,13 @@ import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
 import { Packet } from "./packet";
 import { DeviceType } from "./devices/device";
-import { CreateDevice, createDevice } from "./devices/utils";
-import { UndoRedoManager } from "./undo-redo/undoRedoManager";
-import { AddDeviceMove } from "./undo-redo/addDevice";
-import { RemoveDeviceMove, RemoveEdgeMove } from "./undo-redo";
+import { CreateDevice } from "./devices/utils";
+import {
+  UndoRedoManager,
+  AddDeviceMove,
+  RemoveDeviceMove,
+  RemoveEdgeMove,
+} from "./undo-redo";
 
 type Selectable = Device | Edge | Packet;
 

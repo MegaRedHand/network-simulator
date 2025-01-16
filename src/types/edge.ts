@@ -5,7 +5,7 @@ import { deselectElement, selectElement, urManager } from "./viewportManager";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils";
 import { Packet } from "./packet";
-import { RemoveEdgeMove } from "./undo-redo/removeEdge";
+import { RemoveEdgeMove } from "./undo-redo";
 
 export interface EdgeEdges {
   n1: number;

@@ -1,11 +1,8 @@
-import { Position } from "../common";
-import { DeviceId } from "../graphs/datagraph";
-import { ViewGraph } from "../graphs/viewgraph";
+import { Position } from "../../common";
+import { DeviceId } from "../../graphs/datagraph";
+import { ViewGraph } from "../../graphs/viewgraph";
 import { Move, TypeMove } from "./move";
 
-// Tener una funciona aparte donde hacer la logica de ambos, que es la misma, y que ambos llamen a esa funcion
-// Hacer un metodo de Device que sea para moverlo, asi nos ahorramos de acordarse de avisar al viewgraph
-// Revisar si el viewgraph es el mejor lugar donde registrar el movimiento
 export class DragDeviceMove implements Move {
   type: TypeMove = TypeMove.DragDevice;
   did: DeviceId;

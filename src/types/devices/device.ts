@@ -19,8 +19,7 @@ import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
-import { DragDeviceMove } from "../undo-redo/dragDevice";
-import { AddEdgeData, AddEdgeMove } from "../undo-redo/addEdge";
+import { DragDeviceMove, EdgeData, AddEdgeMove } from "../undo-redo";
 
 export const DEVICE_SIZE = 20;
 
@@ -152,7 +151,7 @@ export abstract class Device extends Sprite {
       adyacentDevice.addConnection(edgeId, this.id);
 
       // Register move
-      const moveData: AddEdgeData = {
+      const moveData: EdgeData = {
         edgeId,
         connectedNodes: { n1: this.id, n2: adyacentId },
       };

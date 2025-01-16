@@ -1,4 +1,4 @@
-import { ViewGraph } from "../graphs/viewgraph";
+import { ViewGraph } from "../../graphs/viewgraph";
 
 export enum TypeMove {
   AddDevice,

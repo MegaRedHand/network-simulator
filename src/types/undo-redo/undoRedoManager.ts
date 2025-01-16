@@ -1,5 +1,5 @@
 import { ViewGraph } from "../graphs/viewgraph";
-import { Move } from "./move";
+import { Move } from "./moves/move";
 
 export class UndoRedoManager {
   undoBuf: Move[] = [];

@@ -1,8 +1,7 @@
 // src/devices/index.ts
 
 export { UndoRedoManager } from "./undoRedoManager";
-export { AddDeviceMove } from "./addDevice";
-export { RemoveDeviceMove } from "./removeDevice";
-export { DragDeviceMove } from "./dragDevice";
-export { AddEdgeMove, AddEdgeData } from "./addEdge";
-export { RemoveEdgeMove, RemoveEdgeData } from "./removeEdge";
+export { Move } from "./moves/move";
+export { AddDeviceMove, RemoveDeviceMove } from "./moves/addRemoveDevice";
+export { DragDeviceMove } from "./moves/dragDevice";
+export { AddEdgeMove, RemoveEdgeMove, EdgeData } from "./moves/addRemoveEdge";
