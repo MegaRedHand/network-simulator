@@ -49,29 +49,49 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
   const viewport = new Viewport(app.renderer.events);
   app.stage.addChild(viewport);
 
+  // Get the layer’s menu
+  const layerSelect = document.getElementById(
+    "layer-select",
+  ) as HTMLSelectElement;
+
   // Left bar logic
   const leftBar = LeftBar.getFrom(document);
   RightBar.getInstance();
 
-  // Add router button
-  leftBar.addButton(
-    RouterSvg,
-    () => AddDevice(ctx, DeviceType.Router),
-    "Add Router",
-  );
+  const addRouterButton = () =>
+    leftBar.addButton(
+      RouterSvg,
+      () => AddDevice(ctx, DeviceType.Router),
+      "Add Router",
+    );
 
-  // Add Host button
-  leftBar.addButton(
-    ComputerSvg,
-    () => AddDevice(ctx, DeviceType.Host),
-    "Add Host",
-  );
+  const addHostButton = () =>
+    leftBar.addButton(
+      ComputerSvg,
+      () => AddDevice(ctx, DeviceType.Host),
+      "Add Host",
+    );
 
-  ctx.initialize(viewport);
+  function setButtonsByLayer(layer: string) {
+    leftBar.clear();
+
+    const buttonConfig: Record<string, (() => void)[]> = {
+      application: [addHostButton],
+      transport: [addHostButton],
+      network: [addRouterButton, addHostButton],
+      link: [addRouterButton, addHostButton],
+    };
+
+    buttonConfig[layer]?.forEach((addButton) => addButton());
+  }
+
+  setButtonsByLayer(layerSelect.value);
+
+  // Initialize Context
+  ctx.initialize(viewport, layerSelect.value);
 
   // Ticker logic
   // app.ticker.add(() => { });
-
   const lBar = document.getElementById("left-bar");
   const rBar = document.getElementById("right-bar");
   const tBar = document.getElementById("top-bar");
@@ -192,16 +212,14 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
   pauseButton.onclick = triggerPause;
 
   // (!) For layer abstraction functionality
-  const layerSelect = document.getElementById(
-    "layer-select",
-  ) as HTMLSelectElement;
-
   const selectNewLayer = (event: Event) => {
     const selectedLayer = (event.target as HTMLSelectElement).value;
     console.log(`Layer selected: ${selectedLayer}`);
 
     if (selectedLayer) {
       ctx.changeViewGraph(selectedLayer);
+      // LeftBar is reset
+      setButtonsByLayer(selectedLayer);
     }
   };
 
@@ -215,7 +233,7 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
   };
 
   // TODO: load from local storage directly, without first generating a context
-  loadFromLocalStorage(ctx);
+  loadFromLocalStorage(ctx, layerSelect.value);
 
   console.log("initialized!");
 })();

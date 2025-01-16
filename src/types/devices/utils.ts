@@ -52,7 +52,6 @@ export function layerFromName(name: string): Layer {
 
 export function layerIncluded(layer1: Layer, layer2: Layer) {
   // Determines whether layer1 is included within layer2’s abstraction.
-  console.log(`${layer1.valueOf()} <= ${layer2.valueOf()}`);
   return layer1.valueOf() <= layer2.valueOf();
 }
 

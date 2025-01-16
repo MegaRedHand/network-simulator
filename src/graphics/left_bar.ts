@@ -22,4 +22,8 @@ export class LeftBar {
     img.classList.add("icon-img");
     button.appendChild(img);
   }
+
+  clear() {
+    this.leftBar.textContent = "";
+  }
 }

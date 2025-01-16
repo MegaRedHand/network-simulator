@@ -30,7 +30,7 @@ export class ViewGraph {
   private devices: Map<DeviceId, Device> = new Map<DeviceId, Device>();
   private edges: Map<EdgeId, Edge> = new Map<EdgeId, Edge>();
   private idCounter: EdgeId = 1;
-  private datagraph: DataGraph;
+  datagraph: DataGraph;
   private layer: Layer;
   viewport: Viewport;
 
@@ -200,7 +200,11 @@ export class ViewGraph {
   // Get all connections of a device
   getConnections(id: DeviceId): Edge[] {
     const device = this.devices.get(id);
-    return device ? Array.from(this.edges.values()) : [];
+    return device
+      ? Array.from(device.connections.keys()).map((edgeId) =>
+          this.edges.get(edgeId),
+        )
+      : [];
   }
 
   // Get a specific device by its ID

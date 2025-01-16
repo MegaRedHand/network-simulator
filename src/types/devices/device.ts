@@ -38,7 +38,7 @@ export enum DeviceType {
 export abstract class Device extends Sprite {
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
-  connections = new Map<number, number>();
+  connections = new Map<EdgeId, DeviceId>();
 
   highlightMarker: Graphics | null = null; // Marker to indicate selection
 
@@ -50,7 +50,7 @@ export abstract class Device extends Sprite {
   ipMask: IpAddress;
 
   constructor(
-    id: number,
+    id: DeviceId,
     svg: string,
     viewgraph: ViewGraph,
     position: Position,
