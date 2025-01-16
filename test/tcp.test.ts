@@ -13,19 +13,18 @@ describe("TCP module", () => {
     );
   });
 
-  test("toBytes works", () => {
-    let flags = new Flags();
-    flags.ack = true;
-    flags.rst = true;
+  const flags = new Flags().withAck().withRst();
 
-    const segment = new TcpSegment(
-      0x4e0,
-      0x9690,
-      0,
-      0xe4d3ebe2,
-      flags,
-      Uint8Array.of(),
-    );
+  const testSegment = new TcpSegment(
+    0x4e0,
+    0x9690,
+    0,
+    0xe4d3ebe2,
+    flags,
+    Uint8Array.of(),
+  );
+
+  test("toBytes works", () => {
     const bytes = Uint8Array.from([
       // Source port
       0x04, 0xe0,
@@ -47,6 +46,6 @@ describe("TCP module", () => {
       0x00, 0x00,
       // No data
     ]);
-    expect(segment.toBytes().toString()).toBe(bytes.toString());
+    expect(testSegment.toBytes().toString()).toBe(bytes.toString());
   });
 });

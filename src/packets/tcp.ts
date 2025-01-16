@@ -23,6 +23,36 @@ export class Flags {
       0,
     );
   }
+
+  withUrg(urg: boolean = true): Flags {
+    this.urg = urg;
+    return this;
+  }
+
+  withAck(ack: boolean = true): Flags {
+    this.ack = ack;
+    return this;
+  }
+
+  withPsh(psh: boolean = true): Flags {
+    this.psh = psh;
+    return this;
+  }
+
+  withRst(rst: boolean = true): Flags {
+    this.rst = rst;
+    return this;
+  }
+
+  withSyn(syn: boolean = true): Flags {
+    this.syn = syn;
+    return this;
+  }
+
+  withFin(fin: boolean = true): Flags {
+    this.fin = fin;
+    return this;
+  }
 }
 
 function bitSet(value: boolean, bit: number): number {
