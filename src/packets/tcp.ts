@@ -1,4 +1,9 @@
-import { computeIpChecksum, IpPayload, TCP_PROTOCOL_NUMBER } from "./ip";
+import {
+  computeIpChecksum,
+  IpAddress,
+  IpPayload,
+  TCP_PROTOCOL_NUMBER,
+} from "./ip";
 
 export class Flags {
   // Urgent Pointer field significant
@@ -131,6 +136,10 @@ export class TcpSegment implements IpPayload {
   // Variable size
   data: Uint8Array;
 
+  // Used for the checksum calculation
+  srcIpAddress: IpAddress;
+  dstIpAddress: IpAddress;
+
   constructor(
     srcPort: number,
     dstPort: number,
@@ -153,8 +162,17 @@ export class TcpSegment implements IpPayload {
   }
 
   computeChecksum(): number {
-    const octets = this.toBytes({ withChecksum: false });
-    return computeIpChecksum(octets);
+    const segmentBytes = this.toBytes({ withChecksum: false });
+
+    const pseudoHeaderBytes = Uint8Array.from([
+      ...this.srcIpAddress.octets,
+      ...this.dstIpAddress.octets,
+      0,
+      TCP_PROTOCOL_NUMBER,
+      ...uintToBytes(segmentBytes.length, 2),
+    ]);
+    const totalBytes = Uint8Array.from([...pseudoHeaderBytes, ...segmentBytes]);
+    return computeIpChecksum(totalBytes);
   }
 
   // ### IpPayload ###

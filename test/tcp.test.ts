@@ -1,3 +1,4 @@
+import { IpAddress, TCP_PROTOCOL_NUMBER } from "../src/packets/ip";
 import { Flags, TcpSegment } from "../src/packets/tcp";
 
 describe("TCP module", () => {
@@ -17,16 +18,18 @@ describe("TCP module", () => {
 
   let testSegment = new TcpSegment(
     0x4e0,
-    0x9690,
+    0xbf08,
     0,
-    0xe4d3ebe2,
+    0x9b84d209,
     flags,
     Uint8Array.of(),
   );
   testSegment.window = 0;
+  testSegment.srcIpAddress = IpAddress.parse("127.0.0.1");
+  testSegment.dstIpAddress = IpAddress.parse("127.0.0.1");
 
   test("Checksum works", () => {
-    const expectedChecksum = 0x45a7;
+    const expectedChecksum = 0x8057;
     expect(testSegment.checksum).toBe(expectedChecksum);
   });
 
@@ -35,11 +38,11 @@ describe("TCP module", () => {
       // Source port
       0x04, 0xe0,
       // Destination port
-      0x96, 0x90,
+      0xbf, 0x08,
       // Sequence Number
       0x00, 0x00, 0x00, 0x00,
       // Acknowledgment Number
-      0xe4, 0xd3, 0xeb, 0xe2,
+      0x9b, 0x84, 0xd2, 0x09,
       // Data offset (4 bits) = 5
       // Reserved (4 bits) = 0
       // Flags (RST+ACK) = 0x14
@@ -47,7 +50,7 @@ describe("TCP module", () => {
       // Window
       0x00, 0x00,
       // Checksum
-      0x45, 0xa7,
+      0x80, 0x57,
       // Urgent pointer
       0x00, 0x00,
       // No data
