@@ -29,32 +29,32 @@ export class Flags {
     );
   }
 
-  withUrg(urg: boolean = true): Flags {
+  withUrg(urg = true): Flags {
     this.urg = urg;
     return this;
   }
 
-  withAck(ack: boolean = true): Flags {
+  withAck(ack = true): Flags {
     this.ack = ack;
     return this;
   }
 
-  withPsh(psh: boolean = true): Flags {
+  withPsh(psh = true): Flags {
     this.psh = psh;
     return this;
   }
 
-  withRst(rst: boolean = true): Flags {
+  withRst(rst = true): Flags {
     this.rst = rst;
     return this;
   }
 
-  withSyn(syn: boolean = true): Flags {
+  withSyn(syn = true): Flags {
     this.syn = syn;
     return this;
   }
 
-  withFin(fin: boolean = true): Flags {
+  withFin(fin = true): Flags {
     this.fin = fin;
     return this;
   }
@@ -119,7 +119,7 @@ export class TcpSegment implements IpPayload {
   // The number of data octets beginning with the one indicated in the
   // acknowledgment field which the sender of this segment is willing to
   // accept.
-  public window: number = 0xffff;
+  public window = 0xffff;
 
   // 2 bytes
   get checksum(): number {
@@ -179,7 +179,7 @@ export class TcpSegment implements IpPayload {
   toBytes({
     withChecksum = true,
   }: { withChecksum?: boolean } = {}): Uint8Array {
-    let checksum = withChecksum ? this.checksum : 0;
+    const checksum = withChecksum ? this.checksum : 0;
     return Uint8Array.from([
       ...uintToBytes(this.sourcePort, 2),
       ...uintToBytes(this.destinationPort, 2),
