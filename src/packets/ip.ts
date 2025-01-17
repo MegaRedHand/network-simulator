@@ -246,7 +246,7 @@ export class IPv4Packet implements FramePayload {
 export function computeIpChecksum(octets: Uint8Array): number {
   const sum = octets.reduce((acc, octet, i) => {
     return acc + (octet << (8 * (1 - (i % 2))));
-  });
+  }, 0);
   const checksum = sum & 0xffff;
   const carry = sum >> 16;
   return 0xffff ^ (checksum + carry);
