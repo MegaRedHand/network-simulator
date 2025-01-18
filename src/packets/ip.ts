@@ -29,12 +29,18 @@ export class IpAddress {
   }
 
   // Parse IP address from a string representation (10.25.34.42)
-  static parse(addrString: string): IpAddress {
+  static parse(addrString: string): IpAddress | null {
     const octets = new Uint8Array(4);
-    addrString.split(".").forEach((octet, i) => {
+    const splits = addrString.split(".");
+    if (splits.length !== 4) {
+      console.error("Invalid IP address. Length: ", splits.length);
+      return null;
+    }
+    splits.forEach((octet, i) => {
       const octetInt = parseInt(octet);
       if (isNaN(octetInt) || octetInt < 0 || octetInt > 255) {
-        throw new Error(`Invalid IP address: ${addrString}`);
+        console.error("Invalid IP address. value: ", octetInt);
+        return null;
       }
       octets[i] = octetInt;
     });

@@ -9,6 +9,7 @@ import {
   RightBar,
 } from "../../graphics/right_bar";
 import { ProgramInfo } from "../../graphics/renderables/device_info";
+import { sendPacket } from "../packet";
 
 export class Host extends Device {
   constructor(
@@ -25,6 +26,8 @@ export class Host extends Device {
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
     info.addSendPacketButton();
+    const destinationIpContainer = createEditableText("Destination IP");
+    const destinationIpInput = destinationIpContainer.querySelector("input");
     const programList: ProgramInfo[] = [
       {
         name: "<select a program>",
@@ -32,12 +35,20 @@ export class Host extends Device {
       },
       {
         name: "Send ICMP echo",
-        inputs: [createEditableText("Destination IP")],
-        start: () => console.log("Send ICMP echo started"),
+        inputs: [destinationIpContainer],
+        start: () => {
+          console.log("Sending ICMP echo. Address: ", destinationIpInput.value);
+          const dstIp = IpAddress.parse(destinationIpInput.value);
+          if (!dstIp) {
+            console.error("Invalid IP address");
+            return;
+          }
+          sendPacket(this.viewgraph, "ICMP", this.id, dstIp);
+        },
       },
       {
         name: "Echo server",
-        inputs: [createEditableText("Destination IP")],
+        inputs: [destinationIpContainer],
         start: () => console.log("Echo server started"),
       },
     ];

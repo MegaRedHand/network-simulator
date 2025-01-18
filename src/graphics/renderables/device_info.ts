@@ -68,6 +68,7 @@ export class DeviceInfo extends StyledInfo {
     );
   }
 
+  // TODO: delete this function
   addSendPacketButton() {
     const { id, viewgraph } = this.device;
 
@@ -109,9 +110,10 @@ export class DeviceInfo extends StyledInfo {
       }),
       inputsContainer,
       // Button to send a packet
-      createRightBarButton("Start program", () =>
-        console.log("Start program: ", selectedProgram.name),
-      ),
+      createRightBarButton("Start program", () => {
+        console.log("Started program: ", selectedProgram.name);
+        selectedProgram.start();
+      }),
     );
   }
 
@@ -151,6 +153,7 @@ function getTypeName(device: Device): string {
   }
 }
 
+// TODO: delete this function
 function sendSelectedPacket(viewgraph: ViewGraph, id: number): void {
   // Get the selected packet type and destination ID
   const packetType = (
@@ -162,7 +165,8 @@ function sendSelectedPacket(viewgraph: ViewGraph, id: number): void {
 
   // Call the sendPacket method with the selected values
   if (packetType && !isNaN(destinationId)) {
-    sendPacket(viewgraph, packetType, id, destinationId);
+    const destinationIp = viewgraph.getDevice(destinationId).ip;
+    sendPacket(viewgraph, packetType, id, destinationIp);
   } else {
     console.warn("Please select both a packet type and a destination.");
   }
