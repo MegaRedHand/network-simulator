@@ -28,8 +28,6 @@ export class Host extends Device {
   showInfo(): void {
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
-    info.addSendPacketButton();
-
     info.addProgramList(this.getProgramList());
     RightBar.getInstance().renderInfo(info);
   }
