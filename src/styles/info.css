@@ -1,0 +1,41 @@
+/* Estilos base para el contenedor */
+.toggle-info-container {
+  overflow: hidden;
+  text-align: left;
+  margin: 0;
+  padding: 0;
+}
+
+/* Ajustes para el texto de la lista */
+.toggle-info-container .right-bar-info {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toggle-info-container .right-bar-info li {
+  margin: 20px 0px;
+  padding: 0;
+  text-align: flex;
+}
+
+/* Estilo para el pre que contiene el payload */
+.toggle-info-container .right-bar-info li pre {
+  background-color: #000;
+  color: #fff;
+  padding: 10px;
+  border-radius: 4px;
+  font-family: monospace;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+/* Elementos abiertos */
+.toggle-info-container .right-bar-info.open {
+  display: block;
+}
+
+/* Transiciones para una experiencia más fluida */
+.toggle-info-container .hidden {
+  display: none;
+}
