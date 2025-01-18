@@ -237,27 +237,6 @@ export function createRightBarButton(
   return button;
 }
 
-export function createEditableText(label: string) {
-  const container = document.createElement("div");
-  container.classList.add("dropdown-container");
-
-  const labelElement = document.createElement("label");
-  labelElement.textContent = label;
-  labelElement.classList.add("right-bar-label");
-
-  const textBox = document.createElement("input");
-  textBox.classList.add("right-bar-select");
-
-  // Default onchange behavior: logs the selected value
-  textBox.onchange = () => {
-    console.log(`Selected:`, textBox.value);
-  };
-
-  container.appendChild(labelElement);
-  container.appendChild(textBox);
-  return container;
-}
-
 export function createDropdown(
   label: string,
   options: { value: string; text: string }[],
