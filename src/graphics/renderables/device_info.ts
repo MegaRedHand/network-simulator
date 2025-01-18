@@ -105,6 +105,10 @@ export class DeviceInfo extends StyledInfo {
     this.inputFields.push(dynamicTable);
   }
 
+  addEmptySpace() {
+    this.inputFields.push(document.createElement("br"));
+  }
+
   toHTML(): Node[] {
     return super.toHTML().concat(this.inputFields);
   }
