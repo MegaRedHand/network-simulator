@@ -2,8 +2,6 @@ import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
 import { CreateDevice } from "../../types/devices/utils";
 import { RoutingTableEntry } from "../../types/graphs/datagraph";
-import { ViewGraph } from "../../types/graphs/viewgraph";
-import { sendPacket } from "../../types/packet";
 import { RemoveDeviceMove } from "../../types/undo-redo";
 import { urManager } from "../../types/viewportManager";
 import {
