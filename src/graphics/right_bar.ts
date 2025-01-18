@@ -241,6 +241,7 @@ export function createDropdown(
   label: string,
   options: { value: string; text: string }[],
   selectId?: string,
+  onchange: (value: string, event: Event) => void = () => undefined,
 ) {
   const container = document.createElement("div");
   container.classList.add("dropdown-container");
@@ -261,8 +262,9 @@ export function createDropdown(
   });
 
   // Default onchange behavior: logs the selected value
-  select.onchange = () => {
+  select.onchange = (e) => {
     console.log(`Selected ${label}:`, select.value);
+    onchange(select.value, e);
   };
 
   container.appendChild(labelElement);

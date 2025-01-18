@@ -3,9 +3,16 @@ import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
 import { IpAddress } from "../../packets/ip";
-import { DeviceInfo, RightBar } from "../../graphics/right_bar";
+import { createDropdown, DeviceInfo, RightBar } from "../../graphics/right_bar";
+import { ProgramInfo } from "../../graphics/renderables/device_info";
+import { sendPacket } from "../packet";
+import { Ticker } from "pixi.js";
+
+const DEFAULT_ECHO_DELAY = 250; // ms
 
 export class Host extends Device {
+  currentProgram: (ticker: Ticker) => void = undefined;
+
   constructor(
     id: number,
     viewgraph: ViewGraph,
@@ -19,7 +26,7 @@ export class Host extends Device {
   showInfo(): void {
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
-    info.addSendPacketButton();
+    info.addProgramList(this.getProgramList());
     RightBar.getInstance().renderInfo(info);
   }
 
@@ -29,5 +36,63 @@ export class Host extends Device {
 
   getType(): DeviceType {
     return DeviceType.Host;
+  }
+
+  getProgramList() {
+    const adjacentDevices = this.viewgraph
+      .getDeviceIds()
+      .filter((adjId) => adjId !== this.id)
+      .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
+
+    const dropdownContainer = createDropdown(
+      "Destination",
+      adjacentDevices,
+      "destination",
+    );
+    const destination = dropdownContainer.querySelector("select");
+
+    const programList: ProgramInfo[] = [
+      { name: "No program", start: () => this.stopProgram() },
+      {
+        name: "Send ICMP echo",
+        inputs: [dropdownContainer],
+        start: () => this.sendSingleEcho(destination.value),
+      },
+      {
+        name: "Echo server",
+        inputs: [dropdownContainer],
+        start: () => this.startEchoServer(destination.value),
+      },
+    ];
+    return programList;
+  }
+
+  sendSingleEcho(id: string) {
+    this.stopProgram();
+    const dst = parseInt(id);
+    sendPacket(this.viewgraph, "ICMP", this.id, dst);
+  }
+
+  startEchoServer(id: string) {
+    this.stopProgram();
+    const dst = parseInt(id);
+    let progress = 0;
+    const send = (ticker: Ticker) => {
+      const delay = DEFAULT_ECHO_DELAY;
+      progress += ticker.deltaMS;
+      if (progress < delay) {
+        return;
+      }
+      sendPacket(this.viewgraph, "ICMP", this.id, dst);
+      progress -= delay;
+    };
+    Ticker.shared.add(send, this);
+    this.currentProgram = send;
+  }
+
+  stopProgram() {
+    if (this.currentProgram) {
+      Ticker.shared.remove(this.currentProgram, this);
+    }
   }
 }

@@ -29,9 +29,6 @@ export class Packet extends Graphics {
   currentStart: number;
   color: number;
   type: string;
-  sourceId: number;
-  destinationId: number;
-  private detailsVisible = false;
 
   rawPacket: IPv4Packet;
 
@@ -45,13 +42,7 @@ export class Packet extends Graphics {
     Packet.animationPaused = false;
   }
 
-  constructor(
-    viewgraph: ViewGraph,
-    type: string,
-    rawPacket: IPv4Packet,
-    sourceid: number,
-    destinationid: number,
-  ) {
+  constructor(viewgraph: ViewGraph, type: string, rawPacket: IPv4Packet) {
     super();
 
     this.viewgraph = viewgraph;
@@ -61,8 +52,6 @@ export class Packet extends Graphics {
     this.zIndex = ZIndexLevels.Packet;
 
     this.rawPacket = rawPacket;
-    this.sourceId = sourceid;
-    this.destinationId = destinationid;
 
     this.interactive = true;
     this.cursor = "pointer";
@@ -134,8 +123,6 @@ export class Packet extends Graphics {
 
     const info = new StyledInfo("Packet Information");
     info.addField("Type", this.type);
-    info.addField("Source ID", this.sourceId.toString());
-    info.addField("Destination ID", this.destinationId.toString());
     info.addField("Source IP Address", this.rawPacket.sourceAddress.toString());
     info.addField(
       "Destination IP Address",
@@ -271,6 +258,7 @@ export class Packet extends Graphics {
   }
 }
 
+// TODO: maybe make this receive the packet directly?
 export function sendPacket(
   viewgraph: ViewGraph,
   packetType: string,
@@ -297,18 +285,10 @@ export function sendPacket(
       console.warn("Tipo de paquete no reconocido");
       return;
   }
-  const rawPacket = new IPv4Packet(
-    originDevice.ip,
-    destinationDevice.ip,
-    payload,
-  );
-  const packet = new Packet(
-    viewgraph,
-    packetType,
-    rawPacket,
-    originId,
-    destinationId,
-  );
+  const dstIp = destinationDevice.ip;
+  const rawPacket = new IPv4Packet(originDevice.ip, dstIp, payload);
+  const packet = new Packet(viewgraph, packetType, rawPacket);
+
   const originConnections = viewgraph.getConnections(originId);
   if (originConnections.length === 0) {
     console.warn(`No se encontró un dispositivo con ID ${originId}.`);
