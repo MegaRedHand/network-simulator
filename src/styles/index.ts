@@ -5,4 +5,5 @@ import "./canvas.css";
 import "./right-bar.css";
 import "./right-bar-buttons.css";
 import "./table.css";
+import "./info.css";
 import "./buttons.css";
