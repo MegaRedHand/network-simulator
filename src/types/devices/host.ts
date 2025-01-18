@@ -8,7 +8,7 @@ import { ProgramInfo } from "../../graphics/renderables/device_info";
 import { sendPacket } from "../packet";
 import { Ticker } from "pixi.js";
 
-const DEFAULT_ECHO_DELAY = 250;
+const DEFAULT_ECHO_DELAY = 250; // ms
 
 export class Host extends Device {
   currentProgram: (ticker: Ticker) => void = undefined;
