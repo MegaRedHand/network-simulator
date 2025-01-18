@@ -5,6 +5,7 @@ import {
   loadFromFile,
   loadFromLocalStorage,
   saveToFile,
+  urManager,
 } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
 import { Packet } from "./types/packet";
@@ -21,6 +22,8 @@ import RouterSvg from "./assets/router.svg";
 import ComputerSvg from "./assets/pc.svg";
 import PlaySvg from "./assets/play-icon.svg";
 import PauseSvg from "./assets/pause-icon.svg";
+import UndoSvg from "./assets/left-curve-arrow.svg";
+import RedoSvg from "./assets/right-curve-arrow.svg";
 
 // IIFE to avoid errors
 (async () => {
@@ -118,6 +121,69 @@ import PauseSvg from "./assets/pause-icon.svg";
   saveButton.onclick = () => saveToFile(ctx);
   loadButton.onclick = () => loadFromFile(ctx);
 
+  // Undo button’s logic
+  const undoButton = document.getElementById(
+    "undo-button",
+  ) as HTMLButtonElement;
+
+  const undoIcon = document.createElement("img");
+  undoIcon.src = UndoSvg;
+  undoIcon.alt = "Undo Icon";
+  undoButton.appendChild(undoIcon);
+
+  console.log(undoIcon.style.filter);
+  urManager.suscribe(() => {
+    undoButton.disabled = !urManager.canUndo();
+    undoIcon.style.opacity = urManager.canUndo() ? "1" : "0.5"; // Full opacity for active, reduced for inactive
+  });
+
+  const triggerUndo = () => {
+    if (urManager.canUndo()) {
+      urManager.undo(ctx.getViewGraph());
+    }
+  };
+
+  undoButton.onclick = triggerUndo;
+
+  // Redo button’s logic
+  const redoButton = document.getElementById(
+    "redo-button",
+  ) as HTMLButtonElement;
+  const redoIcon = document.createElement("img");
+  redoIcon.src = RedoSvg;
+  redoIcon.alt = "Redo Icon";
+  redoButton.appendChild(redoIcon);
+
+  urManager.suscribe(() => {
+    redoButton.disabled = !urManager.canRedo();
+    redoIcon.style.opacity = urManager.canRedo() ? "1" : "0.5"; // Full opacity for active, reduced for inactive
+  });
+
+  const triggerRedo = () => {
+    if (urManager.canRedo()) {
+      urManager.redo(ctx.getViewGraph());
+    }
+  };
+
+  redoButton.onclick = triggerRedo;
+
+  // Add keyboard shortcuts for Undo (Ctrl+Z) and Redo (Ctrl+Y)
+  document.addEventListener("keydown", (event) => {
+    if (event.ctrlKey) {
+      switch (event.key) {
+        case "z": // Ctrl+Z for Undo
+          event.preventDefault(); // Prevent default browser action (like undo in text inputs)
+          triggerUndo();
+          break;
+        case "y": // Ctrl+Y for Redo
+          event.preventDefault(); // Prevent default browser action
+          triggerRedo();
+          break;
+      }
+    }
+  });
+
+  // Pause button’s logic
   const pauseButton = document.getElementById("pause-button");
   let paused = false;
 

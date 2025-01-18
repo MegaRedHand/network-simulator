@@ -5,11 +5,20 @@ import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
 import { Packet } from "./packet";
 import { DeviceType } from "./devices/device";
-import { createDevice, layerFromName } from "./devices/utils";
+import { CreateDevice } from "./devices/utils";
+import {
+  UndoRedoManager,
+  AddDeviceMove,
+  RemoveDeviceMove,
+  RemoveEdgeMove,
+} from "./undo-redo";
+import { layerFromName } from "./devices/utils";
 
 type Selectable = Device | Edge | Packet;
 
 let selectedElement: Selectable | null = null; // Global variable to store the selected element
+
+export const urManager = new UndoRedoManager();
 
 export function selectElement(element: Selectable) {
   deselectElement();
@@ -43,10 +52,44 @@ export function isSelected(element: Selectable) {
   return element === selectedElement;
 }
 
+function isDevice(selectable: Selectable): selectable is Device {
+  return selectable instanceof Device;
+}
+
+function isEdge(selectable: Selectable): selectable is Edge {
+  return selectable instanceof Edge;
+}
+
 document.addEventListener("keydown", (event) => {
   if (event.key === "Delete" || event.key === "Backspace") {
     if (selectedElement) {
-      selectedElement.delete();
+      let data;
+      if (isDevice(selectedElement)) {
+        data = {
+          id: selectedElement.id,
+          type: selectedElement.getType(),
+          x: selectedElement.x,
+          y: selectedElement.y,
+          ip: selectedElement.ip.toString(),
+          mask: selectedElement.ipMask.toString(),
+        };
+        const move = new RemoveDeviceMove(
+          data,
+          selectedElement.getConnections(),
+        );
+        selectedElement.delete();
+        urManager.push(move);
+      } else if (isEdge(selectedElement)) {
+        const move = new RemoveEdgeMove({
+          edgeId: selectedElement.id,
+          connectedNodes: selectedElement.connectedNodes,
+        });
+        selectedElement.delete();
+        urManager.push(move);
+      } else {
+        // se cambia esto
+        selectedElement.delete();
+      }
     }
   }
 
@@ -78,13 +121,15 @@ export function AddDevice(ctx: GlobalContext, type: DeviceType) {
 
   const { ip, mask } = ctx.getNextIp();
   const deviceInfo = { x, y, type, ip, mask };
-
   const id = datagraph.addNewDevice(deviceInfo);
-  const newDevice: Device = createDevice({ ...deviceInfo, id }, viewgraph);
+
+  const deviceData: CreateDevice = { id, ...deviceInfo };
 
   // Add the Device to the graph
-  viewgraph.addDevice(newDevice);
-  viewport.addChild(newDevice);
+  const newDevice = viewgraph.addDevice(deviceData);
+
+  const move = new AddDeviceMove(deviceData);
+  urManager.push(move);
 
   console.log(
     `${DeviceType[newDevice.getType()]} added with ID ${newDevice.id} at the center of the screen.`,

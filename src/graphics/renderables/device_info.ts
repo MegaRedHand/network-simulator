@@ -1,8 +1,11 @@
 import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
+import { CreateDevice } from "../../types/devices/utils";
 import { RoutingTableEntry } from "../../types/graphs/datagraph";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { sendPacket } from "../../types/packet";
+import { RemoveDeviceMove } from "../../types/undo-redo";
+import { urManager } from "../../types/viewportManager";
 import {
   createDropdown,
   createToggleTable,
@@ -38,7 +41,22 @@ export class DeviceInfo extends StyledInfo {
       ),
       createRightBarButton(
         "Delete device",
-        () => this.device.delete(),
+        () => {
+          const deviceData: CreateDevice = {
+            id: this.device.id,
+            type: this.device.getType(),
+            x: this.device.x,
+            y: this.device.y,
+            ip: this.device.ip.toString(),
+            mask: this.device.ipMask.toString(),
+          };
+          const move = new RemoveDeviceMove(
+            deviceData,
+            this.device.getConnections(),
+          );
+          this.device.delete();
+          urManager.push(move);
+        },
         "right-bar-delete-button",
       ),
     );

@@ -4,6 +4,7 @@ import { ViewGraph } from "./types/graphs/viewgraph";
 import {
   loadFromLocalStorage,
   saveToLocalStorage,
+  urManager,
 } from "./types/viewportManager";
 import { Layer } from "./types/devices/device";
 import { IpAddress, IpAddressGenerator } from "./packets/ip";
@@ -40,6 +41,7 @@ export class GlobalContext {
     this.setNetwork(datagraph, layer);
     this.setupAutoSave();
     saveToLocalStorage(this);
+    urManager.reset();
   }
 
   getViewport() {

@@ -1,10 +1,11 @@
 import { Graphics, Point } from "pixi.js";
 import { EdgeId, ViewGraph } from "./graphs/viewgraph";
 import { Device } from "./devices/index"; // Import the Device class
-import { deselectElement, selectElement } from "./viewportManager";
+import { deselectElement, selectElement, urManager } from "./viewportManager";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils";
 import { Packet } from "./packet";
+import { RemoveEdgeMove } from "./undo-redo";
 import { DeviceId } from "./graphs/datagraph";
 
 export interface EdgeEdges {
@@ -117,7 +118,16 @@ export class Edge extends Graphics {
     // Adds the delete button using addButton
     this.rightbar.addButton(
       "Delete Edge",
-      () => this.delete(),
+      () => {
+        // obtener info
+        const move = new RemoveEdgeMove({
+          edgeId: this.id,
+          connectedNodes: this.connectedNodes,
+        });
+        this.delete();
+        urManager.push(move);
+        // registrar movimiento
+      },
       "right-bar-delete-button",
     );
   }
@@ -127,8 +137,9 @@ export class Edge extends Graphics {
     // Remove the edge from the viewgraph and datagraph
     deselectElement();
     this.viewgraph.removeEdge(this.id);
+    this.destroy();
 
-    console.log(`Edge with ID ${this.id} deleted.`);
+    console.log(`Edge ${this.id} deleted.`);
   }
 
   public updatePosition(device1: Device, device2: Device) {
@@ -151,23 +162,5 @@ export class Edge extends Graphics {
     );
 
     this.drawEdge(newStartPos, newEndPos, Colors.Lightblue);
-  }
-
-  public remove() {
-    const { n1, n2 } = this.connectedNodes;
-    const device1 = this.viewgraph.getDevice(n1);
-    const device2 = this.viewgraph.getDevice(n2);
-
-    // Remove the connection from each connected device
-    if (device1) device1.connections.delete(this.id);
-    if (device2) device2.connections.delete(this.id);
-
-    // Remove the edge from the viewport
-    this.viewgraph.getViewport().removeChild(this);
-    this.destroy();
-
-    console.log(
-      `Edge with ID ${this.id} removed between devices ${n1} and ${n2}.`,
-    );
   }
 }
