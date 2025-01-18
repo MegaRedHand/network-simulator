@@ -4,6 +4,7 @@ import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
 import { IpAddress } from "../../packets/ip";
 import {
+  createDropdown,
   createEditableText,
   DeviceInfo,
   RightBar,
@@ -41,43 +42,44 @@ export class Host extends Device {
   }
 
   getProgramList() {
-    const destinationIpContainer = createEditableText("Destination IP");
-    const destinationIpInput = destinationIpContainer.querySelector("input");
+    const adjacentDevices = this.viewgraph
+      .getDeviceIds()
+      .filter((adjId) => adjId !== this.id)
+      .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
+
+    const dropdownContainer = createDropdown(
+      "Destination",
+      adjacentDevices,
+      "destination",
+    );
+    const destination = dropdownContainer.querySelector("select");
 
     const programList: ProgramInfo[] = [
       { name: "No program", start: () => this.stopProgram() },
       {
         name: "Send ICMP echo",
-        inputs: [destinationIpContainer],
-        start: () => this.sendSingleEcho(destinationIpInput.value),
+        inputs: [dropdownContainer],
+        start: () => this.sendSingleEcho(destination.value),
       },
       {
         name: "Echo server",
-        inputs: [destinationIpContainer],
-        start: () => this.startEchoServer(destinationIpInput.value),
+        inputs: [dropdownContainer],
+        start: () => this.startEchoServer(destination.value),
       },
     ];
     return programList;
   }
 
-  sendSingleEcho(ip: string) {
+  sendSingleEcho(id: string) {
     this.stopProgram();
-    const dstIp = IpAddress.parse(ip);
-    if (!dstIp) {
-      console.error("Invalid IP address: ", ip);
-      return;
-    }
-    sendPacket(this.viewgraph, "ICMP", this.id, dstIp);
+    const dst = parseInt(id);
+    sendPacket(this.viewgraph, "ICMP", this.id, dst);
   }
 
-  startEchoServer(ip: string) {
+  startEchoServer(id: string) {
     this.stopProgram();
-    const dstIp = IpAddress.parse(ip);
-    if (!dstIp) {
-      console.error("Invalid IP address: ", ip);
-      return;
-    }
-    const send = () => sendPacket(this.viewgraph, "ICMP", this.id, dstIp);
+    const dst = parseInt(id);
+    const send = () => sendPacket(this.viewgraph, "ICMP", this.id, dst);
     Ticker.shared.add(send, this);
     this.currentProgram = send;
   }

@@ -262,12 +262,15 @@ export class Packet extends Graphics {
 export function sendPacket(
   viewgraph: ViewGraph,
   packetType: string,
-  srcDeviceId: DeviceId,
-  dstIp: IpAddress,
+  originId: DeviceId,
+  destinationId: DeviceId,
 ) {
-  console.log(`Sending ${packetType} packet from ${srcDeviceId} to ${dstIp}`);
+  console.log(
+    `Sending ${packetType} packet from ${originId} to ${destinationId}`,
+  );
 
-  const originDevice = viewgraph.getDevice(srcDeviceId);
+  const originDevice = viewgraph.getDevice(originId);
+  const destinationDevice = viewgraph.getDevice(destinationId);
 
   // TODO: allow user to choose which payload to send
   let payload;
@@ -282,23 +285,21 @@ export function sendPacket(
       console.warn("Tipo de paquete no reconocido");
       return;
   }
+  const dstIp = destinationDevice.ip;
   const rawPacket = new IPv4Packet(originDevice.ip, dstIp, payload);
   const packet = new Packet(viewgraph, packetType, rawPacket);
 
-  const originConnections = viewgraph.getConnections(srcDeviceId);
+  const originConnections = viewgraph.getConnections(originId);
   if (originConnections.length === 0) {
-    console.warn(`No se encontró un dispositivo con ID ${srcDeviceId}.`);
+    console.warn(`No se encontró un dispositivo con ID ${originId}.`);
     return;
   }
   let firstEdge = originConnections.find((edge) => {
-    const other = viewgraph.getDevice(edge.otherEnd(srcDeviceId));
-    return other.ip.equals(dstIp);
+    return edge.otherEnd(originId) === destinationId;
   });
   if (firstEdge === undefined) {
     firstEdge = originConnections.find((edge) => {
-      const otherId = edge.otherEnd(srcDeviceId);
-      const other = viewgraph.datagraph.getDevice(otherId);
-      return isRouter(other);
+      return isRouter(viewgraph.datagraph.getDevice(edge.otherEnd(originId)));
     });
   }
   if (firstEdge === undefined) {
@@ -307,5 +308,5 @@ export function sendPacket(
     );
     return;
   }
-  packet.traverseEdge(firstEdge, srcDeviceId);
+  packet.traverseEdge(firstEdge, originId);
 }
