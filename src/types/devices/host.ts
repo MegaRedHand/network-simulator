@@ -3,18 +3,15 @@ import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
 import { IpAddress } from "../../packets/ip";
-import {
-  createDropdown,
-  createEditableText,
-  DeviceInfo,
-  RightBar,
-} from "../../graphics/right_bar";
+import { createDropdown, DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { ProgramInfo } from "../../graphics/renderables/device_info";
 import { sendPacket } from "../packet";
 import { Ticker } from "pixi.js";
 
+const DEFAULT_ECHO_DELAY = 250;
+
 export class Host extends Device {
-  currentProgram: () => void = undefined;
+  currentProgram: (ticker: Ticker) => void = undefined;
 
   constructor(
     id: number,
@@ -79,7 +76,16 @@ export class Host extends Device {
   startEchoServer(id: string) {
     this.stopProgram();
     const dst = parseInt(id);
-    const send = () => sendPacket(this.viewgraph, "ICMP", this.id, dst);
+    let progress = 0;
+    const send = (ticker: Ticker) => {
+      const delay = DEFAULT_ECHO_DELAY;
+      progress += ticker.deltaMS;
+      if (progress < delay) {
+        return;
+      }
+      sendPacket(this.viewgraph, "ICMP", this.id, dst);
+      progress -= delay;
+    };
     Ticker.shared.add(send, this);
     this.currentProgram = send;
   }
