@@ -22,7 +22,6 @@ export class DeviceInfo extends StyledInfo {
     this.device = device;
     this.addCommonInfoFields();
     this.addCommonButtons();
-    this.addSendPacketButton();
   }
 
   private addCommonInfoFields() {
@@ -62,7 +61,7 @@ export class DeviceInfo extends StyledInfo {
     );
   }
 
-  private addSendPacketButton() {
+  addSendPacketButton() {
     const { id, viewgraph } = this.device;
 
     const adjacentDevices = viewgraph
@@ -104,6 +103,10 @@ export class DeviceInfo extends StyledInfo {
     );
 
     this.inputFields.push(dynamicTable);
+  }
+
+  addEmptySpace() {
+    this.inputFields.push(document.createElement("br"));
   }
 
   toHTML(): Node[] {
