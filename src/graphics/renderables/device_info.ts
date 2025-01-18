@@ -13,6 +13,13 @@ import {
 } from "../right_bar";
 import { StyledInfo } from "./styled_info";
 
+export interface ProgramInfo {
+  name: string;
+  inputs?: Node[];
+
+  start(): void;
+}
+
 export class DeviceInfo extends StyledInfo {
   readonly device: Device;
   inputFields: Node[] = [];
@@ -83,6 +90,27 @@ export class DeviceInfo extends StyledInfo {
       // Button to send a packet
       createRightBarButton("Send Packet", () =>
         sendSelectedPacket(viewgraph, id),
+      ),
+    );
+  }
+
+  addProgramList(programs: ProgramInfo[]) {
+    const programOptions = programs.map(({ name }, i) => {
+      return { value: i.toString(), text: name };
+    });
+    const inputsContainer = document.createElement("div");
+    let selectedProgram = programs[0];
+    this.inputFields.push(
+      // Dropdown for selecting program
+      createDropdown("Program", programOptions, "program-selector", (v) => {
+        selectedProgram = programs[parseInt(v)];
+        const programInputs = selectedProgram.inputs || [];
+        inputsContainer.replaceChildren(...programInputs);
+      }),
+      inputsContainer,
+      // Button to send a packet
+      createRightBarButton("Start program", () =>
+        console.log("Start program: ", selectedProgram.name),
       ),
     );
   }
