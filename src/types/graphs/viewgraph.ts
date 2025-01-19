@@ -2,13 +2,9 @@ import { Device } from "./../devices/index"; // Import the Device class
 import { Edge } from "./../edge";
 import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
-import { Layer } from "../devices/device";
-import {
-  CreateDevice,
-  createDevice,
-  layerFromType,
-  layerIncluded,
-} from "../devices/utils";
+import { Layer, layerIncluded } from "../devices/layer";
+import { CreateDevice, createDevice } from "../devices/utils";
+import { layerFromType } from "../devices/device";
 
 export type EdgeId = number;
 
