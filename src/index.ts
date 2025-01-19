@@ -25,22 +25,27 @@ import UndoSvg from "./assets/left-curve-arrow.svg";
 import RedoSvg from "./assets/right-curve-arrow.svg";
 import { layerToName } from "./types/devices/utils";
 
+const assets = [RouterSvg, ComputerSvg, PlaySvg, PauseSvg, UndoSvg, RedoSvg];
+
+async function loadAssets(otherPromises: Promise<void>[]) {
+  await Promise.all([...otherPromises, ...assets.map((as) => Assets.load(as))]);
+}
+
 // IIFE to avoid errors
 (async () => {
   // Initialization
   const app = new Application();
-  await app.init({
+  const appInitPromise = app.init({
     width: window.innerWidth,
     height: window.innerHeight,
     resolution: window.devicePixelRatio || 1,
     autoDensity: true,
     antialias: true,
   });
+  await loadAssets([appInitPromise]);
 
   const canvasPlaceholder = document.getElementById("canvas");
   canvasPlaceholder.replaceWith(app.canvas);
-  await Assets.load(RouterSvg);
-  await Assets.load(ComputerSvg);
 
   // Background container initialization
   const viewport = new Viewport(app.renderer.events);
