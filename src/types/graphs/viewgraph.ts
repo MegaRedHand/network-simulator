@@ -4,7 +4,7 @@ import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
 import { CreateDevice, createDevice } from "../devices/utils";
-import { layerFromType } from "../devices/device";
+import { DeviceType, layerFromType } from "../devices/device";
 
 export type EdgeId = number;
 
@@ -23,9 +23,12 @@ export class ViewGraph {
   private devices: Map<DeviceId, Device> = new Map<DeviceId, Device>();
   private edges: Map<EdgeId, Edge> = new Map<EdgeId, Edge>();
   private idCounter: EdgeId = 1;
-  datagraph: DataGraph;
+  private datagraph: DataGraph;
   private layer: Layer;
-  viewport: Viewport;
+  private viewport: Viewport;
+
+  // Used for cleanup of Host programs
+  private destroyed = false;
 
   constructor(datagraph: DataGraph, viewport: Viewport, layer: Layer) {
     this.datagraph = datagraph;
@@ -233,6 +236,8 @@ export class ViewGraph {
       return;
     }
 
+    device.destroy();
+
     // Remove connection from adyacent’s devices
     device.getConnections().forEach((connection) => {
       const edge = this.edges.get(connection.edgeId);
@@ -375,5 +380,13 @@ export class ViewGraph {
         }
       }
     });
+  }
+
+  isDestroyed() {
+    return this.destroyed;
+  }
+
+  destroy() {
+    this.destroyed = true;
   }
 }
