@@ -1,14 +1,8 @@
 import { Application, Assets } from "pixi.js";
 
-import {
-  addDevice,
-  loadFromFile,
-  saveToFile,
-  urManager,
-} from "./types/viewportManager";
+import { loadFromFile, saveToFile, urManager } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
 import { Packet } from "./types/packet";
-import { DeviceType } from "./types/devices/device";
 import { LeftBar } from "./graphics/left_bar";
 import { RightBar } from "./graphics/right_bar";
 import { Viewport } from "./graphics/viewport";
