@@ -27,6 +27,9 @@ export class ViewGraph {
   private layer: Layer;
   viewport: Viewport;
 
+  // Used for cleanup of Host programs
+  private destroyed = false;
+
   constructor(datagraph: DataGraph, viewport: Viewport, layer: Layer) {
     this.datagraph = datagraph;
     this.viewport = viewport;
@@ -375,5 +378,13 @@ export class ViewGraph {
         }
       }
     });
+  }
+
+  isDestroyed() {
+    return this.destroyed;
+  }
+
+  destroy() {
+    this.destroyed = true;
   }
 }

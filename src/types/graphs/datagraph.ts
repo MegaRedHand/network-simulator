@@ -314,6 +314,7 @@ export class DataGraph {
     console.log(parents);
 
     const table: RoutingTableEntry[] = [];
+
     parents.forEach((currentId, childId) => {
       const dstId = childId;
       if (dstId === id) {

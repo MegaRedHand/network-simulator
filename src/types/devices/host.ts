@@ -8,6 +8,7 @@ import { ProgramInfo } from "../../graphics/renderables/device_info";
 import { sendPacket } from "../packet";
 import { Ticker } from "pixi.js";
 import { Layer } from "./layer";
+import { RunningProgram } from "../graphs/datagraph";
 
 const DEFAULT_ECHO_DELAY = 250; // ms
 
@@ -79,6 +80,10 @@ export class Host extends Device {
     const dst = parseInt(id);
     let progress = 0;
     const send = (ticker: Ticker) => {
+      if (this.viewgraph.isDestroyed()) {
+        this.stopProgram();
+        return;
+      }
       const delay = DEFAULT_ECHO_DELAY;
       progress += ticker.deltaMS;
       if (progress < delay) {
