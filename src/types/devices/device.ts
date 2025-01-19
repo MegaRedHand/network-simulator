@@ -239,6 +239,9 @@ export abstract class Device extends Sprite {
     Device.connectionTarget = null;
   }
 
+  // Cleans up related resources
+  destroy() {}
+
   // Return the device’s type.
   abstract getType(): DeviceType;
 

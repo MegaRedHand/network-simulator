@@ -8,12 +8,18 @@ import { ProgramInfo } from "../../graphics/renderables/device_info";
 import { sendPacket } from "../packet";
 import { Ticker } from "pixi.js";
 import { Layer } from "./layer";
-import { RunningProgram } from "../graphs/datagraph";
+import { isHost, RunningProgram } from "../graphs/datagraph";
 
 const DEFAULT_ECHO_DELAY = 250; // ms
 
+const ECHO_SERVER_NAME = "Echo server";
+
+type ProgramTicker = (ticker: Ticker) => void;
+type Pid = number;
+
 export class Host extends Device {
-  currentProgram: (ticker: Ticker) => void = undefined;
+  private runningPrograms: Map<Pid, ProgramTicker> = new Map();
+  private programId = 0;
 
   constructor(
     id: number,
@@ -53,35 +59,49 @@ export class Host extends Device {
     );
     const destination = dropdownContainer.querySelector("select");
 
+    // TODO: extract into classes
     const programList: ProgramInfo[] = [
-      { name: "No program", start: () => this.stopProgram() },
       {
         name: "Send ICMP echo",
         inputs: [dropdownContainer],
         start: () => this.sendSingleEcho(destination.value),
       },
       {
-        name: "Echo server",
+        name: ECHO_SERVER_NAME,
         inputs: [dropdownContainer],
-        start: () => this.startEchoServer(destination.value),
+        start: () => this.startNewEchoServer(destination.value),
       },
     ];
     return programList;
   }
 
+  private addRunningProgram(program: RunningProgram) {
+    this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
+      if (!isHost(device)) {
+        console.error("Node is not a Host");
+        return;
+      }
+      device.runningPrograms.push(program);
+    });
+  }
+
   private sendSingleEcho(id: string) {
-    this.stopProgram();
     const dst = parseInt(id);
     sendPacket(this.viewgraph, "ICMP", this.id, dst);
   }
 
+  private startNewEchoServer(id: string) {
+    this.addRunningProgram({ name: "Echo server", inputs: [id] });
+    this.startEchoServer(id);
+  }
+
   private startEchoServer(id: string) {
-    this.stopProgram();
     const dst = parseInt(id);
     let progress = 0;
+    let pid: Pid;
     const send = (ticker: Ticker) => {
       if (this.viewgraph.isDestroyed()) {
-        this.stopProgram();
+        this.stopProgram(pid);
         return;
       }
       const delay = DEFAULT_ECHO_DELAY;
@@ -92,13 +112,28 @@ export class Host extends Device {
       sendPacket(this.viewgraph, "ICMP", this.id, dst);
       progress -= delay;
     };
-    Ticker.shared.add(send, this);
-    this.currentProgram = send;
+    pid = this.startProgram(send);
   }
 
-  private stopProgram() {
-    if (this.currentProgram) {
-      Ticker.shared.remove(this.currentProgram, this);
+  private startProgram(tick: (ticker: Ticker) => void): Pid {
+    const pid = ++this.programId;
+    this.runningPrograms.set(pid, tick);
+    Ticker.shared.add(tick, this);
+    return pid;
+  }
+
+  private stopProgram(pid: Pid) {
+    const tick = this.runningPrograms.get(pid);
+    if (!tick) {
+      console.error("Pid not found: ", pid);
+      return;
     }
+    Ticker.shared.remove(tick, this);
+    this.runningPrograms.delete(pid);
+  }
+
+  destroy() {
+    this.runningPrograms.forEach((tick) => Ticker.shared.remove(tick, this));
+    this.runningPrograms.clear();
   }
 }

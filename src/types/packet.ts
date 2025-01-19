@@ -272,6 +272,11 @@ export function sendPacket(
   const originDevice = viewgraph.getDevice(originId);
   const destinationDevice = viewgraph.getDevice(destinationId);
 
+  if (!originDevice || !destinationDevice) {
+    console.warn("Origen o destino no encontrado.");
+    return;
+  }
+
   // TODO: allow user to choose which payload to send
   let payload;
   switch (packetType) {

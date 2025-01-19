@@ -4,7 +4,7 @@ import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
 import { CreateDevice, createDevice } from "../devices/utils";
-import { layerFromType } from "../devices/device";
+import { DeviceType, layerFromType } from "../devices/device";
 
 export type EdgeId = number;
 
@@ -235,6 +235,8 @@ export class ViewGraph {
       console.warn(`Device with ID ${id} does not exist in the graph.`);
       return;
     }
+
+    device.destroy();
 
     // Remove connection from adyacent’s devices
     device.getConnections().forEach((connection) => {

@@ -125,6 +125,7 @@ export class DataGraph {
       ...deviceInfo,
       connections: new Set<number>(),
       routingTable: [],
+      runningPrograms: [],
     };
     this.devices.set(id, graphnode);
     console.log(`Device added with ID ${id}`);
@@ -191,8 +192,19 @@ export class DataGraph {
     this.notifyChanges();
   }
 
+  // Get a device by its ID.
+  // WARNING: don't modify the device directly, use `modifyDevice` instead
   getDevice(id: DeviceId): GraphNode | undefined {
     return this.devices.get(id);
+  }
+
+  // Modify a device in the graph, notifying subscribers of any changes
+  modifyDevice(id: DeviceId, fn: (d: GraphNode | undefined) => void) {
+    const device = this.getDevice(id);
+    fn(device);
+    if (device) {
+      this.notifyChanges();
+    }
   }
 
   // Get all connections of a device
