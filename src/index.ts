@@ -66,25 +66,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   // Left bar logic
   const leftBar = LeftBar.getFrom(document, ctx);
-
-  const addRouterButton = () => leftBar.addRouterButton();
-
-  const addHostButton = () => leftBar.addHostButton();
-
-  function setButtonsByLayer(layer: string) {
-    leftBar.clear();
-
-    const buttonConfig: Record<string, (() => void)[]> = {
-      application: [addHostButton],
-      transport: [addHostButton],
-      network: [addRouterButton, addHostButton],
-      link: [addRouterButton, addHostButton],
-    };
-
-    buttonConfig[layer]?.forEach((addButton) => addButton());
-  }
-
-  setButtonsByLayer(layerSelect.value);
+  leftBar.setButtonsByLayer(layerSelect.value);
 
   // Ticker logic
   // app.ticker.add(() => { });
@@ -215,7 +197,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     if (selectedLayer) {
       ctx.changeViewGraph(selectedLayer);
       // LeftBar is reset
-      setButtonsByLayer(selectedLayer);
+      leftBar.setButtonsByLayer(selectedLayer);
     }
   };
 
