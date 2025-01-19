@@ -68,13 +68,13 @@ export class Host extends Device {
     return programList;
   }
 
-  sendSingleEcho(id: string) {
+  private sendSingleEcho(id: string) {
     this.stopProgram();
     const dst = parseInt(id);
     sendPacket(this.viewgraph, "ICMP", this.id, dst);
   }
 
-  startEchoServer(id: string) {
+  private startEchoServer(id: string) {
     this.stopProgram();
     const dst = parseInt(id);
     let progress = 0;
@@ -91,7 +91,7 @@ export class Host extends Device {
     this.currentProgram = send;
   }
 
-  stopProgram() {
+  private stopProgram() {
     if (this.currentProgram) {
       Ticker.shared.remove(this.currentProgram, this);
     }
