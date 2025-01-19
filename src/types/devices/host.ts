@@ -29,6 +29,7 @@ export class Host extends Device {
     mask: IpAddress,
   ) {
     super(id, PcImage, viewgraph, position, ip, mask);
+    this.loadRunningPrograms();
   }
 
   showInfo(): void {
@@ -82,6 +83,21 @@ export class Host extends Device {
         return;
       }
       device.runningPrograms.push(program);
+    });
+  }
+
+  private loadRunningPrograms() {
+    const device = this.viewgraph.getDataGraph().getDevice(this.id);
+    if (!isHost(device)) {
+      console.error("Node is not a Host");
+      return;
+    }
+    device.runningPrograms.forEach((program) => {
+      if (program.name !== ECHO_SERVER_NAME) {
+        console.error("Unknown program: ", program.name);
+        return;
+      }
+      this.startEchoServer(program.inputs[0]);
     });
   }
 
