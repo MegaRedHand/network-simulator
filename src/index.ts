@@ -173,6 +173,10 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
       return;
     }
     switch (event.key) {
+      case "Z": // Ctrl+Shift+Z for Redo
+        event.preventDefault(); // Prevent default browser action (like undo in text inputs)
+        triggerRedo();
+        break;
       case "z": // Ctrl+Z for Undo
         event.preventDefault(); // Prevent default browser action (like undo in text inputs)
         triggerUndo();
