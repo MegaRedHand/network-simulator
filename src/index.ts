@@ -3,7 +3,6 @@ import { Application, Assets } from "pixi.js";
 import {
   AddDevice,
   loadFromFile,
-  loadFromLocalStorage,
   saveToFile,
   urManager,
 } from "./types/viewportManager";
@@ -24,6 +23,7 @@ import PlaySvg from "./assets/play-icon.svg";
 import PauseSvg from "./assets/pause-icon.svg";
 import UndoSvg from "./assets/left-curve-arrow.svg";
 import RedoSvg from "./assets/right-curve-arrow.svg";
+import { layerToName } from "./types/devices/utils";
 
 // IIFE to avoid errors
 (async () => {
@@ -42,17 +42,19 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
   await Assets.load(RouterSvg);
   await Assets.load(ComputerSvg);
 
-  // Context initialization
-  const ctx = new GlobalContext();
-
   // Background container initialization
   const viewport = new Viewport(app.renderer.events);
   app.stage.addChild(viewport);
+
+  // Context initialization
+  const ctx = new GlobalContext(viewport);
 
   // Get the layer’s menu
   const layerSelect = document.getElementById(
     "layer-select",
   ) as HTMLSelectElement;
+
+  layerSelect.value = layerToName(ctx.getCurrentLayer());
 
   // Left bar logic
   const leftBar = LeftBar.getFrom(document);
@@ -86,9 +88,6 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
   }
 
   setButtonsByLayer(layerSelect.value);
-
-  // Initialize Context
-  ctx.initialize(viewport, layerSelect.value);
 
   // Ticker logic
   // app.ticker.add(() => { });
@@ -236,9 +235,6 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
       e.preventDefault();
     }
   };
-
-  // TODO: load from local storage directly, without first generating a context
-  loadFromLocalStorage(ctx, layerSelect.value);
 
   console.log("initialized!");
 })();

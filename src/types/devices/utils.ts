@@ -29,25 +29,26 @@ export function createDevice(
   }
 }
 
+const layerFromNameMap: Record<string, Layer> = {
+  application: Layer.App,
+  transport: Layer.Transport,
+  network: Layer.Network,
+  link: Layer.Link,
+};
+
+const layerToNameMap = new Map([
+  [Layer.App, "application"],
+  [Layer.Transport, "transport"],
+  [Layer.Network, "network"],
+  [Layer.Link, "link"],
+]);
+
 export function layerFromName(name: string): Layer {
-  switch (name) {
-    case "application":
-      // Lógica específica para la capa de aplicación
-      console.log("Application Layer selected");
-      return Layer.App;
-    case "transport":
-      // Lógica específica para la capa de transporte
-      console.log("Transport Layer selected");
-      return Layer.Transport;
-    case "network":
-      // Lógica específica para la capa de red
-      console.log("Network Layer selected");
-      return Layer.Network;
-    case "link":
-      // Lógica específica para la capa de enlace
-      console.log("Link Layer selected");
-      return Layer.Link;
-  }
+  return layerFromNameMap[name];
+}
+
+export function layerToName(layer: Layer): string {
+  return layerToNameMap.get(layer);
 }
 
 export function layerIncluded(layer1: Layer, layer2: Layer) {
