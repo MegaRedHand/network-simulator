@@ -1,15 +1,24 @@
+import RouterSvg from "../assets/router.svg";
+import ComputerSvg from "../assets/pc.svg";
+import { addDevice } from "../types/viewportManager";
+import { GlobalContext } from "../context";
+import { DeviceType } from "../types/devices/device";
+import { Layer, layerFromName } from "../types/devices/layer";
+
 export class LeftBar {
   private leftBar: HTMLElement;
+  private ctx: GlobalContext;
 
-  constructor(leftBar: HTMLElement) {
+  constructor(leftBar: HTMLElement, ctx: GlobalContext) {
     this.leftBar = leftBar;
+    this.ctx = ctx;
   }
 
-  static getFrom(document: Document) {
-    return new LeftBar(document.getElementById("left-bar"));
+  static getFrom(document: Document, ctx: GlobalContext) {
+    return new LeftBar(document.getElementById("left-bar"), ctx);
   }
 
-  addButton(src: string, onClick: () => void, label: string) {
+  private addButton(src: string, onClick: () => void, label: string) {
     const button = document.createElement("button");
     button.classList.add("icon-button");
     button.setAttribute("title", label); // Shows Text
@@ -23,7 +32,29 @@ export class LeftBar {
     button.appendChild(img);
   }
 
-  clear() {
+  private clear() {
     this.leftBar.textContent = "";
+  }
+
+  private addRouterButton() {
+    const addRouter = () => addDevice(this.ctx, DeviceType.Router);
+    this.addButton(RouterSvg, addRouter, "Add Router");
+  }
+
+  private addHostButton() {
+    const addHost = () => addDevice(this.ctx, DeviceType.Host);
+    this.addButton(ComputerSvg, addHost, "Add Host");
+  }
+
+  setButtonsByLayer(layerName: string) {
+    this.clear();
+
+    const layer = layerFromName(layerName);
+
+    this.addHostButton();
+
+    if (layer <= Layer.Network) {
+      this.addRouterButton();
+    }
   }
 }

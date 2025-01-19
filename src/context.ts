@@ -8,7 +8,7 @@ import {
 } from "./types/viewportManager";
 import { Layer } from "./types/devices/device";
 import { IpAddress, IpAddressGenerator } from "./packets/ip";
-import { layerFromName } from "./types/devices/utils";
+import { layerFromName } from "./types/devices/layer";
 
 export class GlobalContext {
   private viewport: Viewport = null;

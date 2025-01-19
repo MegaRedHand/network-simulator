@@ -1,14 +1,8 @@
 import { Application, Assets } from "pixi.js";
 
-import {
-  AddDevice,
-  loadFromFile,
-  saveToFile,
-  urManager,
-} from "./types/viewportManager";
+import { loadFromFile, saveToFile, urManager } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
 import { Packet } from "./types/packet";
-import { DeviceType } from "./types/devices/device";
 import { LeftBar } from "./graphics/left_bar";
 import { RightBar } from "./graphics/right_bar";
 import { Viewport } from "./graphics/viewport";
@@ -23,24 +17,29 @@ import PlaySvg from "./assets/play-icon.svg";
 import PauseSvg from "./assets/pause-icon.svg";
 import UndoSvg from "./assets/left-curve-arrow.svg";
 import RedoSvg from "./assets/right-curve-arrow.svg";
-import { layerToName } from "./types/devices/utils";
+import { layerToName } from "./types/devices/layer";
+
+const assets = [RouterSvg, ComputerSvg, PlaySvg, PauseSvg, UndoSvg, RedoSvg];
+
+async function loadAssets(otherPromises: Promise<void>[]) {
+  await Promise.all([...otherPromises, ...assets.map((as) => Assets.load(as))]);
+}
 
 // IIFE to avoid errors
 (async () => {
   // Initialization
   const app = new Application();
-  await app.init({
+  const appInitPromise = app.init({
     width: window.innerWidth,
     height: window.innerHeight,
     resolution: window.devicePixelRatio || 1,
     autoDensity: true,
     antialias: true,
   });
+  await loadAssets([appInitPromise]);
 
   const canvasPlaceholder = document.getElementById("canvas");
   canvasPlaceholder.replaceWith(app.canvas);
-  await Assets.load(RouterSvg);
-  await Assets.load(ComputerSvg);
 
   // Background container initialization
   const viewport = new Viewport(app.renderer.events);
@@ -56,38 +55,12 @@ import { layerToName } from "./types/devices/utils";
 
   layerSelect.value = layerToName(ctx.getCurrentLayer());
 
-  // Left bar logic
-  const leftBar = LeftBar.getFrom(document);
+  // Initialize RightBar
   RightBar.getInstance();
 
-  const addRouterButton = () =>
-    leftBar.addButton(
-      RouterSvg,
-      () => AddDevice(ctx, DeviceType.Router),
-      "Add Router",
-    );
-
-  const addHostButton = () =>
-    leftBar.addButton(
-      ComputerSvg,
-      () => AddDevice(ctx, DeviceType.Host),
-      "Add Host",
-    );
-
-  function setButtonsByLayer(layer: string) {
-    leftBar.clear();
-
-    const buttonConfig: Record<string, (() => void)[]> = {
-      application: [addHostButton],
-      transport: [addHostButton],
-      network: [addRouterButton, addHostButton],
-      link: [addRouterButton, addHostButton],
-    };
-
-    buttonConfig[layer]?.forEach((addButton) => addButton());
-  }
-
-  setButtonsByLayer(layerSelect.value);
+  // Left bar logic
+  const leftBar = LeftBar.getFrom(document, ctx);
+  leftBar.setButtonsByLayer(layerSelect.value);
 
   // Ticker logic
   // app.ticker.add(() => { });
@@ -168,22 +141,17 @@ import { layerToName } from "./types/devices/utils";
 
   // Add keyboard shortcuts for Undo (Ctrl+Z) and Redo (Ctrl+Y)
   document.addEventListener("keydown", (event) => {
-    if (!event.ctrlKey) {
-      return;
-    }
-    switch (event.key) {
-      case "Z": // Ctrl+Shift+Z for Redo
-        event.preventDefault(); // Prevent default browser action (like undo in text inputs)
-        triggerRedo();
-        break;
-      case "z": // Ctrl+Z for Undo
-        event.preventDefault(); // Prevent default browser action (like undo in text inputs)
-        triggerUndo();
-        break;
-      case "y": // Ctrl+Y for Redo
-        event.preventDefault(); // Prevent default browser action
-        triggerRedo();
-        break;
+    if (event.ctrlKey) {
+      switch (event.key) {
+        case "z": // Ctrl+Z for Undo
+          event.preventDefault(); // Prevent default browser action (like undo in text inputs)
+          triggerUndo();
+          break;
+        case "y": // Ctrl+Y for Redo
+          event.preventDefault(); // Prevent default browser action
+          triggerRedo();
+          break;
+      }
     }
   });
 
@@ -223,7 +191,7 @@ import { layerToName } from "./types/devices/utils";
     if (selectedLayer) {
       ctx.changeViewGraph(selectedLayer);
       // LeftBar is reset
-      setButtonsByLayer(selectedLayer);
+      leftBar.setButtonsByLayer(selectedLayer);
     }
   };
 

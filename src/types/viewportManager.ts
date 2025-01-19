@@ -105,8 +105,8 @@ document.addEventListener("keydown", (event) => {
 });
 
 // Function to add a device at the center of the viewport
-export function AddDevice(ctx: GlobalContext, type: DeviceType) {
-  console.log(`Entered AddDevice with ${type}`);
+export function addDevice(ctx: GlobalContext, type: DeviceType) {
+  console.log(`Entered addDevice with ${type}`);
   deselectElement();
   const viewgraph = ctx.getViewGraph();
   const datagraph = ctx.getDataGraph();
