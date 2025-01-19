@@ -12,7 +12,6 @@ import {
   RemoveDeviceMove,
   RemoveEdgeMove,
 } from "./undo-redo";
-import { layerFromName } from "./devices/utils";
 
 type Selectable = Device | Edge | Packet;
 
