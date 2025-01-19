@@ -49,6 +49,9 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
   const viewport = new Viewport(app.renderer.events);
   app.stage.addChild(viewport);
 
+  // Initialize Context
+  ctx.initialize(viewport, "network");
+
   // Get the layer’s menu
   const layerSelect = document.getElementById(
     "layer-select",
@@ -86,9 +89,6 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
   }
 
   setButtonsByLayer(layerSelect.value);
-
-  // Initialize Context
-  ctx.initialize(viewport, layerSelect.value);
 
   // Ticker logic
   // app.ticker.add(() => { });
@@ -231,9 +231,6 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
       e.preventDefault();
     }
   };
-
-  // TODO: load from local storage directly, without first generating a context
-  loadFromLocalStorage(ctx, layerSelect.value);
 
   console.log("initialized!");
 })();
