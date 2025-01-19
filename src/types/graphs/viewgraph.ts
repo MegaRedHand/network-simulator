@@ -194,6 +194,10 @@ export class ViewGraph {
     this.datagraph.updateDevicePosition(deviceId, { x: device.x, y: device.y });
   }
 
+  getLayer(): Layer {
+    return this.layer;
+  }
+
   // Get all connections of a device
   getConnections(id: DeviceId): Edge[] {
     const device = this.devices.get(id);

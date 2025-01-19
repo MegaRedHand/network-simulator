@@ -21,7 +21,7 @@ export class GlobalContext {
     this.viewport = viewport;
 
     // Sets the initial datagraph and viewgraph
-    loadFromLocalStorage(this, "network");
+    loadFromLocalStorage(this);
 
     this.setIpGenerator();
   }
@@ -50,6 +50,10 @@ export class GlobalContext {
 
   getViewGraph() {
     return this.viewgraph;
+  }
+
+  getCurrentLayer() {
+    return this.viewgraph.getLayer();
   }
 
   getDataGraph() {
