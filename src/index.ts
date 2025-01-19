@@ -1,7 +1,7 @@
 import { Application, Assets } from "pixi.js";
 
 import {
-  AddDevice,
+  addDevice,
   loadFromFile,
   saveToFile,
   urManager,
@@ -61,23 +61,15 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   layerSelect.value = layerToName(ctx.getCurrentLayer());
 
-  // Left bar logic
-  const leftBar = LeftBar.getFrom(document);
+  // Initialize RightBar
   RightBar.getInstance();
 
-  const addRouterButton = () =>
-    leftBar.addButton(
-      RouterSvg,
-      () => AddDevice(ctx, DeviceType.Router),
-      "Add Router",
-    );
+  // Left bar logic
+  const leftBar = LeftBar.getFrom(document, ctx);
 
-  const addHostButton = () =>
-    leftBar.addButton(
-      ComputerSvg,
-      () => AddDevice(ctx, DeviceType.Host),
-      "Add Host",
-    );
+  const addRouterButton = () => leftBar.addRouterButton();
+
+  const addHostButton = () => leftBar.addHostButton();
 
   function setButtonsByLayer(layer: string) {
     leftBar.clear();
