@@ -42,15 +42,12 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
   await Assets.load(RouterSvg);
   await Assets.load(ComputerSvg);
 
-  // Context initialization
-  const ctx = new GlobalContext();
-
   // Background container initialization
   const viewport = new Viewport(app.renderer.events);
   app.stage.addChild(viewport);
 
-  // Initialize Context
-  ctx.initialize(viewport, "network");
+  // Context initialization
+  const ctx = new GlobalContext(viewport);
 
   // Get the layer’s menu
   const layerSelect = document.getElementById(

@@ -17,11 +17,11 @@ export class GlobalContext {
   private saveIntervalId: NodeJS.Timeout | null = null;
   private ipGenerator: IpAddressGenerator;
 
-  initialize(viewport: Viewport, layer: string) {
+  constructor(viewport: Viewport) {
     this.viewport = viewport;
 
     // Sets the initial datagraph and viewgraph
-    loadFromLocalStorage(this, layer);
+    loadFromLocalStorage(this, "network");
 
     this.setIpGenerator();
   }
