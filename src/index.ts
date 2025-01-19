@@ -3,7 +3,6 @@ import { Application, Assets } from "pixi.js";
 import {
   AddDevice,
   loadFromFile,
-  loadFromLocalStorage,
   saveToFile,
   urManager,
 } from "./types/viewportManager";
@@ -24,6 +23,7 @@ import PlaySvg from "./assets/play-icon.svg";
 import PauseSvg from "./assets/pause-icon.svg";
 import UndoSvg from "./assets/left-curve-arrow.svg";
 import RedoSvg from "./assets/right-curve-arrow.svg";
+import { layerToName } from "./types/devices/utils";
 
 // IIFE to avoid errors
 (async () => {
@@ -53,6 +53,8 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
   const layerSelect = document.getElementById(
     "layer-select",
   ) as HTMLSelectElement;
+
+  layerSelect.value = layerToName(ctx.getCurrentLayer());
 
   // Left bar logic
   const leftBar = LeftBar.getFrom(document);
