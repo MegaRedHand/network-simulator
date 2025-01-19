@@ -25,7 +25,7 @@ export class ViewGraph {
   private idCounter: EdgeId = 1;
   private datagraph: DataGraph;
   private layer: Layer;
-  viewport: Viewport;
+  private viewport: Viewport;
 
   // Used for cleanup of Host programs
   private destroyed = false;
