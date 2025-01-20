@@ -1,4 +1,4 @@
-import { Device, DeviceType, Layer } from "./device";
+import { Device, DeviceType } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
@@ -8,6 +8,7 @@ import { ProgramInfo } from "../../graphics/renderables/device_info";
 import { sendPacket } from "../packet";
 import { Ticker } from "pixi.js";
 import { DeviceId } from "../graphs/datagraph";
+import { Layer } from "./layer";
 
 const DEFAULT_ECHO_DELAY = 250; // ms
 

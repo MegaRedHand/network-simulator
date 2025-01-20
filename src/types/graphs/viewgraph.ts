@@ -2,13 +2,9 @@ import { Device } from "./../devices/index"; // Import the Device class
 import { Edge, EdgeEdges } from "./../edge";
 import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
-import { Layer } from "../devices/device";
-import {
-  CreateDevice,
-  createDevice,
-  layerFromType,
-  layerIncluded,
-} from "../devices/utils";
+import { Layer, layerIncluded } from "../devices/layer";
+import { CreateDevice, createDevice } from "../devices/utils";
+import { layerFromType } from "../devices/device";
 
 export type EdgeId = string;
 
@@ -171,6 +167,10 @@ export class ViewGraph {
       }
     });
     this.datagraph.updateDevicePosition(deviceId, { x: device.x, y: device.y });
+  }
+
+  getLayer(): Layer {
+    return this.layer;
   }
 
   // Get all connections of a device

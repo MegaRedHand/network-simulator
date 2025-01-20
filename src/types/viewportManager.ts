@@ -4,7 +4,7 @@ import { Device } from "./devices/index";
 import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
 import { Packet } from "./packet";
-import { DeviceType } from "./devices/device";
+import { DeviceType, Layer } from "./devices/device";
 import { CreateDevice } from "./devices/utils";
 import {
   UndoRedoManager,
@@ -12,7 +12,6 @@ import {
   RemoveDeviceMove,
   RemoveEdgeMove,
 } from "./undo-redo";
-import { layerFromName } from "./devices/utils";
 
 type Selectable = Device | Edge | Packet;
 
@@ -103,8 +102,8 @@ document.addEventListener("keydown", (event) => {
 });
 
 // Function to add a device at the center of the viewport
-export function AddDevice(ctx: GlobalContext, type: DeviceType) {
-  console.log(`Entered AddDevice with ${type}`);
+export function addDevice(ctx: GlobalContext, type: DeviceType) {
+  console.log(`Entered addDevice with ${type}`);
   deselectElement();
   const viewgraph = ctx.getViewGraph();
   const datagraph = ctx.getDataGraph();
@@ -175,23 +174,31 @@ export function loadFromFile(ctx: GlobalContext) {
 
 const LOCAL_STORAGE_KEY = "graphData";
 
+interface LocalStorageData {
+  graph: string;
+  layer: Layer;
+}
+
 export function saveToLocalStorage(ctx: GlobalContext) {
   const dataGraph = ctx.getDataGraph();
   const graphData = JSON.stringify(dataGraph.toData());
-  localStorage.setItem(LOCAL_STORAGE_KEY, graphData);
+  const layer = ctx.getCurrentLayer();
+  const data: LocalStorageData = { graph: graphData, layer };
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
 
   console.log("Graph saved in local storage.");
 }
 
-export function loadFromLocalStorage(ctx: GlobalContext, currLayer: string) {
-  const jsonData = localStorage.getItem(LOCAL_STORAGE_KEY) || "[]";
+export function loadFromLocalStorage(ctx: GlobalContext) {
+  const jsonData = localStorage.getItem(LOCAL_STORAGE_KEY) || "{}";
   try {
-    const graphData: GraphData = JSON.parse(jsonData);
-    ctx.load(DataGraph.fromData(graphData), layerFromName(currLayer));
+    const data: LocalStorageData = JSON.parse(jsonData);
+    const graphData: GraphData = JSON.parse(data.graph);
+    ctx.load(DataGraph.fromData(graphData), data.layer);
   } catch (error) {
     const extraData = { jsonData, error };
     console.error("Failed to load graph from local storage.", extraData);
-    ctx.load(new DataGraph(), layerFromName(currLayer));
+    ctx.load(new DataGraph(), Layer.App);
     return;
   }
   console.log("Graph loaded from local storage.");

@@ -8,7 +8,7 @@ import {
 } from "./types/viewportManager";
 import { Layer } from "./types/devices/device";
 import { IpAddress, IpAddressGenerator } from "./packets/ip";
-import { layerFromName } from "./types/devices/utils";
+import { layerFromName } from "./types/devices/layer";
 
 export class GlobalContext {
   private viewport: Viewport = null;
@@ -17,11 +17,11 @@ export class GlobalContext {
   private saveIntervalId: NodeJS.Timeout | null = null;
   private ipGenerator: IpAddressGenerator;
 
-  initialize(viewport: Viewport, layer: string) {
+  constructor(viewport: Viewport) {
     this.viewport = viewport;
 
     // Sets the initial datagraph and viewgraph
-    loadFromLocalStorage(this, layer);
+    loadFromLocalStorage(this);
 
     this.setIpGenerator();
   }
@@ -50,6 +50,10 @@ export class GlobalContext {
 
   getViewGraph() {
     return this.viewgraph;
+  }
+
+  getCurrentLayer() {
+    return this.viewgraph.getLayer();
   }
 
   getDataGraph() {

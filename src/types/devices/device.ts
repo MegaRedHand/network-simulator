@@ -20,19 +20,24 @@ import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
+import { Layer } from "./layer";
+
+export { Layer } from "./layer";
 
 export const DEVICE_SIZE = 20;
-
-export enum Layer {
-  App = 0,
-  Transport = 1,
-  Network = 2,
-  Link = 3,
-}
 
 export enum DeviceType {
   Router = 0,
   Host = 1,
+}
+
+export function layerFromType(type: DeviceType) {
+  switch (type) {
+    case DeviceType.Router:
+      return Layer.Network;
+    case DeviceType.Host:
+      return Layer.App;
+  }
 }
 
 export abstract class Device extends Sprite {

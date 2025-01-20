@@ -1,15 +1,8 @@
 import { Application, Assets } from "pixi.js";
 
-import {
-  AddDevice,
-  loadFromFile,
-  loadFromLocalStorage,
-  saveToFile,
-  urManager,
-} from "./types/viewportManager";
+import { loadFromFile, saveToFile, urManager } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
 import { Packet } from "./types/packet";
-import { DeviceType } from "./types/devices/device";
 import { LeftBar } from "./graphics/left_bar";
 import { RightBar } from "./graphics/right_bar";
 import { Viewport } from "./graphics/viewport";
@@ -24,71 +17,50 @@ import PlaySvg from "./assets/play-icon.svg";
 import PauseSvg from "./assets/pause-icon.svg";
 import UndoSvg from "./assets/left-curve-arrow.svg";
 import RedoSvg from "./assets/right-curve-arrow.svg";
+import { layerToName } from "./types/devices/layer";
+
+const assets = [RouterSvg, ComputerSvg, PlaySvg, PauseSvg, UndoSvg, RedoSvg];
+
+async function loadAssets(otherPromises: Promise<void>[]) {
+  await Promise.all([...otherPromises, ...assets.map((as) => Assets.load(as))]);
+}
 
 // IIFE to avoid errors
 (async () => {
   // Initialization
   const app = new Application();
-  await app.init({
+  const appInitPromise = app.init({
     width: window.innerWidth,
     height: window.innerHeight,
     resolution: window.devicePixelRatio || 1,
     autoDensity: true,
     antialias: true,
   });
+  await loadAssets([appInitPromise]);
 
   const canvasPlaceholder = document.getElementById("canvas");
   canvasPlaceholder.replaceWith(app.canvas);
-  await Assets.load(RouterSvg);
-  await Assets.load(ComputerSvg);
-
-  // Context initialization
-  const ctx = new GlobalContext();
 
   // Background container initialization
   const viewport = new Viewport(app.renderer.events);
   app.stage.addChild(viewport);
+
+  // Context initialization
+  const ctx = new GlobalContext(viewport);
 
   // Get the layer’s menu
   const layerSelect = document.getElementById(
     "layer-select",
   ) as HTMLSelectElement;
 
-  // Left bar logic
-  const leftBar = LeftBar.getFrom(document);
+  layerSelect.value = layerToName(ctx.getCurrentLayer());
+
+  // Initialize RightBar
   RightBar.getInstance();
 
-  const addRouterButton = () =>
-    leftBar.addButton(
-      RouterSvg,
-      () => AddDevice(ctx, DeviceType.Router),
-      "Add Router",
-    );
-
-  const addHostButton = () =>
-    leftBar.addButton(
-      ComputerSvg,
-      () => AddDevice(ctx, DeviceType.Host),
-      "Add Host",
-    );
-
-  function setButtonsByLayer(layer: string) {
-    leftBar.clear();
-
-    const buttonConfig: Record<string, (() => void)[]> = {
-      application: [addHostButton],
-      transport: [addHostButton],
-      network: [addRouterButton, addHostButton],
-      link: [addRouterButton, addHostButton],
-    };
-
-    buttonConfig[layer]?.forEach((addButton) => addButton());
-  }
-
-  setButtonsByLayer(layerSelect.value);
-
-  // Initialize Context
-  ctx.initialize(viewport, layerSelect.value);
+  // Left bar logic
+  const leftBar = LeftBar.getFrom(document, ctx);
+  leftBar.setButtonsByLayer(layerSelect.value);
 
   // Ticker logic
   // app.ticker.add(() => { });
@@ -219,7 +191,7 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
     if (selectedLayer) {
       ctx.changeViewGraph(selectedLayer);
       // LeftBar is reset
-      setButtonsByLayer(selectedLayer);
+      leftBar.setButtonsByLayer(selectedLayer);
     }
   };
 
@@ -231,9 +203,6 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
       e.preventDefault();
     }
   };
-
-  // TODO: load from local storage directly, without first generating a context
-  loadFromLocalStorage(ctx, layerSelect.value);
 
   console.log("initialized!");
 })();
