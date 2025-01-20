@@ -2,8 +2,9 @@ import { Device } from "./../devices/index"; // Import the Device class
 import { Edge } from "./../edge";
 import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
-import { Layer } from "../devices/device";
-import { createDevice, layerFromType, layerIncluded } from "../devices/utils";
+import { Layer, layerIncluded } from "../devices/layer";
+import { CreateDevice, createDevice } from "../devices/utils";
+import { layerFromType } from "../devices/device";
 
 export type EdgeId = number;
 
@@ -41,11 +42,7 @@ export class ViewGraph {
     this.datagraph.getDevices().forEach((graphNode, deviceId) => {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
         const deviceInfo = { ...graphNode, id: deviceId };
-        const device: Device = createDevice(deviceInfo, this);
-
-        this.viewport.addChild(device);
-
-        this.addDevice(device);
+        this.addDevice(deviceInfo);
 
         this.layer_dfs(
           this.datagraph.getDevices(),
@@ -69,30 +66,48 @@ export class ViewGraph {
   }
 
   // Add a device to the graph
-  addDevice(device: Device) {
-    if (!this.devices.has(device.id)) {
+  addDevice(deviceData: CreateDevice): Device {
+    if (!this.devices.has(deviceData.id)) {
+      const device = createDevice(deviceData, this);
       this.devices.set(device.id, device);
+      this.viewport.addChild(device);
       console.log(`Device added with ID ${device.id}`);
     } else {
-      console.warn(`Device with ID ${device.id} already exists in the graph.`);
+      console.warn(
+        `Device with ID ${deviceData.id} already exists in the graph.`,
+      );
     }
+    return this.devices.get(deviceData.id);
   }
 
-  drawEdge(device1: Device, device2: Device): Edge {
+  drawEdge(device1: Device, device2: Device, edgeId?: EdgeId): Edge {
+    // Usa el ID proporcionado o genera uno nuevo si no se especifica
+    const id = edgeId ?? this.idCounter++;
+
+    if (this.edges.has(id)) {
+      console.warn(`Edge with ID ${id} already exists.`);
+      return this.edges.get(id);
+    }
+
     const edge = new Edge(
-      this.idCounter++,
+      id,
       { n1: device1.id, n2: device2.id },
       device1,
       device2,
       this,
     );
-    this.edges.set(edge.id, edge);
+
+    this.edges.set(id, edge);
     this.viewport.addChild(edge);
+
     return edge;
   }
 
-  // Add a connection between two devices
-  addEdge(device1Id: DeviceId, device2Id: DeviceId): EdgeId | null {
+  addEdge(
+    device1Id: DeviceId,
+    device2Id: DeviceId,
+    edgeId?: EdgeId,
+  ): EdgeId | null {
     if (device1Id === device2Id) {
       console.warn(
         `Cannot create a connection between the same device (ID ${device1Id}).`,
@@ -102,38 +117,44 @@ export class ViewGraph {
 
     if (!this.devices.has(device1Id)) {
       console.warn(`Device with ID ${device1Id} does not exist in devices.`);
-    } else if (!this.devices.has(device2Id)) {
+      return null;
+    }
+
+    if (!this.devices.has(device2Id)) {
       console.warn(`Device with ID ${device2Id} does not exist in devices.`);
-    } else {
-      // Check if an edge already exists between these two devices
-      for (const edge of this.edges.values()) {
-        const { n1, n2 } = edge.connectedNodes;
-        if (
-          (n1 === device1Id && n2 === device2Id) ||
-          (n1 === device2Id && n2 === device1Id)
-        ) {
-          console.warn(
-            `Connection between ID ${device1Id} and ID ${device2Id} already exists.`,
-          );
-          return null;
-        }
-      }
+      return null;
+    }
 
-      const device1 = this.devices.get(device1Id);
-      const device2 = this.devices.get(device2Id);
-
-      if (device1 && device2) {
-        const edge = this.drawEdge(device1, device2);
-
-        this.datagraph.addEdge(device1Id, device2Id);
-
-        console.log(
-          `Connection created between devices ID: ${device1Id} and ID: ${device2Id}`,
+    // Check if an edge already exists between these two devices
+    for (const edge of this.edges.values()) {
+      const { n1, n2 } = edge.connectedNodes;
+      if (
+        (n1 === device1Id && n2 === device2Id) ||
+        (n1 === device2Id && n2 === device1Id)
+      ) {
+        console.warn(
+          `Connection between ID ${device1Id} and ID ${device2Id} already exists.`,
         );
-
-        return edge.id;
+        return null;
       }
     }
+
+    const device1 = this.devices.get(device1Id);
+    const device2 = this.devices.get(device2Id);
+
+    if (device1 && device2) {
+      // Use the provided edgeId if available, otherwise auto-generate one
+      const edge = this.drawEdge(device1, device2, edgeId);
+
+      this.datagraph.addEdge(device1Id, device2Id);
+
+      console.log(
+        `Connection created between devices ID: ${device1Id} and ID: ${device2Id} with Edge ID: ${edge.id}`,
+      );
+
+      return edge.id;
+    }
+
     return null;
   }
 
@@ -162,9 +183,15 @@ export class ViewGraph {
 
       if (startDevice && endDevice) {
         edge.updatePosition(startDevice, endDevice);
+      } else {
+        console.warn("At least one device in connection does not exist");
       }
     });
     this.datagraph.updateDevicePosition(deviceId, { x: device.x, y: device.y });
+  }
+
+  getLayer(): Layer {
+    return this.layer;
   }
 
   // Get all connections of a device
@@ -206,24 +233,23 @@ export class ViewGraph {
       return;
     }
 
+    // Remove connection from adyacent’s devices
     device.getConnections().forEach((connection) => {
-      const adyacentDevice = this.devices.get(connection.adyacentId);
       const edge = this.edges.get(connection.edgeId);
       if (edge) {
-        if (adyacentDevice) {
-          adyacentDevice.removeConnection(edge.id);
-        }
         edge.delete();
+      } else {
+        console.warn(`Edge ${connection.edgeId} does not exist`);
       }
     });
 
     // Remove the device from the viewport and destroy it
     this.viewport.removeChild(device);
-    device.destroy();
 
     // Finally, remove the device from the graph
     this.datagraph.removeDevice(id);
     this.devices.delete(id);
+
     console.log(`Device with ID ${id} and all its connections were removed.`);
   }
 
@@ -236,12 +262,26 @@ export class ViewGraph {
       return;
     }
 
+    // Remove connection in DataGraph
     this.datagraph.removeConnection(
       edge.connectedNodes.n1,
       edge.connectedNodes.n2,
     );
-    // Call Edge's remove method to handle disconnection and cleanup
-    edge.remove();
+
+    // Remove connection from each connected device
+    const { n1, n2 } = edge.connectedNodes;
+    const device1 = this.devices.get(n1);
+    const device2 = this.devices.get(n2);
+
+    if (!(device1 && device2)) {
+      console.warn("At least one device in connection does not exist");
+      return;
+    }
+    device1.removeConnection(edgeId);
+    device2.removeConnection(edgeId);
+
+    // Remove the edge from the viewport
+    this.getViewport().removeChild(edge);
 
     // Remove the edge from the edges map in ViewGraph
     this.edges.delete(edgeId);
@@ -266,6 +306,12 @@ export class ViewGraph {
     return this.edges.get(edgeId);
   }
 
+  // Para que las usen los moves de undo/redo
+  // (la otra es tener dos funciones para agregar un dispositivo, una que avise al datagraph y otra que no)
+  getDataGraph(): DataGraph {
+    return this.datagraph;
+  }
+
   /// Returns the IDs of the edges connecting the two devices
   getPathBetween(idA: DeviceId, idB: DeviceId): number[] {
     if (idA === idB) {
@@ -274,6 +320,7 @@ export class ViewGraph {
     const a = this.devices.get(idA);
     const b = this.devices.get(idB);
     if (!a || !b) {
+      console.warn(`At least one device does not exist`);
       return [];
     }
     let current = a;
@@ -315,6 +362,7 @@ export class ViewGraph {
         const adyacent = this.datagraph.getDevice(w);
         // mark node as visited
         visited.add(w);
+
         if (layerIncluded(layerFromType(adyacent.type), this.layer)) {
           // add connection between v and w
           const connectionKey: string = generateConnectionKey(w, s);

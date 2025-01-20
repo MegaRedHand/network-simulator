@@ -74,6 +74,20 @@ export class RightBar {
     }
   }
 
+  addToggleButton(
+    title: string,
+    details: Record<string, string | number | object>,
+    buttonClass = "right-bar-toggle-button",
+    infoClass = "right-bar-info",
+  ) {
+    const container = createToggleInfo(title, details, buttonClass, infoClass);
+    const infoContent = document.getElementById("info-content");
+
+    if (infoContent) {
+      infoContent.appendChild(container);
+    }
+  }
+
   // Adds a select dropdown to the right-bar
   addDropdown(
     label: string,
@@ -144,6 +158,64 @@ export function createToggleTable(
   return container;
 }
 
+export function createToggleInfo(
+  title: string,
+  details: Record<string, string | number | object>,
+  buttonClass = "right-bar-toggle-button",
+  infoClass = "right-bar-info",
+) {
+  const container = document.createElement("div");
+  container.classList.add("toggle-info-container");
+
+  // Create toggle button
+  const button = document.createElement("button");
+  button.classList.add(buttonClass);
+  button.textContent = "Show Details";
+
+  // Create Packet Details title
+  const header = document.createElement("h3");
+  header.classList.toggle("hidden", true);
+  header.textContent = title;
+
+  // Create info list
+  const list = document.createElement("ul");
+  list.classList.add(infoClass, "hidden");
+
+  // Add details to the list
+  Object.entries(details).forEach(([key, value]) => {
+    const listItem = document.createElement("li");
+    if (key === "Payload") {
+      // Format the payload as JSON
+      const pre = document.createElement("pre");
+      pre.textContent = JSON.stringify(value, null, 2); // Pretty-print JSON
+      listItem.innerHTML = `<strong>${key}:</strong>`;
+      listItem.appendChild(pre);
+    } else {
+      listItem.innerHTML = `<strong>${key}:</strong> ${value}`;
+    }
+    list.appendChild(listItem);
+  });
+
+  // Toggle when clicking on button
+  button.onclick = () => {
+    const isHidden = list.classList.contains("hidden");
+    list.classList.toggle("hidden", !isHidden);
+    list.classList.toggle("open", isHidden);
+    container.classList.toggle("hidden", !isHidden);
+    container.classList.toggle("open", isHidden);
+    button.classList.toggle("open", isHidden);
+    header.classList.toggle("hidden", !isHidden);
+    button.textContent = isHidden ? "Hide Details" : "Show Details";
+  };
+
+  // Add elements to container
+  container.appendChild(button);
+  container.appendChild(header);
+  container.appendChild(list);
+
+  return container;
+}
+
 export function createRightBarButton(
   text: string,
   onClick: () => void,
@@ -169,6 +241,7 @@ export function createDropdown(
   label: string,
   options: { value: string; text: string }[],
   selectId?: string,
+  onchange: (value: string, event: Event) => void = () => undefined,
 ) {
   const container = document.createElement("div");
   container.classList.add("dropdown-container");
@@ -189,8 +262,9 @@ export function createDropdown(
   });
 
   // Default onchange behavior: logs the selected value
-  select.onchange = () => {
+  select.onchange = (e) => {
     console.log(`Selected ${label}:`, select.value);
+    onchange(select.value, e);
   };
 
   container.appendChild(labelElement);

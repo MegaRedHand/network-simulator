@@ -4,12 +4,20 @@ import { Device } from "./devices/index";
 import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
 import { Packet } from "./packet";
-import { DeviceType } from "./devices/device";
-import { createDevice, layerFromName } from "./devices/utils";
+import { DeviceType, Layer } from "./devices/device";
+import { CreateDevice } from "./devices/utils";
+import {
+  UndoRedoManager,
+  AddDeviceMove,
+  RemoveDeviceMove,
+  RemoveEdgeMove,
+} from "./undo-redo";
 
 type Selectable = Device | Edge | Packet;
 
 let selectedElement: Selectable | null = null; // Global variable to store the selected element
+
+export const urManager = new UndoRedoManager();
 
 export function selectElement(element: Selectable) {
   deselectElement();
@@ -43,10 +51,44 @@ export function isSelected(element: Selectable) {
   return element === selectedElement;
 }
 
+function isDevice(selectable: Selectable): selectable is Device {
+  return selectable instanceof Device;
+}
+
+function isEdge(selectable: Selectable): selectable is Edge {
+  return selectable instanceof Edge;
+}
+
 document.addEventListener("keydown", (event) => {
   if (event.key === "Delete" || event.key === "Backspace") {
     if (selectedElement) {
-      selectedElement.delete();
+      let data;
+      if (isDevice(selectedElement)) {
+        data = {
+          id: selectedElement.id,
+          type: selectedElement.getType(),
+          x: selectedElement.x,
+          y: selectedElement.y,
+          ip: selectedElement.ip.toString(),
+          mask: selectedElement.ipMask.toString(),
+        };
+        const move = new RemoveDeviceMove(
+          data,
+          selectedElement.getConnections(),
+        );
+        selectedElement.delete();
+        urManager.push(move);
+      } else if (isEdge(selectedElement)) {
+        const move = new RemoveEdgeMove({
+          edgeId: selectedElement.id,
+          connectedNodes: selectedElement.connectedNodes,
+        });
+        selectedElement.delete();
+        urManager.push(move);
+      } else {
+        // se cambia esto
+        selectedElement.delete();
+      }
     }
   }
 
@@ -63,8 +105,8 @@ document.addEventListener("keydown", (event) => {
 });
 
 // Function to add a device at the center of the viewport
-export function AddDevice(ctx: GlobalContext, type: DeviceType) {
-  console.log(`Entered AddDevice with ${type}`);
+export function addDevice(ctx: GlobalContext, type: DeviceType) {
+  console.log(`Entered addDevice with ${type}`);
   deselectElement();
   const viewgraph = ctx.getViewGraph();
   const datagraph = ctx.getDataGraph();
@@ -78,13 +120,15 @@ export function AddDevice(ctx: GlobalContext, type: DeviceType) {
 
   const { ip, mask } = ctx.getNextIp();
   const deviceInfo = { x, y, type, ip, mask };
-
   const id = datagraph.addNewDevice(deviceInfo);
-  const newDevice: Device = createDevice({ ...deviceInfo, id }, viewgraph);
+
+  const deviceData: CreateDevice = { id, ...deviceInfo };
 
   // Add the Device to the graph
-  viewgraph.addDevice(newDevice);
-  viewport.addChild(newDevice);
+  const newDevice = viewgraph.addDevice(deviceData);
+
+  const move = new AddDeviceMove(deviceData);
+  urManager.push(move);
 
   console.log(
     `${DeviceType[newDevice.getType()]} added with ID ${newDevice.id} at the center of the screen.`,
@@ -133,23 +177,31 @@ export function loadFromFile(ctx: GlobalContext) {
 
 const LOCAL_STORAGE_KEY = "graphData";
 
+interface LocalStorageData {
+  graph: string;
+  layer: Layer;
+}
+
 export function saveToLocalStorage(ctx: GlobalContext) {
   const dataGraph = ctx.getDataGraph();
   const graphData = JSON.stringify(dataGraph.toData());
-  localStorage.setItem(LOCAL_STORAGE_KEY, graphData);
+  const layer = ctx.getCurrentLayer();
+  const data: LocalStorageData = { graph: graphData, layer };
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
 
   console.log("Graph saved in local storage.");
 }
 
-export function loadFromLocalStorage(ctx: GlobalContext, currLayer: string) {
-  const jsonData = localStorage.getItem(LOCAL_STORAGE_KEY) || "[]";
+export function loadFromLocalStorage(ctx: GlobalContext) {
+  const jsonData = localStorage.getItem(LOCAL_STORAGE_KEY) || "{}";
   try {
-    const graphData: GraphData = JSON.parse(jsonData);
-    ctx.load(DataGraph.fromData(graphData), layerFromName(currLayer));
+    const data: LocalStorageData = JSON.parse(jsonData);
+    const graphData: GraphData = JSON.parse(data.graph);
+    ctx.load(DataGraph.fromData(graphData), data.layer);
   } catch (error) {
     const extraData = { jsonData, error };
     console.error("Failed to load graph from local storage.", extraData);
-    ctx.load(new DataGraph(), layerFromName(currLayer));
+    ctx.load(new DataGraph(), Layer.App);
     return;
   }
   console.log("Graph loaded from local storage.");

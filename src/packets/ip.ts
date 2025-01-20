@@ -1,5 +1,6 @@
 import { FramePayload, IP_PROTOCOL_TYPE } from "./ethernet";
 
+// Taken from here: https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
 export const ICMP_PROTOCOL_NUMBER = 1;
 export const TCP_PROTOCOL_NUMBER = 6;
 export const UDP_PROTOCOL_NUMBER = 17;
@@ -9,6 +10,7 @@ export class EmptyPayload implements IpPayload {
     return new Uint8Array(0);
   }
   protocol() {
+    // This number is reserved for experimental protocols
     return 0xfd;
   }
 }
@@ -27,12 +29,18 @@ export class IpAddress {
   }
 
   // Parse IP address from a string representation (10.25.34.42)
-  static parse(addrString: string): IpAddress {
+  static parse(addrString: string): IpAddress | null {
     const octets = new Uint8Array(4);
-    addrString.split(".").forEach((octet, i) => {
+    const splits = addrString.split(".");
+    if (splits.length !== 4) {
+      console.error("Invalid IP address. Length: ", splits.length);
+      return null;
+    }
+    splits.forEach((octet, i) => {
       const octetInt = parseInt(octet);
       if (isNaN(octetInt) || octetInt < 0 || octetInt > 255) {
-        throw new Error(`Invalid IP address: ${addrString}`);
+        console.error("Invalid IP address. value: ", octetInt);
+        return null;
       }
       octets[i] = octetInt;
     });
@@ -102,7 +110,9 @@ export class IpAddressGenerator {
 }
 
 export interface IpPayload {
+  // The bytes equivalent of the payload
   toBytes(): Uint8Array;
+  // The number of the protocol
   protocol(): number;
 }
 
@@ -242,7 +252,7 @@ export class IPv4Packet implements FramePayload {
 export function computeIpChecksum(octets: Uint8Array): number {
   const sum = octets.reduce((acc, octet, i) => {
     return acc + (octet << (8 * (1 - (i % 2))));
-  });
+  }, 0);
   const checksum = sum & 0xffff;
   const carry = sum >> 16;
   return 0xffff ^ (checksum + carry);

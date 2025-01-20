@@ -1,14 +1,8 @@
 import { Application, Assets } from "pixi.js";
 
-import {
-  AddDevice,
-  loadFromFile,
-  loadFromLocalStorage,
-  saveToFile,
-} from "./types/viewportManager";
+import { loadFromFile, saveToFile, urManager } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
 import { Packet } from "./types/packet";
-import { DeviceType } from "./types/devices/device";
 import { LeftBar } from "./graphics/left_bar";
 import { RightBar } from "./graphics/right_bar";
 import { Viewport } from "./graphics/viewport";
@@ -21,71 +15,52 @@ import RouterSvg from "./assets/router.svg";
 import ComputerSvg from "./assets/pc.svg";
 import PlaySvg from "./assets/play-icon.svg";
 import PauseSvg from "./assets/pause-icon.svg";
+import UndoSvg from "./assets/left-curve-arrow.svg";
+import RedoSvg from "./assets/right-curve-arrow.svg";
+import { layerToName } from "./types/devices/layer";
+
+const assets = [RouterSvg, ComputerSvg, PlaySvg, PauseSvg, UndoSvg, RedoSvg];
+
+async function loadAssets(otherPromises: Promise<void>[]) {
+  await Promise.all([...otherPromises, ...assets.map((as) => Assets.load(as))]);
+}
 
 // IIFE to avoid errors
 (async () => {
   // Initialization
   const app = new Application();
-  await app.init({
+  const appInitPromise = app.init({
     width: window.innerWidth,
     height: window.innerHeight,
     resolution: window.devicePixelRatio || 1,
     autoDensity: true,
     antialias: true,
   });
+  await loadAssets([appInitPromise]);
 
   const canvasPlaceholder = document.getElementById("canvas");
   canvasPlaceholder.replaceWith(app.canvas);
-  await Assets.load(RouterSvg);
-  await Assets.load(ComputerSvg);
-
-  // Context initialization
-  const ctx = new GlobalContext();
 
   // Background container initialization
   const viewport = new Viewport(app.renderer.events);
   app.stage.addChild(viewport);
+
+  // Context initialization
+  const ctx = new GlobalContext(viewport);
 
   // Get the layer’s menu
   const layerSelect = document.getElementById(
     "layer-select",
   ) as HTMLSelectElement;
 
-  // Left bar logic
-  const leftBar = LeftBar.getFrom(document);
+  layerSelect.value = layerToName(ctx.getCurrentLayer());
+
+  // Initialize RightBar
   RightBar.getInstance();
 
-  const addRouterButton = () =>
-    leftBar.addButton(
-      RouterSvg,
-      () => AddDevice(ctx, DeviceType.Router),
-      "Add Router",
-    );
-
-  const addHostButton = () =>
-    leftBar.addButton(
-      ComputerSvg,
-      () => AddDevice(ctx, DeviceType.Host),
-      "Add Host",
-    );
-
-  function setButtonsByLayer(layer: string) {
-    leftBar.clear();
-
-    const buttonConfig: Record<string, (() => void)[]> = {
-      application: [addHostButton],
-      transport: [addHostButton],
-      network: [addRouterButton, addHostButton],
-      link: [addRouterButton, addHostButton],
-    };
-
-    buttonConfig[layer]?.forEach((addButton) => addButton());
-  }
-
-  setButtonsByLayer(layerSelect.value);
-
-  // Initialize Context
-  ctx.initialize(viewport, layerSelect.value);
+  // Left bar logic
+  const leftBar = LeftBar.getFrom(document, ctx);
+  leftBar.setButtonsByLayer(layerSelect.value);
 
   // Ticker logic
   // app.ticker.add(() => { });
@@ -118,6 +93,69 @@ import PauseSvg from "./assets/pause-icon.svg";
   saveButton.onclick = () => saveToFile(ctx);
   loadButton.onclick = () => loadFromFile(ctx);
 
+  // Undo button’s logic
+  const undoButton = document.getElementById(
+    "undo-button",
+  ) as HTMLButtonElement;
+
+  const undoIcon = document.createElement("img");
+  undoIcon.src = UndoSvg;
+  undoIcon.alt = "Undo Icon";
+  undoButton.appendChild(undoIcon);
+
+  console.log(undoIcon.style.filter);
+  urManager.suscribe(() => {
+    undoButton.disabled = !urManager.canUndo();
+    undoIcon.style.opacity = urManager.canUndo() ? "1" : "0.5"; // Full opacity for active, reduced for inactive
+  });
+
+  const triggerUndo = () => {
+    if (urManager.canUndo()) {
+      urManager.undo(ctx.getViewGraph());
+    }
+  };
+
+  undoButton.onclick = triggerUndo;
+
+  // Redo button’s logic
+  const redoButton = document.getElementById(
+    "redo-button",
+  ) as HTMLButtonElement;
+  const redoIcon = document.createElement("img");
+  redoIcon.src = RedoSvg;
+  redoIcon.alt = "Redo Icon";
+  redoButton.appendChild(redoIcon);
+
+  urManager.suscribe(() => {
+    redoButton.disabled = !urManager.canRedo();
+    redoIcon.style.opacity = urManager.canRedo() ? "1" : "0.5"; // Full opacity for active, reduced for inactive
+  });
+
+  const triggerRedo = () => {
+    if (urManager.canRedo()) {
+      urManager.redo(ctx.getViewGraph());
+    }
+  };
+
+  redoButton.onclick = triggerRedo;
+
+  // Add keyboard shortcuts for Undo (Ctrl+Z) and Redo (Ctrl+Y)
+  document.addEventListener("keydown", (event) => {
+    if (event.ctrlKey) {
+      switch (event.key) {
+        case "z": // Ctrl+Z for Undo
+          event.preventDefault(); // Prevent default browser action (like undo in text inputs)
+          triggerUndo();
+          break;
+        case "y": // Ctrl+Y for Redo
+          event.preventDefault(); // Prevent default browser action
+          triggerRedo();
+          break;
+      }
+    }
+  });
+
+  // Pause button’s logic
   const pauseButton = document.getElementById("pause-button");
   let paused = false;
 
@@ -153,7 +191,7 @@ import PauseSvg from "./assets/pause-icon.svg";
     if (selectedLayer) {
       ctx.changeViewGraph(selectedLayer);
       // LeftBar is reset
-      setButtonsByLayer(selectedLayer);
+      leftBar.setButtonsByLayer(selectedLayer);
     }
   };
 
@@ -166,20 +204,14 @@ import PauseSvg from "./assets/pause-icon.svg";
     }
   };
 
-  // TODO: load from local storage directly, without first generating a context
-  loadFromLocalStorage(ctx, layerSelect.value);
-
-  // Speed selector logic
-  let speedMultiplier = 1; // Valor predeterminado del multiplicador de velocidad.
+  let speedMultiplier = 1; 
 
   const speedSelect = document.getElementById("speed-select");
   speedSelect?.addEventListener("change", (event) => {
     const selectElement = event.target as HTMLSelectElement;
     speedMultiplier = parseFloat(selectElement.value);
-    console.log(`Velocidad actualizada: ${speedMultiplier}x`);
 
-    // Si el multiplicador afecta a la animación de los paquetes
-    Packet.setSpeedMultiplier(speedMultiplier);
+    Packet.speedMultiplier = speedMultiplier;
   });
 
   console.log("initialized!");

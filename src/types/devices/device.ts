@@ -11,6 +11,7 @@ import {
   deselectElement,
   refreshElement,
   selectElement,
+  urManager,
 } from "./../viewportManager";
 import { RightBar } from "../../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../../utils";
@@ -18,19 +19,25 @@ import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
+import { DragDeviceMove, EdgeData, AddEdgeMove } from "../undo-redo";
+import { Layer } from "./layer";
+
+export { Layer } from "./layer";
 
 export const DEVICE_SIZE = 20;
-
-export enum Layer {
-  App = 0,
-  Transport = 1,
-  Network = 2,
-  Link = 3,
-}
 
 export enum DeviceType {
   Router = 0,
   Host = 1,
+}
+
+export function layerFromType(type: DeviceType) {
+  switch (type) {
+    case DeviceType.Router:
+      return Layer.Network;
+    case DeviceType.Host:
+      return Layer.App;
+  }
 }
 
 export abstract class Device extends Sprite {
@@ -42,6 +49,7 @@ export abstract class Device extends Sprite {
 
   static dragTarget: Device | null = null;
   static connectionTarget: Device | null = null;
+  static startPosition: Position | null = null;
 
   ip: IpAddress;
   ipMask: IpAddress;
@@ -117,6 +125,8 @@ export abstract class Device extends Sprite {
     // Clear connections
     this.connections.clear();
     deselectElement();
+    console.log(`Device ${this.id} deleted`);
+    this.destroy();
   }
 
   onPointerDown(event: FederatedPointerEvent): void {
@@ -125,6 +135,9 @@ export abstract class Device extends Sprite {
       selectElement(this);
     }
     Device.dragTarget = this;
+
+    // Guardar posición inicial
+    Device.startPosition = { x: this.x, y: this.y };
     event.stopPropagation();
 
     // Listen to global pointermove and pointerup events
@@ -141,6 +154,15 @@ export abstract class Device extends Sprite {
       const adyacentDevice = this.viewgraph.getDevice(adyacentId);
       this.addConnection(edgeId, adyacentId);
       adyacentDevice.addConnection(edgeId, this.id);
+
+      // Register move
+      const moveData: EdgeData = {
+        edgeId,
+        connectedNodes: { n1: this.id, n2: adyacentId },
+      };
+      const move = new AddEdgeMove(moveData);
+      urManager.push(move);
+
       return true;
     }
     return false;
@@ -225,7 +247,6 @@ export abstract class Device extends Sprite {
 }
 
 function onPointerMove(event: FederatedPointerEvent): void {
-  console.log("Entered onPointerMove");
   if (Device.dragTarget) {
     Device.dragTarget.parent.toLocal(
       event.global,
@@ -239,8 +260,36 @@ function onPointerMove(event: FederatedPointerEvent): void {
 }
 
 function onPointerUp(): void {
-  console.log("Entered onPointerUp");
-  if (Device.dragTarget) {
+  if (Device.dragTarget && Device.startPosition) {
+    const endPosition: Position = {
+      x: Device.dragTarget.x,
+      y: Device.dragTarget.y,
+    };
+    console.log("Finalizing move for device:", {
+      id: Device.dragTarget.id,
+      startPosition: Device.startPosition,
+      endPosition,
+    });
+
+    if (
+      Device.startPosition.x === endPosition.x &&
+      Device.startPosition.y === endPosition.y
+    ) {
+      console.log(
+        `No movement detected for device ID ${Device.dragTarget.id}. Move not registered.`,
+      );
+    } else {
+      const move = new DragDeviceMove(
+        Device.dragTarget.id,
+        Device.startPosition,
+        endPosition,
+      );
+      urManager.push(move);
+    }
+
+    // Resetear variables estáticas
+    Device.startPosition = null;
+
     // Remove global pointermove and pointerup events
     Device.dragTarget.parent.off("pointermove", onPointerMove);
     Device.dragTarget.parent.off("pointerup", onPointerUp);

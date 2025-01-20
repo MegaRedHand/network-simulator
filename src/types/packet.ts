@@ -11,7 +11,7 @@ import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
 import { EmptyPayload, IpAddress, IPv4Packet } from "../packets/ip";
-import { EchoRequest } from "../packets/icmp";
+import { EchoRequest, EchoReply } from "../packets/icmp";
 import { DeviceId, isRouter } from "./graphs/datagraph";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
@@ -29,8 +29,6 @@ export class Packet extends Graphics {
   currentStart: number;
   color: number;
   type: string;
-  sourceId: number;
-  destinationId: number;
   rawPacket: IPv4Packet;
 
 
@@ -45,17 +43,7 @@ export class Packet extends Graphics {
     Packet.animationPaused = false;
   }
 
-  static setSpeedMultiplier(speed: number) {
-    Packet.speedMultiplier = speed;
-  }
-
-  constructor(
-    viewgraph: ViewGraph,
-    type: string,
-    rawPacket: IPv4Packet,
-    sourceid: number,
-    destinationid: number,
-  ) {
+  constructor(viewgraph: ViewGraph, type: string, rawPacket: IPv4Packet) {
     super();
 
     this.viewgraph = viewgraph;
@@ -65,8 +53,6 @@ export class Packet extends Graphics {
     this.zIndex = ZIndexLevels.Packet;
 
     this.rawPacket = rawPacket;
-    this.sourceId = sourceid;
-    this.destinationId = destinationid;
 
     this.interactive = true;
     this.cursor = "pointer";
@@ -87,12 +73,57 @@ export class Packet extends Graphics {
     this.removeHighlight();
   }
 
+  private getPacketDetails(packet: IPv4Packet) {
+    // Creates a dictionary with the data of the packet
+    const packetDetails: Record<string, string | number | object> = {
+      Version: packet.version,
+      "Internet Header Length": packet.internetHeaderLength,
+      "Type of Service": packet.typeOfService,
+      "Total Length": packet.totalLength,
+      Identification: packet.identification,
+      Flags: packet.flags,
+      "Fragment Offset": packet.fragmentOffset,
+      "Time to Live": packet.timeToLive,
+      Protocol: packet.protocol,
+      "Header Checksum": packet.headerChecksum,
+    };
+
+    // Add payload details if available
+    if (packet.payload instanceof EchoRequest) {
+      const echoRequest = packet.payload as EchoRequest;
+      packetDetails.Payload = {
+        type: "EchoRequest",
+        identifier: echoRequest.identifier,
+        sequenceNumber: echoRequest.sequenceNumber,
+        data: Array.from(echoRequest.data),
+      };
+    } else if (packet.payload instanceof EchoReply) {
+      const echoReply = packet.payload as EchoReply;
+      packetDetails.Payload = {
+        type: "EchoReply",
+        identifier: echoReply.identifier,
+        sequenceNumber: echoReply.sequenceNumber,
+        data: Array.from(echoReply.data),
+      };
+    } else {
+      packetDetails.Payload = {
+        type: "Unknown",
+        protocol: packet.payload.protocol(),
+      };
+    }
+
+    return packetDetails;
+  }
+
   showInfo() {
     const rightbar = RightBar.getInstance();
+    if (!rightbar) {
+      console.error("RightBar instance not found.");
+      return;
+    }
+
     const info = new StyledInfo("Packet Information");
     info.addField("Type", this.type);
-    info.addField("Source ID", this.sourceId.toString());
-    info.addField("Destination ID", this.destinationId.toString());
     info.addField("Source IP Address", this.rawPacket.sourceAddress.toString());
     info.addField(
       "Destination IP Address",
@@ -109,6 +140,11 @@ export class Packet extends Graphics {
       },
       "right-bar-delete-button",
     );
+
+    // Add a toggle info section for packet details
+    const packetDetails = this.getPacketDetails(this.rawPacket);
+
+    rightbar.addToggleButton("Packet Details", packetDetails);
   }
 
   highlight() {
@@ -116,6 +152,10 @@ export class Packet extends Graphics {
   }
 
   removeHighlight() {
+    if (!this.context || !contextPerPacketType[this.type]) {
+      console.warn("Context or packet type context is null");
+      return;
+    }
     this.context = contextPerPacketType[this.type];
   }
 
@@ -226,6 +266,7 @@ export class Packet extends Graphics {
   }
 }
 
+// TODO: maybe make this receive the packet directly?
 export function sendPacket(
   viewgraph: ViewGraph,
   packetType: string,
@@ -252,18 +293,10 @@ export function sendPacket(
       console.warn("Tipo de paquete no reconocido");
       return;
   }
-  const rawPacket = new IPv4Packet(
-    originDevice.ip,
-    destinationDevice.ip,
-    payload,
-  );
-  const packet = new Packet(
-    viewgraph,
-    packetType,
-    rawPacket,
-    originId,
-    destinationId,
-  );
+  const dstIp = destinationDevice.ip;
+  const rawPacket = new IPv4Packet(originDevice.ip, dstIp, payload);
+  const packet = new Packet(viewgraph, packetType, rawPacket);
+
   const originConnections = viewgraph.getConnections(originId);
   if (originConnections.length === 0) {
     console.warn(`No se encontró un dispositivo con ID ${originId}.`);
