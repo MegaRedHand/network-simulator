@@ -14,23 +14,24 @@ export interface EdgeEdges {
 }
 
 export class Edge extends Graphics {
-  id: EdgeId;
-  connectedNodes: { n1: DeviceId; n2: DeviceId };
+  connectedNodes: EdgeEdges;
   startPos: Point;
   endPos: Point;
   viewgraph: ViewGraph;
   rightbar: RightBar;
 
+  static generateConnectionKey(connectedNodes: EdgeEdges): string {
+    const { n1, n2 } = connectedNodes;
+    return [n1, n2].sort().join(",");
+  }
+
   constructor(
-    id: EdgeId,
     connectedNodes: EdgeEdges,
     device1: Device,
     device2: Device,
     viewgraph: ViewGraph,
   ) {
     super();
-
-    this.id = id;
     this.connectedNodes = connectedNodes;
     this.viewgraph = viewgraph;
     this.rightbar = RightBar.getInstance();
@@ -98,7 +99,7 @@ export class Edge extends Graphics {
   // Method to show the Edge information
   showInfo() {
     const info = new StyledInfo("Edge Information");
-    info.addField("Edge ID", this.id.toString());
+    info.addField("Edge ID", Edge.generateConnectionKey(this.connectedNodes));
     info.addField(
       "Connected Devices",
       `${this.connectedNodes.n1} <=> ${this.connectedNodes.n2}`,
@@ -120,10 +121,7 @@ export class Edge extends Graphics {
       "Delete Edge",
       () => {
         // obtener info
-        const move = new RemoveEdgeMove({
-          edgeId: this.id,
-          connectedNodes: this.connectedNodes,
-        });
+        const move = new RemoveEdgeMove(this.connectedNodes);
         this.delete();
         urManager.push(move);
         // registrar movimiento
@@ -136,10 +134,11 @@ export class Edge extends Graphics {
   delete() {
     // Remove the edge from the viewgraph and datagraph
     deselectElement();
-    this.viewgraph.removeEdge(this.id);
+    const id = Edge.generateConnectionKey(this.connectedNodes);
+    this.viewgraph.removeEdge(id);
     this.destroy();
 
-    console.log(`Edge ${this.id} deleted.`);
+    console.log(`Edge ${id} deleted.`);
   }
 
   public updatePosition(device1: Device, device2: Device) {

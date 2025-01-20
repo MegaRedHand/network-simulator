@@ -7,6 +7,7 @@ import { createDropdown, DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { ProgramInfo } from "../../graphics/renderables/device_info";
 import { sendPacket } from "../packet";
 import { Ticker } from "pixi.js";
+import { DeviceId } from "../graphs/datagraph";
 
 const DEFAULT_ECHO_DELAY = 250; // ms
 
@@ -14,7 +15,7 @@ export class Host extends Device {
   currentProgram: (ticker: Ticker) => void = undefined;
 
   constructor(
-    id: number,
+    id: DeviceId,
     viewgraph: ViewGraph,
     position: Position,
     ip: IpAddress,

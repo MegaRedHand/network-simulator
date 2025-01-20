@@ -4,10 +4,11 @@ import RouterImage from "../../assets/router.svg";
 import { Position } from "../common";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { IpAddress } from "../../packets/ip";
+import { DeviceId } from "../graphs/datagraph";
 
 export class Router extends Device {
   constructor(
-    id: number,
+    id: DeviceId,
     viewgraph: ViewGraph,
     position: Position,
     ip: IpAddress,

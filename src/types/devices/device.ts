@@ -19,7 +19,7 @@ import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
-import { DragDeviceMove, EdgeData, AddEdgeMove } from "../undo-redo";
+import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 
 export const DEVICE_SIZE = 20;
 
@@ -38,7 +38,7 @@ export enum DeviceType {
 export abstract class Device extends Sprite {
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
-  connections = new Map<EdgeId, DeviceId>();
+  connections = new Set<DeviceId>();
 
   highlightMarker: Graphics | null = null; // Marker to indicate selection
 
@@ -94,19 +94,15 @@ export abstract class Device extends Sprite {
     this.addChild(idText); // Add the ID text as a child of the device
   }
 
-  getConnections(): { edgeId: EdgeId; adyacentId: DeviceId }[] {
-    return Array.from(this.connections.entries()).map(
-      ([edgeId, adyacentId]) => {
-        return { edgeId, adyacentId };
-      },
-    );
+  getConnections(): DeviceId[] {
+    return Array.from(this.connections.values());
   }
 
-  addConnection(edgeId: EdgeId, adyacentId: DeviceId) {
-    this.connections.set(edgeId, adyacentId);
+  addConnection(adyacentId: DeviceId) {
+    this.connections.add(adyacentId);
   }
 
-  removeConnection(id: EdgeId) {
+  removeConnection(id: DeviceId) {
     this.connections.delete(id);
   }
 
@@ -140,22 +136,18 @@ export abstract class Device extends Sprite {
     this.parent.on("pointerup", onPointerUp);
   }
 
-  connectTo(adyacentId: number): boolean {
+  connectTo(adyacentId: DeviceId): boolean {
     // Connects both devices with an edge.
     // console.log("Entered connectTo");
 
     const edgeId = this.viewgraph.addEdge(this.id, adyacentId);
     if (edgeId) {
       const adyacentDevice = this.viewgraph.getDevice(adyacentId);
-      this.addConnection(edgeId, adyacentId);
-      adyacentDevice.addConnection(edgeId, this.id);
+      this.addConnection(adyacentId);
+      adyacentDevice.addConnection(this.id);
 
       // Register move
-      const moveData: EdgeData = {
-        edgeId,
-        connectedNodes: { n1: this.id, n2: adyacentId },
-      };
-      const move = new AddEdgeMove(moveData);
+      const move = new AddEdgeMove({ n1: this.id, n2: adyacentId });
       urManager.push(move);
 
       return true;
