@@ -88,7 +88,14 @@ export class DeviceInfo extends StyledInfo {
     );
   }
 
-  addRoutingTable(entries: RoutingTableEntry[]) {
+  addRoutingTable(
+    entries: RoutingTableEntry[],
+    saveChangeCallback: (
+      rowIndex: number,
+      colIndex: number,
+      newValue: string,
+    ) => void,
+  ) {
     const rows = entries.map((entry) => [
       entry.ip,
       entry.mask,
@@ -96,11 +103,11 @@ export class DeviceInfo extends StyledInfo {
     ]);
 
     const dynamicTable = createToggleTable(
-      "Routing Table", // Title
-      ["IP Address", "Mask", "Interface"], // Headers
-      rows, // Generated files
-      "right-bar-toggle-button", // Button class
-      "right-bar-table", // Table class
+      "Routing Table",
+      ["IP Address", "Mask", "Interface"],
+      rows,
+      [2], // editable columns index
+      saveChangeCallback,
     );
 
     this.inputFields.push(dynamicTable);

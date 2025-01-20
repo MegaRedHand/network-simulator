@@ -20,6 +20,7 @@ export interface RoutingTableEntry {
   ip: string;
   mask: string;
   iface: DeviceId;
+  manuallyEdited?: boolean;
 }
 
 // Typescript type guard
@@ -273,16 +274,17 @@ export class DataGraph {
     if (!isRouter(router)) {
       return;
     }
+
     console.log(`Regenerating routing table for ID ${id}`);
     const parents = new Map<DeviceId, DeviceId>();
     parents.set(id, id);
     const queue = Array.from([id]);
+
     while (queue.length > 0) {
       const currentId = queue.shift();
       const current = this.devices.get(currentId);
       if (!isRouter(current)) {
-        // Don't route packets on hosts
-        continue;
+        continue; // Omitir dispositivos que no sean routers
       }
       current.connections.forEach((connectedId) => {
         if (!parents.has(connectedId)) {
@@ -292,9 +294,8 @@ export class DataGraph {
       });
     }
 
-    console.log(parents);
+    const newTable: RoutingTableEntry[] = [];
 
-    const table: RoutingTableEntry[] = [];
     parents.forEach((currentId, childId) => {
       const dstId = childId;
       if (dstId === id) {
@@ -306,12 +307,78 @@ export class DataGraph {
         childId = currentId;
         currentId = parentId;
       }
-      // Here the currentId is the router, and the childId
-      // is the first step towards dstId
+
       const dst = this.devices.get(dstId);
-      const entry = { ip: dst.ip, mask: dst.mask, iface: childId };
-      table.push(entry);
+      const entry: RoutingTableEntry = {
+        ip: dst.ip,
+        mask: dst.mask,
+        iface: childId,
+      };
+
+      newTable.push(entry);
     });
-    router.routingTable = table;
+
+    // Keep manually edited entries
+    router.routingTable.forEach((entry, index) => {
+      if (entry.manuallyEdited) {
+        newTable[index] = entry;
+      }
+    });
+
+    router.routingTable = newTable;
+    console.log(
+      `Routing table regenerated for router ID ${id}:`,
+      router.routingTable,
+    );
+  }
+
+  // OTRA OPCION ES TENER UN MAPA CON LOS CAMBIOS MANUALES Y REHACERLOS AL REGENERAR LAS TABLAS
+  // private manualChanges: Map<DeviceId, Map<string, string>> = new Map();
+
+  // {
+  //   1: new Map([
+  //     ["0-2", "eth3"],  // Cambio manual en fila 0, columna 2 (interfaz)
+  //     ["1-0", "10.0.0.1"] // Cambio manual en fila 1, columna 0 (IP)
+  //   ])
+  // }
+
+  saveManualChange(
+    routerId: DeviceId,
+    rowIndex: number,
+    colIndex: number,
+    newValue: string,
+  ) {
+    const router = this.getDevice(routerId);
+    if (!router || !isRouter(router)) {
+      console.warn(`Device with ID ${routerId} is not a router.`);
+      return;
+    }
+
+    if (router.routingTable[rowIndex]) {
+      switch (colIndex) {
+        case 0:
+          router.routingTable[rowIndex].ip = newValue;
+          break;
+        case 1:
+          router.routingTable[rowIndex].mask = newValue;
+          break;
+        case 2:
+          router.routingTable[rowIndex].iface = newValue.startsWith("eth")
+            ? parseInt(newValue.replace("eth", ""), 10)
+            : parseInt(newValue, 10);
+          break;
+        default:
+          console.warn(`Invalid column index: ${colIndex}`);
+          return;
+      }
+
+      // Marcar la celda como editada manualmente
+      router.routingTable[rowIndex].manuallyEdited = true;
+      console.log(
+        `Updated router ID ${routerId} routing table entry at [${rowIndex}, ${colIndex}] manually`,
+      );
+    } else {
+      console.warn(`Invalid row index: ${rowIndex}`);
+    }
   }
 }

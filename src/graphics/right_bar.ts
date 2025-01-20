@@ -102,26 +102,37 @@ export class RightBar {
   }
 }
 
-export function createToggleTable(
+// Function to create a toggle button
+function createToggleButton(
   title: string,
-  headers: string[],
-  rows: string[][],
-  buttonClass = "right-bar-toggle-button",
-  tableClass = "right-bar-table",
+  buttonClass: string,
+  table: HTMLTableElement,
 ) {
-  const container = document.createElement("div");
-  container.classList.add("toggle-table-container");
-
-  // Create toggle button
   const button = document.createElement("button");
   button.classList.add(buttonClass);
   button.textContent = title;
 
-  // Create table
+  button.onclick = () => {
+    const isHidden = table.classList.contains("hidden");
+    table.classList.toggle("hidden", !isHidden);
+    button.classList.toggle("open", isHidden);
+  };
+
+  return button;
+}
+
+// Function to create the table with rows and headers
+function createTable(
+  headers: string[],
+  rows: string[][],
+  tableClass: string,
+  editableColumns: number[] = [],
+  saveChange?: (rowIndex: number, colIndex: number, newValue: string) => void,
+) {
   const table = document.createElement("table");
   table.classList.add(tableClass, "hidden");
 
-  // Add headers
+  // create headerRow
   const headerRow = document.createElement("tr");
   headers.forEach((header) => {
     const th = document.createElement("th");
@@ -130,28 +141,57 @@ export function createToggleTable(
   });
   table.appendChild(headerRow);
 
-  // Add rows
-  rows.forEach((row) => {
+  // Create dataRow
+  rows.forEach((row, rowIndex) => {
     const rowElement = document.createElement("tr");
-    row.forEach((cellData) => {
+    row.forEach((cellData, colIndex) => {
       const cell = document.createElement("td");
-      cell.textContent = cellData;
+
+      if (editableColumns.includes(colIndex) && saveChange) {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = cellData;
+
+        input.addEventListener("input", (event) => {
+          const target = event.target as HTMLInputElement;
+          rows[rowIndex][colIndex] = target.value;
+          saveChange(rowIndex, colIndex, target.value);
+        });
+
+        cell.appendChild(input);
+      } else {
+        cell.textContent = cellData;
+      }
+
       rowElement.appendChild(cell);
     });
     table.appendChild(rowElement);
   });
 
-  // Toggle when clicking on button
-  button.onclick = () => {
-    const isHidden = table.classList.contains("hidden");
-    table.classList.toggle("hidden", !isHidden);
-    table.classList.toggle("open", isHidden);
-    container.classList.toggle("hidden", !isHidden);
-    container.classList.toggle("open", isHidden);
-    button.classList.toggle("open", isHidden);
-  };
+  return table;
+}
 
-  // Add button and table to container
+export function createToggleTable(
+  title: string,
+  headers: string[],
+  rows: string[][],
+  editableColumns: number[] = [],
+  saveChange?: (rowIndex: number, colIndex: number, newValue: string) => void,
+  buttonClass = "right-bar-toggle-button",
+  tableClass = "right-bar-table",
+) {
+  const container = document.createElement("div");
+  container.classList.add("toggle-table-container");
+
+  const table = createTable(
+    headers,
+    rows,
+    tableClass,
+    editableColumns,
+    saveChange,
+  );
+  const button = createToggleButton(title, buttonClass, table);
+
   container.appendChild(button);
   container.appendChild(table);
 

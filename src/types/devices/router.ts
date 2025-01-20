@@ -20,7 +20,19 @@ export class Router extends Device {
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
     info.addEmptySpace();
-    info.addRoutingTable(this.viewgraph.getRoutingTable(this.id));
+
+    info.addRoutingTable(
+      this.viewgraph.getRoutingTable(this.id),
+      (rowIndex: number, colIndex: number, newValue: string) => {
+        this.viewgraph.datagraph.saveManualChange(
+          this.id,
+          rowIndex,
+          colIndex,
+          newValue,
+        );
+      },
+    );
+
     RightBar.getInstance().renderInfo(info);
   }
 

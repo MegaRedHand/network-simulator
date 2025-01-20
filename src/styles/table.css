@@ -12,13 +12,16 @@
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Adds a subtle shadow for depth */
 }
 
-/* Header cells in the table */
 .toggle-table-container th {
   background-color: #333333;
   color: white; /* White text color */
   padding: 8px; /* Adds internal spacing */
   border: 1px solid #ddd; /* Light gray border between cells */
   text-align: center; /* Centers the text horizontally */
+  width: calc(
+    100% / 3
+  ); /* Distribuye el ancho uniformemente entre las columnas */
+  box-sizing: border-box; /* Asegura que el padding no afecte el ancho total */
 }
 
 /* Data cells in the table */
@@ -54,4 +57,14 @@
 /* Hidden table (used for toggling visibility) */
 .toggle-table-container table.hidden {
   display: none; /* Hides the table when this class is applied */
+}
+
+/* Ensure input fields fit properly within table cells */
+.toggle-table-container td input {
+  width: 100%; /* Make inputs take full cell width */
+  box-sizing: border-box; /* Include padding and borders in width calculation */
+  border: 1px solid #ccc; /* Subtle border for inputs */
+  padding: 5px; /* Padding inside the input */
+  font-size: 12px; /* Adjust font size */
+  text-align: center; /* Center text inside input */
 }
