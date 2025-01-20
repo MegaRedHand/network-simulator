@@ -206,13 +206,18 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   let speedMultiplier = 1; 
 
-  const speedSelect = document.getElementById("speed-select");
-  speedSelect?.addEventListener("change", (event) => {
-    const selectElement = event.target as HTMLSelectElement;
-    speedMultiplier = parseFloat(selectElement.value);
+  const speedWheel = document.getElementById("speed-wheel");
+  const valueDisplay = document.querySelector(".value-display");
 
+  speedWheel.addEventListener("input", (event) => {
+    const value = parseFloat((event.target as HTMLInputElement).value);
+    speedMultiplier = value;
+    valueDisplay.textContent = `${value}x`;
     Packet.speedMultiplier = speedMultiplier;
   });
+
+  // Initialize with default value
+  valueDisplay.textContent = `${(speedWheel as HTMLInputElement).value}x`;
 
   console.log("initialized!");
 })();

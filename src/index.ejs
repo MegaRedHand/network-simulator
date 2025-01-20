@@ -18,16 +18,20 @@
         <button id="pause-button" class="pause-button" title="Pause"></button>
         <i id="undo-button" class="undo-button" title="Undo"></i>
         <i id="redo-button" class="redo-button" title="Redo"></i>
-        <select id="speed-select" class="dropdown-menu">
-          <option value="0.25">0.25</option>
-          <option value="0.5">0.5</option>
-          <option value="0.75">0.75</option>
-          <option value="1" selected>1</option>
-          <option value="1.25">1.25</option>
-          <option value="1.5">1.5</option>
-          <option value="1.75">1.75</option>
-          <option value="2">2</option>
-        </select>
+        <div class="wheel-container">
+          <div class="wheel-label">Speed</div>
+          <div class="circular-slider">
+            <input 
+              type="range" 
+              id="speed-wheel" 
+              min="0.2" 
+              max="4" 
+              step="0.1" 
+              value="1"
+            >
+          </div>
+          <div class="value-display">1x</div>
+        </div>
         <select id="layer-select" class="dropdown-menu">
           <option value="application">App Layer</option>
           <option value="transport">Transport Layer</option>
