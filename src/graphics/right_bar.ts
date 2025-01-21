@@ -155,7 +155,7 @@ function createTable(
         // Store the previous valid value
         let previousValue = cellData;
 
-        // Add validation for IP and Mask columns (0 and 1)
+        // Add validation for IP, Mask, and Interface columns
         input.addEventListener("blur", (event) => {
           const target = event.target as HTMLInputElement;
           const value = target.value;
@@ -163,6 +163,16 @@ function createTable(
           if (colIndex === 0 || colIndex === 1) {
             if (!isValidIP(value)) {
               target.setCustomValidity("Invalid format. Use: xxx.xxx.xxx.xxx");
+              target.value = previousValue; // Restore previous value
+            } else {
+              target.setCustomValidity("");
+              previousValue = value; // Update previous value if valid
+              rows[rowIndex][colIndex] = value;
+              saveChange(rowIndex, colIndex, value);
+            }
+          } else if (colIndex === 2) {
+            if (!isValidInterface(value)) {
+              target.setCustomValidity("Invalid format. Use: ethX (e.g., eth1)");
               target.value = previousValue; // Restore previous value
             } else {
               target.setCustomValidity("");
@@ -194,6 +204,12 @@ function createTable(
 function isValidIP(ip: string): boolean {
   const ipPattern = /^(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)$/;
   return ipPattern.test(ip);
+}
+
+// Function to validate Interface format (ethX where X is a number)
+function isValidInterface(interfaceStr: string): boolean {
+  const interfacePattern = /^eth[0-9]+$/;
+  return interfacePattern.test(interfaceStr);
 }
 
 export function createToggleTable(
