@@ -6,7 +6,7 @@ import {
   TextStyle,
   Text,
 } from "pixi.js";
-import { EdgeId, ViewGraph } from "./../graphs/viewgraph";
+import { ViewGraph } from "./../graphs/viewgraph";
 import {
   deselectElement,
   refreshElement,

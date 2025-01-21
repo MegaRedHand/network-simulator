@@ -1,5 +1,5 @@
 import { Graphics, Point } from "pixi.js";
-import { EdgeId, ViewGraph } from "./graphs/viewgraph";
+import { ViewGraph } from "./graphs/viewgraph";
 import { Device } from "./devices/index"; // Import the Device class
 import { deselectElement, selectElement, urManager } from "./viewportManager";
 import { RightBar, StyledInfo } from "../graphics/right_bar";

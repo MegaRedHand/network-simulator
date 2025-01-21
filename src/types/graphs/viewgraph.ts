@@ -30,7 +30,6 @@ export class ViewGraph {
   }
 
   private constructView() {
-    // TODO: Adjust construction based on the selected layer in the future
     console.log("Constructing ViewGraph from DataGraph");
     const connections = new Set<string>();
 
@@ -76,7 +75,6 @@ export class ViewGraph {
   }
 
   drawEdge(device1: Device, device2: Device): Edge {
-    // Usa el ID proporcionado o genera uno nuevo si no se especifica
     const connectedNodes: EdgeEdges = { n1: device1.id, n2: device2.id };
     const id = Edge.generateConnectionKey(connectedNodes);
     if (this.edges.has(id)) {
@@ -128,7 +126,6 @@ export class ViewGraph {
     const device2 = this.devices.get(device2Id);
 
     if (device1 && device2) {
-      // Use the provided edgeId if available, otherwise auto-generate one
       const edge = this.drawEdge(device1, device2);
 
       this.datagraph.addEdge(device1Id, device2Id);
@@ -197,7 +194,7 @@ export class ViewGraph {
     return Array.from(this.devices.values());
   }
 
-  // Devuelve un array con solo los IDs de los dispositivos
+  // Returns an array of devices’ ids
   getDeviceIds(): DeviceId[] {
     return Array.from(this.devices.keys());
   }
@@ -285,13 +282,10 @@ export class ViewGraph {
     return device.routingTable;
   }
 
-  // En ViewGraph
   getEdge(edgeId: EdgeId): Edge | undefined {
     return this.edges.get(edgeId);
   }
 
-  // Para que las usen los moves de undo/redo
-  // (la otra es tener dos funciones para agregar un dispositivo, una que avise al datagraph y otra que no)
   getDataGraph(): DataGraph {
     return this.datagraph;
   }

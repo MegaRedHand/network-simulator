@@ -183,7 +183,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   pauseButton.onclick = triggerPause;
 
-  // (!) For layer abstraction functionality
+  // Layer abstraction logic
   const selectNewLayer = (event: Event) => {
     const selectedLayer = (event.target as HTMLSelectElement).value;
     console.log(`Layer selected: ${selectedLayer}`);
