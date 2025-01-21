@@ -57,6 +57,7 @@ export class DeviceInfo extends StyledInfo {
           const move = new RemoveDeviceMove(
             deviceData,
             this.device.getConnections(),
+            this.device.viewgraph.getRoutingTable(this.device.id),
           );
           this.device.delete();
           urManager.push(move);

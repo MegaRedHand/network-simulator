@@ -79,6 +79,7 @@ document.addEventListener("keydown", (event) => {
         const move = new RemoveDeviceMove(
           data,
           selectedElement.getConnections(),
+          selectedElement.viewgraph.getRoutingTable(selectedElement.id),
         );
         selectedElement.delete();
         urManager.push(move);

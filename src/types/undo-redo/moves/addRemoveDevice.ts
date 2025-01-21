@@ -1,6 +1,6 @@
 import { DeviceType } from "../../devices/device";
 import { CreateDevice } from "../../devices/utils";
-import { DeviceId, GraphNode } from "../../graphs/datagraph";
+import { DeviceId, GraphNode, RoutingTableEntry } from "../../graphs/datagraph";
 import { EdgeId, ViewGraph } from "../../graphs/viewgraph";
 import { Move, TypeMove } from "./move";
 
@@ -61,13 +61,18 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
   type: TypeMove = TypeMove.RemoveDevice;
   data: CreateDevice; // Data of the removed device
   connections: { edgeId: number; adyacentId: DeviceId }[];
+  routingTable?: RoutingTableEntry[]; // Store routing table if device is a router
 
   constructor(
     data: CreateDevice,
     connections: { edgeId: EdgeId; adyacentId: DeviceId }[],
+    routingTable?: RoutingTableEntry[],
   ) {
     super(data);
     this.connections = connections;
+    if (routingTable) {
+      this.routingTable = [...routingTable]; // Store routing table to preserve data
+    }
   }
 
   undo(viewgraph: ViewGraph): void {
@@ -87,6 +92,11 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
         );
       }
     });
+
+    // Restore routing table if it's a router
+    if (this.data.type === DeviceType.Router && this.routingTable) {
+      viewgraph.datagraph.setRoutingTable(this.data.id, this.routingTable);
+    }
   }
 
   redo(viewgraph: ViewGraph): void {

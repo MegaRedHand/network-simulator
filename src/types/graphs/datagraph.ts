@@ -65,17 +65,33 @@ export class DataGraph {
   static fromData(data: GraphData): DataGraph {
     const dataGraph = new DataGraph();
     data.forEach((nodeData: GraphDataNode) => {
-      // ADD DATAGRAPH AND EDGES
       console.log(nodeData);
       const connections = new Set(nodeData.connections);
-      const graphNode: GraphNode = {
-        ...nodeData,
-        connections: connections,
-      };
+  
+      let graphNode: GraphNode;
+  
+      if (nodeData.type === DeviceType.Router) {
+        // If the node is a router, include the routing table
+        const routerNode = nodeData as RouterDataNode;
+        graphNode = {
+          ...routerNode,
+          connections: connections,
+          routingTable: routerNode.routingTable || [],  // Ensure routingTable exists
+        };
+        console.log("ROUTING TABLE ADDED:", JSON.stringify(routerNode.routingTable, null, 2));
+      } else {
+        graphNode = {
+          ...nodeData,
+          connections: connections,
+        };
+      }
+  
       dataGraph.addDevice(nodeData.id, graphNode);
     });
+  
     return dataGraph;
   }
+  
 
   toData(): GraphData {
     const graphData: GraphData = [];
@@ -274,12 +290,12 @@ export class DataGraph {
     if (!isRouter(router)) {
       return;
     }
-
+  
     console.log(`Regenerating routing table for ID ${id}`);
     const parents = new Map<DeviceId, DeviceId>();
     parents.set(id, id);
     const queue = Array.from([id]);
-
+  
     while (queue.length > 0) {
       const currentId = queue.shift();
       const current = this.devices.get(currentId);
@@ -293,44 +309,54 @@ export class DataGraph {
         }
       });
     }
-
+  
     const newTable: RoutingTableEntry[] = [];
-
+  
     parents.forEach((currentId, childId) => {
       const dstId = childId;
       if (dstId === id) {
         return;
       }
-
+  
       while (currentId !== id) {
         const parentId = parents.get(currentId);
         childId = currentId;
         currentId = parentId;
       }
-
+  
       const dst = this.devices.get(dstId);
       const entry: RoutingTableEntry = {
         ip: dst.ip,
         mask: dst.mask,
         iface: childId,
       };
-
+  
       newTable.push(entry);
     });
-
-    // Keep manually edited entries
-    router.routingTable.forEach((entry, index) => {
-      if (entry.manuallyEdited) {
-        newTable[index] = entry;
+  
+    // Preserve manually edited entries only if the router is still connected to the device
+    router.routingTable.forEach((manualEntry) => {
+      if (manualEntry.manuallyEdited) {
+        const existingEntry = newTable.find((entry) => entry.ip === manualEntry.ip);
+        const stillConnected = router.connections.has(manualEntry.iface);
+  
+        if (existingEntry && stillConnected) {
+          existingEntry.mask = manualEntry.mask;
+          existingEntry.iface = manualEntry.iface;
+          existingEntry.manuallyEdited = true;
+        } else if (stillConnected) {
+          newTable.push({ ...manualEntry });
+        }
       }
     });
-
+  
     router.routingTable = newTable;
     console.log(
       `Routing table regenerated for router ID ${id}:`,
       router.routingTable,
     );
   }
+  
 
   // OTRA OPCION ES TENER UN MAPA CON LOS CAMBIOS MANUALES Y REHACERLOS AL REGENERAR LAS TABLAS
   // private manualChanges: Map<DeviceId, Map<string, string>> = new Map();
@@ -380,5 +406,28 @@ export class DataGraph {
     } else {
       console.warn(`Invalid row index: ${rowIndex}`);
     }
+    this.notifyChanges();
   }
+
+  setRoutingTable(routerId: DeviceId, newRoutingTable: RoutingTableEntry[]): void {
+    const router = this.getDevice(routerId);
+    
+    if (!router || !isRouter(router)) {
+      console.warn(`Device with ID ${routerId} is not a router.`);
+      return;
+    }
+  
+    router.routingTable = newRoutingTable.map(entry => ({
+      ip: entry.ip,
+      mask: entry.mask,
+      iface: entry.iface,
+      manuallyEdited: entry.manuallyEdited || false, // Ensure flag consistency
+    }));
+  
+    console.log(`Routing table set for router ID ${routerId}:`, router.routingTable);
+    
+    // Notify changes to persist them
+    this.notifyChanges();
+  }
+  
 }
