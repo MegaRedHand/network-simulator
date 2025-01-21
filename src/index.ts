@@ -204,7 +204,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     }
   };
 
-  let speedMultiplier = 1; 
+  let speedMultiplier = 1;
 
   const speedWheel = document.getElementById("speed-wheel");
   const valueDisplay = document.querySelector(".value-display");

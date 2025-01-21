@@ -31,7 +31,6 @@ export class Packet extends Graphics {
   type: string;
   rawPacket: IPv4Packet;
 
-
   static animationPaused = false;
   static speedMultiplier = 1;
 
@@ -184,17 +183,15 @@ export class Packet extends Graphics {
     return null;
   }
 
-  
-
   animationTick(ticker: Ticker) {
     if (this.progress >= 1) {
       this.progress = 0;
       this.removeFromParent();
-  
+
       const newStart = this.currentEdge.otherEnd(this.currentStart);
       this.currentStart = newStart;
       const newEdgeId = this.routePacket(newStart);
-  
+
       const deleteSelf = () => {
         this.destroy();
         ticker.remove(this.animationTick, this);
@@ -202,41 +199,41 @@ export class Packet extends Graphics {
           deselectElement();
         }
       };
-  
+
       if (newEdgeId === null) {
         deleteSelf();
         return;
       }
-  
+
       const currentNodeEdges = this.viewgraph.getConnections(newStart);
       this.currentEdge = currentNodeEdges.find((edge) => {
         return edge.otherEnd(newStart) === newEdgeId;
       });
-  
+
       if (this.currentEdge === undefined) {
         deleteSelf();
         return;
       }
       this.currentEdge.addChild(this);
     }
-  
+
     // Calculate the edge length
     const start = this.currentEdge.startPos;
     const end = this.currentEdge.endPos;
     const edgeLength = Math.sqrt(
-      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2)
+      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
     );
-  
+
     // Normalize the speed based on edge length
     // The longer the edge, the slower the progress increment
     const normalizedSpeed = this.speed / edgeLength;
-  
+
     // Update progress with normalized speed
     if (!Packet.animationPaused) {
-      this.progress += 
+      this.progress +=
         (ticker.deltaMS * normalizedSpeed * Packet.speedMultiplier) / 1000;
     }
-  
+
     this.updatePosition();
   }
 
