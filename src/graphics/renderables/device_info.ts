@@ -106,7 +106,7 @@ export class DeviceInfo extends StyledInfo {
       "Routing Table",
       ["IP Address", "Mask", "Interface"],
       rows,
-      [2], // editable columns index
+      [0,1,2], // editable columns index
       saveChangeCallback,
     );
 
