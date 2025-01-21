@@ -220,13 +220,25 @@ export class Packet extends Graphics {
       this.currentEdge.addChild(this);
     }
   
-    // Ajustar el progreso según el multiplicador de velocidad.
+    // Calculate the edge length
+    const start = this.currentEdge.startPos;
+    const end = this.currentEdge.endPos;
+    const edgeLength = Math.sqrt(
+      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2)
+    );
+  
+    // Normalize the speed based on edge length
+    // The longer the edge, the slower the progress increment
+    const normalizedSpeed = this.speed / edgeLength;
+  
+    // Update progress with normalized speed
     if (!Packet.animationPaused) {
-      this.progress += (ticker.deltaMS * this.speed * Packet.speedMultiplier) / 100000;
+      this.progress += 
+        (ticker.deltaMS * normalizedSpeed * Packet.speedMultiplier) / 1000;
     }
   
     this.updatePosition();
-  }  
+  }
 
   updatePosition() {
     const current = this.currentEdge;

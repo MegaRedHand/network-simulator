@@ -7,7 +7,7 @@
   flex-direction: row; /* Changed to row */
   align-items: center; /* Center items vertically */
   justify-content: space-between; /* Space between elements */
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: #333333;
   padding: 5px 10px; /* Added more horizontal padding */
   border-radius: 5px;
   z-index: 1000;
@@ -54,7 +54,7 @@
 .circular-slider input[type="range"]::-webkit-slider-runnable-track {
   width: 100%;
   height: 5px;
-  background: #444;
+  background: #555;
   border: none;
   border-radius: 2.5px;
 }
