@@ -79,14 +79,11 @@ document.addEventListener("keydown", (event) => {
         selectedElement.delete();
         urManager.push(move);
       } else if (isEdge(selectedElement)) {
-        const move = new RemoveEdgeMove({
-          edgeId: selectedElement.id,
-          connectedNodes: selectedElement.connectedNodes,
-        });
+        const move = new RemoveEdgeMove(selectedElement.connectedNodes);
         selectedElement.delete();
         urManager.push(move);
       } else {
-        // se cambia esto
+        // it’s a packet
         selectedElement.delete();
       }
     }
