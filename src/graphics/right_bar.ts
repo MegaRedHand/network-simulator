@@ -127,12 +127,12 @@ function createTable(
   rows: string[][],
   tableClass: string,
   editableColumns: number[] = [],
-  saveChange?: (rowIndex: number, colIndex: number, newValue: string) => void,
+  saveChange?: (rowIndex: number, colIndex: number, newValue: string) => void
 ) {
   const table = document.createElement("table");
   table.classList.add(tableClass, "hidden");
 
-  // create headerRow
+  // Create header row
   const headerRow = document.createElement("tr");
   headers.forEach((header) => {
     const th = document.createElement("th");
@@ -141,7 +141,7 @@ function createTable(
   });
   table.appendChild(headerRow);
 
-  // Create dataRow
+  // Create data rows
   rows.forEach((row, rowIndex) => {
     const rowElement = document.createElement("tr");
     row.forEach((cellData, colIndex) => {
@@ -152,10 +152,29 @@ function createTable(
         input.type = "text";
         input.value = cellData;
 
-        input.addEventListener("input", (event) => {
+        // Store the previous valid value
+        let previousValue = cellData;
+
+        // Add validation for IP and Mask columns (0 and 1)
+        input.addEventListener("blur", (event) => {
           const target = event.target as HTMLInputElement;
-          rows[rowIndex][colIndex] = target.value;
-          saveChange(rowIndex, colIndex, target.value);
+          const value = target.value;
+
+          if (colIndex === 0 || colIndex === 1) {
+            if (!isValidIP(value)) {
+              target.setCustomValidity("Invalid format. Use: xxx.xxx.xxx.xxx");
+              target.value = previousValue; // Restore previous value
+            } else {
+              target.setCustomValidity("");
+              previousValue = value; // Update previous value if valid
+              rows[rowIndex][colIndex] = value;
+              saveChange(rowIndex, colIndex, value);
+            }
+          } else {
+            previousValue = value;
+            rows[rowIndex][colIndex] = value;
+            saveChange(rowIndex, colIndex, value);
+          }
         });
 
         cell.appendChild(input);
@@ -169,6 +188,12 @@ function createTable(
   });
 
   return table;
+}
+
+// Function to validate IP format
+function isValidIP(ip: string): boolean {
+  const ipPattern = /^(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)$/;
+  return ipPattern.test(ip);
 }
 
 export function createToggleTable(
