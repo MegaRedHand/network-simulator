@@ -60,9 +60,12 @@ function isEdge(selectable: Selectable): selectable is Edge {
 }
 
 document.addEventListener("keydown", (event) => {
-// Check if the focus is on an input or textarea
-  if (document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement) {
-    return;  // Exit and do not execute shortcuts if the user is typing
+  // Check if the focus is on an input or textarea
+  if (
+    document.activeElement instanceof HTMLInputElement ||
+    document.activeElement instanceof HTMLTextAreaElement
+  ) {
+    return; // Exit and do not execute shortcuts if the user is typing
   }
   if (event.key === "Delete" || event.key === "Backspace") {
     if (selectedElement) {

@@ -127,7 +127,7 @@ function createTable(
   rows: string[][],
   tableClass: string,
   editableColumns: number[] = [],
-  saveChange?: (rowIndex: number, colIndex: number, newValue: string) => void
+  saveChange?: (rowIndex: number, colIndex: number, newValue: string) => void,
 ) {
   const table = document.createElement("table");
   table.classList.add(tableClass, "hidden");
@@ -172,7 +172,9 @@ function createTable(
             }
           } else if (colIndex === 2) {
             if (!isValidInterface(value)) {
-              target.setCustomValidity("Invalid format. Use: ethX (e.g., eth1)");
+              target.setCustomValidity(
+                "Invalid format. Use: ethX (e.g., eth1)",
+              );
               target.value = previousValue; // Restore previous value
             } else {
               target.setCustomValidity("");
@@ -202,7 +204,8 @@ function createTable(
 
 // Function to validate IP format
 function isValidIP(ip: string): boolean {
-  const ipPattern = /^(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)$/;
+  const ipPattern =
+    /^(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)$/;
   return ipPattern.test(ip);
 }
 

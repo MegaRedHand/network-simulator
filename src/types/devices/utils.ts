@@ -1,5 +1,4 @@
 import { IpAddress } from "../../packets/ip";
-import { RoutingTableEntry } from "../graphs/datagraph";
 import { ViewGraph } from "../graphs/viewgraph";
 import { Device, DeviceType } from "./device";
 import { Host } from "./host";
