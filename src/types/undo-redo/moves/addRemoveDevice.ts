@@ -79,13 +79,13 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
     this.addDevice(viewgraph);
     const device = viewgraph.getDevice(this.data.id);
 
-    this.connections.forEach(({ edgeId, adyacentId }) => {
+    this.connections.forEach((adyacentId) => {
       const adyacentDevice = viewgraph.getDevice(adyacentId);
 
       if (adyacentDevice) {
-        viewgraph.addEdge(this.data.id, adyacentId, edgeId);
-        device.addConnection(edgeId, adyacentId);
-        adyacentDevice.addConnection(edgeId, this.data.id);
+        viewgraph.addEdge(this.data.id, adyacentId);
+        device.addConnection(adyacentId);
+        adyacentDevice.addConnection(this.data.id);
       } else {
         console.warn(
           `Adjacent Device ${adyacentId} not found while reconnecting Device ${device.id}`,
