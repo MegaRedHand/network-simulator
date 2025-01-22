@@ -60,12 +60,12 @@ export class AddDeviceMove extends AddRemoveDeviceMove {
 export class RemoveDeviceMove extends AddRemoveDeviceMove {
   type: TypeMove = TypeMove.RemoveDevice;
   data: CreateDevice; // Data of the removed device
-  connections: { edgeId: number; adyacentId: DeviceId }[];
+  connections: DeviceId[];
   routingTable?: RoutingTableEntry[]; // Store routing table if device is a router
 
   constructor(
     data: CreateDevice,
-    connections: { edgeId: EdgeId; adyacentId: DeviceId }[],
+    connections: DeviceId[],
     routingTable?: RoutingTableEntry[],
   ) {
     super(data);
@@ -79,16 +79,16 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
     this.addDevice(viewgraph);
     const device = viewgraph.getDevice(this.data.id);
 
-    this.connections.forEach((adyacentId) => {
-      const adyacentDevice = viewgraph.getDevice(adyacentId);
+    this.connections.forEach((adjacentId) => {
+      const adyacentDevice = viewgraph.getDevice(adjacentId);
 
       if (adyacentDevice) {
-        viewgraph.addEdge(this.data.id, adyacentId);
-        device.addConnection(adyacentId);
+        viewgraph.addEdge(this.data.id, adjacentId);
+        device.addConnection(adjacentId);
         adyacentDevice.addConnection(this.data.id);
       } else {
         console.warn(
-          `Adjacent Device ${adyacentId} not found while reconnecting Device ${device.id}`,
+          `Adjacent Device ${adjacentId} not found while reconnecting Device ${device.id}`,
         );
       }
     });
