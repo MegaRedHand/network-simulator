@@ -1,7 +1,7 @@
 import { DeviceType } from "../../devices/device";
 import { CreateDevice } from "../../devices/utils";
 import { DeviceId, GraphNode, RoutingTableEntry } from "../../graphs/datagraph";
-import { EdgeId, ViewGraph } from "../../graphs/viewgraph";
+import { ViewGraph } from "../../graphs/viewgraph";
 import { Move, TypeMove } from "./move";
 
 // Superclass for AddDeviceMove and RemoveDeviceMove
