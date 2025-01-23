@@ -31,10 +31,15 @@ export class GlobalContext {
     return this.ipGenerator.getNextIp();
   }
 
-  private setNetwork(datagraph: DataGraph, layer: Layer) {
+  private setNetwork(
+    datagraph: DataGraph,
+    layer: Layer,
+    speedMultiplier?: SpeedMultiplier,
+  ) {
     this.datagraph = datagraph;
     this.viewport.clear();
     this.viewgraph = new ViewGraph(this.datagraph, this.viewport, layer);
+    this.viewgraph.setSpeed(speedMultiplier?.value || 1);
     this.setIpGenerator();
   }
 
@@ -87,7 +92,8 @@ export class GlobalContext {
 
   changeViewGraph(selectedLayer: string) {
     const layer = layerFromName(selectedLayer);
-    this.setNetwork(this.datagraph, layer);
+    const speedMultiplier = this.getCurrentSpeed();
+    this.setNetwork(this.datagraph, layer, speedMultiplier);
   }
 
   changeSpeedMultiplier(speedMultiplier: number) {
