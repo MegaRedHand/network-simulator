@@ -88,7 +88,10 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
       }
     });
 
-    console.log("Stored routing tables before removal:", this.storedRoutingTables);
+    console.log(
+      "Stored routing tables before removal:",
+      this.storedRoutingTables,
+    );
   }
 
   undo(viewgraph: ViewGraph): void {
@@ -115,7 +118,10 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
       viewgraph.datagraph.setRoutingTable(deviceId, table);
     });
 
-    console.log(`Routing tables restored for devices:`, this.storedRoutingTables.keys());
+    console.log(
+      `Routing tables restored for devices:`,
+      this.storedRoutingTables.keys(),
+    );
   }
 
   redo(viewgraph: ViewGraph): void {
