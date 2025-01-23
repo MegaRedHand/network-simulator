@@ -61,31 +61,48 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
   type: TypeMove = TypeMove.RemoveDevice;
   data: CreateDevice; // Data of the removed device
   connections: DeviceId[];
-  routingTable?: RoutingTableEntry[]; // Store routing table if device is a router
+  private storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>;
 
   constructor(
     data: CreateDevice,
     connections: DeviceId[],
-    routingTable?: RoutingTableEntry[],
+    viewgraph: ViewGraph, // Pasamos la vista para obtener las tablas de enrutamiento
   ) {
     super(data);
     this.connections = connections;
-    if (routingTable) {
-      this.routingTable = [...routingTable]; // Store routing table to preserve data
+    this.storedRoutingTables = new Map();
+
+    // Guardar la tabla de enrutamiento del dispositivo eliminado si es un router
+    if (data.type === DeviceType.Router) {
+      const routingTable = viewgraph.getRoutingTable(data.id);
+      if (routingTable) {
+        this.storedRoutingTables.set(data.id, [...routingTable]);
+      }
     }
+
+    // Guardar las tablas de los dispositivos conectados
+    connections.forEach((adjacentId) => {
+      const routingTable = viewgraph.getRoutingTable(adjacentId);
+      if (routingTable) {
+        this.storedRoutingTables.set(adjacentId, [...routingTable]);
+      }
+    });
+
+    console.log("Stored routing tables before removal:", this.storedRoutingTables);
   }
 
   undo(viewgraph: ViewGraph): void {
     this.addDevice(viewgraph);
     const device = viewgraph.getDevice(this.data.id);
 
+    // Restaurar conexiones con los dispositivos adyacentes
     this.connections.forEach((adjacentId) => {
-      const adyacentDevice = viewgraph.getDevice(adjacentId);
+      const adjacentDevice = viewgraph.getDevice(adjacentId);
 
-      if (adyacentDevice) {
+      if (adjacentDevice) {
         viewgraph.addEdge(this.data.id, adjacentId);
         device.addConnection(adjacentId);
-        adyacentDevice.addConnection(this.data.id);
+        adjacentDevice.addConnection(this.data.id);
       } else {
         console.warn(
           `Adjacent Device ${adjacentId} not found while reconnecting Device ${device.id}`,
@@ -93,10 +110,12 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
       }
     });
 
-    // Restore routing table if it's a router
-    if (this.data.type === DeviceType.Router && this.routingTable) {
-      viewgraph.datagraph.setRoutingTable(this.data.id, this.routingTable);
-    }
+    // Restaurar las tablas de enrutamiento de todos los dispositivos involucrados
+    this.storedRoutingTables.forEach((table, deviceId) => {
+      viewgraph.datagraph.setRoutingTable(deviceId, table);
+    });
+
+    console.log(`Routing tables restored for devices:`, this.storedRoutingTables.keys());
   }
 
   redo(viewgraph: ViewGraph): void {
