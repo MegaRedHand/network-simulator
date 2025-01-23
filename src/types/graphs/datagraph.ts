@@ -342,14 +342,13 @@ export class DataGraph {
         const existingEntry = newTable.find(
           (entry) => entry.ip === manualEntry.ip,
         );
-        const stillConnected = router.connections.has(manualEntry.iface);
-
-        if (existingEntry && stillConnected) {
+    
+        if (existingEntry) {
           existingEntry.mask = manualEntry.mask;
           existingEntry.iface = manualEntry.iface;
           existingEntry.manuallyEdited = true;
-        } else if (stillConnected) {
-          newTable.push({ ...manualEntry });
+        } else {
+          console.warn(`No matching entry found for IP: ${manualEntry.ip}`);
         }
       }
     });
