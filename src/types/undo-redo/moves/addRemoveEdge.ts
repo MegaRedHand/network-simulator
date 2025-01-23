@@ -47,7 +47,10 @@ export class RemoveEdgeMove extends AddRemoveEdgeMove {
   type: TypeMove = TypeMove.RemoveEdge;
   private storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>;
 
-  constructor(connectedNodes: EdgeEdges, storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>) {
+  constructor(
+    connectedNodes: EdgeEdges,
+    storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>,
+  ) {
     super(connectedNodes);
     this.storedRoutingTables = storedRoutingTables;
   }

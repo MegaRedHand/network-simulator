@@ -342,7 +342,7 @@ export class DataGraph {
         const existingEntry = newTable.find(
           (entry) => entry.ip === manualEntry.ip,
         );
-    
+
         if (existingEntry) {
           existingEntry.mask = manualEntry.mask;
           existingEntry.iface = manualEntry.iface;
