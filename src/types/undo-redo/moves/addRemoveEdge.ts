@@ -1,4 +1,5 @@
 import { Edge, EdgeEdges } from "../../edge";
+import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { Move, TypeMove } from "./move";
 
@@ -44,9 +45,20 @@ export class AddEdgeMove extends AddRemoveEdgeMove {
 
 export class RemoveEdgeMove extends AddRemoveEdgeMove {
   type: TypeMove = TypeMove.RemoveEdge;
+  private storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>;
+
+  constructor(connectedNodes: EdgeEdges, storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>) {
+    super(connectedNodes);
+    this.storedRoutingTables = storedRoutingTables;
+  }
 
   undo(viewgraph: ViewGraph): void {
     this.addEdge(viewgraph);
+
+    // Restaurar las tablas de enrutamiento guardadas
+    this.storedRoutingTables.forEach((table, deviceId) => {
+      viewgraph.datagraph.setRoutingTable(deviceId, table);
+    });
   }
 
   redo(viewgraph: ViewGraph): void {

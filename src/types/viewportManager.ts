@@ -87,7 +87,18 @@ document.addEventListener("keydown", (event) => {
         selectedElement.delete();
         urManager.push(move);
       } else if (isEdge(selectedElement)) {
-        const move = new RemoveEdgeMove(selectedElement.connectedNodes);
+        // Obtener las tablas de enrutamiento antes de eliminar la conexión
+        const routingTable1 = selectedElement.viewgraph.getRoutingTable(selectedElement.connectedNodes.n1);
+        const routingTable2 = selectedElement.viewgraph.getRoutingTable(selectedElement.connectedNodes.n2);
+
+        // Crear movimiento con las tablas de enrutamiento
+        const move = new RemoveEdgeMove(
+          selectedElement.connectedNodes,
+          new Map([
+            [selectedElement.connectedNodes.n1, routingTable1],
+            [selectedElement.connectedNodes.n2, routingTable2],
+          ])
+        );
         selectedElement.delete();
         urManager.push(move);
       } else {
