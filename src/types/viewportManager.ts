@@ -189,7 +189,7 @@ export function saveToLocalStorage(ctx: GlobalContext) {
   const graphData = JSON.stringify(dataGraph.toData());
   const layer = ctx.getCurrentLayer();
   const speedMultiplier = ctx.getCurrentSpeed().value;
-  const data: LocalStorageData = { graph: graphData, layer , speedMultiplier};
+  const data: LocalStorageData = { graph: graphData, layer, speedMultiplier };
   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
 
   console.log("Graph saved in local storage.");

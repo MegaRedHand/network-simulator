@@ -33,9 +33,9 @@ export class ViewGraph {
     this.datagraph = datagraph;
     this.viewport = viewport;
     this.layer = layer;
-    this.speedMultiplier = new SpeedMultiplier(1); 
+    this.speedMultiplier = new SpeedMultiplier(1);
     this.constructView();
-}
+  }
 
   private constructView() {
     // TODO: Adjust construction based on the selected layer in the future
@@ -199,16 +199,16 @@ export class ViewGraph {
 
   getSpeed(): SpeedMultiplier {
     if (!this.speedMultiplier) {
-        this.speedMultiplier = new SpeedMultiplier(1);
+      this.speedMultiplier = new SpeedMultiplier(1);
     }
     return this.speedMultiplier;
   }
 
   setSpeed(speed: number) {
     if (this.speedMultiplier) {
-        this.speedMultiplier.value = speed;
+      this.speedMultiplier.value = speed;
     } else {
-        this.speedMultiplier = new SpeedMultiplier(speed);
+      this.speedMultiplier = new SpeedMultiplier(speed);
     }
   }
 

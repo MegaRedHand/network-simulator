@@ -42,18 +42,24 @@ export class GlobalContext {
     if (speedMultiplier && speedMultiplier.value > 0) {
       this.changeSpeedMultiplier(speedMultiplier.value);
       // Update the wheel display after setting the speed
-      const speedWheel = document.getElementById("speed-wheel") as HTMLInputElement;
+      const speedWheel = document.getElementById(
+        "speed-wheel",
+      ) as HTMLInputElement;
       const valueDisplay = document.querySelector(".value-display");
       if (speedWheel && valueDisplay) {
-          speedWheel.value = speedMultiplier.value.toString();
-          valueDisplay.textContent = `${speedMultiplier.value}x`;
+        speedWheel.value = speedMultiplier.value.toString();
+        valueDisplay.textContent = `${speedMultiplier.value}x`;
       }
     }
   }
 
-  load(datagraph: DataGraph, layer: Layer = Layer.Link, speedMultiplier: SpeedMultiplier = SpeedMultiplier.parse(1)) {
+  load(
+    datagraph: DataGraph,
+    layer: Layer = Layer.Link,
+    speedMultiplier: SpeedMultiplier = SpeedMultiplier.parse(1),
+  ) {
     this.setNetwork(datagraph, layer);
-    this.setSpeedMultiplier(speedMultiplier)
+    this.setSpeedMultiplier(speedMultiplier);
     this.setupAutoSave();
     saveToLocalStorage(this);
     urManager.reset();
@@ -86,11 +92,10 @@ export class GlobalContext {
 
   changeSpeedMultiplier(speedMultiplier: number) {
     if (this.viewgraph) {
-        this.viewgraph.setSpeed(speedMultiplier);
-        saveToLocalStorage(this);
+      this.viewgraph.setSpeed(speedMultiplier);
+      saveToLocalStorage(this);
     }
   }
-
 
   private setupAutoSave() {
     this.clearAutoSave();

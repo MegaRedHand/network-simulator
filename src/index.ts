@@ -185,9 +185,11 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   pauseButton.onclick = triggerPause;
 
   function updateSpeedWheel(value: number) {
-    const speedWheel = document.getElementById("speed-wheel") as HTMLInputElement;
+    const speedWheel = document.getElementById(
+      "speed-wheel",
+    ) as HTMLInputElement;
     const valueDisplay = document.querySelector(".value-display");
-    
+
     speedWheel.value = value.toString();
     valueDisplay.textContent = `${value}x`;
   }
