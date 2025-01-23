@@ -32,7 +32,6 @@ export class Packet extends Graphics {
   rawPacket: IPv4Packet;
 
   static animationPaused = false;
-  static speedMultiplier = 1;
 
   static pauseAnimation() {
     Packet.animationPaused = true;
@@ -231,7 +230,7 @@ export class Packet extends Graphics {
     // Update progress with normalized speed
     if (!Packet.animationPaused) {
       this.progress +=
-        (ticker.deltaMS * normalizedSpeed * Packet.speedMultiplier) / 1000;
+        (ticker.deltaMS * normalizedSpeed * this.viewgraph.getSpeed().value) / 1000;
     }
 
     this.updatePosition();
