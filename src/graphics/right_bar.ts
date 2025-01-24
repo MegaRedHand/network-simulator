@@ -45,6 +45,7 @@ export class RightBar {
     if (infoContent) {
       infoContent.innerHTML = ""; // Clears only the content of info-content
     }
+    closeModal();
   }
 
   // Shows specific information of an element in info-content
@@ -146,52 +147,13 @@ function createTable(
     const rowElement = document.createElement("tr");
     row.forEach((cellData, colIndex) => {
       const cell = document.createElement("td");
+      cell.textContent = cellData;
+      cell.classList.add("editable-cell");
 
-      if (editableColumns.includes(colIndex) && saveChange) {
-        const input = document.createElement("input");
-        input.type = "text";
-        input.value = cellData;
-
-        // Store the previous valid value
-        let previousValue = cellData;
-
-        // Add validation for IP, Mask, and Interface columns
-        input.addEventListener("blur", (event) => {
-          const target = event.target as HTMLInputElement;
-          const value = target.value;
-
-          if (colIndex === 0 || colIndex === 1) {
-            if (!isValidIP(value)) {
-              target.setCustomValidity("Invalid format. Use: xxx.xxx.xxx.xxx");
-              target.value = previousValue; // Restore previous value
-            } else {
-              target.setCustomValidity("");
-              previousValue = value; // Update previous value if valid
-              rows[rowIndex][colIndex] = value;
-              saveChange(rowIndex, colIndex, value);
-            }
-          } else if (colIndex === 2) {
-            if (!isValidInterface(value)) {
-              target.setCustomValidity(
-                "Invalid format. Use: ethX (e.g., eth1)",
-              );
-              target.value = previousValue; // Restore previous value
-            } else {
-              target.setCustomValidity("");
-              previousValue = value; // Update previous value if valid
-              rows[rowIndex][colIndex] = value;
-              saveChange(rowIndex, colIndex, value);
-            }
-          } else {
-            previousValue = value;
-            rows[rowIndex][colIndex] = value;
-            saveChange(rowIndex, colIndex, value);
-          }
+      if (editableColumns.includes(colIndex)) {
+        cell.addEventListener("click", () => {
+          openModal(cell, rowIndex, colIndex);
         });
-
-        cell.appendChild(input);
-      } else {
-        cell.textContent = cellData;
       }
 
       rowElement.appendChild(cell);
@@ -199,7 +161,155 @@ function createTable(
     table.appendChild(rowElement);
   });
 
+  if (!document.getElementById("customModal")) {
+    createModal(saveChange);
+  }
+
   return table;
+}
+
+// Function to create the modal dynamically
+function createModal(
+  saveChangeCallback: (
+    rowIndex: number,
+    colIndex: number,
+    newValue: string,
+  ) => void,
+) {
+  const modal = document.createElement("div");
+  modal.id = "customModal";
+  modal.classList.add("modal");
+  modal.innerHTML = `
+    <div class="modal-content">
+      <h2 id="modalTitle">Edit Value</h2>
+      <input type="text" id="modalInput" />
+      <p id="errorMessage" class="error-message"></p>
+      <div class="modal-buttons">
+        <button id="saveBtn">Save</button>
+        <button id="cancelBtn">Cancel</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Attach event listener to save button safely
+  const saveBtn = document.getElementById("saveBtn");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", () => {
+      const inputElement = document.getElementById(
+        "modalInput",
+      ) as HTMLInputElement | null;
+      if (!inputElement) {
+        showError("Input element not found.");
+        return;
+      }
+      const newValue = inputElement.value.trim();
+
+      // Check if currentRowIndex and currentColIndex are valid
+      if (currentRowIndex === null || currentColIndex === null) return;
+
+      // Validation logic for IP and interface
+      if (currentColIndex === 0 || currentColIndex === 1) {
+        if (!isValidIP(newValue)) {
+          showError("Invalid IP format. Use: xxx.xxx.xxx.xxx");
+          return;
+        }
+      } else if (currentColIndex === 2) {
+        if (!isValidInterface(newValue)) {
+          showError("Invalid interface format. Use: ethX (e.g., eth1)");
+          return;
+        }
+      }
+
+      if (currentCell) {
+        currentCell.textContent = newValue;
+        saveChangeCallback(currentRowIndex, currentColIndex, newValue);
+      }
+      closeModal();
+    });
+  } else {
+    console.error("Save button not found.");
+  }
+
+  // Attach event listener to cancel button safely
+  const cancelBtn = document.getElementById("cancelBtn");
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", closeModal);
+  } else {
+    console.error("Cancel button not found.");
+  }
+}
+
+// Function to show validation errors
+function showError(message: string) {
+  const errorElement = document.getElementById("errorMessage");
+  if (errorElement) {
+    errorElement.textContent = message;
+  }
+}
+
+// Open modal function
+let currentCell: HTMLElement | null = null;
+let currentRowIndex: number | null = null;
+let currentColIndex: number | null = null;
+
+// Function to open the modal with dynamic title
+function openModal(cell: HTMLElement, rowIndex: number, colIndex: number) {
+  currentCell = cell;
+  currentRowIndex = rowIndex;
+  currentColIndex = colIndex;
+
+  const modalTitle = document.getElementById("modalTitle");
+  if (modalTitle) {
+    switch (colIndex) {
+      case 0:
+        modalTitle.textContent = "Edit IP Address";
+        break;
+      case 1:
+        modalTitle.textContent = "Edit Mask";
+        break;
+      case 2:
+        modalTitle.textContent = "Edit Interface";
+        break;
+      default:
+        modalTitle.textContent = "Edit Value";
+    }
+  } else {
+    console.error("Modal title element not found.");
+  }
+
+  const modalInput = document.getElementById(
+    "modalInput",
+  ) as HTMLInputElement | null;
+  if (modalInput) {
+    modalInput.value = cell.textContent || "";
+  } else {
+    console.error("Modal input element not found.");
+  }
+
+  const errorMessage = document.getElementById("errorMessage");
+  if (errorMessage) {
+    errorMessage.textContent = ""; // Clear previous errors
+  } else {
+    console.error("Error message element not found.");
+  }
+
+  const modal = document.getElementById("customModal");
+  if (modal) {
+    modal.style.display = "block";
+  } else {
+    console.error("Modal element not found.");
+  }
+}
+
+// Close modal function
+function closeModal() {
+  const modal = document.getElementById("customModal");
+  if (modal) {
+    modal.style.display = "none";
+  } else {
+    console.error("Modal element not found.");
+  }
 }
 
 // Function to validate IP format

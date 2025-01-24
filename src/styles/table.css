@@ -1,70 +1,74 @@
-/* table.css */
-
 /* Styles for tables in the right sidebar */
 .toggle-table-container table {
-  width: 100%; /* Makes the table occupy the full width of its container */
-  border-collapse: collapse; /* Removes spacing between table cells */
-  font-size: 14px; /* Sets the font size for table content */
-  text-align: center; /* Centers the content inside cells */
-  transition: opacity 0.5s ease-out; /* Smooth transition for opacity changes */
-  border-radius: 8px; /* Adds rounded corners to the table */
-  overflow: hidden; /* Prevents content from overflowing */
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Adds a subtle shadow for depth */
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  text-align: center;
+  transition: opacity 0.5s ease-out;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .toggle-table-container th {
   background-color: #333333;
-  color: white; /* White text color */
-  padding: 8px; /* Adds internal spacing */
-  border: 1px solid #ddd; /* Light gray border between cells */
-  text-align: center; /* Centers the text horizontally */
-  width: calc(
-    100% / 3
-  ); /* Distribuye el ancho uniformemente entre las columnas */
-  box-sizing: border-box; /* Asegura que el padding no afecte el ancho total */
+  color: white;
+  padding: 8px;
+  border: 1px solid #ddd;
+  text-align: center;
+  width: calc(100% / 3);
+  box-sizing: border-box;
 }
 
 /* Data cells in the table */
 .toggle-table-container td {
-  padding: 8px; /* Adds internal spacing */
-  border: 1px solid #ddd; /* Light gray border between cells */
-  text-align: center; /* Centers the text horizontally */
+  padding: 8px;
+  border: 1px solid #ddd;
+  text-align: center;
+  transition: background-color 0.3s ease-in-out; /* Smooth transition for hover effect */
+}
+
+/* Add hover effect on table cells */
+.toggle-table-container td:hover {
+  background-color: #f0f0f0; /* Light gray when hovering over a cell */
+  cursor: pointer; /* Change cursor to pointer */
 }
 
 /* Alternating row colors for better readability */
 .toggle-table-container tr:nth-child(even) {
-  background-color: #f9f9f9; /* Light gray for even rows */
+  background-color: #f9f9f9;
 }
 
 .toggle-table-container tr:nth-child(odd) {
-  background-color: #ffffff; /* White for odd rows */
-}
-
-/* Hover effect for rows */
-.toggle-table-container tr:hover {
-  background-color: #f1f1f1; /* Light gray background on hover */
+  background-color: #ffffff;
 }
 
 /* Table caption styles */
 .toggle-table-container caption {
-  font-size: 16px; /* Slightly larger font for the caption */
-  font-weight: bold; /* Bold text for the caption */
-  margin-bottom: 5px; /* Adds space below the caption */
-  color: #333333; /* Dark gray text color */
-  text-align: center; /* Centers the caption */
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333333;
+  text-align: center;
 }
 
 /* Hidden table (used for toggling visibility) */
 .toggle-table-container table.hidden {
-  display: none; /* Hides the table when this class is applied */
+  display: none;
 }
 
 /* Ensure input fields fit properly within table cells */
 .toggle-table-container td input {
-  width: 100%; /* Make inputs take full cell width */
-  box-sizing: border-box; /* Include padding and borders in width calculation */
-  border: 1px solid #ccc; /* Subtle border for inputs */
-  padding: 5px; /* Padding inside the input */
-  font-size: 12px; /* Adjust font size */
-  text-align: center; /* Center text inside input */
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  padding: 5px;
+  font-size: 12px;
+  text-align: center;
+  pointer-events: none; /* Prevent text cursor on input fields unless focused */
+}
+
+/* Allow input to be edited only when clicked */
+.toggle-table-container td input:focus {
+  pointer-events: auto; /* Allow editing on focus */
 }
