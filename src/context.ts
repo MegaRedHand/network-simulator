@@ -93,6 +93,7 @@ export class GlobalContext {
   changeViewGraph(selectedLayer: string) {
     const layer = layerFromName(selectedLayer);
     const speedMultiplier = this.getCurrentSpeed();
+    urManager.reset();
     this.setNetwork(this.datagraph, layer, speedMultiplier);
   }
 

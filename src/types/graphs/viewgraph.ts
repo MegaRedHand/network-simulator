@@ -1,5 +1,5 @@
 import { Device } from "./../devices/index"; // Import the Device class
-import { Edge } from "./../edge";
+import { Edge, EdgeEdges } from "./../edge";
 import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
@@ -7,11 +7,7 @@ import { SpeedMultiplier } from "../devices/speedMultiplier";
 import { CreateDevice, createDevice } from "../devices/utils";
 import { layerFromType } from "../devices/device";
 
-export type EdgeId = number;
-
-function generateConnectionKey(id1: number, id2: number): string {
-  return [id1, id2].sort().join(",");
-}
+export type EdgeId = string;
 
 function parseConnectionKey(key: string): { id1: number; id2: number } {
   const connection: number[] = key
@@ -23,7 +19,6 @@ function parseConnectionKey(key: string): { id1: number; id2: number } {
 export class ViewGraph {
   private devices: Map<DeviceId, Device> = new Map<DeviceId, Device>();
   private edges: Map<EdgeId, Edge> = new Map<EdgeId, Edge>();
-  private idCounter: EdgeId = 1;
   datagraph: DataGraph;
   private layer: Layer;
   private speedMultiplier: SpeedMultiplier;
@@ -38,7 +33,6 @@ export class ViewGraph {
   }
 
   private constructView() {
-    // TODO: Adjust construction based on the selected layer in the future
     console.log("Constructing ViewGraph from DataGraph");
     const connections = new Set<string>();
 
@@ -61,9 +55,9 @@ export class ViewGraph {
       const connection = parseConnectionKey(key);
       const device1 = this.getDevice(connection.id1);
       const device2 = this.getDevice(connection.id2);
-      const edge = this.drawEdge(device1, device2);
-      device1.addConnection(edge.id, device2.id);
-      device2.addConnection(edge.id, device1.id);
+      this.drawEdge(device1, device2);
+      device1.addConnection(device2.id);
+      device2.addConnection(device1.id);
     });
     console.log("Finished constructing ViewGraph");
   }
@@ -83,22 +77,15 @@ export class ViewGraph {
     return this.devices.get(deviceData.id);
   }
 
-  drawEdge(device1: Device, device2: Device, edgeId?: EdgeId): Edge {
-    // Usa el ID proporcionado o genera uno nuevo si no se especifica
-    const id = edgeId ?? this.idCounter++;
-
+  drawEdge(device1: Device, device2: Device): Edge {
+    const connectedNodes: EdgeEdges = { n1: device1.id, n2: device2.id };
+    const id = Edge.generateConnectionKey(connectedNodes);
     if (this.edges.has(id)) {
       console.warn(`Edge with ID ${id} already exists.`);
       return this.edges.get(id);
     }
 
-    const edge = new Edge(
-      id,
-      { n1: device1.id, n2: device2.id },
-      device1,
-      device2,
-      this,
-    );
+    const edge = new Edge(connectedNodes, device1, device2, this);
 
     this.edges.set(id, edge);
     this.viewport.addChild(edge);
@@ -106,11 +93,7 @@ export class ViewGraph {
     return edge;
   }
 
-  addEdge(
-    device1Id: DeviceId,
-    device2Id: DeviceId,
-    edgeId?: EdgeId,
-  ): EdgeId | null {
+  addEdge(device1Id: DeviceId, device2Id: DeviceId): EdgeId | null {
     if (device1Id === device2Id) {
       console.warn(
         `Cannot create a connection between the same device (ID ${device1Id}).`,
@@ -146,16 +129,15 @@ export class ViewGraph {
     const device2 = this.devices.get(device2Id);
 
     if (device1 && device2) {
-      // Use the provided edgeId if available, otherwise auto-generate one
-      const edge = this.drawEdge(device1, device2, edgeId);
+      const edge = this.drawEdge(device1, device2);
 
       this.datagraph.addEdge(device1Id, device2Id);
 
       console.log(
-        `Connection created between devices ID: ${device1Id} and ID: ${device2Id} with Edge ID: ${edge.id}`,
+        `Connection created between devices ID: ${device1Id} and ID: ${device2Id}`,
       );
 
-      return edge.id;
+      return Edge.generateConnectionKey(edge.connectedNodes);
     }
 
     return null;
@@ -163,25 +145,19 @@ export class ViewGraph {
 
   deviceMoved(deviceId: DeviceId) {
     const device: Device = this.devices.get(deviceId);
-    device.getConnections().forEach((connection) => {
-      const edge = this.edges.get(connection.edgeId);
-      if (
-        !(
-          edge.connectedNodes.n1 == connection.adyacentId ||
-          edge.connectedNodes.n2 == connection.adyacentId
-        )
-      ) {
-        return;
-      }
+    device.getConnections().forEach((adyacentId) => {
+      const edge = this.edges.get(
+        Edge.generateConnectionKey({ n1: deviceId, n2: adyacentId }),
+      );
       // Get start and end devices directly
       const startDevice =
         edge.connectedNodes.n1 === device.id
           ? device
-          : this.devices.get(connection.adyacentId);
+          : this.devices.get(adyacentId);
 
       const endDevice =
         edge.connectedNodes.n1 === device.id
-          ? this.devices.get(connection.adyacentId)
+          ? this.devices.get(adyacentId)
           : device;
 
       if (startDevice && endDevice) {
@@ -216,9 +192,13 @@ export class ViewGraph {
   getConnections(id: DeviceId): Edge[] {
     const device = this.devices.get(id);
     return device
-      ? Array.from(device.connections.keys()).map((edgeId) =>
-          this.edges.get(edgeId),
-        )
+      ? device
+          .getConnections()
+          .map((adyacentId) =>
+            this.edges.get(
+              Edge.generateConnectionKey({ n1: id, n2: adyacentId }),
+            ),
+          )
       : [];
   }
 
@@ -232,7 +212,7 @@ export class ViewGraph {
     return Array.from(this.devices.values());
   }
 
-  // Devuelve un array con solo los IDs de los dispositivos
+  // Returns an array of devices’ ids
   getDeviceIds(): DeviceId[] {
     return Array.from(this.devices.keys());
   }
@@ -243,7 +223,7 @@ export class ViewGraph {
   }
 
   // Method to remove a device and its connections (edges)
-  removeDevice(id: number) {
+  removeDevice(id: DeviceId) {
     const device = this.devices.get(id);
 
     if (!device) {
@@ -252,12 +232,13 @@ export class ViewGraph {
     }
 
     // Remove connection from adyacent’s devices
-    device.getConnections().forEach((connection) => {
-      const edge = this.edges.get(connection.edgeId);
+    device.getConnections().forEach((adyacentId) => {
+      const edgeId = Edge.generateConnectionKey({ n1: id, n2: adyacentId });
+      const edge = this.edges.get(edgeId);
       if (edge) {
         edge.delete();
       } else {
-        console.warn(`Edge ${connection.edgeId} does not exist`);
+        console.warn(`Edge ${edgeId} does not exist`);
       }
     });
 
@@ -295,8 +276,8 @@ export class ViewGraph {
       console.warn("At least one device in connection does not exist");
       return;
     }
-    device1.removeConnection(edgeId);
-    device2.removeConnection(edgeId);
+    device1.removeConnection(n2);
+    device2.removeConnection(n1);
 
     // Remove the edge from the viewport
     this.getViewport().removeChild(edge);
@@ -319,19 +300,16 @@ export class ViewGraph {
     return device.routingTable;
   }
 
-  // En ViewGraph
   getEdge(edgeId: EdgeId): Edge | undefined {
     return this.edges.get(edgeId);
   }
 
-  // Para que las usen los moves de undo/redo
-  // (la otra es tener dos funciones para agregar un dispositivo, una que avise al datagraph y otra que no)
   getDataGraph(): DataGraph {
     return this.datagraph;
   }
 
   /// Returns the IDs of the edges connecting the two devices
-  getPathBetween(idA: DeviceId, idB: DeviceId): number[] {
+  getPathBetween(idA: DeviceId, idB: DeviceId): EdgeId[] {
     if (idA === idB) {
       return [];
     }
@@ -345,10 +323,13 @@ export class ViewGraph {
     const unvisitedNodes = [];
     const connectingEdges = new Map<DeviceId, EdgeId>([[a.id, null]]);
     while (current.id !== idB) {
-      for (const [edgeId, adyacentId] of current.connections) {
-        const edge = this.edges.get(edgeId);
+      for (const adyacentId of current.connections) {
+        const edgeId = Edge.generateConnectionKey({
+          n1: current.id,
+          n2: adyacentId,
+        });
         if (!connectingEdges.has(adyacentId)) {
-          connectingEdges.set(adyacentId, edge.id);
+          connectingEdges.set(adyacentId, edgeId);
           unvisitedNodes.push(this.devices.get(adyacentId));
         }
       }
@@ -383,7 +364,10 @@ export class ViewGraph {
 
         if (layerIncluded(layerFromType(adyacent.type), this.layer)) {
           // add connection between v and w
-          const connectionKey: string = generateConnectionKey(w, s);
+          const connectionKey: string = Edge.generateConnectionKey({
+            n1: w,
+            n2: s,
+          });
           if (!connections.has(connectionKey)) {
             connections.add(connectionKey);
           }
