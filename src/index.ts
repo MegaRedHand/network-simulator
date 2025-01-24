@@ -1,6 +1,11 @@
 import { Application, Assets } from "pixi.js";
 
-import { loadFromFile, saveToFile, urManager } from "./types/viewportManager";
+import {
+  deselectElement,
+  loadFromFile,
+  saveToFile,
+  urManager,
+} from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
 import { Packet } from "./types/packet";
 import { LeftBar } from "./graphics/left_bar";
@@ -89,10 +94,18 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   const loadButton = document.getElementById("load-button");
   const saveButton = document.getElementById("save-button");
 
-  newButton.onclick = () => ctx.load(new DataGraph());
-  saveButton.onclick = () => saveToFile(ctx);
-  loadButton.onclick = () => loadFromFile(ctx);
-
+  newButton.onclick = () => {
+    deselectElement();
+    ctx.load(new DataGraph());
+  };
+  saveButton.onclick = () => {
+    deselectElement();
+    saveToFile(ctx);
+  };
+  loadButton.onclick = () => {
+    deselectElement();
+    loadFromFile(ctx);
+  };
   // Undo button’s logic
   const undoButton = document.getElementById(
     "undo-button",
@@ -192,6 +205,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
       ctx.changeViewGraph(selectedLayer);
       // LeftBar is reset
       leftBar.setButtonsByLayer(selectedLayer);
+      deselectElement();
     }
   };
 
