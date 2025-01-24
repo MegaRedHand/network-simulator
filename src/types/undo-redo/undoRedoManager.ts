@@ -21,9 +21,8 @@ export class UndoRedoManager {
   undo(viewgraph: ViewGraph) {
     if (this.undoBuf.length != 0) {
       const move = this.undoBuf.pop();
-      // revertir el movimiento con move
       move.undo(viewgraph);
-      this.redoBuf.push(move); // tal vez hay que guardar otra cosa
+      this.redoBuf.push(move);
     }
     this.notifyListeners();
     console.log(this.redoBuf);
@@ -33,9 +32,8 @@ export class UndoRedoManager {
   redo(viewgraph: ViewGraph) {
     if (this.redoBuf.length != 0) {
       const move = this.redoBuf.pop();
-      // rehacer el movimineto con move
       move.redo(viewgraph);
-      this.undoBuf.push(move); // tal vez hay que guardar otra cosa
+      this.undoBuf.push(move);
     }
     this.notifyListeners();
     console.log(this.redoBuf);

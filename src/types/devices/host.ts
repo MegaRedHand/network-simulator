@@ -5,7 +5,7 @@ import { Position } from "../common";
 import { IpAddress } from "../../packets/ip";
 import { createDropdown, DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { ProgramInfo } from "../../graphics/renderables/device_info";
-import { sendPacket } from "../packet";
+import { Packet, sendPacket } from "../packet";
 import { Ticker } from "pixi.js";
 import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "./layer";
@@ -56,7 +56,7 @@ export class Host extends Device {
     const programList: ProgramInfo[] = [
       { name: "No program", start: () => this.stopProgram() },
       {
-        name: "Send ICMP echo",
+        name: "Send ping",
         inputs: [dropdownContainer],
         start: () => this.sendSingleEcho(destination.value),
       },
@@ -72,7 +72,7 @@ export class Host extends Device {
   sendSingleEcho(id: string) {
     this.stopProgram();
     const dst = parseInt(id);
-    sendPacket(this.viewgraph, "ICMP", this.id, dst);
+    sendPacket(this.viewgraph, "ICMP-0", this.id, dst);
   }
 
   startEchoServer(id: string) {
@@ -85,7 +85,7 @@ export class Host extends Device {
       if (progress < delay) {
         return;
       }
-      sendPacket(this.viewgraph, "ICMP", this.id, dst);
+      sendPacket(this.viewgraph, "ICMP-0", this.id, dst);
       progress -= delay;
     };
     Ticker.shared.add(send, this);

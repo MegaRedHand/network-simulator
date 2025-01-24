@@ -5,6 +5,7 @@ import { Position } from "../common";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { IpAddress } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
+import { Packet } from "../packet";
 
 export class Router extends Device {
   constructor(

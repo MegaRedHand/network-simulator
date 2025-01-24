@@ -13,10 +13,12 @@ import { ViewGraph } from "./graphs/viewgraph";
 import { EmptyPayload, IpAddress, IPv4Packet } from "../packets/ip";
 import { EchoRequest, EchoReply } from "../packets/icmp";
 import { DeviceId, isRouter } from "./graphs/datagraph";
+import { Device } from "./devices";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
-  ICMP: circleGraphicsContext(Colors.Red, 0, 0, 5),
+  "ICMP-0": circleGraphicsContext(Colors.Red, 0, 0, 5),
+  "ICMP-8": circleGraphicsContext(Colors.Yellow, 0, 0, 5),
 };
 
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
@@ -29,6 +31,7 @@ export class Packet extends Graphics {
   currentStart: number;
   color: number;
   type: string;
+  destinationDevice: Device = null;
 
   rawPacket: IPv4Packet;
 
@@ -166,6 +169,7 @@ export class Packet extends Graphics {
     this.currentEdge.addChild(this);
     this.updatePosition();
     Ticker.shared.add(this.animationTick, this);
+    console.log("Termino traverseEdge");
   }
 
   routePacket(id: DeviceId): DeviceId | null {
@@ -177,7 +181,7 @@ export class Packet extends Graphics {
         console.log("considering entry:", entry);
         return this.rawPacket.destinationAddress.isInSubnet(ip, mask);
       });
-      console.log("result:", result);
+      // console.log("result:", result);
       return result === undefined ? null : result.iface;
     }
     return null;
@@ -185,27 +189,40 @@ export class Packet extends Graphics {
 
   animationTick(ticker: Ticker) {
     if (this.progress >= 1) {
-      this.progress = 0;
-      this.removeFromParent();
-      const newStart = this.currentEdge.otherEnd(this.currentStart);
-      this.currentStart = newStart;
-      const newEdgeId = this.routePacket(newStart);
-
       const deleteSelf = () => {
         this.destroy();
         ticker.remove(this.animationTick, this);
         if (isSelected(this)) {
           deselectElement();
         }
+        console.log("Se corto animationTick");
       };
 
-      if (newEdgeId === null) {
+      if (this.destinationDevice) {
+        this.destinationDevice.receivePacket(this);
         deleteSelf();
         return;
       }
+
+      this.progress = 0;
+      this.removeFromParent();
+      const newStart = this.currentEdge.otherEnd(this.currentStart);
+      this.currentStart = newStart;
+      const newEndId = this.routePacket(newStart);
+
+      if (newEndId === null) {
+        deleteSelf();
+        return;
+      }
+
+      const newEndDevice = this.viewgraph.getDevice(newEndId);
+
+      if (this.rawPacket.destinationAddress == newEndDevice.ip) {
+        this.destinationDevice = newEndDevice;
+      }
       const currentNodeEdges = this.viewgraph.getConnections(newStart);
       this.currentEdge = currentNodeEdges.find((edge) => {
-        return edge.otherEnd(newStart) === newEdgeId;
+        return edge.otherEnd(newStart) === newEndId;
       });
       if (this.currentEdge === undefined) {
         deleteSelf();
@@ -278,11 +295,14 @@ export function sendPacket(
     case "IP":
       payload = new EmptyPayload();
       break;
-    case "ICMP":
+    case "ICMP-0":
       payload = new EchoRequest(0);
       break;
+    case "ICMP-8":
+      payload = new EchoReply(0);
+      break;
     default:
-      console.warn("Tipo de paquete no reconocido");
+      console.warn("Packet’s type unrecognized");
       return;
   }
   const dstIp = destinationDevice.ip;
@@ -309,4 +329,5 @@ export function sendPacket(
     return;
   }
   packet.traverseEdge(firstEdge, originId);
+  console.log("Termino sendPacket");
 }

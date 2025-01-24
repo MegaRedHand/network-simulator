@@ -21,6 +21,7 @@ import { IpAddress } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer } from "./layer";
+import { Packet, sendPacket } from "../packet";
 
 export { Layer } from "./layer";
 
@@ -114,6 +115,21 @@ export abstract class Device extends Sprite {
   resize(sprite: Sprite): void {
     sprite.width = sprite.width / 70;
     sprite.height = sprite.height / DEVICE_SIZE;
+  }
+
+  receivePacket(packet: Packet): void {
+    switch (packet.type) {
+      case "ICMP-0":
+        const destinationDevice = this.viewgraph.getDevices().find((device) => {
+          return device.ip == packet.rawPacket.sourceAddress;
+        });
+        if (destinationDevice) {
+          sendPacket(this.viewgraph, "ICMP-8", this.id, destinationDevice.id);
+        }
+        break;
+      default:
+        console.warn("Packet’s type unrecognized");
+    }
   }
 
   delete(): void {
