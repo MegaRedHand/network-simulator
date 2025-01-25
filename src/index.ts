@@ -1,6 +1,11 @@
 import { Application, Assets } from "pixi.js";
 
-import { loadFromFile, saveToFile, urManager } from "./types/viewportManager";
+import {
+  loadFromFile,
+  saveToFile,
+  saveToLocalStorage,
+  urManager,
+} from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
 import { Packet } from "./types/packet";
 import { LeftBar } from "./graphics/left_bar";
@@ -189,6 +194,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
     if (selectedLayer) {
       ctx.changeViewGraph(selectedLayer);
+      saveToLocalStorage(ctx);
       // LeftBar is reset
       leftBar.setButtonsByLayer(selectedLayer);
     }
