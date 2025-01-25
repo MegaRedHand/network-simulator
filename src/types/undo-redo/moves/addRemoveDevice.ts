@@ -49,18 +49,16 @@ export class AddDeviceMove extends AddRemoveDeviceMove {
 export class RemoveDeviceMove extends AddRemoveDeviceMove {
   type: TypeMove = TypeMove.RemoveDevice;
   data: CreateDevice; // Data of the removed device
-  connections: DeviceId[];
 
-  constructor(data: CreateDevice, connections: DeviceId[]) {
+  constructor(data: CreateDevice) {
     super(data);
-    this.connections = connections;
   }
 
   undo(viewgraph: ViewGraph): void {
     this.addDevice(viewgraph);
     const device = viewgraph.getDevice(this.data.id);
 
-    this.connections.forEach((adyacentId) => {
+    this.data.node.connections.forEach((adyacentId) => {
       const adyacentDevice = viewgraph.getDevice(adyacentId);
 
       if (adyacentDevice) {

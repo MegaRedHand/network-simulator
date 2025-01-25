@@ -63,10 +63,7 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Delete" || event.key === "Backspace") {
     if (selectedElement) {
       if (isDevice(selectedElement)) {
-        const move = new RemoveDeviceMove(
-          selectedElement.getCreateDevice(),
-          selectedElement.getConnections(),
-        );
+        const move = new RemoveDeviceMove(selectedElement.getCreateDevice());
         selectedElement.delete();
         urManager.push(move);
       } else if (isEdge(selectedElement)) {

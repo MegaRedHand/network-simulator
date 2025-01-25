@@ -46,10 +46,7 @@ export class DeviceInfo extends StyledInfo {
         "Delete device",
         () => {
           const deviceData = this.device.getCreateDevice();
-          const move = new RemoveDeviceMove(
-            deviceData,
-            this.device.getConnections(),
-          );
+          const move = new RemoveDeviceMove(deviceData);
           this.device.delete();
           urManager.push(move);
         },
