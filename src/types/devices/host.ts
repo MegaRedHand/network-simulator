@@ -19,7 +19,7 @@ type ProgramTicker = (ticker: Ticker) => void;
 type Pid = number;
 
 export class Host extends Device {
-  private runningPrograms: Map<Pid, ProgramTicker> = new Map();
+  private runningPrograms = new Map<Pid, ProgramTicker>();
   private programId = 0;
 
   constructor(
@@ -115,7 +115,6 @@ export class Host extends Device {
   private startEchoServer(id: string) {
     const dst = parseInt(id);
     let progress = 0;
-    let pid: Pid;
     const send = (ticker: Ticker) => {
       if (this.viewgraph.isDestroyed()) {
         this.stopProgram(pid);
@@ -129,7 +128,7 @@ export class Host extends Device {
       sendPacket(this.viewgraph, "ICMP", this.id, dst);
       progress -= delay;
     };
-    pid = this.startProgram(send);
+    const pid = this.startProgram(send);
   }
 
   private startProgram(tick: (ticker: Ticker) => void): Pid {

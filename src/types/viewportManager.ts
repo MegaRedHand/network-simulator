@@ -62,7 +62,6 @@ function isEdge(selectable: Selectable): selectable is Edge {
 document.addEventListener("keydown", (event) => {
   if (event.key === "Delete" || event.key === "Backspace") {
     if (selectedElement) {
-      let data;
       if (isDevice(selectedElement)) {
         const move = new RemoveDeviceMove(
           selectedElement.getCreateDevice(),

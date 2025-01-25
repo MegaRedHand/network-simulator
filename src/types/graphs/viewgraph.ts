@@ -4,7 +4,7 @@ import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
 import { CreateDevice, createDevice } from "../devices/utils";
-import { DeviceType, layerFromType } from "../devices/device";
+import { layerFromType } from "../devices/device";
 
 export type EdgeId = string;
 
