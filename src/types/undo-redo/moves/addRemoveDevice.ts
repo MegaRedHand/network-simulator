@@ -1,5 +1,4 @@
 import { CreateDevice } from "../../devices/utils";
-import { DeviceId } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { Move, TypeMove } from "./move";
 
@@ -51,10 +50,6 @@ export class AddDeviceMove extends AddRemoveDeviceMove {
 export class RemoveDeviceMove extends AddRemoveDeviceMove {
   type: TypeMove = TypeMove.RemoveDevice;
   data: CreateDevice; // Data of the removed device
-
-  constructor(data: CreateDevice) {
-    super(data);
-  }
 
   undo(viewgraph: ViewGraph): void {
     this.addDevice(viewgraph);
