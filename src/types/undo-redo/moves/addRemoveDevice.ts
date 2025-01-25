@@ -11,7 +11,9 @@ export abstract class AddRemoveDeviceMove implements Move {
   abstract redo(viewgraph: ViewGraph): void;
 
   constructor(data: CreateDevice) {
-    this.data = data;
+    // NOTE: we have to deep-copy the data to stop the data from
+    // being modified by the original
+    this.data = structuredClone(data);
   }
 
   addDevice(viewgraph: ViewGraph) {

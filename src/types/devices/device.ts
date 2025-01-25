@@ -106,9 +106,7 @@ export abstract class Device extends Sprite {
 
   /// Returns the data needed to create the device
   getCreateDevice(): CreateDevice {
-    const nodeRef = this.viewgraph.getDataGraph().getDevice(this.id);
-    // NOTE: we need to clone the node to avoid deletion to affect this
-    const node = structuredClone(nodeRef);
+    const node = this.viewgraph.getDataGraph().getDevice(this.id);
     return { id: this.id, node };
   }
 
