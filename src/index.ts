@@ -1,6 +1,7 @@
 import { Application, Assets } from "pixi.js";
 
 import {
+  deselectElement,
   loadFromFile,
   saveToFile,
   saveToLocalStorage,
@@ -94,10 +95,18 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   const loadButton = document.getElementById("load-button");
   const saveButton = document.getElementById("save-button");
 
-  newButton.onclick = () => ctx.load(new DataGraph());
-  saveButton.onclick = () => saveToFile(ctx);
-  loadButton.onclick = () => loadFromFile(ctx);
-
+  newButton.onclick = () => {
+    deselectElement();
+    ctx.load(new DataGraph());
+  };
+  saveButton.onclick = () => {
+    deselectElement();
+    saveToFile(ctx);
+  };
+  loadButton.onclick = () => {
+    deselectElement();
+    loadFromFile(ctx);
+  };
   // Undo button’s logic
   const undoButton = document.getElementById(
     "undo-button",
@@ -202,6 +211,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
       saveToLocalStorage(ctx);
       // LeftBar is reset
       leftBar.setButtonsByLayer(selectedLayer);
+      deselectElement();
     }
   };
 

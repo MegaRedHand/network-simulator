@@ -186,6 +186,10 @@ export abstract class Device extends Sprite {
   }
 
   selectToConnect() {
+    if (Device.connectionTarget) {
+      Device.connectionTarget = null;
+      return;
+    }
     Device.connectionTarget = this;
   }
 
