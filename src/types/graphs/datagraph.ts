@@ -140,6 +140,9 @@ export class DataGraph {
       return;
     }
     this.devices.set(idDevice, deviceInfo);
+    deviceInfo.connections.forEach((connectedId) => {
+      this.devices.get(connectedId)?.connections.add(idDevice);
+    });
     if (this.idCounter <= idDevice) {
       this.idCounter = idDevice + 1;
     }
