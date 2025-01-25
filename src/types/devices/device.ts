@@ -18,9 +18,10 @@ import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
-import { DeviceId } from "../graphs/datagraph";
+import { DeviceId, GraphNode } from "../graphs/datagraph";
 import { DragDeviceMove, EdgeData, AddEdgeMove } from "../undo-redo";
 import { Layer } from "./layer";
+import { CreateDevice } from "./utils";
 
 export { Layer } from "./layer";
 
@@ -105,6 +106,11 @@ export abstract class Device extends Sprite {
         return { edgeId, adyacentId };
       },
     );
+  }
+
+  getCreateDevice(): CreateDevice {
+    const nodeData = this.viewgraph.getDataGraph().getDevice(this.id);
+    return { id: this.id, node: nodeData };
   }
 
   addConnection(edgeId: EdgeId, adyacentId: DeviceId) {

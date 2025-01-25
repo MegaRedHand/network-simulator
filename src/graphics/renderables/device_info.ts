@@ -46,14 +46,7 @@ export class DeviceInfo extends StyledInfo {
       createRightBarButton(
         "Delete device",
         () => {
-          const deviceData: CreateDevice = {
-            id: this.device.id,
-            type: this.device.getType(),
-            x: this.device.x,
-            y: this.device.y,
-            ip: this.device.ip.toString(),
-            mask: this.device.ipMask.toString(),
-          };
+          const deviceData = this.device.getCreateDevice();
           const move = new RemoveDeviceMove(
             deviceData,
             this.device.getConnections(),

@@ -64,16 +64,8 @@ document.addEventListener("keydown", (event) => {
     if (selectedElement) {
       let data;
       if (isDevice(selectedElement)) {
-        data = {
-          id: selectedElement.id,
-          type: selectedElement.getType(),
-          x: selectedElement.x,
-          y: selectedElement.y,
-          ip: selectedElement.ip.toString(),
-          mask: selectedElement.ipMask.toString(),
-        };
         const move = new RemoveDeviceMove(
-          data,
+          selectedElement.getCreateDevice(),
           selectedElement.getConnections(),
         );
         selectedElement.delete();
@@ -119,10 +111,10 @@ export function addDevice(ctx: GlobalContext, type: DeviceType) {
   );
 
   const { ip, mask } = ctx.getNextIp();
-  const deviceInfo = { x, y, type, ip, mask };
-  const id = datagraph.addNewDevice(deviceInfo);
+  const id = datagraph.addNewDevice({ x, y, type, ip, mask });
+  const deviceInfo = datagraph.getDevice(id);
 
-  const deviceData: CreateDevice = { id, ...deviceInfo };
+  const deviceData: CreateDevice = { id, node: deviceInfo };
 
   // Add the Device to the graph
   const newDevice = viewgraph.addDevice(deviceData);

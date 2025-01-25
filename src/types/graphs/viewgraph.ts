@@ -44,7 +44,7 @@ export class ViewGraph {
 
     this.datagraph.getDevices().forEach((graphNode, deviceId) => {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
-        const deviceInfo = { ...graphNode, id: deviceId };
+        const deviceInfo = { id: deviceId, node: graphNode };
         this.addDevice(deviceInfo);
 
         this.layer_dfs(

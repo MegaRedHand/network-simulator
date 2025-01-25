@@ -170,17 +170,17 @@ export class Packet extends Graphics {
 
   routePacket(id: DeviceId): DeviceId | null {
     const device = this.viewgraph.getDataGraph().getDevice(id);
-    if (isRouter(device)) {
-      const result = device.routingTable.find((entry) => {
-        const ip = IpAddress.parse(entry.ip);
-        const mask = IpAddress.parse(entry.mask);
-        console.log("considering entry:", entry);
-        return this.rawPacket.destinationAddress.isInSubnet(ip, mask);
-      });
-      console.log("result:", result);
-      return result === undefined ? null : result.iface;
+    if (!device || !isRouter(device)) {
+      return null;
     }
-    return null;
+    const result = device.routingTable.find((entry) => {
+      const ip = IpAddress.parse(entry.ip);
+      const mask = IpAddress.parse(entry.mask);
+      console.log("considering entry:", entry);
+      return this.rawPacket.destinationAddress.isInSubnet(ip, mask);
+    });
+    console.log("result:", result);
+    return result === undefined ? null : result.iface;
   }
 
   animationTick(ticker: Ticker) {
