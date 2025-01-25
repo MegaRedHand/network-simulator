@@ -145,17 +145,22 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   // Add keyboard shortcuts for Undo (Ctrl+Z) and Redo (Ctrl+Y)
   document.addEventListener("keydown", (event) => {
-    if (event.ctrlKey) {
-      switch (event.key) {
-        case "z": // Ctrl+Z for Undo
-          event.preventDefault(); // Prevent default browser action (like undo in text inputs)
-          triggerUndo();
-          break;
-        case "y": // Ctrl+Y for Redo
-          event.preventDefault(); // Prevent default browser action
-          triggerRedo();
-          break;
-      }
+    if (!event.ctrlKey) {
+      return;
+    }
+    switch (event.key) {
+      case "Z": // Ctrl+Shift+Z for Redo
+        event.preventDefault(); // Prevent default browser action (like undo in text inputs)
+        triggerRedo();
+        break;
+      case "z": // Ctrl+Z for Undo
+        event.preventDefault(); // Prevent default browser action (like undo in text inputs)
+        triggerUndo();
+        break;
+      case "y": // Ctrl+Y for Redo
+        event.preventDefault(); // Prevent default browser action
+        triggerRedo();
+        break;
     }
   });
 
