@@ -41,40 +41,47 @@ export class ViewGraph {
         const deviceInfo = { id: deviceId, node: graphNode };
         this.addDevice(deviceInfo);
 
-        this.layer_dfs(
-          this.datagraph.getDevices(),
-          deviceId,
-          deviceId,
-          new Set([deviceId]),
-          connections,
-        );
+        this.computeLayerConnections(deviceId, connections);
       }
     });
 
-    connections.forEach((key) => {
-      const connection = parseConnectionKey(key);
-      const device1 = this.getDevice(connection.id1);
-      const device2 = this.getDevice(connection.id2);
-      this.drawEdge(device1, device2);
-      device1.addConnection(device2.id);
-      device2.addConnection(device1.id);
-    });
+    this.addConnections(connections);
     console.log("Finished constructing ViewGraph");
   }
 
   // Add a device to the graph
   addDevice(deviceData: CreateDevice): Device {
-    if (!this.devices.has(deviceData.id)) {
-      const device = createDevice(deviceData, this);
-      this.devices.set(device.id, device);
-      this.viewport.addChild(device);
-      console.log(`Device added with ID ${device.id}`);
-    } else {
+    if (this.devices.has(deviceData.id)) {
       console.warn(
         `Device with ID ${deviceData.id} already exists in the graph.`,
       );
+      return this.devices.get(deviceData.id);
     }
+    const device = createDevice(deviceData, this);
+
+    const connections = new Set<string>();
+    this.computeLayerConnections(deviceData.id, connections);
+
+    this.addConnections(connections);
+
+    this.devices.set(device.id, device);
+    this.viewport.addChild(device);
+    console.log(`Device added with ID ${device.id}`);
     return this.devices.get(deviceData.id);
+  }
+
+  private addConnections(connections: Set<string>) {
+    connections.forEach((key) => {
+      const connection = parseConnectionKey(key);
+      const device1 = this.getDevice(connection.id1);
+      const device2 = this.getDevice(connection.id2);
+      if (!(device1 && device2)) {
+        return;
+      }
+      this.drawEdge(device1, device2);
+      device1.addConnection(device2.id);
+      device2.addConnection(device1.id);
+    });
   }
 
   drawEdge(device1: Device, device2: Device): Edge {
@@ -334,6 +341,16 @@ export class ViewGraph {
       current = this.devices.get(parentId);
     }
     return path.reverse();
+  }
+
+  private computeLayerConnections(source: DeviceId, connections: Set<string>) {
+    this.layer_dfs(
+      this.datagraph.getDevices(),
+      source,
+      source,
+      new Set([source]),
+      connections,
+    );
   }
 
   private layer_dfs(
