@@ -1,6 +1,6 @@
 import { CreateDevice } from "../../devices/utils";
-import { DeviceId, GraphNode, isHost, isRouter } from "../../graphs/datagraph";
-import { EdgeId, ViewGraph } from "../../graphs/viewgraph";
+import { DeviceId } from "../../graphs/datagraph";
+import { ViewGraph } from "../../graphs/viewgraph";
 import { Move, TypeMove } from "./move";
 
 // Superclass for AddDeviceMove and RemoveDeviceMove
@@ -49,12 +49,9 @@ export class AddDeviceMove extends AddRemoveDeviceMove {
 export class RemoveDeviceMove extends AddRemoveDeviceMove {
   type: TypeMove = TypeMove.RemoveDevice;
   data: CreateDevice; // Data of the removed device
-  connections: { edgeId: number; adyacentId: DeviceId }[];
+  connections: DeviceId[];
 
-  constructor(
-    data: CreateDevice,
-    connections: { edgeId: EdgeId; adyacentId: DeviceId }[],
-  ) {
+  constructor(data: CreateDevice, connections: DeviceId[]) {
     super(data);
     this.connections = connections;
   }
@@ -63,13 +60,13 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
     this.addDevice(viewgraph);
     const device = viewgraph.getDevice(this.data.id);
 
-    this.connections.forEach(({ edgeId, adyacentId }) => {
+    this.connections.forEach((adyacentId) => {
       const adyacentDevice = viewgraph.getDevice(adyacentId);
 
       if (adyacentDevice) {
-        viewgraph.addEdge(this.data.id, adyacentId, edgeId);
-        device.addConnection(edgeId, adyacentId);
-        adyacentDevice.addConnection(edgeId, this.data.id);
+        viewgraph.addEdge(this.data.id, adyacentId);
+        device.addConnection(adyacentId);
+        adyacentDevice.addConnection(this.data.id);
       } else {
         console.warn(
           `Adjacent Device ${adyacentId} not found while reconnecting Device ${device.id}`,

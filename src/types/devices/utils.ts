@@ -1,12 +1,13 @@
 import { IpAddress } from "../../packets/ip";
 import { GraphNode } from "../graphs/datagraph";
+import { DeviceId } from "../graphs/datagraph";
 import { ViewGraph } from "../graphs/viewgraph";
 import { Device, DeviceType } from "./device";
 import { Host } from "./host";
 import { Router } from "./router";
 
 export interface CreateDevice {
-  id: number;
+  id: DeviceId;
   node: GraphNode;
 }
 

@@ -7,6 +7,7 @@ import { createDropdown, DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { ProgramInfo } from "../../graphics/renderables/device_info";
 import { sendPacket } from "../packet";
 import { Ticker } from "pixi.js";
+import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "./layer";
 import { isHost, RunningProgram } from "../graphs/datagraph";
 
@@ -22,7 +23,7 @@ export class Host extends Device {
   private programId = 0;
 
   constructor(
-    id: number,
+    id: DeviceId,
     viewgraph: ViewGraph,
     position: Position,
     ip: IpAddress,

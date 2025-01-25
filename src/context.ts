@@ -65,6 +65,7 @@ export class GlobalContext {
 
   changeViewGraph(selectedLayer: string) {
     const layer = layerFromName(selectedLayer);
+    urManager.reset();
     this.setNetwork(this.datagraph, layer);
   }
 
