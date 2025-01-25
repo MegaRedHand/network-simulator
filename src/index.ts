@@ -103,7 +103,6 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   undoIcon.alt = "Undo Icon";
   undoButton.appendChild(undoIcon);
 
-  console.log(undoIcon.style.filter);
   urManager.suscribe(() => {
     undoButton.disabled = !urManager.canUndo();
     undoIcon.style.opacity = urManager.canUndo() ? "1" : "0.5"; // Full opacity for active, reduced for inactive

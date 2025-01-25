@@ -338,30 +338,31 @@ export class ViewGraph {
 
   private layer_dfs(
     graph: Map<DeviceId, GraphNode>,
-    s: number, // source node
-    v: number,
-    visited: Set<number>,
+    s: DeviceId, // source node
+    v: DeviceId,
+    visited: Set<DeviceId>,
     connections: Set<string>,
   ) {
     graph.get(v).connections.forEach((w) => {
-      if (!visited.has(w)) {
-        const adyacent = this.datagraph.getDevice(w);
-        // mark node as visited
-        visited.add(w);
+      if (visited.has(w)) {
+        return;
+      }
+      const adyacent = this.datagraph.getDevice(w);
+      // mark node as visited
+      visited.add(w);
 
-        if (layerIncluded(layerFromType(adyacent.type), this.layer)) {
-          // add connection between v and w
-          const connectionKey: string = Edge.generateConnectionKey({
-            n1: w,
-            n2: s,
-          });
-          if (!connections.has(connectionKey)) {
-            connections.add(connectionKey);
-          }
-        } else {
-          // continue with recursive search
-          this.layer_dfs(graph, s, w, visited, connections);
+      if (layerIncluded(layerFromType(adyacent.type), this.layer)) {
+        // add connection between v and w
+        const connectionKey: string = Edge.generateConnectionKey({
+          n1: w,
+          n2: s,
+        });
+        if (!connections.has(connectionKey)) {
+          connections.add(connectionKey);
         }
+      } else {
+        // continue with recursive search
+        this.layer_dfs(graph, s, w, visited, connections);
       }
     });
   }
