@@ -17,11 +17,12 @@ import { RightBar } from "../../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
-import { IpAddress } from "../../packets/ip";
+import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer } from "./layer";
 import { Packet, sendPacket } from "../packet";
+import { EchoReply } from "../../packets/icmp";
 
 export { Layer } from "./layer";
 
@@ -120,11 +121,23 @@ export abstract class Device extends Sprite {
   receivePacket(packet: Packet): void {
     switch (packet.type) {
       case "ICMP-0":
-        const destinationDevice = this.viewgraph.getDevices().find((device) => {
-          return device.ip == packet.rawPacket.sourceAddress;
-        });
+        const destinationDevice = this.viewgraph.getDeviceByIP(
+          packet.rawPacket.sourceAddress,
+        );
         if (destinationDevice) {
-          sendPacket(this.viewgraph, "ICMP-8", this.id, destinationDevice.id);
+          const echoReply = new EchoReply(0);
+          const ipPacket = new IPv4Packet(
+            this.ip,
+            destinationDevice.ip,
+            echoReply,
+          );
+          sendPacket(
+            this.viewgraph,
+            ipPacket,
+            "ICMP-8",
+            this.id,
+            destinationDevice.id,
+          );
         }
         break;
       default:

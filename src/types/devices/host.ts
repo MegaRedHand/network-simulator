@@ -2,13 +2,14 @@ import { Device, DeviceType } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
-import { IpAddress } from "../../packets/ip";
+import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { createDropdown, DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { ProgramInfo } from "../../graphics/renderables/device_info";
 import { Packet, sendPacket } from "../packet";
 import { Ticker } from "pixi.js";
 import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "./layer";
+import { EchoRequest } from "../../packets/icmp";
 
 const DEFAULT_ECHO_DELAY = 250; // ms
 
@@ -72,24 +73,36 @@ export class Host extends Device {
   sendSingleEcho(id: string) {
     this.stopProgram();
     const dst = parseInt(id);
-    sendPacket(this.viewgraph, "ICMP-0", this.id, dst);
+    const dstDevice = this.viewgraph.getDevice(dst);
+    if (dstDevice) {
+      const echoRequest = new EchoRequest(0);
+      const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoRequest);
+      sendPacket(this.viewgraph, ipPacket, "ICMP-0", this.id, dst);
+    }
   }
 
+  // TODO: Receive ip address instead of id?
   startEchoServer(id: string) {
     this.stopProgram();
     const dst = parseInt(id);
-    let progress = 0;
-    const send = (ticker: Ticker) => {
-      const delay = DEFAULT_ECHO_DELAY;
-      progress += ticker.deltaMS;
-      if (progress < delay) {
-        return;
-      }
-      sendPacket(this.viewgraph, "ICMP-0", this.id, dst);
-      progress -= delay;
-    };
-    Ticker.shared.add(send, this);
-    this.currentProgram = send;
+    const dstDevice = this.viewgraph.getDevice(dst);
+    // If ip address received instead of id, device may not exist.
+    if (dstDevice) {
+      let progress = 0;
+      const echoRequest = new EchoRequest(0);
+      const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoRequest);
+      const send = (ticker: Ticker) => {
+        const delay = DEFAULT_ECHO_DELAY;
+        progress += ticker.deltaMS;
+        if (progress < delay) {
+          return;
+        }
+        sendPacket(this.viewgraph, ipPacket, "ICMP-0", this.id, dst);
+        progress -= delay;
+      };
+      Ticker.shared.add(send, this);
+      this.currentProgram = send;
+    }
   }
 
   stopProgram() {

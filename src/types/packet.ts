@@ -31,7 +31,7 @@ export class Packet extends Graphics {
   currentStart: number;
   color: number;
   type: string;
-  destinationDevice: Device = null;
+  destinationDevice: Device = null; // Cambiarlo
 
   rawPacket: IPv4Packet;
 
@@ -275,38 +275,21 @@ export class Packet extends Graphics {
   }
 }
 
-// TODO: maybe make this receive the packet directly?
+// TODO: Remove?
+// - packetType; manage in a more effective way the packet’s type so it can handle it without the paremeter.
+// - originId and destinationId; logic regarding this two parameters ought to be manage with ip addresses,
+//   or else, by obtaining both ids inside the function.
 export function sendPacket(
   viewgraph: ViewGraph,
+  rawPacket: IPv4Packet,
   packetType: string,
   originId: DeviceId,
   destinationId: DeviceId,
 ) {
   console.log(
-    `Sending ${packetType} packet from ${originId} to ${destinationId}`,
+    `Sending ${packetType} packet from ${rawPacket.sourceAddress} to ${rawPacket.destinationAddress}`,
   );
 
-  const originDevice = viewgraph.getDevice(originId);
-  const destinationDevice = viewgraph.getDevice(destinationId);
-
-  // TODO: allow user to choose which payload to send
-  let payload;
-  switch (packetType) {
-    case "IP":
-      payload = new EmptyPayload();
-      break;
-    case "ICMP-0":
-      payload = new EchoRequest(0);
-      break;
-    case "ICMP-8":
-      payload = new EchoReply(0);
-      break;
-    default:
-      console.warn("Packet’s type unrecognized");
-      return;
-  }
-  const dstIp = destinationDevice.ip;
-  const rawPacket = new IPv4Packet(originDevice.ip, dstIp, payload);
   const packet = new Packet(viewgraph, packetType, rawPacket);
 
   const originConnections = viewgraph.getConnections(originId);

@@ -45,6 +45,10 @@ abstract class IcmpPacket implements IpPayload {
   }
 
   protected abstract _dataToBytes(): Uint8Array;
+
+  getPacketType(): string {
+    return `ICMP-${this.type}`;
+  }
 }
 
 class EchoMessage extends IcmpPacket {
@@ -79,10 +83,10 @@ class EchoMessage extends IcmpPacket {
   }
 }
 
-export class EchoReply extends EchoMessage {
-  type = 0;
-}
-
 export class EchoRequest extends EchoMessage {
   type = 8;
+}
+
+export class EchoReply extends EchoMessage {
+  type = 0;
 }
