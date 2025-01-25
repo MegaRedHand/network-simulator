@@ -39,7 +39,7 @@ export class ViewGraph {
     this.datagraph.getDevices().forEach((graphNode, deviceId) => {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
         const deviceInfo = { id: deviceId, node: graphNode };
-        this.addDevice(deviceInfo);
+        this.createDevice(deviceInfo);
 
         this.computeLayerConnections(deviceId, connections);
       }
@@ -49,8 +49,19 @@ export class ViewGraph {
     console.log("Finished constructing ViewGraph");
   }
 
+  addDevice(deviceData: CreateDevice) {
+    const device = this.createDevice(deviceData);
+    if (deviceData.node.connections.size !== 0) {
+      const connections = new Set<string>();
+      this.computeLayerConnections(deviceData.id, connections);
+
+      this.addConnections(connections);
+    }
+    return device;
+  }
+
   // Add a device to the graph
-  addDevice(deviceData: CreateDevice): Device {
+  private createDevice(deviceData: CreateDevice): Device {
     if (this.devices.has(deviceData.id)) {
       console.warn(
         `Device with ID ${deviceData.id} already exists in the graph.`,
@@ -58,11 +69,6 @@ export class ViewGraph {
       return this.devices.get(deviceData.id);
     }
     const device = createDevice(deviceData, this);
-
-    const connections = new Set<string>();
-    this.computeLayerConnections(deviceData.id, connections);
-
-    this.addConnections(connections);
 
     this.devices.set(device.id, device);
     this.viewport.addChild(device);
@@ -76,6 +82,7 @@ export class ViewGraph {
       const device1 = this.getDevice(connection.id1);
       const device2 = this.getDevice(connection.id2);
       if (!(device1 && device2)) {
+        console.warn("At least one device in connection does not exist");
         return;
       }
       this.drawEdge(device1, device2);
