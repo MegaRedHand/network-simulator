@@ -61,23 +61,22 @@ function isEdge(selectable: Selectable): selectable is Edge {
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Delete" || event.key === "Backspace") {
-    if (selectedElement) {
-      if (isDevice(selectedElement)) {
-        const move = new RemoveDeviceMove(selectedElement.getCreateDevice());
-        selectedElement.delete();
-        urManager.push(move);
-      } else if (isEdge(selectedElement)) {
-        const move = new RemoveEdgeMove(selectedElement.connectedNodes);
-        selectedElement.delete();
-        urManager.push(move);
-      } else {
-        // it’s a packet
-        selectedElement.delete();
-      }
+    if (!selectedElement) {
+      return;
     }
-  }
-
-  if (event.key === "c" || event.key === "C") {
+    if (isDevice(selectedElement)) {
+      const move = new RemoveDeviceMove(selectedElement.getCreateDevice());
+      selectedElement.delete();
+      urManager.push(move);
+    } else if (isEdge(selectedElement)) {
+      const move = new RemoveEdgeMove(selectedElement.connectedNodes);
+      selectedElement.delete();
+      urManager.push(move);
+    } else {
+      // it’s a packet
+      selectedElement.delete();
+    }
+  } else if (event.key === "c" || event.key === "C") {
     if (selectedElement instanceof Device) {
       selectedElement.selectToConnect();
       const connectButton = document.querySelector(".right-bar-connect-button");
@@ -105,9 +104,9 @@ export function addDevice(ctx: GlobalContext, type: DeviceType) {
 
   const { ip, mask } = ctx.getNextIp();
   const id = datagraph.addNewDevice({ x, y, type, ip, mask });
-  const deviceInfo = datagraph.getDevice(id);
+  const node = datagraph.getDevice(id);
 
-  const deviceData: CreateDevice = { id, node: deviceInfo };
+  const deviceData: CreateDevice = { id, node };
 
   // Add the Device to the graph
   const newDevice = viewgraph.addDevice(deviceData);

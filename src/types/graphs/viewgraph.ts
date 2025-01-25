@@ -18,7 +18,7 @@ function parseConnectionKey(key: string): { id1: number; id2: number } {
 export class ViewGraph {
   private devices: Map<DeviceId, Device> = new Map<DeviceId, Device>();
   private edges: Map<EdgeId, Edge> = new Map<EdgeId, Edge>();
-  datagraph: DataGraph;
+  private datagraph: DataGraph;
   private layer: Layer;
   private viewport: Viewport;
 

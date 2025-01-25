@@ -200,7 +200,7 @@ export class DataGraph {
 
   // Modify a device in the graph, notifying subscribers of any changes
   modifyDevice(id: DeviceId, fn: (d: GraphNode | undefined) => void) {
-    const device = this.getDevice(id);
+    const device = this.devices.get(id);
     fn(device);
     if (device) {
       this.notifyChanges();
@@ -322,8 +322,6 @@ export class DataGraph {
         }
       });
     }
-
-    console.log(parents);
 
     const table: RoutingTableEntry[] = [];
 
