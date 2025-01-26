@@ -363,4 +363,8 @@ export class ViewGraph {
       }
     });
   }
+
+  destroy() {
+    this.devices.forEach((device) => device.destroy());
+  }
 }
