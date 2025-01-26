@@ -10,9 +10,15 @@ import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
-import { EmptyPayload, IpAddress, IPv4Packet } from "../packets/ip";
+import {
+  EmptyPayload,
+  ICMP_PROTOCOL_NUMBER,
+  IpAddress,
+  IPv4Packet,
+} from "../packets/ip";
 import { EchoRequest, EchoReply } from "../packets/icmp";
 import { DeviceId, isRouter } from "./graphs/datagraph";
+import { EthernetFrame } from "../packets/ethernet";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
@@ -316,4 +322,40 @@ export function sendPacket(
     return;
   }
   packet.traverseEdge(firstEdge, originId);
+}
+
+export function sendRawPacket(
+  viewgraph: ViewGraph,
+  srcId: DeviceId,
+  rawPacket: IPv4Packet,
+) {
+  const srcIp = rawPacket.sourceAddress;
+  const dstIp = rawPacket.destinationAddress;
+  console.log(`Sending frame from ${srcIp.toString()} to ${dstIp.toString()}`);
+
+  const originConnections = viewgraph.getConnections(srcId);
+  if (originConnections.length === 0) {
+    console.warn("El dispositivo de origen no tiene conexiones.");
+    return;
+  }
+  let firstEdge = originConnections.find((edge) => {
+    const otherId = edge.otherEnd(srcId);
+    const otherDevice = viewgraph.getDevice(otherId);
+    return otherDevice.ip.equals(dstIp);
+  });
+  if (firstEdge === undefined) {
+    const datagraph = viewgraph.getDataGraph();
+    firstEdge = originConnections.find((edge) => {
+      const otherId = edge.otherEnd(srcId);
+      return isRouter(datagraph.getDevice(otherId));
+    });
+  }
+  if (firstEdge === undefined) {
+    console.warn(
+      "El dispositivo de origen no está conectado al destino o a un router.",
+    );
+    return;
+  }
+  const packet = new Packet(viewgraph, "ICMP", rawPacket);
+  packet.traverseEdge(firstEdge, srcId);
 }
