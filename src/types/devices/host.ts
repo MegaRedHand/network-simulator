@@ -9,7 +9,8 @@ import { sendPacket } from "../packet";
 import { Ticker } from "pixi.js";
 import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "./layer";
-import { isHost, RunningProgram } from "../graphs/datagraph";
+import { isHost } from "../graphs/datagraph";
+import { RunningProgram } from "../../programs";
 
 const DEFAULT_ECHO_DELAY = 250; // ms
 
@@ -36,7 +37,7 @@ export class Host extends Device {
   showInfo(): void {
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
-    info.addProgramList(this.getProgramList());
+    info.addProgramList(this, this.getProgramList());
     RightBar.getInstance().renderInfo(info);
   }
 
@@ -54,30 +55,23 @@ export class Host extends Device {
       .filter((adjId) => adjId !== this.id)
       .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
 
-    const dropdownContainer = createDropdown(
-      "Destination",
-      adjacentDevices,
-      "destination",
-    );
-    const destination = dropdownContainer.querySelector("select");
+    const programList = [];
 
-    // TODO: extract into classes
-    const programList: ProgramInfo[] = [
-      {
-        name: "Send ICMP echo",
-        inputs: [dropdownContainer],
-        start: () => this.sendSingleEcho(destination.value),
-      },
-      {
-        name: ECHO_SERVER_NAME,
-        inputs: [dropdownContainer],
-        start: () => this.startNewEchoServer(destination.value),
-      },
-    ];
+    {
+      const programInfo = new ProgramInfo("Send ICMP echo");
+      programInfo.withDropdown("Destination", adjacentDevices);
+      programList.push(programInfo);
+    }
+    {
+      const programInfo = new ProgramInfo(ECHO_SERVER_NAME);
+      programInfo.withDropdown("Destination", adjacentDevices);
+      programList.push(programInfo);
+    }
+
     return programList;
   }
 
-  private addRunningProgram(program: RunningProgram) {
+  addRunningProgram(program: RunningProgram) {
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
       if (!isHost(device)) {
         console.error("Node is not a Host");
@@ -85,6 +79,7 @@ export class Host extends Device {
       }
       device.runningPrograms.push(program);
     });
+    this.runProgram(program);
   }
 
   private loadRunningPrograms() {
@@ -93,13 +88,15 @@ export class Host extends Device {
       console.error("Node is not a Host");
       return;
     }
-    device.runningPrograms.forEach((program) => {
-      if (program.name !== ECHO_SERVER_NAME) {
-        console.error("Unknown program: ", program.name);
-        return;
-      }
-      this.startEchoServer(program.inputs[0]);
-    });
+    device.runningPrograms.forEach((program) => this.runProgram(program));
+  }
+
+  runProgram(program: RunningProgram) {
+    if (program.name !== ECHO_SERVER_NAME) {
+      console.error("Unknown program: ", program.name);
+      return;
+    }
+    this.startEchoServer(program.inputs[0]);
   }
 
   private sendSingleEcho(id: string) {
@@ -132,17 +129,6 @@ export class Host extends Device {
     this.runningPrograms.set(pid, tick);
     Ticker.shared.add(tick, this);
     return pid;
-  }
-
-  // TODO: this is unused
-  stopProgram(pid: Pid) {
-    const tick = this.runningPrograms.get(pid);
-    if (!tick) {
-      console.error("Pid not found: ", pid);
-      return;
-    }
-    Ticker.shared.remove(tick, this);
-    this.runningPrograms.delete(pid);
   }
 
   destroy() {

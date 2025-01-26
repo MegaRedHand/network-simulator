@@ -1,3 +1,4 @@
+import { RunningProgram } from "../../programs";
 import { DeviceType } from "../devices/device";
 
 export type DeviceId = number;
@@ -25,11 +26,6 @@ export interface RoutingTableEntry {
 interface HostGraphNode extends CommonGraphNode {
   type: DeviceType.Host;
   runningPrograms: RunningProgram[];
-}
-
-export interface RunningProgram {
-  name: string;
-  inputs: string[];
 }
 
 // Typescript type guard
