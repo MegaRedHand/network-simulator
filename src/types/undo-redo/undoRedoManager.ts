@@ -1,4 +1,5 @@
 import { ViewGraph } from "../graphs/viewgraph";
+import { deselectElement } from "../viewportManager";
 import { Move } from "./moves/move";
 
 export class UndoRedoManager {
@@ -27,6 +28,7 @@ export class UndoRedoManager {
     this.notifyListeners();
     console.log(this.redoBuf);
     console.log(this.undoBuf);
+    deselectElement();
   }
 
   redo(viewgraph: ViewGraph) {
@@ -38,6 +40,7 @@ export class UndoRedoManager {
     this.notifyListeners();
     console.log(this.redoBuf);
     console.log(this.undoBuf);
+    deselectElement();
   }
 
   canUndo(): boolean {

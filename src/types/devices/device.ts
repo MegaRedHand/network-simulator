@@ -23,6 +23,7 @@ import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer } from "./layer";
 import { Packet, sendPacket } from "../packet";
 import { EchoReply } from "../../packets/icmp";
+import { CreateDevice } from "./utils";
 
 export { Layer } from "./layer";
 
@@ -103,6 +104,12 @@ export abstract class Device extends Sprite {
 
   getConnections(): DeviceId[] {
     return Array.from(this.connections.values());
+  }
+
+  /// Returns the data needed to create the device
+  getCreateDevice(): CreateDevice {
+    const node = this.viewgraph.getDataGraph().getDevice(this.id);
+    return { id: this.id, node };
   }
 
   addConnection(adyacentId: DeviceId) {
@@ -208,6 +215,10 @@ export abstract class Device extends Sprite {
   }
 
   selectToConnect() {
+    if (Device.connectionTarget) {
+      Device.connectionTarget = null;
+      return;
+    }
     Device.connectionTarget = this;
   }
 
@@ -258,6 +269,11 @@ export abstract class Device extends Sprite {
   deselect() {
     this.removeHighlight(); // Calls removeHighlight on deselect
     Device.connectionTarget = null;
+  }
+
+  // Cleans up related resources
+  destroy() {
+    // do nothing
   }
 
   // Return the device’s type.
