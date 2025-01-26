@@ -1,6 +1,11 @@
 import { Application, Assets } from "pixi.js";
 
-import { loadFromFile, saveToFile, urManager } from "./types/viewportManager";
+import {
+  deselectElement,
+  loadFromFile,
+  saveToFile,
+  urManager,
+} from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
 import { Packet } from "./types/packet";
 import { LeftBar } from "./graphics/left_bar";
@@ -90,10 +95,18 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   const loadButton = document.getElementById("load-button");
   const saveButton = document.getElementById("save-button");
 
-  newButton.onclick = () => ctx.load(new DataGraph());
-  saveButton.onclick = () => saveToFile(ctx);
-  loadButton.onclick = () => loadFromFile(ctx);
-
+  newButton.onclick = () => {
+    deselectElement();
+    ctx.load(new DataGraph());
+  };
+  saveButton.onclick = () => {
+    deselectElement();
+    saveToFile(ctx);
+  };
+  loadButton.onclick = () => {
+    deselectElement();
+    loadFromFile(ctx);
+  };
   // Undo button’s logic
   const undoButton = document.getElementById(
     "undo-button",
@@ -142,17 +155,22 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   // Add keyboard shortcuts for Undo (Ctrl+Z) and Redo (Ctrl+Y)
   document.addEventListener("keydown", (event) => {
-    if (event.ctrlKey) {
-      switch (event.key) {
-        case "z": // Ctrl+Z for Undo
-          event.preventDefault(); // Prevent default browser action (like undo in text inputs)
-          triggerUndo();
-          break;
-        case "y": // Ctrl+Y for Redo
-          event.preventDefault(); // Prevent default browser action
-          triggerRedo();
-          break;
-      }
+    if (!event.ctrlKey) {
+      return;
+    }
+    switch (event.key) {
+      case "Z": // Ctrl+Shift+Z for Redo
+        event.preventDefault(); // Prevent default browser action (like undo in text inputs)
+        triggerRedo();
+        break;
+      case "z": // Ctrl+Z for Undo
+        event.preventDefault(); // Prevent default browser action (like undo in text inputs)
+        triggerUndo();
+        break;
+      case "y": // Ctrl+Y for Redo
+        event.preventDefault(); // Prevent default browser action
+        triggerRedo();
+        break;
     }
   });
 
@@ -203,6 +221,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
       ctx.changeViewGraph(selectedLayer);
       // LeftBar is reset
       leftBar.setButtonsByLayer(selectedLayer);
+      deselectElement();
     }
   };
 
