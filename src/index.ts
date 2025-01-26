@@ -4,6 +4,7 @@ import {
   deselectElement,
   loadFromFile,
   saveToFile,
+  saveToLocalStorage,
   urManager,
 } from "./types/viewportManager";
 import { DataGraph } from "./types/graphs/datagraph";
@@ -116,7 +117,6 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   undoIcon.alt = "Undo Icon";
   undoButton.appendChild(undoIcon);
 
-  console.log(undoIcon.style.filter);
   urManager.suscribe(() => {
     undoButton.disabled = !urManager.canUndo();
     undoIcon.style.opacity = urManager.canUndo() ? "1" : "0.5"; // Full opacity for active, reduced for inactive
@@ -208,6 +208,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
     if (selectedLayer) {
       ctx.changeViewGraph(selectedLayer);
+      saveToLocalStorage(ctx);
       // LeftBar is reset
       leftBar.setButtonsByLayer(selectedLayer);
       deselectElement();

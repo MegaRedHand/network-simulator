@@ -22,14 +22,28 @@ export interface RoutingTableEntry {
   iface: DeviceId;
 }
 
+interface HostGraphNode extends CommonGraphNode {
+  type: DeviceType.Host;
+  runningPrograms: RunningProgram[];
+}
+
+export interface RunningProgram {
+  name: string;
+  inputs: string[];
+}
+
 // Typescript type guard
 export function isRouter(node: GraphNode): node is RouterGraphNode {
   return node.type === DeviceType.Router;
 }
 
-export type GraphNode = CommonGraphNode | RouterGraphNode;
+export function isHost(node: GraphNode): node is HostGraphNode {
+  return node.type === DeviceType.Host;
+}
 
-export type GraphDataNode = CommonDataNode | RouterDataNode;
+export type GraphNode = CommonGraphNode | RouterGraphNode | HostGraphNode;
+
+export type GraphDataNode = CommonDataNode | RouterDataNode | HostDataNode;
 
 interface CommonDataNode {
   id: DeviceId;
@@ -44,6 +58,11 @@ interface CommonDataNode {
 interface RouterDataNode extends CommonDataNode {
   type: DeviceType.Router;
   routingTable: RoutingTableEntry[];
+}
+
+interface HostDataNode extends CommonDataNode {
+  type: DeviceType.Host;
+  runningPrograms: RunningProgram[];
 }
 
 export type GraphData = GraphDataNode[];
@@ -92,8 +111,8 @@ export class DataGraph {
       };
       if (isRouter(info)) {
         graphData.push({ ...graphNode, routingTable: info.routingTable });
-      } else {
-        graphData.push(graphNode);
+      } else if (isHost(info)) {
+        graphData.push({ ...graphNode, runningPrograms: info.runningPrograms });
       }
     });
     return graphData;
@@ -106,6 +125,7 @@ export class DataGraph {
       ...deviceInfo,
       connections: new Set<number>(),
       routingTable: [],
+      runningPrograms: [],
     };
     this.devices.set(id, graphnode);
     console.log(`Device added with ID ${id}`);
@@ -172,8 +192,19 @@ export class DataGraph {
     this.notifyChanges();
   }
 
+  // Get a device by its ID.
+  // WARNING: don't modify the device directly, use `modifyDevice` instead
   getDevice(id: DeviceId): GraphNode | undefined {
     return this.devices.get(id);
+  }
+
+  // Modify a device in the graph, notifying subscribers of any changes
+  modifyDevice(id: DeviceId, fn: (d: GraphNode | undefined) => void) {
+    const device = this.devices.get(id);
+    fn(device);
+    if (device) {
+      this.notifyChanges();
+    }
   }
 
   // Get all connections of a device
@@ -292,9 +323,8 @@ export class DataGraph {
       });
     }
 
-    console.log(parents);
-
     const table: RoutingTableEntry[] = [];
+
     parents.forEach((currentId, childId) => {
       const dstId = childId;
       if (dstId === id) {

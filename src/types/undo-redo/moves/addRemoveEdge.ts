@@ -17,7 +17,7 @@ export abstract class AddRemoveEdgeMove implements Move {
     const device1 = viewgraph.getDevice(n1);
     const device2 = viewgraph.getDevice(n2);
     if (!device1 || !device2) {
-      console.warn("Edge’s devices does not exist");
+      console.warn("Edge's devices does not exist");
       return;
     }
     viewgraph.addEdge(n1, n2);

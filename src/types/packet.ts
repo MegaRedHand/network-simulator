@@ -169,18 +169,18 @@ export class Packet extends Graphics {
   }
 
   routePacket(id: DeviceId): DeviceId | null {
-    const device = this.viewgraph.datagraph.getDevice(id);
-    if (isRouter(device)) {
-      const result = device.routingTable.find((entry) => {
-        const ip = IpAddress.parse(entry.ip);
-        const mask = IpAddress.parse(entry.mask);
-        console.log("considering entry:", entry);
-        return this.rawPacket.destinationAddress.isInSubnet(ip, mask);
-      });
-      console.log("result:", result);
-      return result === undefined ? null : result.iface;
+    const device = this.viewgraph.getDataGraph().getDevice(id);
+    if (!device || !isRouter(device)) {
+      return null;
     }
-    return null;
+    const result = device.routingTable.find((entry) => {
+      const ip = IpAddress.parse(entry.ip);
+      const mask = IpAddress.parse(entry.mask);
+      console.log("considering entry:", entry);
+      return this.rawPacket.destinationAddress.isInSubnet(ip, mask);
+    });
+    console.log("result:", result);
+    return result === undefined ? null : result.iface;
   }
 
   animationTick(ticker: Ticker) {
@@ -272,6 +272,11 @@ export function sendPacket(
   const originDevice = viewgraph.getDevice(originId);
   const destinationDevice = viewgraph.getDevice(destinationId);
 
+  if (!originDevice || !destinationDevice) {
+    console.warn("Origen o destino no encontrado.");
+    return;
+  }
+
   // TODO: allow user to choose which payload to send
   let payload;
   switch (packetType) {
@@ -299,7 +304,9 @@ export function sendPacket(
   });
   if (firstEdge === undefined) {
     firstEdge = originConnections.find((edge) => {
-      return isRouter(viewgraph.datagraph.getDevice(edge.otherEnd(originId)));
+      return isRouter(
+        viewgraph.getDataGraph().getDevice(edge.otherEnd(originId)),
+      );
     });
   }
   if (firstEdge === undefined) {

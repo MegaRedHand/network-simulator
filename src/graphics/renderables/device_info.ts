@@ -1,6 +1,5 @@
 import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
-import { CreateDevice } from "../../types/devices/utils";
 import { RoutingTableEntry } from "../../types/graphs/datagraph";
 import { RemoveDeviceMove } from "../../types/undo-redo";
 import { urManager } from "../../types/viewportManager";
@@ -46,18 +45,8 @@ export class DeviceInfo extends StyledInfo {
       createRightBarButton(
         "Delete device",
         () => {
-          const deviceData: CreateDevice = {
-            id: this.device.id,
-            type: this.device.getType(),
-            x: this.device.x,
-            y: this.device.y,
-            ip: this.device.ip.toString(),
-            mask: this.device.ipMask.toString(),
-          };
-          const move = new RemoveDeviceMove(
-            deviceData,
-            this.device.getConnections(),
-          );
+          const deviceData = this.device.getCreateDevice();
+          const move = new RemoveDeviceMove(deviceData);
           this.device.delete();
           urManager.push(move);
         },
