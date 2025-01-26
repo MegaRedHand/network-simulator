@@ -23,7 +23,7 @@ export interface RoutingTableEntry {
 }
 
 interface HostGraphNode extends CommonGraphNode {
-  type: DeviceType.Router;
+  type: DeviceType.Host;
   runningPrograms: RunningProgram[];
 }
 

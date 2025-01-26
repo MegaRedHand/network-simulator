@@ -116,10 +116,6 @@ export class Host extends Device {
     const dst = parseInt(id);
     let progress = 0;
     const send = (ticker: Ticker) => {
-      if (this.viewgraph.isDestroyed()) {
-        this.stopProgram(pid);
-        return;
-      }
       const delay = DEFAULT_ECHO_DELAY;
       progress += ticker.deltaMS;
       if (progress < delay) {
@@ -128,7 +124,7 @@ export class Host extends Device {
       sendPacket(this.viewgraph, "ICMP", this.id, dst);
       progress -= delay;
     };
-    const pid = this.startProgram(send);
+    this.startProgram(send);
   }
 
   private startProgram(tick: (ticker: Ticker) => void): Pid {
@@ -138,7 +134,8 @@ export class Host extends Device {
     return pid;
   }
 
-  private stopProgram(pid: Pid) {
+  // TODO: this is unused
+  stopProgram(pid: Pid) {
     const tick = this.runningPrograms.get(pid);
     if (!tick) {
       console.error("Pid not found: ", pid);
