@@ -116,10 +116,6 @@ export class Host extends Device {
     const dst = parseInt(id);
     let progress = 0;
     const send = (ticker: Ticker) => {
-      if (this.viewgraph.isDestroyed()) {
-        this.stopProgram(pid);
-        return;
-      }
       const delay = DEFAULT_ECHO_DELAY;
       progress += ticker.deltaMS;
       if (progress < delay) {

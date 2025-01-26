@@ -22,9 +22,6 @@ export class ViewGraph {
   private layer: Layer;
   private viewport: Viewport;
 
-  // Used for cleanup of Host programs
-  private destroyed = false;
-
   constructor(datagraph: DataGraph, viewport: Viewport, layer: Layer) {
     this.datagraph = datagraph;
     this.viewport = viewport;
@@ -365,13 +362,5 @@ export class ViewGraph {
         this.layer_dfs(graph, s, w, visited, connections);
       }
     });
-  }
-
-  isDestroyed() {
-    return this.destroyed;
-  }
-
-  destroy() {
-    this.destroyed = true;
   }
 }
