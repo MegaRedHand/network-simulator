@@ -134,7 +134,7 @@ export abstract class Device extends Sprite {
   // TODO: Most probably it will be different for each type of device
   handlePacket(packet: Packet) {
     switch (packet.type) {
-      case "ICMP-8":
+      case "ICMP-8": {
         const destinationDevice = this.viewgraph.getDeviceByIP(
           packet.rawPacket.sourceAddress,
         );
@@ -154,6 +154,7 @@ export abstract class Device extends Sprite {
           );
         }
         break;
+      }
       default:
         console.warn("Packet’s type unrecognized");
     }

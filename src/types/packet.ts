@@ -10,7 +10,7 @@ import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
-import { IpAddress, IPv4Packet } from "../packets/ip";
+import { IPv4Packet } from "../packets/ip";
 import { EchoRequest, EchoReply } from "../packets/icmp";
 import { DeviceId, isRouter } from "./graphs/datagraph";
 import { Device } from "./devices";
