@@ -49,6 +49,13 @@ export class Host extends Device {
     return DeviceType.Host;
   }
 
+  receivePacket(packet: Packet): DeviceId | null {
+    if (this.ip.equals(packet.rawPacket.destinationAddress)) {
+      this.handlePacket(packet);
+    }
+    return null;
+  }
+
   getProgramList() {
     const adjacentDevices = this.viewgraph
       .getDeviceIds()
@@ -109,7 +116,13 @@ export class Host extends Device {
     if (dstDevice) {
       const echoRequest = new EchoRequest(0);
       const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoRequest);
-      sendPacket(this.viewgraph, ipPacket, "ICMP-0", this.id, dst);
+      sendPacket(
+        this.viewgraph,
+        ipPacket,
+        echoRequest.getPacketType(),
+        this.id,
+        dst,
+      );
     }
   }
 
@@ -133,7 +146,13 @@ export class Host extends Device {
         if (progress < delay) {
           return;
         }
-        sendPacket(this.viewgraph, ipPacket, "ICMP-0", this.id, dst);
+        sendPacket(
+          this.viewgraph,
+          ipPacket,
+          echoRequest.getPacketType(),
+          this.id,
+          dst,
+        );
         progress -= delay;
       };
       this.startProgram(send);

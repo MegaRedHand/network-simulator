@@ -57,6 +57,12 @@ export abstract class Device extends Sprite {
   ip: IpAddress;
   ipMask: IpAddress;
 
+  // Each type of device has different ways of handling a received packet.
+  // Returns the DevicedId for the next device to send the packet to, or
+  // null if there’s no next device to send the packet.
+  // TODO: Might be general for all device in the future.
+  abstract receivePacket(packet: Packet): DeviceId | null;
+
   constructor(
     id: DeviceId,
     svg: string,
@@ -125,9 +131,10 @@ export abstract class Device extends Sprite {
     sprite.height = sprite.height / DEVICE_SIZE;
   }
 
-  receivePacket(packet: Packet): void {
+  // TODO: Most probably it will be different for each type of device
+  handlePacket(packet: Packet) {
     switch (packet.type) {
-      case "ICMP-0":
+      case "ICMP-8":
         const destinationDevice = this.viewgraph.getDeviceByIP(
           packet.rawPacket.sourceAddress,
         );
@@ -141,7 +148,7 @@ export abstract class Device extends Sprite {
           sendPacket(
             this.viewgraph,
             ipPacket,
-            "ICMP-8",
+            echoReply.getPacketType(),
             this.id,
             destinationDevice.id,
           );

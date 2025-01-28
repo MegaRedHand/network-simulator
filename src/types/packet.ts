@@ -10,15 +10,15 @@ import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
-import { EmptyPayload, IpAddress, IPv4Packet } from "../packets/ip";
+import { IpAddress, IPv4Packet } from "../packets/ip";
 import { EchoRequest, EchoReply } from "../packets/icmp";
 import { DeviceId, isRouter } from "./graphs/datagraph";
 import { Device } from "./devices";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
-  "ICMP-0": circleGraphicsContext(Colors.Red, 0, 0, 5),
-  "ICMP-8": circleGraphicsContext(Colors.Yellow, 0, 0, 5),
+  "ICMP-8": circleGraphicsContext(Colors.Red, 0, 0, 5),
+  "ICMP-0": circleGraphicsContext(Colors.Yellow, 0, 0, 5),
 };
 
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
@@ -172,21 +172,6 @@ export class Packet extends Graphics {
     console.log("Termino traverseEdge");
   }
 
-  routePacket(id: DeviceId): DeviceId | null {
-    const device = this.viewgraph.getDataGraph().getDevice(id);
-    if (!device || !isRouter(device)) {
-      return null;
-    }
-    const result = device.routingTable.find((entry) => {
-      const ip = IpAddress.parse(entry.ip);
-      const mask = IpAddress.parse(entry.mask);
-      console.log("considering entry:", entry);
-      return this.rawPacket.destinationAddress.isInSubnet(ip, mask);
-    });
-    console.log("result:", result);
-    return result === undefined ? null : result.iface;
-  }
-
   animationTick(ticker: Ticker) {
     if (this.progress >= 1) {
       const deleteSelf = () => {
@@ -198,32 +183,30 @@ export class Packet extends Graphics {
         console.log("Se corto animationTick");
       };
 
-      if (this.destinationDevice) {
-        this.destinationDevice.receivePacket(this);
+      this.progress = 0;
+      this.removeFromParent();
+      const newStart = this.currentEdge.otherEnd(this.currentStart);
+      const newStartDevice = this.viewgraph.getDevice(newStart);
+
+      // Viewgraph may return undefined when trying to get the device
+      // as the device may have been removed by the user.
+      if (!newStartDevice) {
         deleteSelf();
         return;
       }
 
-      this.progress = 0;
-      this.removeFromParent();
-      const newStart = this.currentEdge.otherEnd(this.currentStart);
       this.currentStart = newStart;
-      const newEndId = this.routePacket(newStart);
+      const newEndId = newStartDevice.receivePacket(this);
 
       if (newEndId === null) {
         deleteSelf();
         return;
       }
 
-      const newEndDevice = this.viewgraph.getDevice(newEndId);
+      this.currentEdge = this.viewgraph.getEdge(
+        Edge.generateConnectionKey({ n1: this.currentStart, n2: newEndId }),
+      );
 
-      if (this.rawPacket.destinationAddress == newEndDevice.ip) {
-        this.destinationDevice = newEndDevice;
-      }
-      const currentNodeEdges = this.viewgraph.getConnections(newStart);
-      this.currentEdge = currentNodeEdges.find((edge) => {
-        return edge.otherEnd(newStart) === newEndId;
-      });
       if (this.currentEdge === undefined) {
         deleteSelf();
         return;
@@ -238,11 +221,10 @@ export class Packet extends Graphics {
   }
 
   updatePosition() {
-    const current = this.currentEdge;
-    const start = this.currentStart;
-
-    const startPos = current.nodePosition(start);
-    const endPos = current.nodePosition(current.otherEnd(start));
+    const startPos = this.currentEdge.nodePosition(this.currentStart);
+    const endPos = this.currentEdge.nodePosition(
+      this.currentEdge.otherEnd(this.currentStart),
+    );
     this.setPositionAlongEdge(startPos, endPos, this.progress);
   }
 
@@ -305,14 +287,14 @@ export function sendPacket(
   let firstEdge = originConnections.find((edge) => {
     return edge.otherEnd(originId) === destinationId;
   });
-  if (firstEdge === undefined) {
+  if (!firstEdge) {
     firstEdge = originConnections.find((edge) => {
       return isRouter(
         viewgraph.getDataGraph().getDevice(edge.otherEnd(originId)),
       );
     });
   }
-  if (firstEdge === undefined) {
+  if (!firstEdge) {
     console.warn(
       "El dispositivo de origen no está conectado al destino o a un router.",
     );
