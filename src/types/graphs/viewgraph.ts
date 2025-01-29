@@ -275,11 +275,7 @@ export class ViewGraph {
   }
 
   getRoutingTable(id: DeviceId) {
-    const device = this.datagraph.getDevice(id);
-    if (!device || !isRouter(device)) {
-      return [];
-    }
-    return device.routingTable;
+    return this.datagraph.getRoutingTable(id);
   }
 
   getEdge(edgeId: EdgeId): Edge | undefined {

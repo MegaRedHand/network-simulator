@@ -1,3 +1,6 @@
+import { DeviceId, isRouter, RoutingTableEntry } from "../types/graphs/datagraph";
+import { ViewGraph } from "../types/graphs/viewgraph";
+
 export { StyledInfo } from "./renderables/styled_info";
 export { DeviceInfo } from "./renderables/device_info";
 
@@ -122,29 +125,58 @@ function createToggleButton(
   return button;
 }
 
-// Function to create the table with rows and headers
 function createTable(
   headers: string[],
   rows: string[][],
   tableClass: string,
   editableColumns: number[] = [],
-  saveChange?: (rowIndex: number, colIndex: number, newValue: string) => void,
+  viewgraph: ViewGraph,
+  deviceId: number
 ) {
   const table = document.createElement("table");
   table.classList.add(tableClass, "hidden");
 
-  // Create header row
+  // Crear fila de encabezado
   const headerRow = document.createElement("tr");
   headers.forEach((header) => {
     const th = document.createElement("th");
     th.textContent = header;
     headerRow.appendChild(th);
   });
+
+  // Crear un botón en el encabezado de "Actions"
+  const actionsHeader = document.createElement("th");
+  const regenerateAllButton = document.createElement("button");
+  regenerateAllButton.innerHTML = "🔄"; // Ícono de regenerar
+  regenerateAllButton.style.border = "none";
+  regenerateAllButton.style.background = "transparent";
+  regenerateAllButton.style.cursor = "pointer";
+  regenerateAllButton.style.fontSize = "1.2em";
+  regenerateAllButton.title = "Regenerate Full Routing Table";
+
+  regenerateAllButton.addEventListener("click", () => {
+    console.log(`Regenerating full routing table for device ${deviceId}`);
+    
+    const newTableData = viewgraph.datagraph.regenerateRoutingTableClean(deviceId);
+    if (!newTableData.length) {
+      console.warn("Failed to regenerate routing table.");
+      return;
+    }
+  
+    // Actualizar la UI con la nueva tabla generada
+    updateRoutingTableUI(deviceId, newTableData, viewgraph);
+  });
+  
+
+  actionsHeader.appendChild(regenerateAllButton);
+  headerRow.appendChild(actionsHeader);
+
   table.appendChild(headerRow);
 
   // Create data rows
   rows.forEach((row, rowIndex) => {
     const rowElement = document.createElement("tr");
+
     row.forEach((cellData, colIndex) => {
       const cell = document.createElement("td");
       cell.textContent = cellData;
@@ -152,29 +184,141 @@ function createTable(
 
       if (editableColumns.includes(colIndex)) {
         cell.addEventListener("click", () => {
-          openModal(cell, rowIndex, colIndex);
+          openModal(cell, rowIndex, colIndex, deviceId);
         });
       }
 
       rowElement.appendChild(cell);
     });
+
+    // Add a "Delete" button to the row with a trashcan emoji
+    const deleteCell = document.createElement("td");
+    const deleteButton = document.createElement("button");
+    deleteButton.innerHTML = "🗑️"; // Use the trashcan emoji
+    deleteButton.style.border = "none";
+    deleteButton.style.background = "transparent";
+    deleteButton.style.cursor = "pointer";
+    deleteButton.title = "Delete row"; // Tooltip for better UX
+
+    deleteButton.addEventListener("click", () => {
+      const currentRowIndex = Array.from(table.rows).indexOf(rowElement);
+    
+      if (currentRowIndex <= 0) { // Evita eliminar la cabecera
+        console.warn(`Cannot delete header row`);
+        return;
+      }
+    
+      // Remove the row visually
+      table.removeChild(rowElement);
+    
+      // Notify the viewgraph of the deletion
+      viewgraph.datagraph.removeRoutingTableRow(deviceId, currentRowIndex - 1); // Ajustamos por la cabecera
+    
+      console.log(`Deleted row ${currentRowIndex - 1} from device ${deviceId}`);
+    });
+    
+    deleteCell.appendChild(deleteButton);
+    rowElement.appendChild(deleteCell);
+
     table.appendChild(rowElement);
   });
 
   if (!document.getElementById("customModal")) {
-    createModal(saveChange);
+    createModal(viewgraph);
   }
 
   return table;
 }
 
+function updateRoutingTableUI(deviceId: DeviceId, newTableData: RoutingTableEntry[], viewgraph: ViewGraph) {
+  const router = viewgraph.datagraph.getDevice(deviceId);
+
+  if (!router || !isRouter(router)) {
+    console.warn(`Device with ID ${deviceId} is not a valid router.`);
+    return;
+  }
+
+  // Actualizar la estructura de datos del router
+  router.routingTable = newTableData;
+
+  // Obtener la tabla existente dentro del contenedor
+  const tableContainer = document.querySelector(".toggle-table-container");
+  if (!tableContainer) {
+    console.warn("Routing table container not found.");
+    return;
+  }
+
+  const existingTable = tableContainer.querySelector("table");
+  if (!existingTable) {
+    console.warn("Existing table not found inside container.");
+    return;
+  }
+
+  // 🔥 Eliminar todas las filas excepto el encabezado
+  const rows = existingTable.querySelectorAll("tr");
+  rows.forEach((row, index) => {
+    if (index > 0) { // Mantener solo la primera fila (el encabezado)
+      row.remove();
+    }
+  });
+
+  // Agregar nuevas filas, replicando la lógica de `createTable`
+  newTableData.forEach((entry, rowIndex) => {
+    const rowElement = document.createElement("tr");
+
+    [entry.ip, entry.mask, `eth${entry.iface}`].forEach((cellData, colIndex) => {
+      const cell = document.createElement("td");
+      cell.textContent = cellData;
+      cell.classList.add("editable-cell");
+
+      if ([0, 1, 2].includes(colIndex)) {
+        cell.addEventListener("click", () => {
+          openModal(cell, rowIndex, colIndex, deviceId);
+        });
+      }
+
+      rowElement.appendChild(cell);
+    });
+
+    // Agregar botón de eliminar
+    const deleteCell = document.createElement("td");
+    const deleteButton = document.createElement("button");
+    deleteButton.innerHTML = "🗑️"; // Ícono de basura
+    deleteButton.style.border = "none";
+    deleteButton.style.background = "transparent";
+    deleteButton.style.cursor = "pointer";
+    deleteButton.title = "Delete row";
+
+    deleteButton.addEventListener("click", () => {
+      const currentRowIndex = Array.from(existingTable.rows).indexOf(rowElement);
+
+      if (currentRowIndex <= 0) { // Evita eliminar la cabecera
+        console.warn(`Cannot delete header row`);
+        return;
+      }
+
+      // Eliminar la fila visualmente
+      existingTable.removeChild(rowElement);
+
+      // Notificar al sistema de la eliminación
+      viewgraph.datagraph.removeRoutingTableRow(deviceId, currentRowIndex - 1); // Ajustamos por la cabecera
+      console.log(`Deleted row ${currentRowIndex - 1} from device ${deviceId}`);
+    });
+
+    deleteCell.appendChild(deleteButton);
+    rowElement.appendChild(deleteCell);
+
+    existingTable.appendChild(rowElement);
+  });
+
+  console.log(`Routing table for router ID ${deviceId} updated successfully.`);
+}
+
+
+
 // Function to create the modal dynamically
 function createModal(
-  saveChangeCallback: (
-    rowIndex: number,
-    colIndex: number,
-    newValue: string,
-  ) => void,
+  viewgraph: ViewGraph
 ) {
   const modal = document.createElement("div");
   modal.id = "customModal";
@@ -223,7 +367,9 @@ function createModal(
 
       if (currentCell) {
         currentCell.textContent = newValue;
-        saveChangeCallback(currentRowIndex, currentColIndex, newValue);
+        viewgraph.datagraph.saveManualChange(currentDeviceId, currentRowIndex, currentColIndex, newValue);
+        // Imprimir el ID del dispositivo
+        console.log(`Saving change for device ID: ${currentDeviceId}`);
       }
       closeModal();
     });
@@ -252,12 +398,14 @@ function showError(message: string) {
 let currentCell: HTMLElement | null = null;
 let currentRowIndex: number | null = null;
 let currentColIndex: number | null = null;
+let currentDeviceId: number | null = null;
 
 // Function to open the modal with dynamic title
-function openModal(cell: HTMLElement, rowIndex: number, colIndex: number) {
+function openModal(cell: HTMLElement, rowIndex: number, colIndex: number, deviceId: number) {
   currentCell = cell;
   currentRowIndex = rowIndex;
   currentColIndex = colIndex;
+  currentDeviceId = deviceId;
 
   const modalTitle = document.getElementById("modalTitle");
   if (modalTitle) {
@@ -330,7 +478,8 @@ export function createToggleTable(
   headers: string[],
   rows: string[][],
   editableColumns: number[] = [],
-  saveChange?: (rowIndex: number, colIndex: number, newValue: string) => void,
+  viewgraph: ViewGraph,
+  deviceId: number,
   buttonClass = "right-bar-toggle-button",
   tableClass = "right-bar-table",
 ) {
@@ -342,7 +491,8 @@ export function createToggleTable(
     rows,
     tableClass,
     editableColumns,
-    saveChange,
+    viewgraph,
+    deviceId
   );
   const button = createToggleButton(title, buttonClass, table);
 

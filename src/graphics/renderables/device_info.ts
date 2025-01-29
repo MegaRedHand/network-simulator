@@ -2,6 +2,7 @@ import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
 import { CreateDevice } from "../../types/devices/utils";
 import { RoutingTableEntry } from "../../types/graphs/datagraph";
+import { ViewGraph } from "../../types/graphs/viewgraph";
 import { RemoveDeviceMove } from "../../types/undo-redo";
 import { urManager } from "../../types/viewportManager";
 import {
@@ -89,14 +90,10 @@ export class DeviceInfo extends StyledInfo {
     );
   }
 
-  addRoutingTable(
-    entries: RoutingTableEntry[],
-    saveChangeCallback: (
-      rowIndex: number,
-      colIndex: number,
-      newValue: string,
-    ) => void,
-  ) {
+  addRoutingTable(viewgraph: ViewGraph, deviceId: number) {
+
+    const entries = viewgraph.getRoutingTable(deviceId);
+
     const rows = entries.map((entry) => [
       entry.ip,
       entry.mask,
@@ -105,10 +102,11 @@ export class DeviceInfo extends StyledInfo {
 
     const dynamicTable = createToggleTable(
       "Routing Table",
-      ["IP Address", "Mask", "Interface"],
+      ["IP", "Mask", "Interface"],
       rows,
       [0, 1, 2], // editable columns index
-      saveChangeCallback,
+      viewgraph,
+      deviceId,
     );
 
     this.inputFields.push(dynamicTable);
