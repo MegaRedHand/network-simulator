@@ -19,7 +19,7 @@ function parseConnectionKey(key: string): { id1: number; id2: number } {
 export class ViewGraph {
   private devices: Map<DeviceId, Device> = new Map<DeviceId, Device>();
   private edges: Map<EdgeId, Edge> = new Map<EdgeId, Edge>();
-  datagraph: DataGraph;
+  private datagraph: DataGraph;
   private layer: Layer;
   private speedMultiplier: SpeedMultiplier;
   viewport: Viewport;
@@ -38,7 +38,7 @@ export class ViewGraph {
 
     this.datagraph.getDevices().forEach((graphNode, deviceId) => {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
-        const deviceInfo = { ...graphNode, id: deviceId };
+        const deviceInfo = { id: deviceId, node: graphNode };
         this.addDevice(deviceInfo);
 
         this.layer_dfs(
@@ -231,6 +231,8 @@ export class ViewGraph {
       return;
     }
 
+    device.destroy();
+
     // Remove connection from adyacent’s devices
     device.getConnections().forEach((adyacentId) => {
       const edgeId = Edge.generateConnectionKey({ n1: id, n2: adyacentId });
@@ -351,31 +353,36 @@ export class ViewGraph {
 
   private layer_dfs(
     graph: Map<DeviceId, GraphNode>,
-    s: number, // source node
-    v: number,
-    visited: Set<number>,
+    s: DeviceId, // source node
+    v: DeviceId,
+    visited: Set<DeviceId>,
     connections: Set<string>,
   ) {
     graph.get(v).connections.forEach((w) => {
-      if (!visited.has(w)) {
-        const adyacent = this.datagraph.getDevice(w);
-        // mark node as visited
-        visited.add(w);
+      if (visited.has(w)) {
+        return;
+      }
+      const adyacent = this.datagraph.getDevice(w);
+      // mark node as visited
+      visited.add(w);
 
-        if (layerIncluded(layerFromType(adyacent.type), this.layer)) {
-          // add connection between v and w
-          const connectionKey: string = Edge.generateConnectionKey({
-            n1: w,
-            n2: s,
-          });
-          if (!connections.has(connectionKey)) {
-            connections.add(connectionKey);
-          }
-        } else {
-          // continue with recursive search
-          this.layer_dfs(graph, s, w, visited, connections);
+      if (layerIncluded(layerFromType(adyacent.type), this.layer)) {
+        // add connection between v and w
+        const connectionKey: string = Edge.generateConnectionKey({
+          n1: w,
+          n2: s,
+        });
+        if (!connections.has(connectionKey)) {
+          connections.add(connectionKey);
         }
+      } else {
+        // continue with recursive search
+        this.layer_dfs(graph, s, w, visited, connections);
       }
     });
+  }
+
+  destroy() {
+    this.devices.forEach((device) => device.destroy());
   }
 }

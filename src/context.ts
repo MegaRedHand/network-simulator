@@ -38,6 +38,9 @@ export class GlobalContext {
   ) {
     this.datagraph = datagraph;
     this.viewport.clear();
+    if (this.viewgraph) {
+      this.viewgraph.destroy();
+    }
     this.viewgraph = new ViewGraph(this.datagraph, this.viewport, layer);
     this.viewgraph.setSpeed(speedMultiplier?.value || 1);
     this.setIpGenerator();
