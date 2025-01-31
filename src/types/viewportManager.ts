@@ -91,7 +91,8 @@ document.addEventListener("keydown", (event) => {
 // Function to add a device at the center of the viewport
 export function addDevice(ctx: GlobalContext, type: DeviceType) {
   console.log(`Entered addDevice with ${type}`);
-  deselectElement();
+  // TODO: Should we deselect the current element or let the current information on display?
+  //deselectElement();
   const viewgraph = ctx.getViewGraph();
   const datagraph = ctx.getDataGraph();
   const viewport = ctx.getViewport();
