@@ -18,9 +18,9 @@ function parseConnectionKey(key: string): { id1: number; id2: number } {
 export class ViewGraph {
   private devices: Map<DeviceId, Device> = new Map<DeviceId, Device>();
   private edges: Map<EdgeId, Edge> = new Map<EdgeId, Edge>();
-  datagraph: DataGraph;
+  private datagraph: DataGraph;
   private layer: Layer;
-  viewport: Viewport;
+  private viewport: Viewport;
 
   constructor(datagraph: DataGraph, viewport: Viewport, layer: Layer) {
     this.datagraph = datagraph;
@@ -35,43 +35,57 @@ export class ViewGraph {
 
     this.datagraph.getDevices().forEach((graphNode, deviceId) => {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
-        const deviceInfo = { ...graphNode, id: deviceId };
-        this.addDevice(deviceInfo);
+        const deviceInfo = { id: deviceId, node: graphNode };
+        this.createDevice(deviceInfo);
 
-        this.layer_dfs(
-          this.datagraph.getDevices(),
-          deviceId,
-          deviceId,
-          new Set([deviceId]),
-          connections,
-        );
+        this.computeLayerConnections(deviceId, connections);
       }
     });
 
+    this.addConnections(connections);
+    console.log("Finished constructing ViewGraph");
+  }
+
+  addDevice(deviceData: CreateDevice) {
+    const device = this.createDevice(deviceData);
+    if (deviceData.node.connections.size !== 0) {
+      const connections = new Set<string>();
+      this.computeLayerConnections(deviceData.id, connections);
+
+      this.addConnections(connections);
+    }
+    return device;
+  }
+
+  // Add a device to the graph
+  private createDevice(deviceData: CreateDevice): Device {
+    if (this.devices.has(deviceData.id)) {
+      console.warn(
+        `Device with ID ${deviceData.id} already exists in the graph.`,
+      );
+      return this.devices.get(deviceData.id);
+    }
+    const device = createDevice(deviceData, this);
+
+    this.devices.set(device.id, device);
+    this.viewport.addChild(device);
+    console.log(`Device added with ID ${device.id}`);
+    return this.devices.get(deviceData.id);
+  }
+
+  private addConnections(connections: Set<string>) {
     connections.forEach((key) => {
       const connection = parseConnectionKey(key);
       const device1 = this.getDevice(connection.id1);
       const device2 = this.getDevice(connection.id2);
+      if (!(device1 && device2)) {
+        console.warn("At least one device in connection does not exist");
+        return;
+      }
       this.drawEdge(device1, device2);
       device1.addConnection(device2.id);
       device2.addConnection(device1.id);
     });
-    console.log("Finished constructing ViewGraph");
-  }
-
-  // Add a device to the graph
-  addDevice(deviceData: CreateDevice): Device {
-    if (!this.devices.has(deviceData.id)) {
-      const device = createDevice(deviceData, this);
-      this.devices.set(device.id, device);
-      this.viewport.addChild(device);
-      console.log(`Device added with ID ${device.id}`);
-    } else {
-      console.warn(
-        `Device with ID ${deviceData.id} already exists in the graph.`,
-      );
-    }
-    return this.devices.get(deviceData.id);
   }
 
   drawEdge(device1: Device, device2: Device): Edge {
@@ -213,6 +227,8 @@ export class ViewGraph {
       return;
     }
 
+    device.destroy();
+
     // Remove connection from adyacent’s devices
     device.getConnections().forEach((adyacentId) => {
       const edgeId = Edge.generateConnectionKey({ n1: id, n2: adyacentId });
@@ -327,33 +343,48 @@ export class ViewGraph {
     return path.reverse();
   }
 
+  private computeLayerConnections(source: DeviceId, connections: Set<string>) {
+    this.layer_dfs(
+      this.datagraph.getDevices(),
+      source,
+      source,
+      new Set([source]),
+      connections,
+    );
+  }
+
   private layer_dfs(
     graph: Map<DeviceId, GraphNode>,
-    s: number, // source node
-    v: number,
-    visited: Set<number>,
+    s: DeviceId, // source node
+    v: DeviceId,
+    visited: Set<DeviceId>,
     connections: Set<string>,
   ) {
     graph.get(v).connections.forEach((w) => {
-      if (!visited.has(w)) {
-        const adyacent = this.datagraph.getDevice(w);
-        // mark node as visited
-        visited.add(w);
+      if (visited.has(w)) {
+        return;
+      }
+      const adyacent = this.datagraph.getDevice(w);
+      // mark node as visited
+      visited.add(w);
 
-        if (layerIncluded(layerFromType(adyacent.type), this.layer)) {
-          // add connection between v and w
-          const connectionKey: string = Edge.generateConnectionKey({
-            n1: w,
-            n2: s,
-          });
-          if (!connections.has(connectionKey)) {
-            connections.add(connectionKey);
-          }
-        } else {
-          // continue with recursive search
-          this.layer_dfs(graph, s, w, visited, connections);
+      if (layerIncluded(layerFromType(adyacent.type), this.layer)) {
+        // add connection between v and w
+        const connectionKey: string = Edge.generateConnectionKey({
+          n1: w,
+          n2: s,
+        });
+        if (!connections.has(connectionKey)) {
+          connections.add(connectionKey);
         }
+      } else {
+        // continue with recursive search
+        this.layer_dfs(graph, s, w, visited, connections);
       }
     });
+  }
+
+  destroy() {
+    this.devices.forEach((device) => device.destroy());
   }
 }

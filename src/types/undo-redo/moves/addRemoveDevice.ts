@@ -1,4 +1,3 @@
-import { DeviceType } from "../../devices/device";
 import { CreateDevice } from "../../devices/utils";
 import { DeviceId, GraphNode, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
@@ -12,24 +11,16 @@ export abstract class AddRemoveDeviceMove implements Move {
   abstract redo(viewgraph: ViewGraph): void;
 
   constructor(data: CreateDevice) {
-    this.data = data;
+    // NOTE: we have to deep-copy the data to stop the data from
+    // being modified by the original
+    this.data = structuredClone(data);
   }
 
   addDevice(viewgraph: ViewGraph) {
     const datagraph = viewgraph.getDataGraph();
 
-    const deviceInfo = {
-      type: this.data.type,
-      x: this.data.x,
-      y: this.data.y,
-      ip: this.data.ip,
-      mask: this.data.mask,
-      connections: new Set<DeviceId>(),
-      ...(this.data.type === DeviceType.Router && { routingTable: [] }), // Add routingTable if it is a router
-    };
-
     // Add the device to the datagraph and the viewgraph
-    datagraph.addDevice(this.data.id, deviceInfo as GraphNode);
+    datagraph.addDevice(this.data.id, this.data.node);
     viewgraph.addDevice(this.data);
   }
 
@@ -45,7 +36,6 @@ export abstract class AddRemoveDeviceMove implements Move {
 // "Move" is here because it conflicts with AddDevice from viewportManager
 export class AddDeviceMove extends AddRemoveDeviceMove {
   type = TypeMove.AddDevice;
-  data: CreateDevice;
 
   undo(viewgraph: ViewGraph): void {
     this.removeDevice(viewgraph);

@@ -18,9 +18,10 @@ import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
-import { DeviceId } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
+import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "./layer";
+import { CreateDevice } from "./utils";
 
 export { Layer } from "./layer";
 
@@ -103,6 +104,12 @@ export abstract class Device extends Sprite {
     return Array.from(this.connections.values());
   }
 
+  /// Returns the data needed to create the device
+  getCreateDevice(): CreateDevice {
+    const node = this.viewgraph.getDataGraph().getDevice(this.id);
+    return { id: this.id, node };
+  }
+
   addConnection(adyacentId: DeviceId) {
     this.connections.add(adyacentId);
   }
@@ -179,6 +186,10 @@ export abstract class Device extends Sprite {
   }
 
   selectToConnect() {
+    if (Device.connectionTarget) {
+      Device.connectionTarget = null;
+      return;
+    }
     Device.connectionTarget = this;
   }
 
@@ -229,6 +240,11 @@ export abstract class Device extends Sprite {
   deselect() {
     this.removeHighlight(); // Calls removeHighlight on deselect
     Device.connectionTarget = null;
+  }
+
+  // Cleans up related resources
+  destroy() {
+    // do nothing
   }
 
   // Return the device’s type.
