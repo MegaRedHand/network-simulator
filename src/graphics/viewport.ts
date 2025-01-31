@@ -35,19 +35,19 @@ export class Viewport extends pixi_viewport.Viewport {
     this.addChild(new Background());
 
     // Track drag start
-    this.on('drag-start', () => {
+    this.on("drag-start", () => {
       this.isDragging = true;
     });
 
     // Track drag end
-    this.on('drag-end', () => {
+    this.on("drag-end", () => {
       setTimeout(() => {
         this.isDragging = false;
       }, 50); // Small delay to ensure click doesn't trigger after drag
     });
 
     // Only deselect if it's a genuine click, not a drag
-    this.on('click', (event) => {
+    this.on("click", (event) => {
       if (!this.isDragging && event.target === this) {
         deselectElement();
       }
