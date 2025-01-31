@@ -35,7 +35,6 @@ export abstract class AddRemoveDeviceMove implements Move {
 // "Move" is here because it conflicts with AddDevice from viewportManager
 export class AddDeviceMove extends AddRemoveDeviceMove {
   type = TypeMove.AddDevice;
-  data: CreateDevice;
 
   undo(viewgraph: ViewGraph): void {
     this.removeDevice(viewgraph);
@@ -49,7 +48,6 @@ export class AddDeviceMove extends AddRemoveDeviceMove {
 // Check if the viewgraph is the best place to load the move into the manager
 export class RemoveDeviceMove extends AddRemoveDeviceMove {
   type: TypeMove = TypeMove.RemoveDevice;
-  data: CreateDevice; // Data of the removed device
 
   undo(viewgraph: ViewGraph): void {
     this.addDevice(viewgraph);
