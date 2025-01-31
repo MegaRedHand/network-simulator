@@ -1,6 +1,6 @@
 import { Device } from "./../devices/index"; // Import the Device class
 import { Edge, EdgeEdges } from "./../edge";
-import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
+import { DataGraph, DeviceId, GraphNode } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
 import { CreateDevice, createDevice } from "../devices/utils";

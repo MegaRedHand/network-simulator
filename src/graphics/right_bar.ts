@@ -1,4 +1,8 @@
-import { DeviceId, isRouter, RoutingTableEntry } from "../types/graphs/datagraph";
+import {
+  DeviceId,
+  isRouter,
+  RoutingTableEntry,
+} from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
 
 export { StyledInfo } from "./renderables/styled_info";
@@ -48,7 +52,6 @@ export class RightBar {
     if (infoContent) {
       infoContent.innerHTML = ""; // Clears only the content of info-content
     }
-    closeModal();
   }
 
   // Shows specific information of an element in info-content
@@ -125,18 +128,43 @@ function createToggleButton(
   return button;
 }
 
+function updateRoutingTableUI(
+  deviceId: DeviceId,
+  newTableData: RoutingTableEntry[],
+  viewgraph: ViewGraph,
+): void {
+  const router = viewgraph.datagraph.getDevice(deviceId);
+  if (!router || !isRouter(router)) {
+    console.warn(`Device with ID ${deviceId} is not a valid router.`);
+    return;
+  }
+  router.routingTable = newTableData;
+
+  const tableContainer = document.querySelector(".toggle-table-container");
+  if (!tableContainer)
+    return console.warn("Routing table container not found.");
+
+  const existingTable = tableContainer.querySelector("table");
+  if (!existingTable)
+    return console.warn("Existing table not found inside container.");
+
+  clearTableRows(existingTable);
+  newTableData.forEach((entry) =>
+    createTableRow(entry, existingTable, deviceId, viewgraph),
+  );
+  console.log(`Routing table for router ID ${deviceId} updated successfully.`);
+}
+
 function createTable(
   headers: string[],
   rows: string[][],
   tableClass: string,
-  editableColumns: number[] = [],
   viewgraph: ViewGraph,
-  deviceId: number
-) {
+  deviceId: DeviceId,
+): HTMLTableElement {
   const table = document.createElement("table");
   table.classList.add(tableClass, "hidden");
 
-  // Crear fila de encabezado
   const headerRow = document.createElement("tr");
   headers.forEach((header) => {
     const th = document.createElement("th");
@@ -144,10 +172,90 @@ function createTable(
     headerRow.appendChild(th);
   });
 
-  // Crear un botón en el encabezado de "Actions"
   const actionsHeader = document.createElement("th");
+  actionsHeader.appendChild(createRegenerateButton(deviceId, viewgraph));
+  headerRow.appendChild(actionsHeader);
+  table.appendChild(headerRow);
+
+  rows.forEach((row) => {
+    createTableRow(
+      { ip: row[0], mask: row[1], iface: parseInt(row[2].replace("eth", "")) },
+      table,
+      deviceId,
+      viewgraph,
+    );
+  });
+
+  return table;
+}
+
+function clearTableRows(table: HTMLTableElement): void {
+  const rows = Array.from(table.querySelectorAll("tr"));
+  rows.slice(1).forEach((row) => row.remove()); // Mantener solo el encabezado
+}
+
+function createTableRow(
+  entry: RoutingTableEntry,
+  table: HTMLTableElement,
+  deviceId: DeviceId,
+  viewgraph: ViewGraph,
+): void {
+  const rowElement = document.createElement("tr");
+
+  [entry.ip, entry.mask, `eth${entry.iface}`].forEach((cellData, colIndex) => {
+    const cell = document.createElement("td");
+    cell.textContent = cellData;
+    cell.classList.add("editable-cell");
+    cell.contentEditable = "true";
+
+    cell.addEventListener("keydown", (event) => {
+      if (event.key === "Delete" || event.key === "Backspace") {
+        event.stopPropagation(); // Evita que el evento borre la fila en la tabla
+      }
+    });
+
+    cell.addEventListener("blur", () => {
+      const updatedRowIndex =
+        Array.from(table.querySelectorAll("tr")).indexOf(rowElement) - 1; // Ajuste dinámico del índice
+      const newValue = cell.textContent?.trim() || "";
+
+      let isValid = false;
+      if (colIndex === 0) isValid = isValidIP(newValue);
+      else if (colIndex === 1) isValid = isValidIP(newValue);
+      else if (colIndex === 2) isValid = isValidInterface(newValue);
+
+      if (!isValid) {
+        console.warn(`Invalid input for column ${colIndex}: ${newValue}`);
+        cell.textContent = cellData; // Revertir cambio si es inválido
+        return;
+      }
+
+      viewgraph.datagraph.saveManualChange(
+        deviceId,
+        updatedRowIndex,
+        colIndex,
+        newValue,
+      );
+      console.log(
+        `Updated cell at row ${updatedRowIndex}, column ${colIndex} with value: ${newValue}`,
+      );
+    });
+
+    rowElement.appendChild(cell);
+  });
+
+  rowElement.appendChild(
+    createDeleteButton(rowElement, table, deviceId, viewgraph),
+  );
+  table.appendChild(rowElement);
+}
+
+function createRegenerateButton(
+  deviceId: DeviceId,
+  viewgraph: ViewGraph,
+): HTMLButtonElement {
   const regenerateAllButton = document.createElement("button");
-  regenerateAllButton.innerHTML = "🔄"; // Ícono de regenerar
+  regenerateAllButton.innerHTML = "🔄";
   regenerateAllButton.style.border = "none";
   regenerateAllButton.style.background = "transparent";
   regenerateAllButton.style.cursor = "pointer";
@@ -156,308 +264,57 @@ function createTable(
 
   regenerateAllButton.addEventListener("click", () => {
     console.log(`Regenerating full routing table for device ${deviceId}`);
-    
-    const newTableData = viewgraph.datagraph.regenerateRoutingTableClean(deviceId);
+    const newTableData =
+      viewgraph.datagraph.regenerateRoutingTableClean(deviceId);
     if (!newTableData.length) {
       console.warn("Failed to regenerate routing table.");
       return;
     }
-  
-    // Actualizar la UI con la nueva tabla generada
     updateRoutingTableUI(deviceId, newTableData, viewgraph);
   });
-  
 
-  actionsHeader.appendChild(regenerateAllButton);
-  headerRow.appendChild(actionsHeader);
-
-  table.appendChild(headerRow);
-
-  // Create data rows
-  rows.forEach((row, rowIndex) => {
-    const rowElement = document.createElement("tr");
-
-    row.forEach((cellData, colIndex) => {
-      const cell = document.createElement("td");
-      cell.textContent = cellData;
-      cell.classList.add("editable-cell");
-
-      if (editableColumns.includes(colIndex)) {
-        cell.addEventListener("click", () => {
-          openModal(cell, rowIndex, colIndex, deviceId);
-        });
-      }
-
-      rowElement.appendChild(cell);
-    });
-
-    // Add a "Delete" button to the row with a trashcan emoji
-    const deleteCell = document.createElement("td");
-    const deleteButton = document.createElement("button");
-    deleteButton.innerHTML = "🗑️"; // Use the trashcan emoji
-    deleteButton.style.border = "none";
-    deleteButton.style.background = "transparent";
-    deleteButton.style.cursor = "pointer";
-    deleteButton.title = "Delete row"; // Tooltip for better UX
-
-    deleteButton.addEventListener("click", () => {
-      const currentRowIndex = Array.from(table.rows).indexOf(rowElement);
-    
-      if (currentRowIndex <= 0) { // Evita eliminar la cabecera
-        console.warn(`Cannot delete header row`);
-        return;
-      }
-    
-      // Remove the row visually
-      table.removeChild(rowElement);
-    
-      // Notify the viewgraph of the deletion
-      viewgraph.datagraph.removeRoutingTableRow(deviceId, currentRowIndex - 1); // Ajustamos por la cabecera
-    
-      console.log(`Deleted row ${currentRowIndex - 1} from device ${deviceId}`);
-    });
-    
-    deleteCell.appendChild(deleteButton);
-    rowElement.appendChild(deleteCell);
-
-    table.appendChild(rowElement);
-  });
-
-  if (!document.getElementById("customModal")) {
-    createModal(viewgraph);
-  }
-
-  return table;
+  return regenerateAllButton;
 }
 
-function updateRoutingTableUI(deviceId: DeviceId, newTableData: RoutingTableEntry[], viewgraph: ViewGraph) {
-  const router = viewgraph.datagraph.getDevice(deviceId);
+function createDeleteButton(
+  rowElement: HTMLTableRowElement,
+  table: HTMLTableElement,
+  deviceId: DeviceId,
+  viewgraph: ViewGraph,
+): HTMLTableCellElement {
+  const deleteCell = document.createElement("td");
+  const deleteButton = document.createElement("button");
+  deleteButton.innerHTML = "🗑️";
+  deleteButton.style.border = "none";
+  deleteButton.style.background = "transparent";
+  deleteButton.style.cursor = "pointer";
+  deleteButton.title = "Delete row";
 
-  if (!router || !isRouter(router)) {
-    console.warn(`Device with ID ${deviceId} is not a valid router.`);
+  deleteButton.addEventListener("click", () =>
+    handleDeleteRow(rowElement, table, deviceId, viewgraph),
+  );
+
+  deleteCell.appendChild(deleteButton);
+  return deleteCell;
+}
+
+function handleDeleteRow(
+  rowElement: HTMLTableRowElement,
+  table: HTMLTableElement,
+  deviceId: DeviceId,
+  viewgraph: ViewGraph,
+): void {
+  const updatedRowIndex =
+    Array.from(table.querySelectorAll("tr")).indexOf(rowElement) - 1; // Ajuste dinámico del índice
+
+  if (updatedRowIndex < 0) {
+    console.warn("Cannot delete header row");
     return;
   }
 
-  // Actualizar la estructura de datos del router
-  router.routingTable = newTableData;
-
-  // Obtener la tabla existente dentro del contenedor
-  const tableContainer = document.querySelector(".toggle-table-container");
-  if (!tableContainer) {
-    console.warn("Routing table container not found.");
-    return;
-  }
-
-  const existingTable = tableContainer.querySelector("table");
-  if (!existingTable) {
-    console.warn("Existing table not found inside container.");
-    return;
-  }
-
-  // 🔥 Eliminar todas las filas excepto el encabezado
-  const rows = existingTable.querySelectorAll("tr");
-  rows.forEach((row, index) => {
-    if (index > 0) { // Mantener solo la primera fila (el encabezado)
-      row.remove();
-    }
-  });
-
-  // Agregar nuevas filas, replicando la lógica de `createTable`
-  newTableData.forEach((entry, rowIndex) => {
-    const rowElement = document.createElement("tr");
-
-    [entry.ip, entry.mask, `eth${entry.iface}`].forEach((cellData, colIndex) => {
-      const cell = document.createElement("td");
-      cell.textContent = cellData;
-      cell.classList.add("editable-cell");
-
-      if ([0, 1, 2].includes(colIndex)) {
-        cell.addEventListener("click", () => {
-          openModal(cell, rowIndex, colIndex, deviceId);
-        });
-      }
-
-      rowElement.appendChild(cell);
-    });
-
-    // Agregar botón de eliminar
-    const deleteCell = document.createElement("td");
-    const deleteButton = document.createElement("button");
-    deleteButton.innerHTML = "🗑️"; // Ícono de basura
-    deleteButton.style.border = "none";
-    deleteButton.style.background = "transparent";
-    deleteButton.style.cursor = "pointer";
-    deleteButton.title = "Delete row";
-
-    deleteButton.addEventListener("click", () => {
-      const currentRowIndex = Array.from(existingTable.rows).indexOf(rowElement);
-
-      if (currentRowIndex <= 0) { // Evita eliminar la cabecera
-        console.warn(`Cannot delete header row`);
-        return;
-      }
-
-      // Eliminar la fila visualmente
-      existingTable.removeChild(rowElement);
-
-      // Notificar al sistema de la eliminación
-      viewgraph.datagraph.removeRoutingTableRow(deviceId, currentRowIndex - 1); // Ajustamos por la cabecera
-      console.log(`Deleted row ${currentRowIndex - 1} from device ${deviceId}`);
-    });
-
-    deleteCell.appendChild(deleteButton);
-    rowElement.appendChild(deleteCell);
-
-    existingTable.appendChild(rowElement);
-  });
-
-  console.log(`Routing table for router ID ${deviceId} updated successfully.`);
-}
-
-
-
-// Function to create the modal dynamically
-function createModal(
-  viewgraph: ViewGraph
-) {
-  const modal = document.createElement("div");
-  modal.id = "customModal";
-  modal.classList.add("modal");
-  modal.innerHTML = `
-    <div class="modal-content">
-      <h2 id="modalTitle">Edit Value</h2>
-      <input type="text" id="modalInput" />
-      <p id="errorMessage" class="error-message"></p>
-      <div class="modal-buttons">
-        <button id="saveBtn">Save</button>
-        <button id="cancelBtn">Cancel</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  // Attach event listener to save button safely
-  const saveBtn = document.getElementById("saveBtn");
-  if (saveBtn) {
-    saveBtn.addEventListener("click", () => {
-      const inputElement = document.getElementById(
-        "modalInput",
-      ) as HTMLInputElement | null;
-      if (!inputElement) {
-        showError("Input element not found.");
-        return;
-      }
-      const newValue = inputElement.value.trim();
-
-      // Check if currentRowIndex and currentColIndex are valid
-      if (currentRowIndex === null || currentColIndex === null) return;
-
-      // Validation logic for IP and interface
-      if (currentColIndex === 0 || currentColIndex === 1) {
-        if (!isValidIP(newValue)) {
-          showError("Invalid IP format. Use: xxx.xxx.xxx.xxx");
-          return;
-        }
-      } else if (currentColIndex === 2) {
-        if (!isValidInterface(newValue)) {
-          showError("Invalid interface format. Use: ethX (e.g., eth1)");
-          return;
-        }
-      }
-
-      if (currentCell) {
-        currentCell.textContent = newValue;
-        viewgraph.datagraph.saveManualChange(currentDeviceId, currentRowIndex, currentColIndex, newValue);
-        // Imprimir el ID del dispositivo
-        console.log(`Saving change for device ID: ${currentDeviceId}`);
-      }
-      closeModal();
-    });
-  } else {
-    console.error("Save button not found.");
-  }
-
-  // Attach event listener to cancel button safely
-  const cancelBtn = document.getElementById("cancelBtn");
-  if (cancelBtn) {
-    cancelBtn.addEventListener("click", closeModal);
-  } else {
-    console.error("Cancel button not found.");
-  }
-}
-
-// Function to show validation errors
-function showError(message: string) {
-  const errorElement = document.getElementById("errorMessage");
-  if (errorElement) {
-    errorElement.textContent = message;
-  }
-}
-
-// Open modal function
-let currentCell: HTMLElement | null = null;
-let currentRowIndex: number | null = null;
-let currentColIndex: number | null = null;
-let currentDeviceId: number | null = null;
-
-// Function to open the modal with dynamic title
-function openModal(cell: HTMLElement, rowIndex: number, colIndex: number, deviceId: number) {
-  currentCell = cell;
-  currentRowIndex = rowIndex;
-  currentColIndex = colIndex;
-  currentDeviceId = deviceId;
-
-  const modalTitle = document.getElementById("modalTitle");
-  if (modalTitle) {
-    switch (colIndex) {
-      case 0:
-        modalTitle.textContent = "Edit IP Address";
-        break;
-      case 1:
-        modalTitle.textContent = "Edit Mask";
-        break;
-      case 2:
-        modalTitle.textContent = "Edit Interface";
-        break;
-      default:
-        modalTitle.textContent = "Edit Value";
-    }
-  } else {
-    console.error("Modal title element not found.");
-  }
-
-  const modalInput = document.getElementById(
-    "modalInput",
-  ) as HTMLInputElement | null;
-  if (modalInput) {
-    modalInput.value = cell.textContent || "";
-  } else {
-    console.error("Modal input element not found.");
-  }
-
-  const errorMessage = document.getElementById("errorMessage");
-  if (errorMessage) {
-    errorMessage.textContent = ""; // Clear previous errors
-  } else {
-    console.error("Error message element not found.");
-  }
-
-  const modal = document.getElementById("customModal");
-  if (modal) {
-    modal.style.display = "block";
-  } else {
-    console.error("Modal element not found.");
-  }
-}
-
-// Close modal function
-function closeModal() {
-  const modal = document.getElementById("customModal");
-  if (modal) {
-    modal.style.display = "none";
-  } else {
-    console.error("Modal element not found.");
-  }
+  table.removeChild(rowElement);
+  viewgraph.datagraph.removeRoutingTableRow(deviceId, updatedRowIndex);
+  console.log(`Deleted row ${updatedRowIndex} from device ${deviceId}`);
 }
 
 // Function to validate IP format
@@ -477,7 +334,6 @@ export function createToggleTable(
   title: string,
   headers: string[],
   rows: string[][],
-  editableColumns: number[] = [],
   viewgraph: ViewGraph,
   deviceId: number,
   buttonClass = "right-bar-toggle-button",
@@ -486,14 +342,7 @@ export function createToggleTable(
   const container = document.createElement("div");
   container.classList.add("toggle-table-container");
 
-  const table = createTable(
-    headers,
-    rows,
-    tableClass,
-    editableColumns,
-    viewgraph,
-    deviceId
-  );
+  const table = createTable(headers, rows, tableClass, viewgraph, deviceId);
   const button = createToggleButton(title, buttonClass, table);
 
   container.appendChild(button);

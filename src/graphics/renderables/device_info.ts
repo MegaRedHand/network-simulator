@@ -1,7 +1,6 @@
 import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
 import { CreateDevice } from "../../types/devices/utils";
-import { RoutingTableEntry } from "../../types/graphs/datagraph";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { RemoveDeviceMove } from "../../types/undo-redo";
 import { urManager } from "../../types/viewportManager";
@@ -91,7 +90,6 @@ export class DeviceInfo extends StyledInfo {
   }
 
   addRoutingTable(viewgraph: ViewGraph, deviceId: number) {
-
     const entries = viewgraph.getRoutingTable(deviceId);
 
     const rows = entries.map((entry) => [
@@ -104,7 +102,6 @@ export class DeviceInfo extends StyledInfo {
       "Routing Table",
       ["IP", "Mask", "Interface"],
       rows,
-      [0, 1, 2], // editable columns index
       viewgraph,
       deviceId,
     );

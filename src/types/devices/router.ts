@@ -21,12 +21,11 @@ export class Router extends Device {
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
     info.addEmptySpace();
-  
+
     info.addRoutingTable(this.viewgraph, this.id);
-  
+
     RightBar.getInstance().renderInfo(info);
   }
-  
 
   getLayer(): Layer {
     return Layer.Network;
