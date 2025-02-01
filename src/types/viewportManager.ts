@@ -61,21 +61,48 @@ function isEdge(selectable: Selectable): selectable is Edge {
 }
 
 document.addEventListener("keydown", (event) => {
+  // Check if the focus is on an input or textarea
+  if (
+    document.activeElement instanceof HTMLInputElement ||
+    document.activeElement instanceof HTMLTextAreaElement
+  ) {
+    return; // Exit and do not execute shortcuts if the user is typing
+  }
   if (event.key === "Delete" || event.key === "Backspace") {
-    if (!selectedElement) {
-      return;
-    }
-    if (isDevice(selectedElement)) {
-      const move = new RemoveDeviceMove(selectedElement.getCreateDevice());
-      selectedElement.delete();
-      urManager.push(move);
-    } else if (isEdge(selectedElement)) {
-      const move = new RemoveEdgeMove(selectedElement.connectedNodes);
-      selectedElement.delete();
-      urManager.push(move);
-    } else {
-      // it’s a packet
-      selectedElement.delete();
+    if (selectedElement) {
+      let data;
+      if (isDevice(selectedElement)) {
+        data = selectedElement.getCreateDevice();
+        const move = new RemoveDeviceMove(
+          data,
+          selectedElement.getConnections(),
+          selectedElement.viewgraph,
+        );
+        selectedElement.delete();
+        urManager.push(move);
+      } else if (isEdge(selectedElement)) {
+        // Obtener las tablas de enrutamiento antes de eliminar la conexión
+        const routingTable1 = selectedElement.viewgraph.getRoutingTable(
+          selectedElement.connectedNodes.n1,
+        );
+        const routingTable2 = selectedElement.viewgraph.getRoutingTable(
+          selectedElement.connectedNodes.n2,
+        );
+
+        // Crear movimiento con las tablas de enrutamiento
+        const move = new RemoveEdgeMove(
+          selectedElement.connectedNodes,
+          new Map([
+            [selectedElement.connectedNodes.n1, routingTable1],
+            [selectedElement.connectedNodes.n2, routingTable2],
+          ]),
+        );
+        selectedElement.delete();
+        urManager.push(move);
+      } else {
+        // it’s a packet
+        selectedElement.delete();
+      }
     }
   } else if (event.key === "c" || event.key === "C") {
     if (selectedElement instanceof Device) {

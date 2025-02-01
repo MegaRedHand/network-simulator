@@ -1,6 +1,6 @@
 import { Device } from "./../devices/index"; // Import the Device class
 import { Edge, EdgeEdges } from "./../edge";
-import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
+import { DataGraph, DeviceId, GraphNode } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
 import { SpeedMultiplier } from "../devices/speedMultiplier";
@@ -309,11 +309,7 @@ export class ViewGraph {
   }
 
   getRoutingTable(id: DeviceId) {
-    const device = this.datagraph.getDevice(id);
-    if (!device || !isRouter(device)) {
-      return [];
-    }
-    return device.routingTable;
+    return this.datagraph.getRoutingTable(id);
   }
 
   getEdge(edgeId: EdgeId): Edge | undefined {

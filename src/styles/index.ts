@@ -8,3 +8,4 @@ import "./right-bar-buttons.css";
 import "./table.css";
 import "./info.css";
 import "./buttons.css";
+import "./modal.css";
