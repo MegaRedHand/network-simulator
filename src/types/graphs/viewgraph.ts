@@ -1,8 +1,9 @@
 import { Device } from "./../devices/index"; // Import the Device class
 import { Edge, EdgeEdges } from "./../edge";
-import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
+import { DataGraph, DeviceId, GraphNode } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
+import { SpeedMultiplier } from "../devices/speedMultiplier";
 import { CreateDevice, createDevice } from "../devices/utils";
 import { layerFromType } from "../devices/device";
 
@@ -20,12 +21,14 @@ export class ViewGraph {
   private edges: Map<EdgeId, Edge> = new Map<EdgeId, Edge>();
   private datagraph: DataGraph;
   private layer: Layer;
-  private viewport: Viewport;
+  private speedMultiplier: SpeedMultiplier;
+  viewport: Viewport;
 
   constructor(datagraph: DataGraph, viewport: Viewport, layer: Layer) {
     this.datagraph = datagraph;
     this.viewport = viewport;
     this.layer = layer;
+    this.speedMultiplier = new SpeedMultiplier(1);
     this.constructView();
   }
 
@@ -184,6 +187,21 @@ export class ViewGraph {
     return this.layer;
   }
 
+  getSpeed(): SpeedMultiplier {
+    if (!this.speedMultiplier) {
+      this.speedMultiplier = new SpeedMultiplier(1);
+    }
+    return this.speedMultiplier;
+  }
+
+  setSpeed(speed: number) {
+    if (this.speedMultiplier) {
+      this.speedMultiplier.value = speed;
+    } else {
+      this.speedMultiplier = new SpeedMultiplier(speed);
+    }
+  }
+
   // Get all connections of a device
   getConnections(id: DeviceId): Edge[] {
     const device = this.devices.get(id);
@@ -295,11 +313,7 @@ export class ViewGraph {
   }
 
   getRoutingTable(id: DeviceId) {
-    const device = this.datagraph.getDevice(id);
-    if (!device || !isRouter(device)) {
-      return [];
-    }
-    return device.routingTable;
+    return this.datagraph.getRoutingTable(id);
   }
 
   getEdge(edgeId: EdgeId): Edge | undefined {

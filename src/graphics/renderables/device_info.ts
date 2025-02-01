@@ -1,7 +1,7 @@
 import { ProgramRunner } from "../../programs";
 import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
-import { RoutingTableEntry } from "../../types/graphs/datagraph";
+import { ViewGraph } from "../../types/graphs/viewgraph";
 import { RemoveDeviceMove } from "../../types/undo-redo";
 import { urManager } from "../../types/viewportManager";
 import {
@@ -43,7 +43,11 @@ export class DeviceInfo extends StyledInfo {
         "Delete device",
         () => {
           const deviceData = this.device.getCreateDevice();
-          const move = new RemoveDeviceMove(deviceData);
+          const move = new RemoveDeviceMove(
+            deviceData,
+            this.device.getConnections(),
+            this.device.viewgraph,
+          );
           this.device.delete();
           urManager.push(move);
         },
@@ -77,7 +81,9 @@ export class DeviceInfo extends StyledInfo {
     );
   }
 
-  addRoutingTable(entries: RoutingTableEntry[]) {
+  addRoutingTable(viewgraph: ViewGraph, deviceId: number) {
+    const entries = viewgraph.getRoutingTable(deviceId);
+
     const rows = entries.map((entry) => [
       entry.ip,
       entry.mask,
@@ -85,11 +91,11 @@ export class DeviceInfo extends StyledInfo {
     ]);
 
     const dynamicTable = createToggleTable(
-      "Routing Table", // Title
-      ["IP Address", "Mask", "Interface"], // Headers
-      rows, // Generated files
-      "right-bar-toggle-button", // Button class
-      "right-bar-table", // Table class
+      "Routing Table",
+      ["IP", "Mask", "Interface"],
+      rows,
+      viewgraph,
+      deviceId,
     );
 
     this.inputFields.push(dynamicTable);

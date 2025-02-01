@@ -24,6 +24,7 @@ import PauseSvg from "./assets/pause-icon.svg";
 import UndoSvg from "./assets/left-curve-arrow.svg";
 import RedoSvg from "./assets/right-curve-arrow.svg";
 import { layerToName } from "./types/devices/layer";
+import { SpeedMultiplier } from "./types/devices/speedMultiplier";
 
 const assets = [RouterSvg, ComputerSvg, PlaySvg, PauseSvg, UndoSvg, RedoSvg];
 
@@ -201,7 +202,17 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   pauseButton.onclick = triggerPause;
 
-  // Layer abstraction logic
+  function updateSpeedWheel(value: number) {
+    const speedWheel = document.getElementById(
+      "speed-wheel",
+    ) as HTMLInputElement;
+    const valueDisplay = document.querySelector(".value-display");
+
+    speedWheel.value = value.toString();
+    valueDisplay.textContent = `${value}x`;
+  }
+
+  // (!) For layer abstraction functionality
   const selectNewLayer = (event: Event) => {
     const selectedLayer = (event.target as HTMLSelectElement).value;
     console.log(`Layer selected: ${selectedLayer}`);
@@ -223,6 +234,26 @@ async function loadAssets(otherPromises: Promise<void>[]) {
       e.preventDefault();
     }
   };
+
+  let speedMultiplier = ctx.getCurrentSpeed();
+  console.log("Current Speed Multiplier: ", speedMultiplier);
+
+  const speedWheel = document.getElementById("speed-wheel") as HTMLInputElement;
+  const valueDisplay = document.querySelector(".value-display");
+
+  // Update the wheel with the current speed value
+  updateSpeedWheel(speedMultiplier.value);
+
+  speedWheel.addEventListener("input", (event) => {
+    const value = parseFloat((event.target as HTMLInputElement).value);
+    speedMultiplier = SpeedMultiplier.parse(value);
+    valueDisplay.textContent = speedMultiplier.multiplier;
+
+    ctx.changeSpeedMultiplier(speedMultiplier.value);
+  });
+
+  // Initialize with default value
+  valueDisplay.textContent = `${(speedWheel as HTMLInputElement).value}x`;
 
   console.log("initialized!");
 })();
