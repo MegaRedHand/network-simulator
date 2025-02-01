@@ -9,6 +9,7 @@ import {
 import { Layer } from "./types/devices/device";
 import { IpAddress, IpAddressGenerator } from "./packets/ip";
 import { layerFromName } from "./types/devices/layer";
+import { SpeedMultiplier } from "./types/devices/speedMultiplier";
 
 export class GlobalContext {
   private viewport: Viewport = null;
@@ -30,18 +31,43 @@ export class GlobalContext {
     return this.ipGenerator.getNextIp();
   }
 
-  private setNetwork(datagraph: DataGraph, layer: Layer) {
+  private setNetwork(
+    datagraph: DataGraph,
+    layer: Layer,
+    speedMultiplier?: SpeedMultiplier,
+  ) {
     this.datagraph = datagraph;
     this.viewport.clear();
     if (this.viewgraph) {
       this.viewgraph.destroy();
     }
     this.viewgraph = new ViewGraph(this.datagraph, this.viewport, layer);
+    this.viewgraph.setSpeed(speedMultiplier?.value || 1);
     this.setIpGenerator();
   }
 
-  load(datagraph: DataGraph, layer: Layer = Layer.Link) {
+  private setSpeedMultiplier(speedMultiplier: SpeedMultiplier) {
+    if (speedMultiplier && speedMultiplier.value > 0) {
+      this.changeSpeedMultiplier(speedMultiplier.value);
+      // Update the wheel display after setting the speed
+      const speedWheel = document.getElementById(
+        "speed-wheel",
+      ) as HTMLInputElement;
+      const valueDisplay = document.querySelector(".value-display");
+      if (speedWheel && valueDisplay) {
+        speedWheel.value = speedMultiplier.value.toString();
+        valueDisplay.textContent = `${speedMultiplier.value}x`;
+      }
+    }
+  }
+
+  load(
+    datagraph: DataGraph,
+    layer: Layer = Layer.Link,
+    speedMultiplier: SpeedMultiplier = SpeedMultiplier.parse(1),
+  ) {
     this.setNetwork(datagraph, layer);
+    this.setSpeedMultiplier(speedMultiplier);
     this.setupAutoSave();
     saveToLocalStorage(this);
     urManager.reset();
@@ -59,14 +85,26 @@ export class GlobalContext {
     return this.viewgraph.getLayer();
   }
 
+  getCurrentSpeed() {
+    return this.viewgraph.getSpeed();
+  }
+
   getDataGraph() {
     return this.datagraph;
   }
 
   changeViewGraph(selectedLayer: string) {
     const layer = layerFromName(selectedLayer);
+    const speedMultiplier = this.getCurrentSpeed();
     urManager.reset();
-    this.setNetwork(this.datagraph, layer);
+    this.setNetwork(this.datagraph, layer, speedMultiplier);
+  }
+
+  changeSpeedMultiplier(speedMultiplier: number) {
+    if (this.viewgraph) {
+      this.viewgraph.setSpeed(speedMultiplier);
+      saveToLocalStorage(this);
+    }
   }
 
   private setupAutoSave() {
