@@ -47,6 +47,31 @@ const programMap = new Map<string, ProgramConstructor>(
   programList.map((p) => [p.PROGRAM_NAME, p]),
 );
 
+export function getProgramList(
+  viewgraph: ViewGraph,
+  srcId: DeviceId,
+): ProgramInfo[] {
+  const adjacentDevices = viewgraph
+    .getDeviceIds()
+    .filter((adjId) => adjId !== srcId)
+    .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
+
+  const programList = [];
+
+  {
+    const programInfo = new ProgramInfo(SingleEcho.PROGRAM_NAME);
+    programInfo.withDropdown("Destination", adjacentDevices);
+    programList.push(programInfo);
+  }
+  {
+    const programInfo = new ProgramInfo(EchoServer.PROGRAM_NAME);
+    programInfo.withDropdown("Destination", adjacentDevices);
+    programList.push(programInfo);
+  }
+
+  return programList;
+}
+
 /**
  * Creates a new program instance.
  * @param viewgraph Viegraph instance the device is on

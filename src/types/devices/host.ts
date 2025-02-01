@@ -10,7 +10,13 @@ import { Ticker } from "pixi.js";
 import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "./layer";
 import { isHost } from "../graphs/datagraph";
-import { newProgram, Pid, Program, RunningProgram } from "../../programs";
+import {
+  getProgramList,
+  newProgram,
+  Pid,
+  Program,
+  RunningProgram,
+} from "../../programs";
 
 const ECHO_SERVER_NAME = "Echo server";
 
@@ -30,9 +36,11 @@ export class Host extends Device {
   }
 
   showInfo(): void {
+    const programList = getProgramList(this.viewgraph, this.id);
+
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
-    info.addProgramList(this, this.getProgramList());
+    info.addProgramList(this, programList);
     RightBar.getInstance().renderInfo(info);
   }
 
@@ -42,28 +50,6 @@ export class Host extends Device {
 
   getType(): DeviceType {
     return DeviceType.Host;
-  }
-
-  getProgramList() {
-    const adjacentDevices = this.viewgraph
-      .getDeviceIds()
-      .filter((adjId) => adjId !== this.id)
-      .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
-
-    const programList = [];
-
-    {
-      const programInfo = new ProgramInfo("Send ICMP echo");
-      programInfo.withDropdown("Destination", adjacentDevices);
-      programList.push(programInfo);
-    }
-    {
-      const programInfo = new ProgramInfo(ECHO_SERVER_NAME);
-      programInfo.withDropdown("Destination", adjacentDevices);
-      programList.push(programInfo);
-    }
-
-    return programList;
   }
 
   addRunningProgram(name: string, inputs: string[]) {
