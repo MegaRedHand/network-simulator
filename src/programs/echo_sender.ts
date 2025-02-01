@@ -35,7 +35,9 @@ export class SingleEcho extends EchoSender {
     this.signalStop();
   }
 
-  protected _stop() {}
+  protected _stop() {
+    // Nothing to do
+  }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);

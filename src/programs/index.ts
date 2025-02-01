@@ -30,14 +30,13 @@ export interface Program {
 }
 
 /**
- * This interface matches a class having a constructor with the given signature
+ * This type matches a class having a constructor with the given signature
  */
-interface ProgramConstructor {
-  /**
-   * Creates a Program from the given inputs
-   */
-  new (viewgraph: ViewGraph, srcId: DeviceId, inputs: string[]): Program;
-}
+type ProgramConstructor = new (
+  viewgraph: ViewGraph,
+  srcId: DeviceId,
+  inputs: string[],
+) => Program;
 
 // List of all programs.
 // Each one has to:

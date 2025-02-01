@@ -4,9 +4,6 @@ import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
 import { IpAddress } from "../../packets/ip";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
-import { ProgramInfo } from "../../graphics/renderables/device_info";
-import { sendPacket } from "../packet";
-import { Ticker } from "pixi.js";
 import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "./layer";
 import { isHost } from "../graphs/datagraph";
@@ -17,8 +14,6 @@ import {
   Program,
   RunningProgram,
 } from "../../programs";
-
-const ECHO_SERVER_NAME = "Echo server";
 
 export class Host extends Device {
   private runningPrograms = new Map<Pid, Program>();

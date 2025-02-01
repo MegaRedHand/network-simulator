@@ -10,15 +10,9 @@ import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
-import {
-  EmptyPayload,
-  ICMP_PROTOCOL_NUMBER,
-  IpAddress,
-  IPv4Packet,
-} from "../packets/ip";
+import { EmptyPayload, IpAddress, IPv4Packet } from "../packets/ip";
 import { EchoRequest, EchoReply } from "../packets/icmp";
 import { DeviceId, isRouter } from "./graphs/datagraph";
-import { EthernetFrame } from "../packets/ethernet";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
