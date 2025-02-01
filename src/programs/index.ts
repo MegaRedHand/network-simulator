@@ -1,13 +1,9 @@
 import { Ticker } from "pixi.js";
-import { ProgramInfo } from "../graphics/renderables/device_info";
-import { createDropdown } from "../graphics/right_bar";
 import { DeviceId } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
 import { sendPacket } from "../types/packet";
 
 export type Pid = number;
-
-const ECHO_SERVER_NAME = "Echo server";
 
 export interface RunningProgram {
   pid: Pid;
@@ -25,29 +21,13 @@ export interface Program {
   stop(): void;
 }
 
-export function newProgram(
-  viewgraph: ViewGraph,
-  sourceId: DeviceId,
-  { name, inputs }: RunningProgram,
-): Program {
-  let program: Program;
-  switch (name) {
-    case "Send ICMP echo":
-      return new SingleEcho(viewgraph, sourceId, inputs);
-    case ECHO_SERVER_NAME:
-      return new EchoServer(viewgraph, sourceId, inputs);
-    default:
-      console.error("Unknown program: ", name);
-      return;
-  }
-  return program;
-}
-
-export class SingleEcho {
+export class SingleEcho implements Program {
   private viewgraph: ViewGraph;
   private srcId: DeviceId;
   private dstId: DeviceId;
   private signalStop: () => void;
+
+  static readonly PROGRAM_NAME = "Send ICMP echo";
 
   constructor(viewgraph: ViewGraph, srcId: DeviceId, inputs: string[]) {
     this.viewgraph = viewgraph;
@@ -71,12 +51,14 @@ export class SingleEcho {
 
 const DEFAULT_ECHO_DELAY = 250; // ms
 
-export class EchoServer {
+export class EchoServer implements Program {
   private viewgraph: ViewGraph;
   private srcId: DeviceId;
   private dstId: DeviceId;
   private progress = 0;
   private signalStop: () => void;
+
+  static readonly PROGRAM_NAME = "Echo server";
 
   constructor(viewgraph: ViewGraph, srcId: DeviceId, inputs: string[]) {
     this.viewgraph = viewgraph;
@@ -107,4 +89,41 @@ export class EchoServer {
   stop() {
     Ticker.shared.remove(this.tick, this);
   }
+}
+
+/**
+ * This interface matches a class having a constructor with the given signature
+ */
+interface ProgramConstructor {
+  /**
+   * Creates a Program from the given inputs
+   */
+  new (viewgraph: ViewGraph, srcId: DeviceId, inputs: string[]): Program;
+}
+
+const programMap = new Map<string, ProgramConstructor>([
+  [SingleEcho.PROGRAM_NAME, SingleEcho],
+  [EchoServer.PROGRAM_NAME, EchoServer],
+]);
+
+/**
+ * Creates a new program instance.
+ * @param viewgraph Viegraph instance the device is on
+ * @param sourceId ID of the device running the program
+ * @param runningProgram data of the running program
+ * @returns a new Program instance if the data is valid, undefined otherwise
+ */
+export function newProgram(
+  viewgraph: ViewGraph,
+  sourceId: DeviceId,
+  runningProgram: RunningProgram,
+): Program | undefined {
+  const { name, inputs } = runningProgram;
+  const GivenProgram = programMap.get(name);
+
+  if (!GivenProgram) {
+    console.error("Unknown program: ", name);
+    return undefined;
+  }
+  return new GivenProgram(viewgraph, sourceId, inputs);
 }
