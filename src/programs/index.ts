@@ -1,7 +1,6 @@
-import { Ticker } from "pixi.js";
 import { DeviceId } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
-import { sendPacket } from "../types/packet";
+import { EchoServer, SingleEcho } from "./echo_sender";
 
 export type Pid = number;
 
@@ -27,114 +26,6 @@ export interface Program {
    * Stops running the program.
    */
   stop(): void;
-}
-
-/**
- * Base class for all programs.
- * Provides a basic structure for programs to be run.
- */
-abstract class ProgramBase implements Program {
-  static readonly PROGRAM_NAME: string;
-
-  protected viewgraph: ViewGraph;
-  protected srcId: DeviceId;
-
-  protected signalStop: () => void;
-
-  constructor(viewgraph: ViewGraph, srcId: DeviceId, inputs: string[]) {
-    this.viewgraph = viewgraph;
-    this.srcId = srcId;
-
-    this._parseInputs(inputs);
-  }
-
-  run(signalStop: () => void) {
-    if (this.signalStop) {
-      console.error(ProgramBase.PROGRAM_NAME + " already running");
-      return;
-    }
-    this.signalStop = signalStop;
-
-    this._run();
-  }
-
-  stop(): void {
-    // This function could be useful
-    console.debug(ProgramBase.PROGRAM_NAME + " stopping");
-    this._stop();
-  }
-
-  // Functions to be implemented by subclasses
-
-  /**
-   * Parses the given inputs and sets any subclass fields.
-   * @param inputs program inputs to be parsed
-   */
-  protected abstract _parseInputs(inputs: string[]): void;
-
-  /**
-   * Starts running the program.
-   */
-  protected abstract _run(): void;
-
-  /**
-   * Stops running the program.
-   */
-  protected abstract _stop(): void;
-}
-
-abstract class EchoSender extends ProgramBase {
-  protected dstId: DeviceId;
-
-  protected _parseInputs(inputs: string[]): void {
-    if (inputs.length !== 1) {
-      console.error(
-        EchoSender.PROGRAM_NAME +
-          " requires 1 input. " +
-          inputs.length +
-          " were given.",
-      );
-      return;
-    }
-    this.dstId = parseInt(inputs[0]);
-  }
-}
-
-class SingleEcho extends EchoSender {
-  static readonly PROGRAM_NAME = "Send ICMP echo";
-
-  protected _run() {
-    sendPacket(this.viewgraph, "ICMP", this.srcId, this.dstId);
-    this.signalStop();
-  }
-
-  protected _stop() {}
-}
-
-const DEFAULT_ECHO_DELAY_MS = 250;
-
-class EchoServer extends EchoSender {
-  static readonly PROGRAM_NAME = "Echo server";
-
-  progress = 0;
-
-  protected _run() {
-    Ticker.shared.add(this.tick, this);
-  }
-
-  private tick(ticker: Ticker) {
-    const delay = DEFAULT_ECHO_DELAY_MS;
-    this.progress += ticker.deltaMS;
-    if (this.progress < delay) {
-      return;
-    }
-    sendPacket(this.viewgraph, "ICMP", this.srcId, this.dstId);
-    this.progress -= delay;
-  }
-
-  protected _stop() {
-    Ticker.shared.remove(this.tick, this);
-  }
 }
 
 /**
