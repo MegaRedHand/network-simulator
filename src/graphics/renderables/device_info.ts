@@ -59,6 +59,7 @@ export class DeviceInfo extends StyledInfo {
     });
     const inputsContainer = document.createElement("div");
     let selectedProgram = programs[0];
+    inputsContainer.replaceChildren(...selectedProgram.toHTML());
     this.inputFields.push(
       // Dropdown for selecting program
       createDropdown("Program", programOptions, "program-selector", (v) => {
@@ -71,7 +72,7 @@ export class DeviceInfo extends StyledInfo {
         const { name } = selectedProgram;
         console.log("Started program: ", name);
         const inputs = selectedProgram.getInputValues();
-        runner.addRunningProgram({ name, inputs });
+        runner.addRunningProgram(name, inputs);
       }),
     );
   }
