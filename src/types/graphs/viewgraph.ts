@@ -213,6 +213,10 @@ export class ViewGraph {
     return Array.from(this.devices.keys());
   }
 
+  getAdjacentDeviceIds(id: DeviceId): DeviceId[] {
+    return this.getDeviceIds().filter((adjId) => adjId !== id);
+  }
+
   // Get the number of devices in the graph
   getDeviceCount(): number {
     return this.devices.size;

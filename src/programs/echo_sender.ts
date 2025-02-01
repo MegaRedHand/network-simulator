@@ -2,6 +2,16 @@ import { Ticker } from "pixi.js";
 import { DeviceId } from "../types/graphs/datagraph";
 import { sendPacket } from "../types/packet";
 import { ProgramBase } from "./program_base";
+import { ViewGraph } from "../types/graphs/viewgraph";
+import { ProgramInfo } from "../graphics/renderables/device_info";
+
+function adjacentDevices(viewgraph: ViewGraph, srcId: DeviceId) {
+  const adjacentDevices = viewgraph
+    .getAdjacentDeviceIds(srcId)
+    .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
+
+  return adjacentDevices;
+}
 
 export abstract class EchoSender extends ProgramBase {
   protected dstId: DeviceId;
@@ -9,10 +19,7 @@ export abstract class EchoSender extends ProgramBase {
   protected _parseInputs(inputs: string[]): void {
     if (inputs.length !== 1) {
       console.error(
-        ProgramBase.PROGRAM_NAME +
-          " requires 1 input. " +
-          inputs.length +
-          " were given.",
+        "Program requires 1 input. " + inputs.length + " were given.",
       );
       return;
     }
@@ -29,6 +36,12 @@ export class SingleEcho extends EchoSender {
   }
 
   protected _stop() {}
+
+  static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
+    const programInfo = new ProgramInfo(this.PROGRAM_NAME);
+    programInfo.withDropdown("Destination", adjacentDevices(viewgraph, srcId));
+    return programInfo;
+  }
 }
 
 const DEFAULT_ECHO_DELAY_MS = 250;
@@ -54,5 +67,11 @@ export class EchoServer extends EchoSender {
 
   protected _stop() {
     Ticker.shared.remove(this.tick, this);
+  }
+
+  static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
+    const programInfo = new ProgramInfo(this.PROGRAM_NAME);
+    programInfo.withDropdown("Destination", adjacentDevices(viewgraph, srcId));
+    return programInfo;
   }
 }

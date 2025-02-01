@@ -39,7 +39,12 @@ interface ProgramConstructor {
   new (viewgraph: ViewGraph, srcId: DeviceId, inputs: string[]): Program;
 }
 
-// List of all programs
+// List of all programs.
+// Each one has to:
+// - Implement the Program interface
+// - Have a static readonly PROGRAM_NAME property
+// - Have a constructor with the signature (viewgraph, srcId, inputs)
+// - Have a getProgramInfo static method
 const programList = [SingleEcho, EchoServer];
 
 // Map of program name to program constructor
@@ -51,25 +56,7 @@ export function getProgramList(
   viewgraph: ViewGraph,
   srcId: DeviceId,
 ): ProgramInfo[] {
-  const adjacentDevices = viewgraph
-    .getDeviceIds()
-    .filter((adjId) => adjId !== srcId)
-    .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
-
-  const programList = [];
-
-  {
-    const programInfo = new ProgramInfo(SingleEcho.PROGRAM_NAME);
-    programInfo.withDropdown("Destination", adjacentDevices);
-    programList.push(programInfo);
-  }
-  {
-    const programInfo = new ProgramInfo(EchoServer.PROGRAM_NAME);
-    programInfo.withDropdown("Destination", adjacentDevices);
-    programList.push(programInfo);
-  }
-
-  return programList;
+  return programList.map((p) => p.getProgramInfo(viewgraph, srcId));
 }
 
 /**

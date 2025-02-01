@@ -7,8 +7,6 @@ import { ViewGraph } from "../types/graphs/viewgraph";
  * Provides a basic structure for programs to be run.
  */
 export abstract class ProgramBase implements Program {
-  static readonly PROGRAM_NAME: string;
-
   protected viewgraph: ViewGraph;
   protected srcId: DeviceId;
 
@@ -23,7 +21,7 @@ export abstract class ProgramBase implements Program {
 
   run(signalStop: () => void) {
     if (this.signalStop) {
-      console.error(ProgramBase.PROGRAM_NAME + " already running");
+      console.error("Program already running");
       return;
     }
     this.signalStop = signalStop;
@@ -33,7 +31,7 @@ export abstract class ProgramBase implements Program {
 
   stop(): void {
     // This function could be useful
-    console.debug(ProgramBase.PROGRAM_NAME + " stopping");
+    console.debug("Program stopping");
     this._stop();
   }
 
