@@ -21,13 +21,13 @@ export interface Program {
   stop(): void;
 }
 
-export class SingleEcho implements Program {
-  private viewgraph: ViewGraph;
-  private srcId: DeviceId;
-  private dstId: DeviceId;
-  private signalStop: () => void;
+abstract class EchoSender implements Program {
+  protected viewgraph: ViewGraph;
+  protected srcId: DeviceId;
+  protected dstId: DeviceId;
+  protected signalStop: () => void;
 
-  static readonly PROGRAM_NAME = "Send ICMP echo";
+  static readonly PROGRAM_NAME: string;
 
   constructor(viewgraph: ViewGraph, srcId: DeviceId, inputs: string[]) {
     this.viewgraph = viewgraph;
@@ -36,12 +36,25 @@ export class SingleEcho implements Program {
     this.dstId = parseInt(inputs[0]);
   }
 
+  abstract _run(): void;
+
   run(signalStop: () => void) {
     if (this.signalStop) {
-      console.error("SingleEcho already running");
+      console.error(EchoSender.PROGRAM_NAME + " already running");
       return;
     }
     this.signalStop = signalStop;
+
+    this._run();
+  }
+
+  stop() {}
+}
+
+export class SingleEcho extends EchoSender {
+  static readonly PROGRAM_NAME = "Send ICMP echo";
+
+  _run() {
     sendPacket(this.viewgraph, "ICMP", this.srcId, this.dstId);
     this.signalStop();
   }
@@ -49,41 +62,25 @@ export class SingleEcho implements Program {
   stop() {}
 }
 
-const DEFAULT_ECHO_DELAY = 250; // ms
+const DEFAULT_ECHO_DELAY_MS = 250;
 
-export class EchoServer implements Program {
-  private viewgraph: ViewGraph;
-  private srcId: DeviceId;
-  private dstId: DeviceId;
-  private progress = 0;
-  private signalStop: () => void;
-
+export class EchoServer extends EchoSender {
   static readonly PROGRAM_NAME = "Echo server";
 
-  constructor(viewgraph: ViewGraph, srcId: DeviceId, inputs: string[]) {
-    this.viewgraph = viewgraph;
-    this.srcId = srcId;
+  progress = 0;
 
-    this.dstId = parseInt(inputs[0]);
+  _run() {
+    Ticker.shared.add(this.tick, this);
   }
 
   private tick(ticker: Ticker) {
-    const delay = DEFAULT_ECHO_DELAY;
+    const delay = DEFAULT_ECHO_DELAY_MS;
     this.progress += ticker.deltaMS;
     if (this.progress < delay) {
       return;
     }
     sendPacket(this.viewgraph, "ICMP", this.srcId, this.dstId);
     this.progress -= delay;
-  }
-
-  run(signalStop: () => void) {
-    if (this.signalStop) {
-      console.error("SingleEcho already running");
-      return;
-    }
-    this.signalStop = signalStop;
-    Ticker.shared.add(this.tick, this);
   }
 
   stop() {
