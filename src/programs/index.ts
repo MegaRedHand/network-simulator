@@ -7,6 +7,8 @@ import { sendPacket } from "../types/packet";
 
 export type Pid = number;
 
+const ECHO_SERVER_NAME = "Echo server";
+
 export interface RunningProgram {
   pid: Pid;
   name: string;
@@ -21,6 +23,24 @@ export interface ProgramRunner {
 export interface Program {
   run(signalStop: () => void): void;
   stop(): void;
+}
+
+export function newProgram(
+  viewgraph: ViewGraph,
+  sourceId: DeviceId,
+  { name, inputs }: RunningProgram,
+): Program {
+  let program: Program;
+  switch (name) {
+    case "Send ICMP echo":
+      return new SingleEcho(viewgraph, sourceId, inputs);
+    case ECHO_SERVER_NAME:
+      return new EchoServer(viewgraph, sourceId, inputs);
+    default:
+      console.error("Unknown program: ", name);
+      return;
+  }
+  return program;
 }
 
 export class SingleEcho {

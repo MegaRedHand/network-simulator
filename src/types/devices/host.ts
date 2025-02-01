@@ -10,13 +10,7 @@ import { Ticker } from "pixi.js";
 import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "./layer";
 import { isHost } from "../graphs/datagraph";
-import {
-  EchoServer,
-  Pid,
-  Program,
-  RunningProgram,
-  SingleEcho,
-} from "../../programs";
+import { newProgram, Pid, Program, RunningProgram } from "../../programs";
 
 const ECHO_SERVER_NAME = "Echo server";
 
@@ -113,23 +107,10 @@ export class Host extends Device {
   }
 
   private runProgram(runningProgram: RunningProgram) {
-    const viewgraph = this.viewgraph;
-    const id = this.id;
-    const { pid, name, inputs } = runningProgram;
+    const { pid } = runningProgram;
 
-    console.log("Running new program: ", runningProgram);
-    let program: Program;
-    switch (name) {
-      case "Send ICMP echo":
-        program = new SingleEcho(viewgraph, id, inputs);
-        break;
-      case ECHO_SERVER_NAME:
-        program = new EchoServer(viewgraph, id, inputs);
-        break;
-      default:
-        console.error("Unknown program: ", name);
-        return;
-    }
+    const program = newProgram(this.viewgraph, this.id, runningProgram);
+
     this.runningPrograms.set(pid, program);
     program.run(() => this.removeRunningProgram(pid));
   }
