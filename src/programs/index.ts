@@ -17,30 +17,40 @@ export interface ProgramRunner {
 }
 
 export interface Program {
+  /**
+   * Starts running the program.
+   * @param signalStop Function to call when the program should stop
+   */
   run(signalStop: () => void): void;
+
+  /**
+   * Stops running the program.
+   */
   stop(): void;
 }
 
-abstract class EchoSender implements Program {
+/**
+ * Base class for all programs.
+ * Provides a basic structure for programs to be run.
+ */
+abstract class ProgramBase implements Program {
+  static readonly PROGRAM_NAME: string;
+
   protected viewgraph: ViewGraph;
   protected srcId: DeviceId;
-  protected dstId: DeviceId;
-  protected signalStop: () => void;
 
-  static readonly PROGRAM_NAME: string;
+  protected signalStop: () => void;
 
   constructor(viewgraph: ViewGraph, srcId: DeviceId, inputs: string[]) {
     this.viewgraph = viewgraph;
     this.srcId = srcId;
 
-    this.dstId = parseInt(inputs[0]);
+    this._parseInputs(inputs);
   }
-
-  abstract _run(): void;
 
   run(signalStop: () => void) {
     if (this.signalStop) {
-      console.error(EchoSender.PROGRAM_NAME + " already running");
+      console.error(ProgramBase.PROGRAM_NAME + " already running");
       return;
     }
     this.signalStop = signalStop;
@@ -48,28 +58,67 @@ abstract class EchoSender implements Program {
     this._run();
   }
 
-  stop() {}
+  stop(): void {
+    // This function could be useful
+    console.debug(ProgramBase.PROGRAM_NAME + " stopping");
+    this._stop();
+  }
+
+  // Functions to be implemented by subclasses
+
+  /**
+   * Parses the given inputs and sets any subclass fields.
+   * @param inputs program inputs to be parsed
+   */
+  protected abstract _parseInputs(inputs: string[]): void;
+
+  /**
+   * Starts running the program.
+   */
+  protected abstract _run(): void;
+
+  /**
+   * Stops running the program.
+   */
+  protected abstract _stop(): void;
 }
 
-export class SingleEcho extends EchoSender {
+abstract class EchoSender extends ProgramBase {
+  protected dstId: DeviceId;
+
+  protected _parseInputs(inputs: string[]): void {
+    if (inputs.length !== 1) {
+      console.error(
+        EchoSender.PROGRAM_NAME +
+          " requires 1 input. " +
+          inputs.length +
+          " were given.",
+      );
+      return;
+    }
+    this.dstId = parseInt(inputs[0]);
+  }
+}
+
+class SingleEcho extends EchoSender {
   static readonly PROGRAM_NAME = "Send ICMP echo";
 
-  _run() {
+  protected _run() {
     sendPacket(this.viewgraph, "ICMP", this.srcId, this.dstId);
     this.signalStop();
   }
 
-  stop() {}
+  protected _stop() {}
 }
 
 const DEFAULT_ECHO_DELAY_MS = 250;
 
-export class EchoServer extends EchoSender {
+class EchoServer extends EchoSender {
   static readonly PROGRAM_NAME = "Echo server";
 
   progress = 0;
 
-  _run() {
+  protected _run() {
     Ticker.shared.add(this.tick, this);
   }
 
@@ -83,7 +132,7 @@ export class EchoServer extends EchoSender {
     this.progress -= delay;
   }
 
-  stop() {
+  protected _stop() {
     Ticker.shared.remove(this.tick, this);
   }
 }
