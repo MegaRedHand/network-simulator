@@ -71,14 +71,7 @@ document.addEventListener("keydown", (event) => {
     if (selectedElement) {
       let data;
       if (isDevice(selectedElement)) {
-        data = {
-          id: selectedElement.id,
-          type: selectedElement.getType(),
-          x: selectedElement.x,
-          y: selectedElement.y,
-          ip: selectedElement.ip.toString(),
-          mask: selectedElement.ipMask.toString(),
-        };
+        data = selectedElement.getCreateDevice();
         const move = new RemoveDeviceMove(
           data,
           selectedElement.getConnections(),
@@ -109,18 +102,6 @@ document.addEventListener("keydown", (event) => {
         // it’s a packet
         selectedElement.delete();
       }
-    }
-    if (isDevice(selectedElement)) {
-      const move = new RemoveDeviceMove(selectedElement.getCreateDevice());
-      selectedElement.delete();
-      urManager.push(move);
-    } else if (isEdge(selectedElement)) {
-      const move = new RemoveEdgeMove(selectedElement.connectedNodes);
-      selectedElement.delete();
-      urManager.push(move);
-    } else {
-      // it’s a packet
-      selectedElement.delete();
     }
   } else if (event.key === "c" || event.key === "C") {
     if (selectedElement instanceof Device) {

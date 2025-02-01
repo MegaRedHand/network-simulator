@@ -133,7 +133,7 @@ function updateRoutingTableUI(
   newTableData: RoutingTableEntry[],
   viewgraph: ViewGraph,
 ): void {
-  const router = viewgraph.datagraph.getDevice(deviceId);
+  const router = viewgraph.getDataGraph().getDevice(deviceId);
   if (!router || !isRouter(router)) {
     console.warn(`Device with ID ${deviceId} is not a valid router.`);
     return;
@@ -230,12 +230,9 @@ function createTableRow(
         return;
       }
 
-      viewgraph.datagraph.saveManualChange(
-        deviceId,
-        updatedRowIndex,
-        colIndex,
-        newValue,
-      );
+      viewgraph
+        .getDataGraph()
+        .saveManualChange(deviceId, updatedRowIndex, colIndex, newValue);
       console.log(
         `Updated cell at row ${updatedRowIndex}, column ${colIndex} with value: ${newValue}`,
       );
@@ -264,8 +261,9 @@ function createRegenerateButton(
 
   regenerateAllButton.addEventListener("click", () => {
     console.log(`Regenerating full routing table for device ${deviceId}`);
-    const newTableData =
-      viewgraph.datagraph.regenerateRoutingTableClean(deviceId);
+    const newTableData = viewgraph
+      .getDataGraph()
+      .regenerateRoutingTableClean(deviceId);
     if (!newTableData.length) {
       console.warn("Failed to regenerate routing table.");
       return;
@@ -313,7 +311,7 @@ function handleDeleteRow(
   }
 
   table.removeChild(rowElement);
-  viewgraph.datagraph.removeRoutingTableRow(deviceId, updatedRowIndex);
+  viewgraph.getDataGraph().removeRoutingTableRow(deviceId, updatedRowIndex);
   console.log(`Deleted row ${updatedRowIndex} from device ${deviceId}`);
 }
 

@@ -60,7 +60,7 @@ export class RemoveEdgeMove extends AddRemoveEdgeMove {
 
     // Restaurar las tablas de enrutamiento guardadas
     this.storedRoutingTables.forEach((table, deviceId) => {
-      viewgraph.datagraph.setRoutingTable(deviceId, table);
+      viewgraph.getDataGraph().setRoutingTable(deviceId, table);
     });
   }
 

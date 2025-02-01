@@ -1,5 +1,6 @@
+import { DeviceType } from "../../devices/device";
 import { CreateDevice } from "../../devices/utils";
-import { DeviceId, GraphNode, RoutingTableEntry } from "../../graphs/datagraph";
+import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { Move, TypeMove } from "./move";
 
@@ -63,7 +64,7 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
     this.storedRoutingTables = new Map();
 
     // Guardar la tabla de enrutamiento del dispositivo eliminado si es un router
-    if (data.type === DeviceType.Router) {
+    if (data.node.type === DeviceType.Router) {
       const routingTable = viewgraph.getRoutingTable(data.id);
       if (routingTable) {
         this.storedRoutingTables.set(data.id, [...routingTable]);
@@ -105,7 +106,7 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
 
     // Restaurar las tablas de enrutamiento de todos los dispositivos involucrados
     this.storedRoutingTables.forEach((table, deviceId) => {
-      viewgraph.datagraph.setRoutingTable(deviceId, table);
+      viewgraph.getDataGraph().setRoutingTable(deviceId, table);
     });
 
     console.log(
