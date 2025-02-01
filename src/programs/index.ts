@@ -1,3 +1,4 @@
+import { ProgramInfo } from "../graphics/renderables/program_info";
 import { DeviceId } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
 import { EchoServer, SingleEcho } from "./echo_sender";
@@ -38,10 +39,13 @@ interface ProgramConstructor {
   new (viewgraph: ViewGraph, srcId: DeviceId, inputs: string[]): Program;
 }
 
-const programMap = new Map<string, ProgramConstructor>([
-  [SingleEcho.PROGRAM_NAME, SingleEcho],
-  [EchoServer.PROGRAM_NAME, EchoServer],
-]);
+// List of all programs
+const programList = [SingleEcho, EchoServer];
+
+// Map of program name to program constructor
+const programMap = new Map<string, ProgramConstructor>(
+  programList.map((p) => [p.PROGRAM_NAME, p]),
+);
 
 /**
  * Creates a new program instance.
