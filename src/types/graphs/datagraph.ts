@@ -20,6 +20,8 @@ export interface RoutingTableEntry {
   ip: string;
   mask: string;
   iface: DeviceId;
+  manuallyEdited?: boolean;
+  deleted?: boolean;
 }
 
 interface HostGraphNode extends CommonGraphNode {
@@ -83,15 +85,33 @@ export class DataGraph {
   static fromData(data: GraphData): DataGraph {
     const dataGraph = new DataGraph();
     data.forEach((nodeData: GraphDataNode) => {
-      // ADD DATAGRAPH AND EDGES
       console.log(nodeData);
       const connections = new Set(nodeData.connections);
-      const graphNode: GraphNode = {
-        ...nodeData,
-        connections: connections,
-      };
+
+      let graphNode: GraphNode;
+
+      if (nodeData.type === DeviceType.Router) {
+        // If the node is a router, include the routing table
+        const routerNode = nodeData as RouterDataNode;
+        graphNode = {
+          ...routerNode,
+          connections: connections,
+          routingTable: routerNode.routingTable || [], // Ensure routingTable exists
+        };
+        console.log(
+          "ROUTING TABLE ADDED:",
+          JSON.stringify(routerNode.routingTable, null, 2),
+        );
+      } else {
+        graphNode = {
+          ...nodeData,
+          connections: connections,
+        };
+      }
+
       dataGraph.addDevice(nodeData.id, graphNode);
     });
+
     return dataGraph;
   }
 
@@ -140,6 +160,9 @@ export class DataGraph {
       return;
     }
     this.devices.set(idDevice, deviceInfo);
+    deviceInfo.connections.forEach((connectedId) => {
+      this.devices.get(connectedId)?.connections.add(idDevice);
+    });
     if (this.idCounter <= idDevice) {
       this.idCounter = idDevice + 1;
     }
@@ -299,22 +322,42 @@ export class DataGraph {
     this.devices.forEach((_, id) => this.regenerateRoutingTable(id));
   }
 
-  regenerateRoutingTable(id: DeviceId) {
+  public regenerateRoutingTableClean(id: DeviceId): RoutingTableEntry[] {
+    return this.generateRoutingTable(id);
+  }
+
+  public regenerateRoutingTable(id: DeviceId) {
+    const router = this.devices.get(id);
+    if (!isRouter(router)) return;
+
+    router.routingTable = this.generateRoutingTable(id, true);
+    console.log(
+      `Routing table regenerated for router ID ${id}:`,
+      router.routingTable,
+    );
+  }
+
+  private generateRoutingTable(
+    id: DeviceId,
+    preserveEdits = false,
+  ): RoutingTableEntry[] {
     const router = this.devices.get(id);
     if (!isRouter(router)) {
-      return;
+      return [];
     }
-    console.log(`Regenerating routing table for ID ${id}`);
+
+    console.log(
+      `Regenerating ${preserveEdits ? "full" : "clean"} routing table for ID ${id}`,
+    );
     const parents = new Map<DeviceId, DeviceId>();
     parents.set(id, id);
-    const queue = Array.from([id]);
+    const queue = [id];
+
     while (queue.length > 0) {
       const currentId = queue.shift();
       const current = this.devices.get(currentId);
-      if (!isRouter(current)) {
-        // Don't route packets on hosts
-        continue;
-      }
+      if (!isRouter(current)) continue;
+
       current.connections.forEach((connectedId) => {
         if (!parents.has(connectedId)) {
           parents.set(connectedId, currentId);
@@ -323,25 +366,199 @@ export class DataGraph {
       });
     }
 
-    const table: RoutingTableEntry[] = [];
+    const newTable: RoutingTableEntry[] = [];
 
     parents.forEach((currentId, childId) => {
       const dstId = childId;
-      if (dstId === id) {
-        return;
-      }
+      if (dstId === id) return;
 
       while (currentId !== id) {
         const parentId = parents.get(currentId);
         childId = currentId;
         currentId = parentId;
       }
-      // Here the currentId is the router, and the childId
-      // is the first step towards dstId
+
       const dst = this.devices.get(dstId);
-      const entry = { ip: dst.ip, mask: dst.mask, iface: childId };
-      table.push(entry);
+      newTable.push({
+        ip: dst.ip,
+        mask: dst.mask,
+        iface: childId,
+      });
     });
-    router.routingTable = table;
+
+    if (preserveEdits) {
+      router.routingTable.forEach((manualEntry) => {
+        if (manualEntry.manuallyEdited) {
+          const existingEntry = newTable.find(
+            (entry) => entry.ip === manualEntry.ip,
+          );
+          if (existingEntry) {
+            existingEntry.mask = manualEntry.mask;
+            existingEntry.iface = manualEntry.iface;
+            existingEntry.manuallyEdited = true;
+          } else {
+            newTable.push({ ...manualEntry });
+          }
+        }
+      });
+
+      router.routingTable.forEach((deletedEntry) => {
+        if (deletedEntry.deleted) {
+          const index = newTable.findIndex(
+            (entry) => entry.ip === deletedEntry.ip,
+          );
+          if (index !== -1) {
+            newTable[index] = deletedEntry;
+            console.log(`Preserving deleted entry:`, deletedEntry);
+          } else {
+            newTable.push(deletedEntry);
+          }
+        }
+      });
+    }
+
+    console.log(`Generated routing table for router ID ${id}:`, newTable);
+    return newTable;
+  }
+
+  saveManualChange(
+    routerId: DeviceId,
+    visibleRowIndex: number, // Este es el índice en la UI
+    colIndex: number,
+    newValue: string,
+  ) {
+    const router = this.getDevice(routerId);
+    if (!router || !isRouter(router)) {
+      console.warn(`Device with ID ${routerId} is not a router.`);
+      return;
+    }
+
+    // Obtener solo las entradas visibles (no eliminadas)
+    const visibleEntries = router.routingTable.filter(
+      (entry) => !entry.deleted,
+    );
+
+    // Validar que el índice de la UI es correcto
+    if (visibleRowIndex < 0 || visibleRowIndex >= visibleEntries.length) {
+      console.warn(`Invalid row index: ${visibleRowIndex}`);
+      return;
+    }
+
+    // Buscar la entrada real en router.routingTable
+    const realEntry = visibleEntries[visibleRowIndex];
+
+    // Encontrar su índice en la tabla original
+    const realIndex = router.routingTable.findIndex(
+      (entry) => entry === realEntry,
+    );
+    if (realIndex === -1) {
+      console.warn(`Could not find matching entry in original routingTable`);
+      return;
+    }
+
+    // Aplicar el cambio en la entrada correcta
+    switch (colIndex) {
+      case 0:
+        router.routingTable[realIndex].ip = newValue;
+        break;
+      case 1:
+        router.routingTable[realIndex].mask = newValue;
+        break;
+      case 2:
+        router.routingTable[realIndex].iface = newValue.startsWith("eth")
+          ? parseInt(newValue.replace("eth", ""), 10)
+          : parseInt(newValue, 10);
+        break;
+      default:
+        console.warn(`Invalid column index: ${colIndex}`);
+        return;
+    }
+
+    // Marcar la entrada como editada manualmente
+    router.routingTable[realIndex].manuallyEdited = true;
+    console.log(
+      `Updated router ID ${routerId} routing table entry at [${realIndex}, ${colIndex}] manually`,
+    );
+
+    this.notifyChanges();
+  }
+
+  setRoutingTable(
+    routerId: DeviceId,
+    newRoutingTable: RoutingTableEntry[],
+  ): void {
+    const router = this.getDevice(routerId);
+
+    if (!router || !isRouter(router)) {
+      console.warn(`Device with ID ${routerId} is not a router.`);
+      return;
+    }
+
+    router.routingTable = newRoutingTable.map((entry) => ({
+      ip: entry.ip,
+      mask: entry.mask,
+      iface: entry.iface,
+      manuallyEdited: entry.manuallyEdited || false, // Ensure flag consistency
+    }));
+
+    console.log(
+      `Routing table set for router ID ${routerId}:`,
+      router.routingTable,
+    );
+
+    // Notify changes to persist them
+    this.notifyChanges();
+  }
+
+  removeRoutingTableRow(deviceId: DeviceId, visibleRowIndex: number): void {
+    const router = this.getDevice(deviceId);
+    if (!router || !isRouter(router)) {
+      console.warn(`Device with ID ${deviceId} is not a router.`);
+      return;
+    }
+
+    // Obtener solo las entradas visibles (no eliminadas)
+    const visibleEntries = router.routingTable.filter(
+      (entry) => !entry.deleted,
+    );
+
+    // Validar que el índice visible es correcto
+    if (visibleRowIndex < 0 || visibleRowIndex >= visibleEntries.length) {
+      console.warn(`Invalid row index: ${visibleRowIndex}`);
+      return;
+    }
+
+    // Buscar la entrada real en router.routingTable
+    const realEntry = visibleEntries[visibleRowIndex];
+
+    // Encontrar su índice en la tabla original
+    const realIndex = router.routingTable.findIndex(
+      (entry) => entry === realEntry,
+    );
+    if (realIndex === -1) {
+      console.warn(`Could not find matching entry in original routingTable`);
+      return;
+    }
+
+    // Marcar la entrada como eliminada en lugar de borrarla
+    router.routingTable[realIndex].deleted = true;
+
+    console.log(
+      `Marked routing table entry as deleted:`,
+      router.routingTable[realIndex],
+    );
+
+    // Notificar los cambios
+    this.notifyChanges();
+  }
+
+  getRoutingTable(id: DeviceId) {
+    const device = this.getDevice(id);
+    if (!device || !isRouter(device)) {
+      return [];
+    }
+
+    // Filtrar solo las entradas que NO estén eliminadas
+    return device.routingTable.filter((entry) => !entry.deleted);
   }
 }

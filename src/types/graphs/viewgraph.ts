@@ -1,8 +1,9 @@
 import { Device } from "./../devices/index"; // Import the Device class
 import { Edge, EdgeEdges } from "./../edge";
-import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
+import { DataGraph, DeviceId, GraphNode } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
+import { SpeedMultiplier } from "../devices/speedMultiplier";
 import { CreateDevice, createDevice } from "../devices/utils";
 import { layerFromType } from "../devices/device";
 import { IpAddress } from "../../packets/ip";
@@ -21,12 +22,14 @@ export class ViewGraph {
   private edges: Map<EdgeId, Edge> = new Map<EdgeId, Edge>();
   private datagraph: DataGraph;
   private layer: Layer;
-  private viewport: Viewport;
+  private speedMultiplier: SpeedMultiplier;
+  viewport: Viewport;
 
   constructor(datagraph: DataGraph, viewport: Viewport, layer: Layer) {
     this.datagraph = datagraph;
     this.viewport = viewport;
     this.layer = layer;
+    this.speedMultiplier = new SpeedMultiplier(1);
     this.constructView();
   }
 
@@ -37,42 +40,56 @@ export class ViewGraph {
     this.datagraph.getDevices().forEach((graphNode, deviceId) => {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
         const deviceInfo = { id: deviceId, node: graphNode };
-        this.addDevice(deviceInfo);
+        this.createDevice(deviceInfo);
 
-        this.layer_dfs(
-          this.datagraph.getDevices(),
-          deviceId,
-          deviceId,
-          new Set([deviceId]),
-          connections,
-        );
+        this.computeLayerConnections(deviceId, connections);
       }
     });
 
+    this.addConnections(connections);
+    console.log("Finished constructing ViewGraph");
+  }
+
+  addDevice(deviceData: CreateDevice) {
+    const device = this.createDevice(deviceData);
+    if (deviceData.node.connections.size !== 0) {
+      const connections = new Set<string>();
+      this.computeLayerConnections(deviceData.id, connections);
+
+      this.addConnections(connections);
+    }
+    return device;
+  }
+
+  // Add a device to the graph
+  private createDevice(deviceData: CreateDevice): Device {
+    if (this.devices.has(deviceData.id)) {
+      console.warn(
+        `Device with ID ${deviceData.id} already exists in the graph.`,
+      );
+      return this.devices.get(deviceData.id);
+    }
+    const device = createDevice(deviceData, this);
+
+    this.devices.set(device.id, device);
+    this.viewport.addChild(device);
+    console.log(`Device added with ID ${device.id}`);
+    return this.devices.get(deviceData.id);
+  }
+
+  private addConnections(connections: Set<string>) {
     connections.forEach((key) => {
       const connection = parseConnectionKey(key);
       const device1 = this.getDevice(connection.id1);
       const device2 = this.getDevice(connection.id2);
+      if (!(device1 && device2)) {
+        console.warn("At least one device in connection does not exist");
+        return;
+      }
       this.drawEdge(device1, device2);
       device1.addConnection(device2.id);
       device2.addConnection(device1.id);
     });
-    console.log("Finished constructing ViewGraph");
-  }
-
-  // Add a device to the graph
-  addDevice(deviceData: CreateDevice): Device {
-    if (!this.devices.has(deviceData.id)) {
-      const device = createDevice(deviceData, this);
-      this.devices.set(device.id, device);
-      this.viewport.addChild(device);
-      console.log(`Device added with ID ${device.id}`);
-    } else {
-      console.warn(
-        `Device with ID ${deviceData.id} already exists in the graph.`,
-      );
-    }
-    return this.devices.get(deviceData.id);
   }
 
   drawEdge(device1: Device, device2: Device): Edge {
@@ -169,6 +186,21 @@ export class ViewGraph {
 
   getLayer(): Layer {
     return this.layer;
+  }
+
+  getSpeed(): SpeedMultiplier {
+    if (!this.speedMultiplier) {
+      this.speedMultiplier = new SpeedMultiplier(1);
+    }
+    return this.speedMultiplier;
+  }
+
+  setSpeed(speed: number) {
+    if (this.speedMultiplier) {
+      this.speedMultiplier.value = speed;
+    } else {
+      this.speedMultiplier = new SpeedMultiplier(speed);
+    }
   }
 
   // Get all connections of a device
@@ -278,11 +310,7 @@ export class ViewGraph {
   }
 
   getRoutingTable(id: DeviceId) {
-    const device = this.datagraph.getDevice(id);
-    if (!device || !isRouter(device)) {
-      return [];
-    }
-    return device.routingTable;
+    return this.datagraph.getRoutingTable(id);
   }
 
   getEdge(edgeId: EdgeId): Edge | undefined {
@@ -338,6 +366,16 @@ export class ViewGraph {
       current = this.devices.get(parentId);
     }
     return path.reverse();
+  }
+
+  private computeLayerConnections(source: DeviceId, connections: Set<string>) {
+    this.layer_dfs(
+      this.datagraph.getDevices(),
+      source,
+      source,
+      new Set([source]),
+      connections,
+    );
   }
 
   private layer_dfs(

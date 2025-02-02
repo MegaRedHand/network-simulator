@@ -24,15 +24,13 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
 
 export class Packet extends Graphics {
-  speed = 200;
+  speed = 100;
   progress = 0;
   viewgraph: ViewGraph;
   currentEdge: Edge;
   currentStart: number;
   color: number;
   type: string;
-  destinationDevice: Device = null; // Cambiarlo
-
   rawPacket: IPv4Packet;
 
   static animationPaused = false;
@@ -213,8 +211,23 @@ export class Packet extends Graphics {
       }
       this.currentEdge.addChild(this);
     }
+
+    // Calculate the edge length
+    const start = this.currentEdge.startPos;
+    const end = this.currentEdge.endPos;
+    const edgeLength = Math.sqrt(
+      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
+    );
+
+    // Normalize the speed based on edge length
+    // The longer the edge, the slower the progress increment
+    const normalizedSpeed = this.speed / edgeLength;
+
+    // Update progress with normalized speed
     if (!Packet.animationPaused) {
-      this.progress += (ticker.deltaMS * this.speed) / 100000;
+      this.progress +=
+        (ticker.deltaMS * normalizedSpeed * this.viewgraph.getSpeed().value) /
+        1000;
     }
 
     this.updatePosition();
