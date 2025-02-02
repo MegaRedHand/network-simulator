@@ -2,13 +2,14 @@ import { Device, DeviceType } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
-import { IpAddress } from "../../packets/ip";
+import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { createDropdown, DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { ProgramInfo } from "../../graphics/renderables/device_info";
-import { sendPacket } from "../packet";
+import { Packet, sendPacket } from "../packet";
 import { Ticker } from "pixi.js";
 import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "./layer";
+import { EchoRequest } from "../../packets/icmp";
 import { isHost, RunningProgram } from "../graphs/datagraph";
 
 const DEFAULT_ECHO_DELAY = 250; // ms
@@ -48,6 +49,13 @@ export class Host extends Device {
     return DeviceType.Host;
   }
 
+  receivePacket(packet: Packet): DeviceId | null {
+    if (this.ip.equals(packet.rawPacket.destinationAddress)) {
+      this.handlePacket(packet);
+    }
+    return null;
+  }
+
   getProgramList() {
     const adjacentDevices = this.viewgraph
       .getDeviceIds()
@@ -64,7 +72,7 @@ export class Host extends Device {
     // TODO: extract into classes
     const programList: ProgramInfo[] = [
       {
-        name: "Send ICMP echo",
+        name: "Send ping",
         inputs: [dropdownContainer],
         start: () => this.sendSingleEcho(destination.value),
       },
@@ -104,7 +112,18 @@ export class Host extends Device {
 
   private sendSingleEcho(id: string) {
     const dst = parseInt(id);
-    sendPacket(this.viewgraph, "ICMP", this.id, dst);
+    const dstDevice = this.viewgraph.getDevice(dst);
+    if (dstDevice) {
+      const echoRequest = new EchoRequest(0);
+      const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoRequest);
+      sendPacket(
+        this.viewgraph,
+        ipPacket,
+        echoRequest.getPacketType(),
+        this.id,
+        dst,
+      );
+    }
   }
 
   private startNewEchoServer(id: string) {
@@ -112,19 +131,32 @@ export class Host extends Device {
     this.startEchoServer(id);
   }
 
+  // TODO: Receive ip address instead of id?
   private startEchoServer(id: string) {
     const dst = parseInt(id);
-    let progress = 0;
-    const send = (ticker: Ticker) => {
-      const delay = DEFAULT_ECHO_DELAY;
-      progress += ticker.deltaMS;
-      if (progress < delay) {
-        return;
-      }
-      sendPacket(this.viewgraph, "ICMP", this.id, dst);
-      progress -= delay;
-    };
-    this.startProgram(send);
+    const dstDevice = this.viewgraph.getDevice(dst);
+    // If ip address received instead of id, device may not exist.
+    if (dstDevice) {
+      let progress = 0;
+      const echoRequest = new EchoRequest(0);
+      const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoRequest);
+      const send = (ticker: Ticker) => {
+        const delay = DEFAULT_ECHO_DELAY;
+        progress += ticker.deltaMS;
+        if (progress < delay) {
+          return;
+        }
+        sendPacket(
+          this.viewgraph,
+          ipPacket,
+          echoRequest.getPacketType(),
+          this.id,
+          dst,
+        );
+        progress -= delay;
+      };
+      this.startProgram(send);
+    }
   }
 
   private startProgram(tick: (ticker: Ticker) => void): Pid {

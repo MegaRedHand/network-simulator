@@ -6,6 +6,7 @@ import { Layer, layerIncluded } from "../devices/layer";
 import { SpeedMultiplier } from "../devices/speedMultiplier";
 import { CreateDevice, createDevice } from "../devices/utils";
 import { layerFromType } from "../devices/device";
+import { IpAddress } from "../../packets/ip";
 
 export type EdgeId = string;
 
@@ -318,6 +319,12 @@ export class ViewGraph {
 
   getDataGraph(): DataGraph {
     return this.datagraph;
+  }
+
+  getDeviceByIP(ipAddress: IpAddress) {
+    return this.getDevices().find((device) => {
+      return device.ip == ipAddress;
+    });
   }
 
   /// Returns the IDs of the edges connecting the two devices

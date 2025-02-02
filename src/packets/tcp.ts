@@ -161,6 +161,10 @@ export class TcpSegment implements IpPayload {
     this.data = data;
   }
 
+  getPacketType(): string {
+    return "TCP";
+  }
+
   computeChecksum(): number {
     const segmentBytes = this.toBytes({ withChecksum: false });
 

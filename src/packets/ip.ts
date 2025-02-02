@@ -13,6 +13,9 @@ export class EmptyPayload implements IpPayload {
     // This number is reserved for experimental protocols
     return 0xfd;
   }
+  getPacketType(): string {
+    return "EMPTY-PROTOCOL";
+  }
 }
 
 /// Internet Protocol (IP) address
@@ -114,6 +117,8 @@ export interface IpPayload {
   toBytes(): Uint8Array;
   // The number of the protocol
   protocol(): number;
+  // Packet protocol name
+  getPacketType(): string;
 }
 
 // Info taken from the original RFC: https://datatracker.ietf.org/doc/html/rfc791#section-3.1

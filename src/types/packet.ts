@@ -10,13 +10,14 @@ import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
-import { EmptyPayload, IpAddress, IPv4Packet } from "../packets/ip";
+import { IPv4Packet } from "../packets/ip";
 import { EchoRequest, EchoReply } from "../packets/icmp";
 import { DeviceId, isRouter } from "./graphs/datagraph";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
-  ICMP: circleGraphicsContext(Colors.Red, 0, 0, 5),
+  "ICMP-8": circleGraphicsContext(Colors.Red, 0, 0, 5),
+  "ICMP-0": circleGraphicsContext(Colors.Yellow, 0, 0, 5),
 };
 
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
@@ -165,49 +166,43 @@ export class Packet extends Graphics {
     this.currentEdge.addChild(this);
     this.updatePosition();
     Ticker.shared.add(this.animationTick, this);
-  }
-
-  routePacket(id: DeviceId): DeviceId | null {
-    const device = this.viewgraph.getDataGraph().getDevice(id);
-    if (!device || !isRouter(device)) {
-      return null;
-    }
-    const result = device.routingTable.find((entry) => {
-      const ip = IpAddress.parse(entry.ip);
-      const mask = IpAddress.parse(entry.mask);
-      console.log("considering entry:", entry);
-      return this.rawPacket.destinationAddress.isInSubnet(ip, mask);
-    });
-    console.log("result:", result);
-    return result === undefined ? null : result.iface;
+    console.log("Termino traverseEdge");
   }
 
   animationTick(ticker: Ticker) {
     if (this.progress >= 1) {
-      this.progress = 0;
-      this.removeFromParent();
-
-      const newStart = this.currentEdge.otherEnd(this.currentStart);
-      this.currentStart = newStart;
-      const newEdgeId = this.routePacket(newStart);
-
       const deleteSelf = () => {
         this.destroy();
         ticker.remove(this.animationTick, this);
         if (isSelected(this)) {
           deselectElement();
         }
+        console.log("Se corto animationTick");
       };
 
-      if (newEdgeId === null) {
+      this.progress = 0;
+      this.removeFromParent();
+      const newStart = this.currentEdge.otherEnd(this.currentStart);
+      const newStartDevice = this.viewgraph.getDevice(newStart);
+
+      // Viewgraph may return undefined when trying to get the device
+      // as the device may have been removed by the user.
+      if (!newStartDevice) {
         deleteSelf();
         return;
       }
 
-      const currentNodeEdges = this.viewgraph.getConnections(newStart);
-      this.currentEdge = currentNodeEdges.find((edge) => {
-        return edge.otherEnd(newStart) === newEdgeId;
-      });
+      this.currentStart = newStart;
+      const newEndId = newStartDevice.receivePacket(this);
+
+      if (newEndId === null) {
+        deleteSelf();
+        return;
+      }
+
+      this.currentEdge = this.viewgraph.getEdge(
+        Edge.generateConnectionKey({ n1: this.currentStart, n2: newEndId }),
+      );
 
       if (this.currentEdge === undefined) {
         deleteSelf();
@@ -238,11 +233,10 @@ export class Packet extends Graphics {
   }
 
   updatePosition() {
-    const current = this.currentEdge;
-    const start = this.currentStart;
-
-    const startPos = current.nodePosition(start);
-    const endPos = current.nodePosition(current.otherEnd(start));
+    const startPos = this.currentEdge.nodePosition(this.currentStart);
+    const endPos = this.currentEdge.nodePosition(
+      this.currentEdge.otherEnd(this.currentStart),
+    );
     this.setPositionAlongEdge(startPos, endPos, this.progress);
   }
 
@@ -275,40 +269,26 @@ export class Packet extends Graphics {
   }
 }
 
-// TODO: maybe make this receive the packet directly?
+// TODO: Remove?
+// - packetType; manage in a more effective way the packet’s type so it can handle it without the paremeter.
+// - originId and destinationId; logic regarding this two parameters ought to be manage with ip addresses,
+//   or else, by obtaining both ids inside the function.
 export function sendPacket(
   viewgraph: ViewGraph,
+  rawPacket: IPv4Packet,
   packetType: string,
   originId: DeviceId,
   destinationId: DeviceId,
 ) {
   console.log(
-    `Sending ${packetType} packet from ${originId} to ${destinationId}`,
+    `Sending ${packetType} packet from ${rawPacket.sourceAddress} to ${rawPacket.destinationAddress}`,
   );
 
-  const originDevice = viewgraph.getDevice(originId);
-  const destinationDevice = viewgraph.getDevice(destinationId);
-
-  if (!originDevice || !destinationDevice) {
+  if (!viewgraph.getDevice(originId) || !viewgraph.getDevice(destinationId)) {
     console.warn("Origen o destino no encontrado.");
     return;
   }
 
-  // TODO: allow user to choose which payload to send
-  let payload;
-  switch (packetType) {
-    case "IP":
-      payload = new EmptyPayload();
-      break;
-    case "ICMP":
-      payload = new EchoRequest(0);
-      break;
-    default:
-      console.warn("Tipo de paquete no reconocido");
-      return;
-  }
-  const dstIp = destinationDevice.ip;
-  const rawPacket = new IPv4Packet(originDevice.ip, dstIp, payload);
   const packet = new Packet(viewgraph, packetType, rawPacket);
 
   const originConnections = viewgraph.getConnections(originId);
@@ -319,18 +299,19 @@ export function sendPacket(
   let firstEdge = originConnections.find((edge) => {
     return edge.otherEnd(originId) === destinationId;
   });
-  if (firstEdge === undefined) {
+  if (!firstEdge) {
     firstEdge = originConnections.find((edge) => {
       return isRouter(
         viewgraph.getDataGraph().getDevice(edge.otherEnd(originId)),
       );
     });
   }
-  if (firstEdge === undefined) {
+  if (!firstEdge) {
     console.warn(
       "El dispositivo de origen no está conectado al destino o a un router.",
     );
     return;
   }
   packet.traverseEdge(firstEdge, originId);
+  console.log("Termino sendPacket");
 }
