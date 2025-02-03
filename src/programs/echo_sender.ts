@@ -4,6 +4,8 @@ import { sendPacket } from "../types/packet";
 import { ProgramBase } from "./program_base";
 import { ViewGraph } from "../types/graphs/viewgraph";
 import { ProgramInfo } from "../graphics/renderables/device_info";
+import { EchoRequest } from "../packets/icmp";
+import { IPv4Packet } from "../packets/ip";
 
 function adjacentDevices(viewgraph: ViewGraph, srcId: DeviceId) {
   const adjacentDevices = viewgraph
@@ -25,13 +27,29 @@ export abstract class EchoSender extends ProgramBase {
     }
     this.dstId = parseInt(inputs[0]);
   }
+
+  protected sendSingleEcho() {
+    const dstDevice = this.viewgraph.getDevice(this.dstId);
+    const srcDevice = this.viewgraph.getDevice(this.srcId);
+    if (dstDevice) {
+      const echoRequest = new EchoRequest(0);
+      const ipPacket = new IPv4Packet(srcDevice.ip, dstDevice.ip, echoRequest);
+      sendPacket(
+        this.viewgraph,
+        ipPacket,
+        echoRequest.getPacketType(),
+        this.srcId,
+        this.dstId,
+      );
+    }
+  }
 }
 
 export class SingleEcho extends EchoSender {
   static readonly PROGRAM_NAME = "Send ICMP echo";
 
   protected _run() {
-    sendPacket(this.viewgraph, "ICMP", this.srcId, this.dstId);
+    this.sendSingleEcho();
     this.signalStop();
   }
 
@@ -63,7 +81,7 @@ export class EchoServer extends EchoSender {
     if (this.progress < delay) {
       return;
     }
-    sendPacket(this.viewgraph, "ICMP", this.srcId, this.dstId);
+    this.sendSingleEcho();
     this.progress -= delay;
   }
 
