@@ -1,4 +1,6 @@
+import { DeviceType } from "../../devices/device";
 import { CreateDevice } from "../../devices/utils";
+import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { Move, TypeMove } from "./move";
 
@@ -48,24 +50,69 @@ export class AddDeviceMove extends AddRemoveDeviceMove {
 // Check if the viewgraph is the best place to load the move into the manager
 export class RemoveDeviceMove extends AddRemoveDeviceMove {
   type: TypeMove = TypeMove.RemoveDevice;
+  data: CreateDevice; // Data of the removed device
+  connections: DeviceId[];
+  private storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>;
+
+  constructor(
+    data: CreateDevice,
+    connections: DeviceId[],
+    viewgraph: ViewGraph, // Pasamos la vista para obtener las tablas de enrutamiento
+  ) {
+    super(data);
+    this.connections = connections;
+    this.storedRoutingTables = new Map();
+
+    // Guardar la tabla de enrutamiento del dispositivo eliminado si es un router
+    if (data.node.type === DeviceType.Router) {
+      const routingTable = viewgraph.getRoutingTable(data.id);
+      if (routingTable) {
+        this.storedRoutingTables.set(data.id, [...routingTable]);
+      }
+    }
+
+    // Guardar las tablas de los dispositivos conectados
+    connections.forEach((adjacentId) => {
+      const routingTable = viewgraph.getRoutingTable(adjacentId);
+      if (routingTable) {
+        this.storedRoutingTables.set(adjacentId, [...routingTable]);
+      }
+    });
+
+    console.log(
+      "Stored routing tables before removal:",
+      this.storedRoutingTables,
+    );
+  }
 
   undo(viewgraph: ViewGraph): void {
     this.addDevice(viewgraph);
     const device = viewgraph.getDevice(this.data.id);
 
-    this.data.node.connections.forEach((adyacentId) => {
-      const adyacentDevice = viewgraph.getDevice(adyacentId);
+    // Restaurar conexiones con los dispositivos adyacentes
+    this.connections.forEach((adjacentId) => {
+      const adjacentDevice = viewgraph.getDevice(adjacentId);
 
-      if (adyacentDevice) {
-        viewgraph.addEdge(this.data.id, adyacentId);
-        device.addConnection(adyacentId);
-        adyacentDevice.addConnection(this.data.id);
+      if (adjacentDevice) {
+        viewgraph.addEdge(this.data.id, adjacentId);
+        device.addConnection(adjacentId);
+        adjacentDevice.addConnection(this.data.id);
       } else {
         console.warn(
-          `Adjacent Device ${adyacentId} not found while reconnecting Device ${device.id}`,
+          `Adjacent Device ${adjacentId} not found while reconnecting Device ${device.id}`,
         );
       }
     });
+
+    // Restaurar las tablas de enrutamiento de todos los dispositivos involucrados
+    this.storedRoutingTables.forEach((table, deviceId) => {
+      viewgraph.getDataGraph().setRoutingTable(deviceId, table);
+    });
+
+    console.log(
+      `Routing tables restored for devices:`,
+      this.storedRoutingTables.keys(),
+    );
   }
 
   redo(viewgraph: ViewGraph): void {

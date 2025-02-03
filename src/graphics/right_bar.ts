@@ -1,3 +1,10 @@
+import {
+  DeviceId,
+  isRouter,
+  RoutingTableEntry,
+} from "../types/graphs/datagraph";
+import { ViewGraph } from "../types/graphs/viewgraph";
+
 export { StyledInfo } from "./renderables/styled_info";
 export { DeviceInfo } from "./renderables/device_info";
 
@@ -102,56 +109,240 @@ export class RightBar {
   }
 }
 
-export function createToggleTable(
+// Function to create a toggle button
+function createToggleButton(
   title: string,
-  headers: string[],
-  rows: string[][],
-  buttonClass = "right-bar-toggle-button",
-  tableClass = "right-bar-table",
+  buttonClass: string,
+  table: HTMLTableElement,
 ) {
-  const container = document.createElement("div");
-  container.classList.add("toggle-table-container");
-
-  // Create toggle button
   const button = document.createElement("button");
   button.classList.add(buttonClass);
   button.textContent = title;
 
-  // Create table
+  button.onclick = () => {
+    const isHidden = table.classList.contains("hidden");
+    table.classList.toggle("hidden", !isHidden);
+    button.classList.toggle("open", isHidden);
+  };
+
+  return button;
+}
+
+function updateRoutingTableUI(
+  deviceId: DeviceId,
+  newTableData: RoutingTableEntry[],
+  viewgraph: ViewGraph,
+): void {
+  const router = viewgraph.getDataGraph().getDevice(deviceId);
+  if (!router || !isRouter(router)) {
+    console.warn(`Device with ID ${deviceId} is not a valid router.`);
+    return;
+  }
+  router.routingTable = newTableData;
+
+  const tableContainer = document.querySelector(".toggle-table-container");
+  if (!tableContainer)
+    return console.warn("Routing table container not found.");
+
+  const existingTable = tableContainer.querySelector("table");
+  if (!existingTable)
+    return console.warn("Existing table not found inside container.");
+
+  clearTableRows(existingTable);
+  newTableData.forEach((entry) =>
+    createTableRow(entry, existingTable, deviceId, viewgraph),
+  );
+  console.log(`Routing table for router ID ${deviceId} updated successfully.`);
+}
+
+function createTable(
+  headers: string[],
+  rows: string[][],
+  tableClass: string,
+  viewgraph: ViewGraph,
+  deviceId: DeviceId,
+): HTMLTableElement {
   const table = document.createElement("table");
   table.classList.add(tableClass, "hidden");
 
-  // Add headers
   const headerRow = document.createElement("tr");
   headers.forEach((header) => {
     const th = document.createElement("th");
     th.textContent = header;
     headerRow.appendChild(th);
   });
+
+  const actionsHeader = document.createElement("th");
+  actionsHeader.appendChild(createRegenerateButton(deviceId, viewgraph));
+  headerRow.appendChild(actionsHeader);
   table.appendChild(headerRow);
 
-  // Add rows
   rows.forEach((row) => {
-    const rowElement = document.createElement("tr");
-    row.forEach((cellData) => {
-      const cell = document.createElement("td");
-      cell.textContent = cellData;
-      rowElement.appendChild(cell);
-    });
-    table.appendChild(rowElement);
+    createTableRow(
+      { ip: row[0], mask: row[1], iface: parseInt(row[2].replace("eth", "")) },
+      table,
+      deviceId,
+      viewgraph,
+    );
   });
 
-  // Toggle when clicking on button
-  button.onclick = () => {
-    const isHidden = table.classList.contains("hidden");
-    table.classList.toggle("hidden", !isHidden);
-    table.classList.toggle("open", isHidden);
-    container.classList.toggle("hidden", !isHidden);
-    container.classList.toggle("open", isHidden);
-    button.classList.toggle("open", isHidden);
-  };
+  return table;
+}
 
-  // Add button and table to container
+function clearTableRows(table: HTMLTableElement): void {
+  const rows = Array.from(table.querySelectorAll("tr"));
+  rows.slice(1).forEach((row) => row.remove()); // Mantener solo el encabezado
+}
+
+function createTableRow(
+  entry: RoutingTableEntry,
+  table: HTMLTableElement,
+  deviceId: DeviceId,
+  viewgraph: ViewGraph,
+): void {
+  const rowElement = document.createElement("tr");
+
+  [entry.ip, entry.mask, `eth${entry.iface}`].forEach((cellData, colIndex) => {
+    const cell = document.createElement("td");
+    cell.textContent = cellData;
+    cell.classList.add("editable-cell");
+    cell.contentEditable = "true";
+
+    cell.addEventListener("keydown", (event) => {
+      if (event.key === "Delete" || event.key === "Backspace") {
+        event.stopPropagation(); // Evita que el evento borre la fila en la tabla
+      }
+    });
+
+    cell.addEventListener("blur", () => {
+      const updatedRowIndex =
+        Array.from(table.querySelectorAll("tr")).indexOf(rowElement) - 1; // Ajuste dinámico del índice
+      const newValue = cell.textContent?.trim() || "";
+
+      let isValid = false;
+      if (colIndex === 0) isValid = isValidIP(newValue);
+      else if (colIndex === 1) isValid = isValidIP(newValue);
+      else if (colIndex === 2) isValid = isValidInterface(newValue);
+
+      if (!isValid) {
+        console.warn(`Invalid input for column ${colIndex}: ${newValue}`);
+        cell.textContent = cellData; // Revertir cambio si es inválido
+        return;
+      }
+
+      viewgraph
+        .getDataGraph()
+        .saveManualChange(deviceId, updatedRowIndex, colIndex, newValue);
+      console.log(
+        `Updated cell at row ${updatedRowIndex}, column ${colIndex} with value: ${newValue}`,
+      );
+    });
+
+    rowElement.appendChild(cell);
+  });
+
+  rowElement.appendChild(
+    createDeleteButton(rowElement, table, deviceId, viewgraph),
+  );
+  table.appendChild(rowElement);
+}
+
+function createRegenerateButton(
+  deviceId: DeviceId,
+  viewgraph: ViewGraph,
+): HTMLButtonElement {
+  const regenerateAllButton = document.createElement("button");
+  regenerateAllButton.innerHTML = "🔄";
+  regenerateAllButton.style.border = "none";
+  regenerateAllButton.style.background = "transparent";
+  regenerateAllButton.style.cursor = "pointer";
+  regenerateAllButton.style.fontSize = "1.2em";
+  regenerateAllButton.title = "Regenerate Full Routing Table";
+
+  regenerateAllButton.addEventListener("click", () => {
+    console.log(`Regenerating full routing table for device ${deviceId}`);
+    const newTableData = viewgraph
+      .getDataGraph()
+      .regenerateRoutingTableClean(deviceId);
+    if (!newTableData.length) {
+      console.warn("Failed to regenerate routing table.");
+      return;
+    }
+    updateRoutingTableUI(deviceId, newTableData, viewgraph);
+  });
+
+  return regenerateAllButton;
+}
+
+function createDeleteButton(
+  rowElement: HTMLTableRowElement,
+  table: HTMLTableElement,
+  deviceId: DeviceId,
+  viewgraph: ViewGraph,
+): HTMLTableCellElement {
+  const deleteCell = document.createElement("td");
+  const deleteButton = document.createElement("button");
+  deleteButton.innerHTML = "🗑️";
+  deleteButton.style.border = "none";
+  deleteButton.style.background = "transparent";
+  deleteButton.style.cursor = "pointer";
+  deleteButton.title = "Delete row";
+
+  deleteButton.addEventListener("click", () =>
+    handleDeleteRow(rowElement, table, deviceId, viewgraph),
+  );
+
+  deleteCell.appendChild(deleteButton);
+  return deleteCell;
+}
+
+function handleDeleteRow(
+  rowElement: HTMLTableRowElement,
+  table: HTMLTableElement,
+  deviceId: DeviceId,
+  viewgraph: ViewGraph,
+): void {
+  const updatedRowIndex =
+    Array.from(table.querySelectorAll("tr")).indexOf(rowElement) - 1; // Ajuste dinámico del índice
+
+  if (updatedRowIndex < 0) {
+    console.warn("Cannot delete header row");
+    return;
+  }
+
+  table.removeChild(rowElement);
+  viewgraph.getDataGraph().removeRoutingTableRow(deviceId, updatedRowIndex);
+  console.log(`Deleted row ${updatedRowIndex} from device ${deviceId}`);
+}
+
+// Function to validate IP format
+function isValidIP(ip: string): boolean {
+  const ipPattern =
+    /^(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)$/;
+  return ipPattern.test(ip);
+}
+
+// Function to validate Interface format (ethX where X is a number)
+function isValidInterface(interfaceStr: string): boolean {
+  const interfacePattern = /^eth[0-9]+$/;
+  return interfacePattern.test(interfaceStr);
+}
+
+export function createToggleTable(
+  title: string,
+  headers: string[],
+  rows: string[][],
+  viewgraph: ViewGraph,
+  deviceId: number,
+  buttonClass = "right-bar-toggle-button",
+  tableClass = "right-bar-table",
+) {
+  const container = document.createElement("div");
+  container.classList.add("toggle-table-container");
+
+  const table = createTable(headers, rows, tableClass, viewgraph, deviceId);
+  const button = createToggleButton(title, buttonClass, table);
+
   container.appendChild(button);
   container.appendChild(table);
 

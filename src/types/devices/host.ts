@@ -3,24 +3,22 @@ import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
 import { IpAddress } from "../../packets/ip";
-import { createDropdown, DeviceInfo, RightBar } from "../../graphics/right_bar";
-import { ProgramInfo } from "../../graphics/renderables/device_info";
-import { sendPacket } from "../packet";
-import { Ticker } from "pixi.js";
+import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "./layer";
-import { isHost, RunningProgram } from "../graphs/datagraph";
-
-const DEFAULT_ECHO_DELAY = 250; // ms
-
-const ECHO_SERVER_NAME = "Echo server";
-
-type ProgramTicker = (ticker: Ticker) => void;
-type Pid = number;
+import { isHost } from "../graphs/datagraph";
+import {
+  getProgramList,
+  newProgram,
+  Pid,
+  Program,
+  RunningProgram,
+} from "../../programs";
+import { Packet } from "../packet";
 
 export class Host extends Device {
-  private runningPrograms = new Map<Pid, ProgramTicker>();
-  private programId = 0;
+  private runningPrograms = new Map<Pid, Program>();
+  private lastProgramId = 0;
 
   constructor(
     id: DeviceId,
@@ -34,9 +32,11 @@ export class Host extends Device {
   }
 
   showInfo(): void {
+    const programList = getProgramList(this.viewgraph, this.id);
+
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
-    info.addProgramList(this.getProgramList());
+    info.addProgramList(this, programList);
     RightBar.getInstance().renderInfo(info);
   }
 
@@ -48,43 +48,37 @@ export class Host extends Device {
     return DeviceType.Host;
   }
 
-  getProgramList() {
-    const adjacentDevices = this.viewgraph
-      .getDeviceIds()
-      .filter((adjId) => adjId !== this.id)
-      .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
-
-    const dropdownContainer = createDropdown(
-      "Destination",
-      adjacentDevices,
-      "destination",
-    );
-    const destination = dropdownContainer.querySelector("select");
-
-    // TODO: extract into classes
-    const programList: ProgramInfo[] = [
-      {
-        name: "Send ICMP echo",
-        inputs: [dropdownContainer],
-        start: () => this.sendSingleEcho(destination.value),
-      },
-      {
-        name: ECHO_SERVER_NAME,
-        inputs: [dropdownContainer],
-        start: () => this.startNewEchoServer(destination.value),
-      },
-    ];
-    return programList;
+  receivePacket(packet: Packet): DeviceId | null {
+    if (this.ip.equals(packet.rawPacket.destinationAddress)) {
+      this.handlePacket(packet);
+    }
+    return null;
   }
 
-  private addRunningProgram(program: RunningProgram) {
+  addRunningProgram(name: string, inputs: string[]) {
+    const pid = this.getNextPid();
+    const runningProgram = { pid, name, inputs };
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
       if (!isHost(device)) {
         console.error("Node is not a Host");
         return;
       }
-      device.runningPrograms.push(program);
+      device.runningPrograms.push(runningProgram);
     });
+    this.runProgram(runningProgram);
+  }
+
+  removeRunningProgram(pid: Pid) {
+    this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
+      if (!isHost(device)) {
+        console.error("Node is not a Host");
+        return;
+      }
+      device.runningPrograms = device.runningPrograms.filter(
+        (p) => p.pid !== pid,
+      );
+    });
+    this.runningPrograms.delete(pid);
   }
 
   private loadRunningPrograms() {
@@ -94,59 +88,28 @@ export class Host extends Device {
       return;
     }
     device.runningPrograms.forEach((program) => {
-      if (program.name !== ECHO_SERVER_NAME) {
-        console.error("Unknown program: ", program.name);
-        return;
+      this.runProgram(program);
+      if (program.pid > this.lastProgramId) {
+        this.lastProgramId = program.pid;
       }
-      this.startEchoServer(program.inputs[0]);
     });
   }
 
-  private sendSingleEcho(id: string) {
-    const dst = parseInt(id);
-    sendPacket(this.viewgraph, "ICMP", this.id, dst);
+  private runProgram(runningProgram: RunningProgram) {
+    const { pid } = runningProgram;
+
+    const program = newProgram(this.viewgraph, this.id, runningProgram);
+
+    this.runningPrograms.set(pid, program);
+    program.run(() => this.removeRunningProgram(pid));
   }
 
-  private startNewEchoServer(id: string) {
-    this.addRunningProgram({ name: "Echo server", inputs: [id] });
-    this.startEchoServer(id);
-  }
-
-  private startEchoServer(id: string) {
-    const dst = parseInt(id);
-    let progress = 0;
-    const send = (ticker: Ticker) => {
-      const delay = DEFAULT_ECHO_DELAY;
-      progress += ticker.deltaMS;
-      if (progress < delay) {
-        return;
-      }
-      sendPacket(this.viewgraph, "ICMP", this.id, dst);
-      progress -= delay;
-    };
-    this.startProgram(send);
-  }
-
-  private startProgram(tick: (ticker: Ticker) => void): Pid {
-    const pid = ++this.programId;
-    this.runningPrograms.set(pid, tick);
-    Ticker.shared.add(tick, this);
-    return pid;
-  }
-
-  // TODO: this is unused
-  stopProgram(pid: Pid) {
-    const tick = this.runningPrograms.get(pid);
-    if (!tick) {
-      console.error("Pid not found: ", pid);
-      return;
-    }
-    Ticker.shared.remove(tick, this);
-    this.runningPrograms.delete(pid);
+  private getNextPid(): Pid {
+    return ++this.lastProgramId;
   }
 
   destroy() {
-    this.runningPrograms.forEach((tick) => Ticker.shared.remove(tick, this));
+    this.runningPrograms.forEach((program) => program.stop());
     this.runningPrograms.clear();
   }
 }

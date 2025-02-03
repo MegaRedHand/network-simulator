@@ -1,10 +1,12 @@
 import { Device } from "./../devices/index"; // Import the Device class
 import { Edge, EdgeEdges } from "./../edge";
-import { DataGraph, DeviceId, GraphNode, isRouter } from "./datagraph";
+import { DataGraph, DeviceId, GraphNode } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
+import { SpeedMultiplier } from "../devices/speedMultiplier";
 import { CreateDevice, createDevice } from "../devices/utils";
 import { layerFromType } from "../devices/device";
+import { IpAddress } from "../../packets/ip";
 
 export type EdgeId = string;
 
@@ -20,12 +22,14 @@ export class ViewGraph {
   private edges: Map<EdgeId, Edge> = new Map<EdgeId, Edge>();
   private datagraph: DataGraph;
   private layer: Layer;
-  private viewport: Viewport;
+  private speedMultiplier: SpeedMultiplier;
+  viewport: Viewport;
 
   constructor(datagraph: DataGraph, viewport: Viewport, layer: Layer) {
     this.datagraph = datagraph;
     this.viewport = viewport;
     this.layer = layer;
+    this.speedMultiplier = new SpeedMultiplier(1);
     this.constructView();
   }
 
@@ -184,18 +188,33 @@ export class ViewGraph {
     return this.layer;
   }
 
+  getSpeed(): SpeedMultiplier {
+    if (!this.speedMultiplier) {
+      this.speedMultiplier = new SpeedMultiplier(1);
+    }
+    return this.speedMultiplier;
+  }
+
+  setSpeed(speed: number) {
+    if (this.speedMultiplier) {
+      this.speedMultiplier.value = speed;
+    } else {
+      this.speedMultiplier = new SpeedMultiplier(speed);
+    }
+  }
+
   // Get all connections of a device
   getConnections(id: DeviceId): Edge[] {
     const device = this.devices.get(id);
-    return device
-      ? device
-          .getConnections()
-          .map((adyacentId) =>
-            this.edges.get(
-              Edge.generateConnectionKey({ n1: id, n2: adyacentId }),
-            ),
-          )
-      : [];
+    if (!device) {
+      return [];
+    }
+    const connections = device
+      .getConnections()
+      .map((adyacentId) =>
+        this.edges.get(Edge.generateConnectionKey({ n1: id, n2: adyacentId })),
+      );
+    return connections;
   }
 
   // Get a specific device by its ID
@@ -211,6 +230,10 @@ export class ViewGraph {
   // Returns an array of devices’ ids
   getDeviceIds(): DeviceId[] {
     return Array.from(this.devices.keys());
+  }
+
+  getAdjacentDeviceIds(id: DeviceId): DeviceId[] {
+    return this.getDeviceIds().filter((adjId) => adjId !== id);
   }
 
   // Get the number of devices in the graph
@@ -291,11 +314,7 @@ export class ViewGraph {
   }
 
   getRoutingTable(id: DeviceId) {
-    const device = this.datagraph.getDevice(id);
-    if (!device || !isRouter(device)) {
-      return [];
-    }
-    return device.routingTable;
+    return this.datagraph.getRoutingTable(id);
   }
 
   getEdge(edgeId: EdgeId): Edge | undefined {
@@ -304,6 +323,12 @@ export class ViewGraph {
 
   getDataGraph(): DataGraph {
     return this.datagraph;
+  }
+
+  getDeviceByIP(ipAddress: IpAddress) {
+    return this.getDevices().find((device) => {
+      return device.ip == ipAddress;
+    });
   }
 
   /// Returns the IDs of the edges connecting the two devices

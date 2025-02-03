@@ -10,26 +10,26 @@ import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
-import { EmptyPayload, IpAddress, IPv4Packet } from "../packets/ip";
+import { IPv4Packet } from "../packets/ip";
 import { EchoRequest, EchoReply } from "../packets/icmp";
 import { DeviceId, isRouter } from "./graphs/datagraph";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
-  ICMP: circleGraphicsContext(Colors.Red, 0, 0, 5),
+  "ICMP-8": circleGraphicsContext(Colors.Red, 0, 0, 5),
+  "ICMP-0": circleGraphicsContext(Colors.Yellow, 0, 0, 5),
 };
 
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
 
 export class Packet extends Graphics {
-  speed = 200;
+  speed = 100;
   progress = 0;
   viewgraph: ViewGraph;
   currentEdge: Edge;
   currentStart: number;
   color: number;
   type: string;
-
   rawPacket: IPv4Packet;
 
   static animationPaused = false;
@@ -166,66 +166,77 @@ export class Packet extends Graphics {
     this.currentEdge.addChild(this);
     this.updatePosition();
     Ticker.shared.add(this.animationTick, this);
-  }
-
-  routePacket(id: DeviceId): DeviceId | null {
-    const device = this.viewgraph.getDataGraph().getDevice(id);
-    if (!device || !isRouter(device)) {
-      return null;
-    }
-    const result = device.routingTable.find((entry) => {
-      const ip = IpAddress.parse(entry.ip);
-      const mask = IpAddress.parse(entry.mask);
-      console.log("considering entry:", entry);
-      return this.rawPacket.destinationAddress.isInSubnet(ip, mask);
-    });
-    console.log("result:", result);
-    return result === undefined ? null : result.iface;
+    console.log("Termino traverseEdge");
   }
 
   animationTick(ticker: Ticker) {
     if (this.progress >= 1) {
-      this.progress = 0;
-      this.removeFromParent();
-      const newStart = this.currentEdge.otherEnd(this.currentStart);
-      this.currentStart = newStart;
-      const newEdgeId = this.routePacket(newStart);
-
       const deleteSelf = () => {
         this.destroy();
         ticker.remove(this.animationTick, this);
         if (isSelected(this)) {
           deselectElement();
         }
+        console.log("Se corto animationTick");
       };
 
-      if (newEdgeId === null) {
+      this.progress = 0;
+      this.removeFromParent();
+      const newStart = this.currentEdge.otherEnd(this.currentStart);
+      const newStartDevice = this.viewgraph.getDevice(newStart);
+
+      // Viewgraph may return undefined when trying to get the device
+      // as the device may have been removed by the user.
+      if (!newStartDevice) {
         deleteSelf();
         return;
       }
-      const currentNodeEdges = this.viewgraph.getConnections(newStart);
-      this.currentEdge = currentNodeEdges.find((edge) => {
-        return edge.otherEnd(newStart) === newEdgeId;
-      });
+
+      this.currentStart = newStart;
+      const newEndId = newStartDevice.receivePacket(this);
+
+      if (newEndId === null) {
+        deleteSelf();
+        return;
+      }
+
+      this.currentEdge = this.viewgraph.getEdge(
+        Edge.generateConnectionKey({ n1: this.currentStart, n2: newEndId }),
+      );
+
       if (this.currentEdge === undefined) {
         deleteSelf();
         return;
       }
       this.currentEdge.addChild(this);
     }
+
+    // Calculate the edge length
+    const start = this.currentEdge.startPos;
+    const end = this.currentEdge.endPos;
+    const edgeLength = Math.sqrt(
+      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
+    );
+
+    // Normalize the speed based on edge length
+    // The longer the edge, the slower the progress increment
+    const normalizedSpeed = this.speed / edgeLength;
+
+    // Update progress with normalized speed
     if (!Packet.animationPaused) {
-      this.progress += (ticker.deltaMS * this.speed) / 100000;
+      this.progress +=
+        (ticker.deltaMS * normalizedSpeed * this.viewgraph.getSpeed().value) /
+        1000;
     }
 
     this.updatePosition();
   }
 
   updatePosition() {
-    const current = this.currentEdge;
-    const start = this.currentStart;
-
-    const startPos = current.nodePosition(start);
-    const endPos = current.nodePosition(current.otherEnd(start));
+    const startPos = this.currentEdge.nodePosition(this.currentStart);
+    const endPos = this.currentEdge.nodePosition(
+      this.currentEdge.otherEnd(this.currentStart),
+    );
     this.setPositionAlongEdge(startPos, endPos, this.progress);
   }
 
@@ -258,55 +269,30 @@ export class Packet extends Graphics {
   }
 }
 
-// TODO: maybe make this receive the packet directly?
-export function sendPacket(
+export function sendRawPacket(
   viewgraph: ViewGraph,
-  packetType: string,
-  originId: DeviceId,
-  destinationId: DeviceId,
+  srcId: DeviceId,
+  rawPacket: IPv4Packet,
 ) {
-  console.log(
-    `Sending ${packetType} packet from ${originId} to ${destinationId}`,
-  );
+  const srcIp = rawPacket.sourceAddress;
+  const dstIp = rawPacket.destinationAddress;
+  console.log(`Sending frame from ${srcIp.toString()} to ${dstIp.toString()}`);
 
-  const originDevice = viewgraph.getDevice(originId);
-  const destinationDevice = viewgraph.getDevice(destinationId);
-
-  if (!originDevice || !destinationDevice) {
-    console.warn("Origen o destino no encontrado.");
-    return;
-  }
-
-  // TODO: allow user to choose which payload to send
-  let payload;
-  switch (packetType) {
-    case "IP":
-      payload = new EmptyPayload();
-      break;
-    case "ICMP":
-      payload = new EchoRequest(0);
-      break;
-    default:
-      console.warn("Tipo de paquete no reconocido");
-      return;
-  }
-  const dstIp = destinationDevice.ip;
-  const rawPacket = new IPv4Packet(originDevice.ip, dstIp, payload);
-  const packet = new Packet(viewgraph, packetType, rawPacket);
-
-  const originConnections = viewgraph.getConnections(originId);
+  const originConnections = viewgraph.getConnections(srcId);
   if (originConnections.length === 0) {
-    console.warn(`No se encontró un dispositivo con ID ${originId}.`);
+    console.warn("El dispositivo de origen no tiene conexiones.");
     return;
   }
   let firstEdge = originConnections.find((edge) => {
-    return edge.otherEnd(originId) === destinationId;
+    const otherId = edge.otherEnd(srcId);
+    const otherDevice = viewgraph.getDevice(otherId);
+    return otherDevice.ip.equals(dstIp);
   });
   if (firstEdge === undefined) {
+    const datagraph = viewgraph.getDataGraph();
     firstEdge = originConnections.find((edge) => {
-      return isRouter(
-        viewgraph.getDataGraph().getDevice(edge.otherEnd(originId)),
-      );
+      const otherId = edge.otherEnd(srcId);
+      return isRouter(datagraph.getDevice(otherId));
     });
   }
   if (firstEdge === undefined) {
@@ -315,5 +301,7 @@ export function sendPacket(
     );
     return;
   }
-  packet.traverseEdge(firstEdge, originId);
+  const packetType = rawPacket.payload.getPacketType();
+  const packet = new Packet(viewgraph, packetType, rawPacket);
+  packet.traverseEdge(firstEdge, srcId);
 }

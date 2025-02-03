@@ -1,6 +1,7 @@
+import { ProgramRunner } from "../../programs";
 import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
-import { RoutingTableEntry } from "../../types/graphs/datagraph";
+import { ViewGraph } from "../../types/graphs/viewgraph";
 import { RemoveDeviceMove } from "../../types/undo-redo";
 import { urManager } from "../../types/viewportManager";
 import {
@@ -8,14 +9,10 @@ import {
   createToggleTable,
   createRightBarButton,
 } from "../right_bar";
+import { ProgramInfo } from "./program_info";
 import { StyledInfo } from "./styled_info";
 
-export interface ProgramInfo {
-  name: string;
-  inputs?: Node[];
-
-  start(): void;
-}
+export { ProgramInfo } from "./program_info";
 
 export class DeviceInfo extends StyledInfo {
   readonly device: Device;
@@ -46,7 +43,11 @@ export class DeviceInfo extends StyledInfo {
         "Delete device",
         () => {
           const deviceData = this.device.getCreateDevice();
-          const move = new RemoveDeviceMove(deviceData);
+          const move = new RemoveDeviceMove(
+            deviceData,
+            this.device.getConnections(),
+            this.device.viewgraph,
+          );
           this.device.delete();
           urManager.push(move);
         },
@@ -55,29 +56,34 @@ export class DeviceInfo extends StyledInfo {
     );
   }
 
-  addProgramList(programs: ProgramInfo[]) {
+  // First argument is to avoid a circular dependency
+  addProgramList(runner: ProgramRunner, programs: ProgramInfo[]) {
     const programOptions = programs.map(({ name }, i) => {
       return { value: i.toString(), text: name };
     });
     const inputsContainer = document.createElement("div");
     let selectedProgram = programs[0];
+    inputsContainer.replaceChildren(...selectedProgram.toHTML());
     this.inputFields.push(
       // Dropdown for selecting program
       createDropdown("Program", programOptions, "program-selector", (v) => {
         selectedProgram = programs[parseInt(v)];
-        const programInputs = selectedProgram.inputs || [];
-        inputsContainer.replaceChildren(...programInputs);
+        inputsContainer.replaceChildren(...selectedProgram.toHTML());
       }),
       inputsContainer,
       // Button to send a packet
       createRightBarButton("Start program", () => {
-        console.log("Started program: ", selectedProgram.name);
-        selectedProgram.start();
+        const { name } = selectedProgram;
+        console.log("Started program: ", name);
+        const inputs = selectedProgram.getInputValues();
+        runner.addRunningProgram(name, inputs);
       }),
     );
   }
 
-  addRoutingTable(entries: RoutingTableEntry[]) {
+  addRoutingTable(viewgraph: ViewGraph, deviceId: number) {
+    const entries = viewgraph.getRoutingTable(deviceId);
+
     const rows = entries.map((entry) => [
       entry.ip,
       entry.mask,
@@ -85,11 +91,11 @@ export class DeviceInfo extends StyledInfo {
     ]);
 
     const dynamicTable = createToggleTable(
-      "Routing Table", // Title
-      ["IP Address", "Mask", "Interface"], // Headers
-      rows, // Generated files
-      "right-bar-toggle-button", // Button class
-      "right-bar-table", // Table class
+      "Routing Table",
+      ["IP", "Mask", "Interface"],
+      rows,
+      viewgraph,
+      deviceId,
     );
 
     this.inputFields.push(dynamicTable);

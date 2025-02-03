@@ -17,10 +17,12 @@ import { RightBar } from "../../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
-import { IpAddress } from "../../packets/ip";
-import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
+import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
+import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer } from "./layer";
+import { Packet, sendRawPacket } from "../packet";
+import { EchoReply } from "../../packets/icmp";
 import { CreateDevice } from "./utils";
 
 export { Layer } from "./layer";
@@ -54,6 +56,12 @@ export abstract class Device extends Sprite {
 
   ip: IpAddress;
   ipMask: IpAddress;
+
+  // Each type of device has different ways of handling a received packet.
+  // Returns the DevicedId for the next device to send the packet to, or
+  // null if there’s no next device to send the packet.
+  // TODO: Might be general for all device in the future.
+  abstract receivePacket(packet: Packet): DeviceId | null;
 
   constructor(
     id: DeviceId,
@@ -121,6 +129,25 @@ export abstract class Device extends Sprite {
   resize(sprite: Sprite): void {
     sprite.width = sprite.width / 70;
     sprite.height = sprite.height / DEVICE_SIZE;
+  }
+
+  // TODO: Most probably it will be different for each type of device
+  handlePacket(packet: Packet) {
+    switch (packet.type) {
+      case "ICMP-8": {
+        const dstDevice = this.viewgraph.getDeviceByIP(
+          packet.rawPacket.sourceAddress,
+        );
+        if (dstDevice) {
+          const echoReply = new EchoReply(0);
+          const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
+          sendRawPacket(this.viewgraph, this.id, ipPacket);
+        }
+        break;
+      }
+      default:
+        console.warn("Packet’s type unrecognized");
+    }
   }
 
   delete(): void {
