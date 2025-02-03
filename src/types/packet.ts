@@ -269,53 +269,6 @@ export class Packet extends Graphics {
   }
 }
 
-// TODO: Remove?
-// - packetType; manage in a more effective way the packet’s type so it can handle it without the paremeter.
-// - originId and destinationId; logic regarding this two parameters ought to be manage with ip addresses,
-//   or else, by obtaining both ids inside the function.
-export function sendPacket(
-  viewgraph: ViewGraph,
-  rawPacket: IPv4Packet,
-  packetType: string,
-  originId: DeviceId,
-  destinationId: DeviceId,
-) {
-  console.log(
-    `Sending ${packetType} packet from ${rawPacket.sourceAddress} to ${rawPacket.destinationAddress}`,
-  );
-
-  if (!viewgraph.getDevice(originId) || !viewgraph.getDevice(destinationId)) {
-    console.warn("Origen o destino no encontrado.");
-    return;
-  }
-
-  const packet = new Packet(viewgraph, packetType, rawPacket);
-
-  const originConnections = viewgraph.getConnections(originId);
-  if (originConnections.length === 0) {
-    console.warn(`No se encontró un dispositivo con ID ${originId}.`);
-    return;
-  }
-  let firstEdge = originConnections.find((edge) => {
-    return edge.otherEnd(originId) === destinationId;
-  });
-  if (!firstEdge) {
-    firstEdge = originConnections.find((edge) => {
-      return isRouter(
-        viewgraph.getDataGraph().getDevice(edge.otherEnd(originId)),
-      );
-    });
-  }
-  if (!firstEdge) {
-    console.warn(
-      "El dispositivo de origen no está conectado al destino o a un router.",
-    );
-    return;
-  }
-  packet.traverseEdge(firstEdge, originId);
-  console.log("Termino sendPacket");
-}
-
 export function sendRawPacket(
   viewgraph: ViewGraph,
   srcId: DeviceId,
@@ -348,6 +301,7 @@ export function sendRawPacket(
     );
     return;
   }
-  const packet = new Packet(viewgraph, "ICMP", rawPacket);
+  const packetType = rawPacket.payload.getPacketType();
+  const packet = new Packet(viewgraph, packetType, rawPacket);
   packet.traverseEdge(firstEdge, srcId);
 }

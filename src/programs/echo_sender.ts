@@ -1,6 +1,6 @@
 import { Ticker } from "pixi.js";
 import { DeviceId } from "../types/graphs/datagraph";
-import { sendPacket } from "../types/packet";
+import { sendRawPacket } from "../types/packet";
 import { ProgramBase } from "./program_base";
 import { ViewGraph } from "../types/graphs/viewgraph";
 import { ProgramInfo } from "../graphics/renderables/device_info";
@@ -31,17 +31,13 @@ export abstract class EchoSender extends ProgramBase {
   protected sendSingleEcho() {
     const dstDevice = this.viewgraph.getDevice(this.dstId);
     const srcDevice = this.viewgraph.getDevice(this.srcId);
-    if (dstDevice) {
-      const echoRequest = new EchoRequest(0);
-      const ipPacket = new IPv4Packet(srcDevice.ip, dstDevice.ip, echoRequest);
-      sendPacket(
-        this.viewgraph,
-        ipPacket,
-        echoRequest.getPacketType(),
-        this.srcId,
-        this.dstId,
-      );
+    if (!dstDevice) {
+      console.error("Destination device not found");
+      return;
     }
+    const echoRequest = new EchoRequest(0);
+    const ipPacket = new IPv4Packet(srcDevice.ip, dstDevice.ip, echoRequest);
+    sendRawPacket(this.viewgraph, this.srcId, ipPacket);
   }
 }
 
