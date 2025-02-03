@@ -21,7 +21,7 @@ import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer } from "./layer";
-import { Packet, sendPacket } from "../packet";
+import { Packet, sendRawPacket } from "../packet";
 import { EchoReply } from "../../packets/icmp";
 import { CreateDevice } from "./utils";
 
@@ -135,23 +135,13 @@ export abstract class Device extends Sprite {
   handlePacket(packet: Packet) {
     switch (packet.type) {
       case "ICMP-8": {
-        const destinationDevice = this.viewgraph.getDeviceByIP(
+        const dstDevice = this.viewgraph.getDeviceByIP(
           packet.rawPacket.sourceAddress,
         );
-        if (destinationDevice) {
+        if (dstDevice) {
           const echoReply = new EchoReply(0);
-          const ipPacket = new IPv4Packet(
-            this.ip,
-            destinationDevice.ip,
-            echoReply,
-          );
-          sendPacket(
-            this.viewgraph,
-            ipPacket,
-            echoReply.getPacketType(),
-            this.id,
-            destinationDevice.id,
-          );
+          const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
+          sendRawPacket(this.viewgraph, this.id, ipPacket);
         }
         break;
       }

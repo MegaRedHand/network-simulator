@@ -206,15 +206,15 @@ export class ViewGraph {
   // Get all connections of a device
   getConnections(id: DeviceId): Edge[] {
     const device = this.devices.get(id);
-    return device
-      ? device
-          .getConnections()
-          .map((adyacentId) =>
-            this.edges.get(
-              Edge.generateConnectionKey({ n1: id, n2: adyacentId }),
-            ),
-          )
-      : [];
+    if (!device) {
+      return [];
+    }
+    const connections = device
+      .getConnections()
+      .map((adyacentId) =>
+        this.edges.get(Edge.generateConnectionKey({ n1: id, n2: adyacentId })),
+      );
+    return connections;
   }
 
   // Get a specific device by its ID
@@ -230,6 +230,10 @@ export class ViewGraph {
   // Returns an array of devices’ ids
   getDeviceIds(): DeviceId[] {
     return Array.from(this.devices.keys());
+  }
+
+  getAdjacentDeviceIds(id: DeviceId): DeviceId[] {
+    return this.getDeviceIds().filter((adjId) => adjId !== id);
   }
 
   // Get the number of devices in the graph
