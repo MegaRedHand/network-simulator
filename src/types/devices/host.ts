@@ -14,6 +14,7 @@ import {
   Program,
   RunningProgram,
 } from "../../programs";
+import { Packet } from "../packet";
 
 export class Host extends Device {
   private runningPrograms = new Map<Pid, Program>();
@@ -45,6 +46,13 @@ export class Host extends Device {
 
   getType(): DeviceType {
     return DeviceType.Host;
+  }
+
+  receivePacket(packet: Packet): DeviceId | null {
+    if (this.ip.equals(packet.rawPacket.destinationAddress)) {
+      this.handlePacket(packet);
+    }
+    return null;
   }
 
   addRunningProgram(name: string, inputs: string[]) {

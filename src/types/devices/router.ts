@@ -4,7 +4,8 @@ import RouterImage from "../../assets/router.svg";
 import { Position } from "../common";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { IpAddress } from "../../packets/ip";
-import { DeviceId } from "../graphs/datagraph";
+import { DeviceId, isRouter } from "../graphs/datagraph";
+import { Packet } from "../packet";
 
 export class Router extends Device {
   constructor(
@@ -33,5 +34,28 @@ export class Router extends Device {
 
   getType(): DeviceType {
     return DeviceType.Router;
+  }
+
+  routePacket(packet: Packet): DeviceId | null {
+    const device = this.viewgraph.getDataGraph().getDevice(this.id);
+    if (!device || !isRouter(device)) {
+      return null;
+    }
+    const result = device.routingTable.find((entry) => {
+      const ip = IpAddress.parse(entry.ip);
+      const mask = IpAddress.parse(entry.mask);
+      console.log("considering entry:", entry);
+      return packet.rawPacket.destinationAddress.isInSubnet(ip, mask);
+    });
+    console.log("result:", result);
+    return result === undefined ? null : result.iface;
+  }
+
+  receivePacket(packet: Packet): DeviceId | null {
+    if (this.ip.equals(packet.rawPacket.destinationAddress)) {
+      this.handlePacket(packet);
+      return null;
+    }
+    return this.routePacket(packet);
   }
 }
