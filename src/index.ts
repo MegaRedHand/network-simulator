@@ -189,9 +189,9 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
     pauseButton.classList.toggle("paused");
     pauseButton.title = paused ? "Resume" : "Pause";
-    
+
     pauseIcon.src = paused ? PlaySvg : PauseSvg;
-  
+
     if (paused) {
       Packet.pauseAnimation();
     } else {

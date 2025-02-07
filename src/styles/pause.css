@@ -2,48 +2,47 @@
 
 /* Redesigned Pause button styles */
 .pause-button {
-    background-color: #228b22; /* Default green background */
-    color: #ffffff; /* White text */
-    border: 2px solid #000000; /* Black border */
-    padding: 0; /* No internal padding */
-    cursor: pointer; /* Pointer on hover */
-    width: 40px; /* Slightly larger button */
-    height: 40px; /* Slightly larger button */
-    border-radius: 12px; /* Rounded but not circular */
-    display: flex; /* Uses flexbox for centering */
-    align-items: center; /* Vertically centers content */
-    justify-content: center; /* Horizontally centers content */
-    transition: background-color 0.3s ease; /* Smooth transitions */
-    position: absolute; /* Position over the canvas */
-    top: 15px; /* Adjusted distance from the top */
-    left: 20px; /* Adjusted distance from the left */
-    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.4); /* Adds a subtle shadow */
-    outline: none; /* Removes focus outline */
-  }
-  
-  /* Hover effect for pause button */
-  .pause-button:hover {
-    background-color: #006400; /* Darker green on hover */
-  }
-  
-  /* Active effect for pause button */
-  .pause-button:active {
-    background-color: #004d00; /* Even darker green when clicked */
-  }
-  
-  /* Styles for paused state */
-  .pause-button.paused {
-    background-color: #f44336; /* Red background when paused */
-  }
-  
-  /* Prevent focus outline when using keyboard */
-  .pause-button:focus {
-    outline: none;
-  }
-  
-  /* Icon inside the pause button */
-  .pause-button img {
-    width: 60%; /* Original icon size */
-    height: 60%; /* Original icon size */
-  }
-  
+  background-color: #228b22; /* Default green background */
+  color: #ffffff; /* White text */
+  border: 2px solid #000000; /* Black border */
+  padding: 0; /* No internal padding */
+  cursor: pointer; /* Pointer on hover */
+  width: 40px; /* Slightly larger button */
+  height: 40px; /* Slightly larger button */
+  border-radius: 12px; /* Rounded but not circular */
+  display: flex; /* Uses flexbox for centering */
+  align-items: center; /* Vertically centers content */
+  justify-content: center; /* Horizontally centers content */
+  transition: background-color 0.3s ease; /* Smooth transitions */
+  position: absolute; /* Position over the canvas */
+  top: 15px; /* Adjusted distance from the top */
+  left: 20px; /* Adjusted distance from the left */
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.4); /* Adds a subtle shadow */
+  outline: none; /* Removes focus outline */
+}
+
+/* Hover effect for pause button */
+.pause-button:hover {
+  background-color: #006400; /* Darker green on hover */
+}
+
+/* Active effect for pause button */
+.pause-button:active {
+  background-color: #004d00; /* Even darker green when clicked */
+}
+
+/* Styles for paused state */
+.pause-button.paused {
+  background-color: #f44336; /* Red background when paused */
+}
+
+/* Prevent focus outline when using keyboard */
+.pause-button:focus {
+  outline: none;
+}
+
+/* Icon inside the pause button */
+.pause-button img {
+  width: 60%; /* Original icon size */
+  height: 60%; /* Original icon size */
+}
