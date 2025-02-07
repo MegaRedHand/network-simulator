@@ -8,4 +8,5 @@ import "./right-bar-buttons.css";
 import "./table.css";
 import "./info.css";
 import "./buttons.css";
-import "./modal.css";
+import "./pause.css";
+import "./undo-redo.css";
