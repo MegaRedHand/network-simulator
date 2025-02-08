@@ -73,11 +73,7 @@ document.addEventListener("keydown", (event) => {
       let data;
       if (isDevice(selectedElement)) {
         data = selectedElement.getCreateDevice();
-        const move = new RemoveDeviceMove(
-          data,
-          selectedElement.getConnections(),
-          selectedElement.viewgraph,
-        );
+        const move = new RemoveDeviceMove(data, selectedElement.viewgraph);
         selectedElement.delete();
         urManager.push(move);
       } else if (isEdge(selectedElement)) {

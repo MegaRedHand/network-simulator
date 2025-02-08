@@ -22,9 +22,13 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
     const datagraph = viewgraph.getDataGraph();
 
     // Add the device to the datagraph and the viewgraph
-    datagraph.addDevice(this.data.id, this.data.node);
+    const deviceInfo = structuredClone(this.data.node);
+    datagraph.addDevice(this.data.id, deviceInfo);
+
     this.adjustLayer(viewgraph, this.data.node.type);
-    viewgraph.addDevice(this.data);
+
+    const deviceData = structuredClone(this.data);
+    viewgraph.addDevice(deviceData);
   }
 
   removeDevice(viewgraph: ViewGraph) {
@@ -53,17 +57,13 @@ export class AddDeviceMove extends AddRemoveDeviceMove {
 // Check if the viewgraph is the best place to load the move into the manager
 export class RemoveDeviceMove extends AddRemoveDeviceMove {
   type: TypeMove = TypeMove.RemoveDevice;
-  data: CreateDevice; // Data of the removed device
-  connections: DeviceId[];
   private storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>;
 
   constructor(
     data: CreateDevice,
-    connections: DeviceId[],
     viewgraph: ViewGraph, // Pasamos la vista para obtener las tablas de enrutamiento
   ) {
     super(data);
-    this.connections = connections;
     this.storedRoutingTables = new Map();
 
     // Guardar la tabla de enrutamiento del dispositivo eliminado si es un router
@@ -75,7 +75,7 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
     }
 
     // Guardar las tablas de los dispositivos conectados
-    connections.forEach((adjacentId) => {
+    data.node.connections.forEach((adjacentId) => {
       const routingTable = viewgraph.getRoutingTable(adjacentId);
       if (routingTable) {
         this.storedRoutingTables.set(adjacentId, [...routingTable]);
