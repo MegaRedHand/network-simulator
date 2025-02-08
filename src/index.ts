@@ -191,15 +191,14 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   const triggerPause = () => {
     paused = !paused;
 
+    pauseButton.classList.toggle("paused");
+    pauseButton.title = paused ? "Resume" : "Pause";
+
+    pauseIcon.src = paused ? PlaySvg : PauseSvg;
+
     if (paused) {
-      pauseIcon.src = PlaySvg;
-      pauseButton.style.backgroundColor = "#f44336";
-      pauseButton.title = "Resume";
       Packet.pauseAnimation();
     } else {
-      pauseIcon.src = PauseSvg;
-      pauseButton.style.backgroundColor = "#228b22";
-      pauseButton.title = "Pause";
       Packet.unpauseAnimation();
     }
   };
