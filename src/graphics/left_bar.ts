@@ -1,5 +1,6 @@
 import RouterSvg from "../assets/router.svg";
 import ComputerSvg from "../assets/pc.svg";
+import SwitchSvg from "../assets/switch.svg";
 import { addDevice } from "../types/viewportManager";
 import { GlobalContext } from "../context";
 import { DeviceType } from "../types/devices/device";
@@ -46,6 +47,11 @@ export class LeftBar {
     this.addButton(ComputerSvg, addHost, "Add Host");
   }
 
+  private addSwitchButton() {
+    const addSwitch = () => addDevice(this.ctx, DeviceType.Switch);
+    this.addButton(SwitchSvg, addSwitch, "Add Switch");
+  }
+
   setButtonsByLayer(layerName: string) {
     this.clear();
 
@@ -55,6 +61,10 @@ export class LeftBar {
 
     if (layer <= Layer.Network) {
       this.addRouterButton();
+    }
+
+    if (layer <= Layer.Link) {
+      this.addSwitchButton();
     }
   }
 }

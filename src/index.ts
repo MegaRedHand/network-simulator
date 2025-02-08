@@ -18,6 +18,7 @@ import { GlobalContext } from "./context";
 // Doing this includes the file in the build
 import "./styles";
 import RouterSvg from "./assets/router.svg";
+import SwitchSvg from "./assets/switch.svg";
 import ComputerSvg from "./assets/pc.svg";
 import PlaySvg from "./assets/play-icon.svg";
 import PauseSvg from "./assets/pause-icon.svg";
@@ -26,7 +27,15 @@ import RedoSvg from "./assets/right-curve-arrow.svg";
 import { layerToName } from "./types/devices/layer";
 import { SpeedMultiplier } from "./types/devices/speedMultiplier";
 
-const assets = [RouterSvg, ComputerSvg, PlaySvg, PauseSvg, UndoSvg, RedoSvg];
+const assets = [
+  RouterSvg,
+  ComputerSvg,
+  PlaySvg,
+  PauseSvg,
+  UndoSvg,
+  RedoSvg,
+  SwitchSvg,
+];
 
 async function loadAssets(otherPromises: Promise<void>[]) {
   await Promise.all([...otherPromises, ...assets.map((as) => Assets.load(as))]);
