@@ -21,8 +21,6 @@ export abstract class BaseMove implements Move {
   abstract undo(viewgraph: ViewGraph): void;
   abstract redo(viewgraph: ViewGraph): void;
 
-  constructor() {}
-
   adjustLayer(viewgraph: ViewGraph, deviceType: DeviceType) {
     const deviceLayer = layerFromType(deviceType);
     if (!layerIncluded(deviceLayer, viewgraph.getLayer())) {

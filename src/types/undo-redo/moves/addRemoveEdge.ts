@@ -1,5 +1,5 @@
 import { DeviceType, layerFromType } from "../../devices/device";
-import { Layer, layerIncluded } from "../../devices/layer";
+import { layerIncluded } from "../../devices/layer";
 import { Edge, EdgeEdges } from "../../edge";
 import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";

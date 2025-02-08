@@ -1,4 +1,3 @@
-import { node } from "webpack";
 import { Position } from "../../common";
 import { DeviceId } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
