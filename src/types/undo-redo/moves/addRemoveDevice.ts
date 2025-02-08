@@ -2,10 +2,10 @@ import { DeviceType } from "../../devices/device";
 import { CreateDevice } from "../../devices/utils";
 import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
-import { Move, TypeMove } from "./move";
+import { BaseMove, TypeMove } from "./move";
 
 // Superclass for AddDeviceMove and RemoveDeviceMove
-export abstract class AddRemoveDeviceMove implements Move {
+export abstract class AddRemoveDeviceMove extends BaseMove {
   type: TypeMove;
   data: CreateDevice;
   abstract undo(viewgraph: ViewGraph): void;
@@ -14,6 +14,7 @@ export abstract class AddRemoveDeviceMove implements Move {
   constructor(data: CreateDevice) {
     // NOTE: we have to deep-copy the data to stop the data from
     // being modified by the original
+    super();
     this.data = structuredClone(data);
   }
 
@@ -22,12 +23,14 @@ export abstract class AddRemoveDeviceMove implements Move {
 
     // Add the device to the datagraph and the viewgraph
     datagraph.addDevice(this.data.id, this.data.node);
+    this.adjustLayer(viewgraph, this.data.node.type);
     viewgraph.addDevice(this.data);
   }
 
   removeDevice(viewgraph: ViewGraph) {
+    this.adjustLayer(viewgraph, this.data.node.type);
     const device = viewgraph.getDevice(this.data.id);
-    if (!device) {
+    if (device == undefined) {
       throw new Error(`Device with ID ${this.data.id} not found.`);
     }
     device.delete();
@@ -87,22 +90,6 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
 
   undo(viewgraph: ViewGraph): void {
     this.addDevice(viewgraph);
-    const device = viewgraph.getDevice(this.data.id);
-
-    // Restaurar conexiones con los dispositivos adyacentes
-    this.connections.forEach((adjacentId) => {
-      const adjacentDevice = viewgraph.getDevice(adjacentId);
-
-      if (adjacentDevice) {
-        viewgraph.addEdge(this.data.id, adjacentId);
-        device.addConnection(adjacentId);
-        adjacentDevice.addConnection(this.data.id);
-      } else {
-        console.warn(
-          `Adjacent Device ${adjacentId} not found while reconnecting Device ${device.id}`,
-        );
-      }
-    });
 
     // Restaurar las tablas de enrutamiento de todos los dispositivos involucrados
     this.storedRoutingTables.forEach((table, deviceId) => {

@@ -146,12 +146,15 @@ export class Edge extends Graphics {
   // Method to delete the edge
   delete() {
     // Remove the edge from the viewgraph and datagraph
-    deselectElement();
     const id = Edge.generateConnectionKey(this.connectedNodes);
     this.viewgraph.removeEdge(id);
-    this.destroy();
-
     console.log(`Edge ${id} deleted.`);
+    this.destroy();
+  }
+
+  destroy() {
+    deselectElement();
+    super.destroy();
   }
 
   public updatePosition(device1: Device, device2: Device) {

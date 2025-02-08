@@ -126,20 +126,6 @@ export class ViewGraph {
       return null;
     }
 
-    // Check if an edge already exists between these two devices
-    for (const edge of this.edges.values()) {
-      const { n1, n2 } = edge.connectedNodes;
-      if (
-        (n1 === device1Id && n2 === device2Id) ||
-        (n1 === device2Id && n2 === device1Id)
-      ) {
-        console.warn(
-          `Connection between ID ${device1Id} and ID ${device2Id} already exists.`,
-        );
-        return null;
-      }
-    }
-
     const device1 = this.devices.get(device1Id);
     const device2 = this.devices.get(device2Id);
 
@@ -186,6 +172,17 @@ export class ViewGraph {
 
   getLayer(): Layer {
     return this.layer;
+  }
+
+  changeCurrLayer(newLayer: Layer) {
+    this.layer = newLayer;
+    this.clear();
+    this.constructView();
+    const layerSelect = document.getElementById(
+      "layer-select",
+    ) as HTMLSelectElement;
+    const event = new CustomEvent("layerChanged");
+    layerSelect.dispatchEvent(event);
   }
 
   getSpeed(): SpeedMultiplier {
@@ -249,8 +246,6 @@ export class ViewGraph {
       console.warn(`Device with ID ${id} does not exist in the graph.`);
       return;
     }
-
-    device.destroy();
 
     // Remove connection from adyacent’s devices
     device.getConnections().forEach((adyacentId) => {
@@ -398,7 +393,7 @@ export class ViewGraph {
       visited.add(w);
 
       if (layerIncluded(layerFromType(adyacent.type), this.layer)) {
-        // add connection between v and w
+        // add connection between s and w
         const connectionKey: string = Edge.generateConnectionKey({
           n1: w,
           n2: s,
@@ -413,7 +408,11 @@ export class ViewGraph {
     });
   }
 
-  destroy() {
+  clear() {
+    this.viewport.clear();
     this.devices.forEach((device) => device.destroy());
+    this.devices.clear();
+    this.edges.forEach((edge) => edge.destroy());
+    this.edges.clear();
   }
 }

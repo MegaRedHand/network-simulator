@@ -152,9 +152,6 @@ export abstract class Device extends Sprite {
 
   delete(): void {
     this.viewgraph.removeDevice(this.id);
-    // Clear connections
-    this.connections.clear();
-    deselectElement();
     console.log(`Device ${this.id} deleted`);
     this.destroy();
   }
@@ -269,16 +266,18 @@ export abstract class Device extends Sprite {
     Device.connectionTarget = null;
   }
 
-  // Cleans up related resources
-  destroy() {
-    // do nothing
-  }
-
   // Return the device’s type.
   abstract getType(): DeviceType;
 
   // Return the device’s layer.
   abstract getLayer(): Layer;
+
+  destroy() {
+    // Clear connections
+    this.connections.clear();
+    deselectElement();
+    super.destroy();
+  }
 }
 
 function onPointerMove(event: FederatedPointerEvent): void {

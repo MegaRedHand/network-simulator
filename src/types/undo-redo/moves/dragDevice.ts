@@ -1,39 +1,60 @@
+import { node } from "webpack";
 import { Position } from "../../common";
 import { DeviceId } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
-import { Move, TypeMove } from "./move";
+import { BaseMove, TypeMove } from "./move";
 
-export class DragDeviceMove implements Move {
+export class DragDeviceMove extends BaseMove {
   type: TypeMove = TypeMove.DragDevice;
   did: DeviceId;
   startPosition: Position;
   endPosition: Position;
 
   constructor(did: DeviceId, startPosition: Position, endPosition: Position) {
+    super();
     this.did = did;
     this.startPosition = startPosition;
     this.endPosition = endPosition;
   }
 
-  undo(viewgraph: ViewGraph): void {
+  private moveDevice(viewgraph: ViewGraph, position: Position) {
     const device = viewgraph.getDevice(this.did);
     if (!device) {
-      throw new Error(`Device with ID ${this.did} not found.`);
+      throw new Error(`Device with ID ${this.did} not found in viewgraph.`);
     }
 
-    device.x = this.startPosition.x;
-    device.y = this.startPosition.y;
+    device.x = position.x;
+    device.y = position.y;
     viewgraph.deviceMoved(this.did);
   }
 
-  redo(viewgraph: ViewGraph): void {
-    const device = viewgraph.getDevice(this.did);
-    if (!device) {
-      throw new Error(`Device with ID ${this.did} not found.`);
+  private findNodeType(viewgraph: ViewGraph) {
+    const datagraph = viewgraph.getDataGraph();
+    const node = datagraph.getDevice(this.did);
+    if (!node) {
+      console.warn(`Device with id ${this.did} does not exist`);
+      return;
     }
+    return node.type;
+  }
 
-    device.x = this.endPosition.x;
-    device.y = this.endPosition.y;
-    viewgraph.deviceMoved(this.did);
+  undo(viewgraph: ViewGraph): void {
+    const nodeType = this.findNodeType(viewgraph);
+    if (nodeType == undefined) {
+      return;
+    }
+    this.adjustLayer(viewgraph, nodeType);
+
+    this.moveDevice(viewgraph, this.startPosition);
+  }
+
+  redo(viewgraph: ViewGraph): void {
+    const nodeType = this.findNodeType(viewgraph);
+    if (nodeType == undefined) {
+      return;
+    }
+    this.adjustLayer(viewgraph, nodeType);
+
+    this.moveDevice(viewgraph, this.endPosition);
   }
 }

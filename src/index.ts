@@ -95,6 +95,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   const newButton = document.getElementById("new-button");
   const loadButton = document.getElementById("load-button");
   const saveButton = document.getElementById("save-button");
+  const printButton = document.getElementById("print-button");
 
   newButton.onclick = () => {
     deselectElement();
@@ -107,6 +108,9 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   loadButton.onclick = () => {
     deselectElement();
     loadFromFile(ctx);
+  };
+  printButton.onclick = () => {
+    ctx.print();
   };
   // Undo button’s logic
   const undoButton = document.getElementById(
@@ -212,7 +216,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     valueDisplay.textContent = `${value}x`;
   }
 
-  // (!) For layer abstraction functionality
+  // For layer abstraction logic
   const selectNewLayer = (event: Event) => {
     const selectedLayer = (event.target as HTMLSelectElement).value;
     console.log(`Layer selected: ${selectedLayer}`);
@@ -222,11 +226,16 @@ async function loadAssets(otherPromises: Promise<void>[]) {
       saveToLocalStorage(ctx);
       // LeftBar is reset
       leftBar.setButtonsByLayer(selectedLayer);
-      deselectElement();
+      deselectElement(); // not needed
     }
   };
 
   layerSelect.onchange = selectNewLayer;
+  layerSelect.addEventListener("layerChanged", () => {
+    const currLayer = layerToName(ctx.getCurrentLayer());
+    layerSelect.value = currLayer;
+    leftBar.setButtonsByLayer(currLayer);
+  });
 
   document.body.onkeyup = function (e) {
     if (e.key === " " || e.code === "Space") {
