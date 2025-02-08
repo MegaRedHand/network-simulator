@@ -92,6 +92,8 @@ export abstract class Device extends Sprite {
 
     this.on("pointerdown", this.onPointerDown, this);
     this.on("click", this.onClick, this);
+    // NOTE: this is "click" for mobile devices
+    this.on("tap", this.onClick, this);
   }
 
   // Function to add the ID label to the device
@@ -146,7 +148,7 @@ export abstract class Device extends Sprite {
         break;
       }
       default:
-        console.warn("Packet’s type unrecognized");
+        console.warn("Packet's type unrecognized");
     }
   }
 
@@ -160,7 +162,6 @@ export abstract class Device extends Sprite {
   }
 
   onPointerDown(event: FederatedPointerEvent): void {
-    console.log("Entered onPointerDown");
     if (!Device.connectionTarget) {
       selectElement(this);
     }
@@ -177,8 +178,6 @@ export abstract class Device extends Sprite {
 
   connectTo(adyacentId: DeviceId): boolean {
     // Connects both devices with an edge.
-    // console.log("Entered connectTo");
-
     const edgeId = this.viewgraph.addEdge(this.id, adyacentId);
     if (edgeId) {
       const adyacentDevice = this.viewgraph.getDevice(adyacentId);
