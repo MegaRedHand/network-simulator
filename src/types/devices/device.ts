@@ -27,8 +27,6 @@ import { CreateDevice } from "./utils";
 
 export { Layer } from "./layer";
 
-export const DEVICE_SIZE = 20;
-
 export enum DeviceType {
   Router = 0,
   Host = 1,
@@ -78,6 +76,7 @@ export abstract class Device extends Sprite {
     this.ipMask = ipMask;
 
     this.anchor.set(0.5);
+    this.setSize(48);
 
     this.x = position.x;
     this.y = position.y;
@@ -97,13 +96,14 @@ export abstract class Device extends Sprite {
   // Function to add the ID label to the device
   addDeviceIdLabel() {
     const textStyle = new TextStyle({
-      fontSize: 12,
+      fontSize: 12 / this.scale.x,
       fill: Colors.Black,
       align: "center",
+      fontWeight: "bold",
     });
     const idText = new Text({ text: `ID: ${this.id}`, style: textStyle });
     idText.anchor.set(0.5);
-    idText.y = this.height - 15;
+    idText.y = this.texture.height * 0.8;
     idText.zIndex = ZIndexLevels.Label;
     this.addChild(idText); // Add the ID text as a child of the device
   }
@@ -124,11 +124,6 @@ export abstract class Device extends Sprite {
 
   removeConnection(id: DeviceId) {
     this.connections.delete(id);
-  }
-
-  resize(sprite: Sprite): void {
-    sprite.width = sprite.width / 70;
-    sprite.height = sprite.height / DEVICE_SIZE;
   }
 
   // TODO: Most probably it will be different for each type of device
@@ -227,13 +222,10 @@ export abstract class Device extends Sprite {
     // Create the square as a selection marker
     this.highlightMarker = new Graphics();
 
-    this.highlightMarker.roundRect(
-      -this.width / 2,
-      -this.height / 2,
-      this.width,
-      this.height,
-      5,
-    );
+    // NOTE: we get the original size since pixijs autoscales the sprite's children
+    const { width, height } = this.texture;
+
+    this.highlightMarker.roundRect(-width / 2, -height / 2, width, height, 5);
     this.highlightMarker.stroke({
       width: 3,
       color: Colors.Violet,
