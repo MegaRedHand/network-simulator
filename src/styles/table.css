@@ -43,15 +43,6 @@ table.toggle-table {
   background-color: #ffffff;
 }
 
-/* Table caption styles */
-.toggle-table caption {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 5px;
-  color: #333333;
-  text-align: center;
-}
-
 /* Hidden table (used for toggling visibility) */
 table.toggle-table.hidden {
   display: none;

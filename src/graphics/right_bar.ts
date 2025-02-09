@@ -158,8 +158,6 @@ function createTable(
   tableClasses: string[],
   viewgraph: ViewGraph,
   deviceId: DeviceId,
-  onCellEdit?: (rowIndex: number, colIndex: number, newValue: string) => void,
-  onDelete?: (rowIndex: number) => void,
 ): HTMLTableElement {
   const table = document.createElement("table");
   table.classList.add(...tableClasses);
