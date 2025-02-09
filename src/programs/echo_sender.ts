@@ -87,7 +87,9 @@ export class EchoServer extends ProgramBase {
     if (this.progress < delay) {
       return;
     }
-    this.echoProgram.run(() => {});
+    this.echoProgram.run(() => {
+      // do nothing
+    });
     this.progress -= delay;
   }
 
