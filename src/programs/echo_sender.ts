@@ -83,7 +83,7 @@ export class EchoServer extends EchoSender {
 
   private tick(ticker: Ticker) {
     const delay = this.delay;
-    this.progress += ticker.deltaMS;
+    this.progress += ticker.deltaMS * this.viewgraph.getSpeed().value;
     if (this.progress < delay) {
       return;
     }
