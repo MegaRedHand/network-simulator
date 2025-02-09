@@ -60,7 +60,7 @@ export class GlobalContext {
   load(
     datagraph: DataGraph,
     layer: Layer = Layer.Link,
-    speedMultiplier: SpeedMultiplier = SpeedMultiplier.parse(1),
+    speedMultiplier: SpeedMultiplier = new SpeedMultiplier(1),
   ) {
     this.setNetwork(datagraph, layer);
     this.setSpeedMultiplier(speedMultiplier);

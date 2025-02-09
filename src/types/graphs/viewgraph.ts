@@ -3,7 +3,6 @@ import { Edge, EdgeEdges } from "./../edge";
 import { DataGraph, DeviceId, GraphNode } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
-import { SpeedMultiplier } from "../devices/speedMultiplier";
 import { CreateDevice, createDevice } from "../devices/utils";
 import { layerFromType } from "../devices/device";
 import { IpAddress } from "../../packets/ip";
