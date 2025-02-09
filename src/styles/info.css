@@ -36,6 +36,6 @@
 }
 
 /* Transiciones para una experiencia más fluida */
-.toggle-info-container .hidden {
+.hidden {
   display: none;
 }

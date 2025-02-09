@@ -1,5 +1,5 @@
 /* Styles for tables in the right sidebar */
-table.toggle-table {
+table.right-bar-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
@@ -10,7 +10,7 @@ table.toggle-table {
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.toggle-table th {
+.right-bar-table th {
   background-color: #333333;
   color: white;
   padding: 8px;
@@ -21,7 +21,7 @@ table.toggle-table {
 }
 
 /* Data cells in the table */
-.toggle-table td {
+.right-bar-table td {
   padding: 8px;
   border: 1px solid #ddd;
   text-align: center;
@@ -29,27 +29,27 @@ table.toggle-table {
 }
 
 /* Add hover effect on table cells */
-.toggle-table td:hover {
+.right-bar-table td:hover {
   background-color: #f0f0f0; /* Light gray when hovering over a cell */
   cursor: pointer; /* Change cursor to pointer */
 }
 
 /* Alternating row colors for better readability */
-.toggle-table tr:nth-child(even) {
+.right-bar-table tr:nth-child(even) {
   background-color: #f9f9f9;
 }
 
-.toggle-table tr:nth-child(odd) {
+.right-bar-table tr:nth-child(odd) {
   background-color: #ffffff;
 }
 
 /* Hidden table (used for toggling visibility) */
-table.toggle-table.hidden {
+.hidden {
   display: none;
 }
 
 /* Ensure input fields fit properly within table cells */
-.toggle-table td input {
+.right-bar-table td input {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid #ccc;
@@ -60,6 +60,6 @@ table.toggle-table.hidden {
 }
 
 /* Allow input to be edited only when clicked */
-.toggle-table td input:focus {
+.right-bar-table td input:focus {
   pointer-events: auto; /* Allow editing on focus */
 }

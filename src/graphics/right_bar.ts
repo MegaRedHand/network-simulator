@@ -152,7 +152,7 @@ function updateRoutingTableUI(
   console.log(`Routing table for router ID ${deviceId} updated successfully.`);
 }
 
-function createTable(
+export function createTable(
   headers: string[],
   rows: string[][],
   tableClasses: string[],

@@ -8,6 +8,7 @@ import {
   createDropdown,
   createToggleTable,
   createRightBarButton,
+  createTable,
 } from "../right_bar";
 import { ProgramInfo } from "./program_info";
 import { StyledInfo } from "./styled_info";
@@ -90,10 +91,10 @@ export class DeviceInfo extends StyledInfo {
       program.name,
       program.inputs.join(", "),
     ]);
-    const table = createToggleTable(
-      "Running Programs",
+    const table = createTable(
       ["PID", "Name", "Inputs"],
       rows,
+      ["right-bar-table"],
       this.device.viewgraph,
       this.device.id,
     );
