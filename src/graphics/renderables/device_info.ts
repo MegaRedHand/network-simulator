@@ -57,11 +57,7 @@ export class DeviceInfo extends StyledInfo {
   }
 
   // First argument is to avoid a circular dependency
-  addProgramList(
-    runner: ProgramRunner,
-    programs: ProgramInfo[],
-    runningPrograms: RunningProgram[],
-  ) {
+  addProgramList(runner: ProgramRunner, programs: ProgramInfo[]) {
     const programOptions = programs.map(({ name }, i) => {
       return { value: i.toString(), text: name };
     });
@@ -83,6 +79,12 @@ export class DeviceInfo extends StyledInfo {
         runner.addRunningProgram(name, inputs);
       }),
     );
+  }
+
+  addRunningProgramsList(
+    runner: ProgramRunner,
+    runningPrograms: RunningProgram[],
+  ) {
     const runningProgramsList = document.createElement("div");
     runningPrograms.forEach((program) => {
       runningProgramsList.appendChild(
