@@ -110,18 +110,18 @@ export class RightBar {
 }
 
 // Function to create a toggle button
-function createToggleButton(
+export function createToggleButton(
   title: string,
   buttonClass: string,
-  table: HTMLTableElement,
+  element: HTMLElement,
 ) {
   const button = document.createElement("button");
   button.classList.add(buttonClass);
   button.textContent = title;
 
   button.onclick = () => {
-    const isHidden = table.classList.contains("hidden");
-    table.classList.toggle("hidden", !isHidden);
+    const isHidden = element.classList.contains("hidden");
+    element.classList.toggle("hidden", !isHidden);
     button.classList.toggle("open", isHidden);
   };
 
@@ -161,6 +161,8 @@ function createTable(
   tableClass: string,
   viewgraph: ViewGraph,
   deviceId: DeviceId,
+  onCellEdit?: (rowIndex: number, colIndex: number, newValue: string) => void,
+  onDelete?: (rowIndex: number) => void,
 ): HTMLTableElement {
   const table = document.createElement("table");
   table.classList.add(tableClass, "hidden");
@@ -191,7 +193,7 @@ function createTable(
 
 function clearTableRows(table: HTMLTableElement): void {
   const rows = Array.from(table.querySelectorAll("tr"));
-  rows.slice(1).forEach((row) => row.remove()); // Mantener solo el encabezado
+  rows.slice(1).forEach((row) => row.remove()); // Keep the header only
 }
 
 function createTableRow(
@@ -210,13 +212,13 @@ function createTableRow(
 
     cell.addEventListener("keydown", (event) => {
       if (event.key === "Delete" || event.key === "Backspace") {
-        event.stopPropagation(); // Evita que el evento borre la fila en la tabla
+        event.stopPropagation(); // Avoid the event to clear the table's row
       }
     });
 
     cell.addEventListener("blur", () => {
       const updatedRowIndex =
-        Array.from(table.querySelectorAll("tr")).indexOf(rowElement) - 1; // Ajuste dinámico del índice
+        Array.from(table.querySelectorAll("tr")).indexOf(rowElement) - 1;
       const newValue = cell.textContent?.trim() || "";
 
       let isValid = false;
@@ -226,7 +228,7 @@ function createTableRow(
 
       if (!isValid) {
         console.warn(`Invalid input for column ${colIndex}: ${newValue}`);
-        cell.textContent = cellData; // Revertir cambio si es inválido
+        cell.textContent = cellData; // Revert change if invalid
         return;
       }
 
