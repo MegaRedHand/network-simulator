@@ -5,10 +5,20 @@ import { Position } from "../common";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { DeviceId } from "../graphs/datagraph";
 import { Packet } from "../packet";
+import { Texture } from "pixi.js";
 
 export class Switch extends Device {
+  static DEVICE_TEXTURE: Texture;
+
+  static getTexture() {
+    if (!Switch.DEVICE_TEXTURE) {
+      Switch.DEVICE_TEXTURE = Texture.from(SwitchImage);
+    }
+    return Switch.DEVICE_TEXTURE;
+  }
+
   constructor(id: DeviceId, viewgraph: ViewGraph, position: Position) {
-    super(id, SwitchImage, viewgraph, position, null, null);
+    super(id, Switch.getTexture(), viewgraph, position, null, null);
   }
 
   showInfo(): void {

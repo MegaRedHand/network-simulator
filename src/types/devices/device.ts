@@ -5,6 +5,7 @@ import {
   Graphics,
   TextStyle,
   Text,
+  Container,
 } from "pixi.js";
 import { ViewGraph } from "./../graphs/viewgraph";
 import {
@@ -27,8 +28,6 @@ import { CreateDevice } from "./utils";
 
 export { Layer } from "./layer";
 
-export const DEVICE_SIZE = 20;
-
 export enum DeviceType {
   Router = 0,
   Host = 1,
@@ -46,7 +45,9 @@ export function layerFromType(type: DeviceType) {
   }
 }
 
-export abstract class Device extends Sprite {
+export abstract class Device extends Container {
+  private sprite: Sprite;
+
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
   connections = new Set<DeviceId>();
@@ -56,6 +57,13 @@ export abstract class Device extends Sprite {
   static dragTarget: Device | null = null;
   static connectionTarget: Device | null = null;
   static startPosition: Position | null = null;
+
+  get width(): number {
+    return this.sprite.width;
+  }
+  get height(): number {
+    return this.sprite.height;
+  }
 
   ip: IpAddress;
   ipMask: IpAddress;
@@ -68,19 +76,24 @@ export abstract class Device extends Sprite {
 
   constructor(
     id: DeviceId,
-    svg: string,
+    texture: Texture,
     viewgraph: ViewGraph,
     position: Position,
     ip: IpAddress,
     ipMask: IpAddress,
   ) {
-    super(Texture.from(svg));
+    super();
+
     this.id = id;
     this.viewgraph = viewgraph;
     this.ip = ip;
     this.ipMask = ipMask;
 
-    this.anchor.set(0.5);
+    this.sprite = new Sprite(texture);
+
+    this.sprite.anchor.set(0.5);
+    this.sprite.setSize(50);
+    this.addChild(this.sprite);
 
     this.x = position.x;
     this.y = position.y;
@@ -105,10 +118,11 @@ export abstract class Device extends Sprite {
       fontSize: 12,
       fill: Colors.Black,
       align: "center",
+      fontWeight: "bold",
     });
     const idText = new Text({ text: `ID: ${this.id}`, style: textStyle });
     idText.anchor.set(0.5);
-    idText.y = this.height - 15;
+    idText.y = this.height * 0.8;
     idText.zIndex = ZIndexLevels.Label;
     this.addChild(idText); // Add the ID text as a child of the device
   }
@@ -129,11 +143,6 @@ export abstract class Device extends Sprite {
 
   removeConnection(id: DeviceId) {
     this.connections.delete(id);
-  }
-
-  resize(sprite: Sprite): void {
-    sprite.width = sprite.width / 70;
-    sprite.height = sprite.height / DEVICE_SIZE;
   }
 
   // TODO: Most probably it will be different for each type of device
@@ -229,13 +238,10 @@ export abstract class Device extends Sprite {
     // Create the square as a selection marker
     this.highlightMarker = new Graphics();
 
-    this.highlightMarker.roundRect(
-      -this.width / 2,
-      -this.height / 2,
-      this.width,
-      this.height,
-      5,
-    );
+    // NOTE: we get the original size since pixijs autoscales the sprite's children
+    const { width, height } = this;
+
+    this.highlightMarker.roundRect(-width / 2, -height / 2, width, height, 5);
     this.highlightMarker.stroke({
       width: 3,
       color: Colors.Violet,

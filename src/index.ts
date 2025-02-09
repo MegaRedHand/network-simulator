@@ -78,20 +78,14 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   const leftBar = LeftBar.getFrom(document, ctx);
   leftBar.setButtonsByLayer(layerSelect.value);
 
-  // Ticker logic
-  // app.ticker.add(() => { });
   const lBar = document.getElementById("left-bar");
   const rBar = document.getElementById("right-bar");
   const tBar = document.getElementById("top-bar");
 
   // Resize logic
   function resize() {
-    const leftBarWidth = lBar ? lBar.offsetWidth : 100;
-    const rightBarWidth = rBar ? rBar.offsetWidth : 250;
-    const topBarHeight = tBar ? tBar.offsetHeight : 40;
-
-    const newWidth = window.innerWidth - leftBarWidth - rightBarWidth;
-    const newHeight = window.innerHeight - topBarHeight;
+    const newWidth = window.innerWidth - lBar.offsetWidth - rBar.offsetWidth;
+    const newHeight = window.innerHeight - tBar.offsetHeight;
 
     app.renderer.resize(newWidth, newHeight);
     viewport.resize(newWidth, newHeight);

@@ -114,10 +114,6 @@ export class DataGraph {
           connections: connections,
           routingTable: routerNode.routingTable || [], // Ensure routingTable exists
         };
-        console.log(
-          "ROUTING TABLE ADDED:",
-          JSON.stringify(routerNode.routingTable, null, 2),
-        );
       } else {
         graphNode = {
           ...nodeData,
