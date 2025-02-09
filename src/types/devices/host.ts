@@ -46,7 +46,7 @@ export class Host extends Device {
 
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
-    info.addProgramList(this, programList);
+    info.addProgramList(this, programList, this.getRunningPrograms());
     RightBar.getInstance().renderInfo(info);
   }
 
@@ -91,13 +91,17 @@ export class Host extends Device {
     this.runningPrograms.delete(pid);
   }
 
-  private loadRunningPrograms() {
-    const device = this.viewgraph.getDataGraph().getDevice(this.id);
-    if (!isHost(device)) {
+  private getRunningPrograms() {
+    const thisDevice = this.viewgraph.getDataGraph().getDevice(this.id);
+    if (!isHost(thisDevice)) {
       console.error("Node is not a Host");
       return;
     }
-    device.runningPrograms.forEach((program) => {
+    return thisDevice.runningPrograms;
+  }
+
+  private loadRunningPrograms() {
+    this.getRunningPrograms().forEach((program) => {
       this.runProgram(program);
       if (program.pid > this.lastProgramId) {
         this.lastProgramId = program.pid;

@@ -1,4 +1,4 @@
-import { ProgramRunner } from "../../programs";
+import { ProgramRunner, RunningProgram } from "../../programs";
 import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
 import { ViewGraph } from "../../types/graphs/viewgraph";
@@ -57,7 +57,11 @@ export class DeviceInfo extends StyledInfo {
   }
 
   // First argument is to avoid a circular dependency
-  addProgramList(runner: ProgramRunner, programs: ProgramInfo[]) {
+  addProgramList(
+    runner: ProgramRunner,
+    programs: ProgramInfo[],
+    runningPrograms: RunningProgram[],
+  ) {
     const programOptions = programs.map(({ name }, i) => {
       return { value: i.toString(), text: name };
     });
@@ -79,6 +83,13 @@ export class DeviceInfo extends StyledInfo {
         runner.addRunningProgram(name, inputs);
       }),
     );
+    const runningProgramsList = document.createElement("div");
+    runningPrograms.forEach((program) => {
+      runningProgramsList.appendChild(
+        document.createTextNode(JSON.stringify(program)),
+      );
+    });
+    this.inputFields.push(runningProgramsList);
   }
 
   addRoutingTable(viewgraph: ViewGraph, deviceId: number) {
