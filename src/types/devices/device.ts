@@ -63,13 +63,13 @@ export abstract class Device extends Sprite {
 
   constructor(
     id: DeviceId,
-    svg: string,
+    texture: Texture,
     viewgraph: ViewGraph,
     position: Position,
     ip: IpAddress,
     ipMask: IpAddress,
   ) {
-    super(Texture.from(svg));
+    super(texture);
     this.id = id;
     this.viewgraph = viewgraph;
     this.ip = ip;
