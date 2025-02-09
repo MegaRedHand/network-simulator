@@ -227,7 +227,7 @@ export abstract class Device extends Sprite {
 
     this.highlightMarker.roundRect(-width / 2, -height / 2, width, height, 5);
     this.highlightMarker.stroke({
-      width: 3,
+      width: 3 / this.scale.x,
       color: Colors.Violet,
       alpha: 0.6,
     });
