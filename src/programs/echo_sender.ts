@@ -60,11 +60,13 @@ export class SingleEcho extends EchoSender {
   }
 }
 
-export class EchoServer extends EchoSender {
+export class EchoServer extends ProgramBase {
   static readonly PROGRAM_NAME = "Echo server";
 
-  private delay: number;
+  private echoProgram: SingleEcho;
   private progress = 0;
+
+  private delay: number;
 
   protected _parseInputs(inputs: string[]): void {
     if (inputs.length !== 2) {
@@ -73,7 +75,7 @@ export class EchoServer extends EchoSender {
       );
       return;
     }
-    this.dstId = parseInt(inputs[0]);
+    this.echoProgram = new SingleEcho(this.viewgraph, this.srcId, [inputs[0]]);
     this.delay = parseInt(inputs[1]);
   }
 
@@ -87,7 +89,7 @@ export class EchoServer extends EchoSender {
     if (this.progress < delay) {
       return;
     }
-    this.sendSingleEcho();
+    this.echoProgram.run(() => {});
     this.progress -= delay;
   }
 
