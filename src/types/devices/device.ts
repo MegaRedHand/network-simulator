@@ -32,6 +32,7 @@ export const DEVICE_SIZE = 20;
 export enum DeviceType {
   Router = 0,
   Host = 1,
+  Switch = 2,
 }
 
 export function layerFromType(type: DeviceType) {
@@ -40,6 +41,8 @@ export function layerFromType(type: DeviceType) {
       return Layer.Network;
     case DeviceType.Host:
       return Layer.App;
+    case DeviceType.Switch:
+      return Layer.Link;
   }
 }
 

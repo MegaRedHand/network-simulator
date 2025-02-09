@@ -116,5 +116,7 @@ function getTypeName(device: Device): string {
       return "Router";
     case DeviceType.Host:
       return "Host";
+    case DeviceType.Switch:
+      return "Switch";
   }
 }

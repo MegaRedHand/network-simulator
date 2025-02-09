@@ -30,6 +30,10 @@ interface HostGraphNode extends CommonGraphNode {
   runningPrograms: RunningProgram[];
 }
 
+interface SwitchGraphNode extends CommonGraphNode {
+  type: DeviceType.Switch;
+}
+
 // Typescript type guard
 export function isRouter(node: GraphNode): node is RouterGraphNode {
   return node.type === DeviceType.Router;
@@ -39,9 +43,21 @@ export function isHost(node: GraphNode): node is HostGraphNode {
   return node.type === DeviceType.Host;
 }
 
-export type GraphNode = CommonGraphNode | RouterGraphNode | HostGraphNode;
+export function isSwitch(node: GraphNode): node is SwitchGraphNode {
+  return node.type === DeviceType.Switch;
+}
 
-export type GraphDataNode = CommonDataNode | RouterDataNode | HostDataNode;
+export type GraphNode =
+  | CommonGraphNode
+  | RouterGraphNode
+  | HostGraphNode
+  | SwitchGraphNode;
+
+export type GraphDataNode =
+  | CommonDataNode
+  | RouterDataNode
+  | HostDataNode
+  | SwitchDataNode;
 
 interface CommonDataNode {
   id: DeviceId;
@@ -61,6 +77,10 @@ interface RouterDataNode extends CommonDataNode {
 interface HostDataNode extends CommonDataNode {
   type: DeviceType.Host;
   runningPrograms: RunningProgram[];
+}
+
+interface SwitchDataNode extends CommonDataNode {
+  type: DeviceType.Switch;
 }
 
 export type GraphData = GraphDataNode[];
@@ -129,6 +149,8 @@ export class DataGraph {
         graphData.push({ ...graphNode, routingTable: info.routingTable });
       } else if (isHost(info)) {
         graphData.push({ ...graphNode, runningPrograms: info.runningPrograms });
+      } else if (isSwitch(info)) {
+        graphData.push({ ...graphNode });
       }
     });
     return graphData;
