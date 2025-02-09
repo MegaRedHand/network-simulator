@@ -1,5 +1,5 @@
 /* Styles for tables in the right sidebar */
-.toggle-table-container table {
+table.toggle-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
@@ -10,7 +10,7 @@
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.toggle-table-container th {
+.toggle-table th {
   background-color: #333333;
   color: white;
   padding: 8px;
@@ -21,7 +21,7 @@
 }
 
 /* Data cells in the table */
-.toggle-table-container td {
+.toggle-table td {
   padding: 8px;
   border: 1px solid #ddd;
   text-align: center;
@@ -29,22 +29,22 @@
 }
 
 /* Add hover effect on table cells */
-.toggle-table-container td:hover {
+.toggle-table td:hover {
   background-color: #f0f0f0; /* Light gray when hovering over a cell */
   cursor: pointer; /* Change cursor to pointer */
 }
 
 /* Alternating row colors for better readability */
-.toggle-table-container tr:nth-child(even) {
+.toggle-table tr:nth-child(even) {
   background-color: #f9f9f9;
 }
 
-.toggle-table-container tr:nth-child(odd) {
+.toggle-table tr:nth-child(odd) {
   background-color: #ffffff;
 }
 
 /* Table caption styles */
-.toggle-table-container caption {
+.toggle-table caption {
   font-size: 16px;
   font-weight: bold;
   margin-bottom: 5px;
@@ -53,12 +53,12 @@
 }
 
 /* Hidden table (used for toggling visibility) */
-.toggle-table-container table.hidden {
+table.toggle-table.hidden {
   display: none;
 }
 
 /* Ensure input fields fit properly within table cells */
-.toggle-table-container td input {
+.toggle-table td input {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid #ccc;
@@ -69,6 +69,6 @@
 }
 
 /* Allow input to be edited only when clicked */
-.toggle-table-container td input:focus {
+.toggle-table td input:focus {
   pointer-events: auto; /* Allow editing on focus */
 }

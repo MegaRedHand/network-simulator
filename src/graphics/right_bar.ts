@@ -120,9 +120,8 @@ export function createToggleButton(
   button.textContent = title;
 
   button.onclick = () => {
-    const isHidden = element.classList.contains("hidden");
-    element.classList.toggle("hidden", !isHidden);
-    button.classList.toggle("open", isHidden);
+    element.classList.toggle("hidden");
+    button.classList.toggle("open");
   };
 
   return button;
@@ -140,11 +139,9 @@ function updateRoutingTableUI(
   }
   router.routingTable = newTableData;
 
-  const tableContainer = document.querySelector(".toggle-table-container");
-  if (!tableContainer)
-    return console.warn("Routing table container not found.");
+  const existingTable: HTMLTableElement | null =
+    document.querySelector("table.toggle-table");
 
-  const existingTable = tableContainer.querySelector("table");
   if (!existingTable)
     return console.warn("Existing table not found inside container.");
 
@@ -158,14 +155,14 @@ function updateRoutingTableUI(
 function createTable(
   headers: string[],
   rows: string[][],
-  tableClass: string,
+  tableClasses: string[],
   viewgraph: ViewGraph,
   deviceId: DeviceId,
   onCellEdit?: (rowIndex: number, colIndex: number, newValue: string) => void,
   onDelete?: (rowIndex: number) => void,
 ): HTMLTableElement {
   const table = document.createElement("table");
-  table.classList.add(tableClass, "hidden");
+  table.classList.add(...tableClasses);
 
   const headerRow = document.createElement("tr");
   headers.forEach((header) => {
@@ -336,13 +333,12 @@ export function createToggleTable(
   rows: string[][],
   viewgraph: ViewGraph,
   deviceId: number,
-  buttonClass = "right-bar-toggle-button",
-  tableClass = "right-bar-table",
 ) {
   const container = document.createElement("div");
-  container.classList.add("toggle-table-container");
+  const tableClasses = ["right-bar-table", "hidden", "toggle-table"];
+  const buttonClass = "right-bar-toggle-button";
 
-  const table = createTable(headers, rows, tableClass, viewgraph, deviceId);
+  const table = createTable(headers, rows, tableClasses, viewgraph, deviceId);
   const button = createToggleButton(title, buttonClass, table);
 
   container.appendChild(button);
