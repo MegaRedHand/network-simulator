@@ -19,11 +19,6 @@ export class SpeedMultiplier {
     }
   }
 
-  // Get the speed multiplier as a formatted string
-  get multiplier(): string {
-    return `${this._value}x`;
-  }
-
   // Static method to parse a number to a Speed instance
   static parse(value: number): SpeedMultiplier {
     if (value > 0) {

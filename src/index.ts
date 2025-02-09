@@ -248,10 +248,9 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   speedWheel.addEventListener("input", (event) => {
     const value = parseFloat((event.target as HTMLInputElement).value);
-    speedMultiplier = SpeedMultiplier.parse(value);
-    valueDisplay.textContent = speedMultiplier.multiplier;
+    valueDisplay.textContent = `${value}x`;
 
-    ctx.changeSpeedMultiplier(speedMultiplier.value);
+    ctx.changeSpeedMultiplier(value);
   });
 
   // Initialize with default value
