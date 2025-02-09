@@ -15,24 +15,10 @@ function adjacentDevices(viewgraph: ViewGraph, srcId: DeviceId) {
   return adjacentDevices;
 }
 
-export abstract class EchoSender extends ProgramBase {
-  protected dstId: DeviceId;
-
-  protected sendSingleEcho() {
-    const dstDevice = this.viewgraph.getDevice(this.dstId);
-    const srcDevice = this.viewgraph.getDevice(this.srcId);
-    if (!dstDevice) {
-      console.error("Destination device not found");
-      return;
-    }
-    const echoRequest = new EchoRequest(0);
-    const ipPacket = new IPv4Packet(srcDevice.ip, dstDevice.ip, echoRequest);
-    sendRawPacket(this.viewgraph, this.srcId, ipPacket);
-  }
-}
-
-export class SingleEcho extends EchoSender {
+export class SingleEcho extends ProgramBase {
   static readonly PROGRAM_NAME = "Send ICMP echo";
+
+  protected dstId: DeviceId;
 
   protected _parseInputs(inputs: string[]): void {
     if (inputs.length !== 1) {
@@ -51,6 +37,18 @@ export class SingleEcho extends EchoSender {
 
   protected _stop() {
     // Nothing to do
+  }
+
+  private sendSingleEcho() {
+    const dstDevice = this.viewgraph.getDevice(this.dstId);
+    const srcDevice = this.viewgraph.getDevice(this.srcId);
+    if (!dstDevice) {
+      console.error("Destination device not found");
+      return;
+    }
+    const echoRequest = new EchoRequest(0);
+    const ipPacket = new IPv4Packet(srcDevice.ip, dstDevice.ip, echoRequest);
+    sendRawPacket(this.viewgraph, this.srcId, ipPacket);
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
