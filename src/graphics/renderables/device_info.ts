@@ -85,13 +85,19 @@ export class DeviceInfo extends StyledInfo {
     runner: ProgramRunner,
     runningPrograms: RunningProgram[],
   ) {
-    const runningProgramsList = document.createElement("div");
-    runningPrograms.forEach((program) => {
-      runningProgramsList.appendChild(
-        document.createTextNode(JSON.stringify(program)),
-      );
-    });
-    this.inputFields.push(runningProgramsList);
+    const rows = runningPrograms.map((program) => [
+      program.pid.toString(),
+      program.name,
+      program.inputs.join(", "),
+    ]);
+    const table = createToggleTable(
+      "Running Programs",
+      ["PID", "Name", "Inputs"],
+      rows,
+      this.device.viewgraph,
+      this.device.id,
+    );
+    this.inputFields.push(table);
   }
 
   addRoutingTable(viewgraph: ViewGraph, deviceId: number) {
