@@ -5,6 +5,7 @@ import {
   Graphics,
   TextStyle,
   Text,
+  Container,
 } from "pixi.js";
 import { ViewGraph } from "./../graphs/viewgraph";
 import {
@@ -41,7 +42,9 @@ export function layerFromType(type: DeviceType) {
   }
 }
 
-export abstract class Device extends Sprite {
+export abstract class Device extends Container {
+  private sprite: Sprite;
+
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
   connections = new Set<DeviceId>();
@@ -51,6 +54,13 @@ export abstract class Device extends Sprite {
   static dragTarget: Device | null = null;
   static connectionTarget: Device | null = null;
   static startPosition: Position | null = null;
+
+  get width(): number {
+    return this.sprite.width;
+  }
+  get height(): number {
+    return this.sprite.height;
+  }
 
   ip: IpAddress;
   ipMask: IpAddress;
@@ -69,14 +79,18 @@ export abstract class Device extends Sprite {
     ip: IpAddress,
     ipMask: IpAddress,
   ) {
-    super(texture);
+    super();
+
     this.id = id;
     this.viewgraph = viewgraph;
     this.ip = ip;
     this.ipMask = ipMask;
 
-    this.anchor.set(0.5);
-    this.setSize(50);
+    this.sprite = new Sprite(texture);
+
+    this.sprite.anchor.set(0.5);
+    this.sprite.setSize(50);
+    this.addChild(this.sprite);
 
     this.x = position.x;
     this.y = position.y;
@@ -96,14 +110,14 @@ export abstract class Device extends Sprite {
   // Function to add the ID label to the device
   addDeviceIdLabel() {
     const textStyle = new TextStyle({
-      fontSize: 12 / this.scale.x,
+      fontSize: 12,
       fill: Colors.Black,
       align: "center",
       fontWeight: "bold",
     });
     const idText = new Text({ text: `ID: ${this.id}`, style: textStyle });
     idText.anchor.set(0.5);
-    idText.y = this.texture.height * 0.8;
+    idText.y = this.height * 0.8;
     idText.zIndex = ZIndexLevels.Label;
     this.addChild(idText); // Add the ID text as a child of the device
   }
@@ -223,11 +237,11 @@ export abstract class Device extends Sprite {
     this.highlightMarker = new Graphics();
 
     // NOTE: we get the original size since pixijs autoscales the sprite's children
-    const { width, height } = this.texture;
+    const { width, height } = this;
 
     this.highlightMarker.roundRect(-width / 2, -height / 2, width, height, 5);
     this.highlightMarker.stroke({
-      width: 3 / this.scale.x,
+      width: 3,
       color: Colors.Violet,
       alpha: 0.6,
     });
