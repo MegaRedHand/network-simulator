@@ -9,13 +9,12 @@ import {
 import { Layer } from "./types/devices/device";
 import { IpAddress, IpAddressGenerator } from "./packets/ip";
 import { layerFromName } from "./types/devices/layer";
-import { SpeedMultiplier } from "./types/devices/speedMultiplier";
 
 export class GlobalContext {
   private viewport: Viewport = null;
   private datagraph: DataGraph;
   private viewgraph: ViewGraph;
-  private speedMultiplier: SpeedMultiplier;
+  private speedMultiplier: number;
   private saveIntervalId: NodeJS.Timeout | null = null;
   private ipGenerator: IpAddressGenerator;
 
@@ -42,26 +41,24 @@ export class GlobalContext {
     this.setIpGenerator();
   }
 
-  private setSpeedMultiplier(speedMultiplier: SpeedMultiplier) {
-    if (speedMultiplier && speedMultiplier.value > 0) {
-      this.changeSpeedMultiplier(speedMultiplier.value);
-      // Update the wheel display after setting the speed
-      const speedWheel = document.getElementById(
-        "speed-wheel",
-      ) as HTMLInputElement;
-      const valueDisplay = document.querySelector(".value-display");
-      if (speedWheel && valueDisplay) {
-        speedWheel.value = speedMultiplier.value.toString();
-        valueDisplay.textContent = `${speedMultiplier.value}x`;
-      }
+  private setSpeedMultiplier(speedMultiplier: number) {
+    if (speedMultiplier <= 0) {
+      console.error("Tried setting speedMultiplier to: ", speedMultiplier);
+      return;
+    }
+    this.changeSpeedMultiplier(speedMultiplier);
+    // Update the wheel display after setting the speed
+    const speedWheel = document.getElementById(
+      "speed-wheel",
+    ) as HTMLInputElement;
+    const valueDisplay = document.querySelector(".value-display");
+    if (speedWheel && valueDisplay) {
+      speedWheel.value = speedMultiplier.toString();
+      valueDisplay.textContent = `${speedMultiplier}x`;
     }
   }
 
-  load(
-    datagraph: DataGraph,
-    layer: Layer = Layer.Link,
-    speedMultiplier: SpeedMultiplier = new SpeedMultiplier(1),
-  ) {
+  load(datagraph: DataGraph, layer: Layer = Layer.Link, speedMultiplier = 1) {
     this.setNetwork(datagraph, layer);
     this.setSpeedMultiplier(speedMultiplier);
     this.setupAutoSave();
@@ -95,9 +92,9 @@ export class GlobalContext {
     this.setNetwork(this.datagraph, layer);
   }
 
-  changeSpeedMultiplier(speedMultiplier: number) {
+  changeSpeedMultiplier(newMultiplier: number) {
     if (this.viewgraph) {
-      this.speedMultiplier = new SpeedMultiplier(speedMultiplier);
+      this.speedMultiplier = newMultiplier;
       saveToLocalStorage(this);
     }
   }
