@@ -76,7 +76,7 @@ export abstract class Device extends Sprite {
     this.ipMask = ipMask;
 
     this.anchor.set(0.5);
-    this.setSize(48);
+    this.setSize(50);
 
     this.x = position.x;
     this.y = position.y;
