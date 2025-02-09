@@ -227,8 +227,7 @@ export class Packet extends Graphics {
     // Update progress with normalized speed
     if (!Packet.animationPaused) {
       this.progress +=
-        (ticker.deltaMS * normalizedSpeed * this.viewgraph.getSpeed().value) /
-        1000;
+        (ticker.deltaMS * normalizedSpeed * this.viewgraph.getSpeed()) / 1000;
     }
 
     this.updatePosition();
