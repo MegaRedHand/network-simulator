@@ -5,6 +5,7 @@ import { ViewGraph } from "../graphs/viewgraph";
 import { Device, DeviceType } from "./device";
 import { Host } from "./host";
 import { Router } from "./router";
+import { Switch } from "./switch";
 
 export interface CreateDevice {
   id: DeviceId;
@@ -24,5 +25,7 @@ export function createDevice(
       return new Router(deviceInfo.id, viewgraph, position, ip, mask);
     case DeviceType.Host:
       return new Host(deviceInfo.id, viewgraph, position, ip, mask);
+    case DeviceType.Switch:
+      return new Switch(deviceInfo.id, viewgraph, position);
   }
 }

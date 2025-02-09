@@ -42,6 +42,8 @@ export class Edge extends Graphics {
     this.interactive = true;
     this.cursor = "pointer";
     this.on("click", () => selectElement(this));
+    // NOTE: this is "click" for mobile devices
+    this.on("tap", () => selectElement(this));
   }
 
   nodePosition(nodeId: DeviceId): Point | undefined {

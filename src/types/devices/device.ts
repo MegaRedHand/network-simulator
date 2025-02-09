@@ -31,6 +31,7 @@ export { Layer } from "./layer";
 export enum DeviceType {
   Router = 0,
   Host = 1,
+  Switch = 2,
 }
 
 export function layerFromType(type: DeviceType) {
@@ -39,6 +40,8 @@ export function layerFromType(type: DeviceType) {
       return Layer.Network;
     case DeviceType.Host:
       return Layer.App;
+    case DeviceType.Switch:
+      return Layer.Link;
   }
 }
 
@@ -105,6 +108,8 @@ export abstract class Device extends Container {
 
     this.on("pointerdown", this.onPointerDown, this);
     this.on("click", this.onClick, this);
+    // NOTE: this is "click" for mobile devices
+    this.on("tap", this.onClick, this);
   }
 
   // Function to add the ID label to the device
@@ -155,7 +160,7 @@ export abstract class Device extends Container {
         break;
       }
       default:
-        console.warn("Packet’s type unrecognized");
+        console.warn("Packet's type unrecognized");
     }
   }
 
@@ -169,7 +174,6 @@ export abstract class Device extends Container {
   }
 
   onPointerDown(event: FederatedPointerEvent): void {
-    console.log("Entered onPointerDown");
     if (!Device.connectionTarget) {
       selectElement(this);
     }
@@ -186,8 +190,6 @@ export abstract class Device extends Container {
 
   connectTo(adyacentId: DeviceId): boolean {
     // Connects both devices with an edge.
-    // console.log("Entered connectTo");
-
     const edgeId = this.viewgraph.addEdge(this.id, adyacentId);
     if (edgeId) {
       const adyacentDevice = this.viewgraph.getDevice(adyacentId);
