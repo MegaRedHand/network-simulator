@@ -37,7 +37,7 @@ export class SingleEcho extends EchoSender {
   protected _parseInputs(inputs: string[]): void {
     if (inputs.length !== 1) {
       console.error(
-        "Program requires 1 input. " + inputs.length + " were given.",
+        "SingleEcho requires 1 input. " + inputs.length + " were given.",
       );
       return;
     }
@@ -60,21 +60,21 @@ export class SingleEcho extends EchoSender {
   }
 }
 
-const DEFAULT_ECHO_DELAY_MS = 250;
-
 export class EchoServer extends EchoSender {
   static readonly PROGRAM_NAME = "Echo server";
 
-  progress = 0;
+  private delay: number;
+  private progress = 0;
 
   protected _parseInputs(inputs: string[]): void {
-    if (inputs.length !== 1) {
+    if (inputs.length !== 2) {
       console.error(
-        "Program requires 1 input. " + inputs.length + " were given.",
+        "EchoServer requires 2 inputs. " + inputs.length + " were given.",
       );
       return;
     }
     this.dstId = parseInt(inputs[0]);
+    this.delay = parseInt(inputs[1]);
   }
 
   protected _run() {
@@ -82,7 +82,7 @@ export class EchoServer extends EchoSender {
   }
 
   private tick(ticker: Ticker) {
-    const delay = DEFAULT_ECHO_DELAY_MS;
+    const delay = this.delay;
     this.progress += ticker.deltaMS;
     if (this.progress < delay) {
       return;
@@ -96,8 +96,18 @@ export class EchoServer extends EchoSender {
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
+    // TODO: make this a slider or text field
+    const delayOptions = [
+      { value: "250", text: "250ms" },
+      { value: "500", text: "500ms" },
+      { value: "1000", text: "1s" },
+      { value: "5000", text: "5s" },
+      { value: "15000", text: "15s" },
+    ];
+
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);
     programInfo.withDropdown("Destination", adjacentDevices(viewgraph, srcId));
+    programInfo.withDropdown("Time between pings", delayOptions);
     return programInfo;
   }
 }
