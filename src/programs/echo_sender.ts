@@ -18,16 +18,6 @@ function adjacentDevices(viewgraph: ViewGraph, srcId: DeviceId) {
 export abstract class EchoSender extends ProgramBase {
   protected dstId: DeviceId;
 
-  protected _parseInputs(inputs: string[]): void {
-    if (inputs.length !== 1) {
-      console.error(
-        "Program requires 1 input. " + inputs.length + " were given.",
-      );
-      return;
-    }
-    this.dstId = parseInt(inputs[0]);
-  }
-
   protected sendSingleEcho() {
     const dstDevice = this.viewgraph.getDevice(this.dstId);
     const srcDevice = this.viewgraph.getDevice(this.srcId);
@@ -43,6 +33,16 @@ export abstract class EchoSender extends ProgramBase {
 
 export class SingleEcho extends EchoSender {
   static readonly PROGRAM_NAME = "Send ICMP echo";
+
+  protected _parseInputs(inputs: string[]): void {
+    if (inputs.length !== 1) {
+      console.error(
+        "Program requires 1 input. " + inputs.length + " were given.",
+      );
+      return;
+    }
+    this.dstId = parseInt(inputs[0]);
+  }
 
   protected _run() {
     this.sendSingleEcho();
@@ -66,6 +66,16 @@ export class EchoServer extends EchoSender {
   static readonly PROGRAM_NAME = "Echo server";
 
   progress = 0;
+
+  protected _parseInputs(inputs: string[]): void {
+    if (inputs.length !== 1) {
+      console.error(
+        "Program requires 1 input. " + inputs.length + " were given.",
+      );
+      return;
+    }
+    this.dstId = parseInt(inputs[0]);
+  }
 
   protected _run() {
     Ticker.shared.add(this.tick, this);
