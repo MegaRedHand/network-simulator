@@ -243,7 +243,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   const valueDisplay = document.querySelector(".value-display");
 
   // Update the wheel with the current speed value
-  updateSpeedWheel(speedMultiplier.value);
+  updateSpeedWheel(speedMultiplier);
 
   speedWheel.addEventListener("input", (event) => {
     const value = parseFloat((event.target as HTMLInputElement).value);

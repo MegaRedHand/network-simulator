@@ -189,7 +189,7 @@ export class ViewGraph {
   }
 
   getSpeed(): number {
-    return this.ctx.getCurrentSpeed().value;
+    return this.ctx.getCurrentSpeed();
   }
 
   // Get all connections of a device
