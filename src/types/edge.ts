@@ -131,6 +131,7 @@ export class Edge extends Graphics {
 
         // Crear el movimiento de eliminación de la arista con la información adicional
         const move = new RemoveEdgeMove(
+          this.viewgraph.getLayer(),
           this.connectedNodes,
           new Map([
             [this.connectedNodes.n1, routingTable1],
@@ -148,12 +149,15 @@ export class Edge extends Graphics {
   // Method to delete the edge
   delete() {
     // Remove the edge from the viewgraph and datagraph
-    deselectElement();
     const id = Edge.generateConnectionKey(this.connectedNodes);
     this.viewgraph.removeEdge(id);
-    this.destroy();
-
     console.log(`Edge ${id} deleted.`);
+    this.destroy();
+  }
+
+  destroy() {
+    deselectElement();
+    super.destroy();
   }
 
   public updatePosition(device1: Device, device2: Device) {
