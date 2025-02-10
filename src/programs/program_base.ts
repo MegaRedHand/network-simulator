@@ -10,7 +10,7 @@ export abstract class ProgramBase implements Program {
   protected viewgraph: ViewGraph;
   protected srcId: DeviceId;
 
-  protected signalStop: () => void;
+  private _signalStop?: () => void;
 
   constructor(viewgraph: ViewGraph, srcId: DeviceId, inputs: string[]) {
     this.viewgraph = viewgraph;
@@ -20,11 +20,11 @@ export abstract class ProgramBase implements Program {
   }
 
   run(signalStop: () => void) {
-    if (this.signalStop) {
+    if (this._signalStop) {
       console.error("Program already running");
       return;
     }
-    this.signalStop = signalStop;
+    this._signalStop = signalStop;
 
     this._run();
   }
@@ -33,6 +33,11 @@ export abstract class ProgramBase implements Program {
     // This function could be useful
     console.debug("Program stopping");
     this._stop();
+  }
+
+  protected signalStop() {
+    this._signalStop?.();
+    delete this._signalStop;
   }
 
   // Functions to be implemented by subclasses
