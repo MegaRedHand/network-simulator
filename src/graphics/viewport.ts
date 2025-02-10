@@ -1,4 +1,4 @@
-import { Graphics, EventSystem } from "pixi.js";
+import { Graphics, EventSystem, FederatedPointerEvent } from "pixi.js";
 import * as pixi_viewport from "pixi-viewport";
 import { deselectElement } from "../types/viewportManager";
 
@@ -47,11 +47,14 @@ export class Viewport extends pixi_viewport.Viewport {
     });
 
     // Only deselect if it's a genuine click, not a drag
-    this.on("click", (event) => {
+    const onClick = (event: FederatedPointerEvent) => {
       if (!this.isDragging && event.target === this) {
         deselectElement();
       }
-    });
+    };
+    this.on("click", onClick, this);
+    // NOTE: this is "click" for mobile devices
+    this.on("tap", onClick, this);
   }
 
   clear() {

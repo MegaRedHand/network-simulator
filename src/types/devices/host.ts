@@ -15,8 +15,18 @@ import {
   RunningProgram,
 } from "../../programs";
 import { Packet } from "../packet";
+import { Texture } from "pixi.js";
 
 export class Host extends Device {
+  static DEVICE_TEXTURE: Texture;
+
+  static getTexture() {
+    if (!Host.DEVICE_TEXTURE) {
+      Host.DEVICE_TEXTURE = Texture.from(PcImage);
+    }
+    return Host.DEVICE_TEXTURE;
+  }
+
   private runningPrograms = new Map<Pid, Program>();
   private lastProgramId = 0;
 
@@ -27,7 +37,7 @@ export class Host extends Device {
     ip: IpAddress,
     mask: IpAddress,
   ) {
-    super(id, PcImage, viewgraph, position, ip, mask);
+    super(id, Host.getTexture(), viewgraph, position, ip, mask);
     this.loadRunningPrograms();
   }
 

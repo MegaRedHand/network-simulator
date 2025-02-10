@@ -6,8 +6,18 @@ import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { IpAddress } from "../../packets/ip";
 import { DeviceId, isRouter } from "../graphs/datagraph";
 import { Packet } from "../packet";
+import { Texture } from "pixi.js";
 
 export class Router extends Device {
+  static DEVICE_TEXTURE: Texture;
+
+  static getTexture() {
+    if (!Router.DEVICE_TEXTURE) {
+      Router.DEVICE_TEXTURE = Texture.from(RouterImage);
+    }
+    return Router.DEVICE_TEXTURE;
+  }
+
   constructor(
     id: DeviceId,
     viewgraph: ViewGraph,
@@ -15,7 +25,7 @@ export class Router extends Device {
     ip: IpAddress,
     mask: IpAddress,
   ) {
-    super(id, RouterImage, viewgraph, position, ip, mask);
+    super(id, Router.getTexture(), viewgraph, position, ip, mask);
   }
 
   showInfo(): void {

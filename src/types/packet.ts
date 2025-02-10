@@ -56,6 +56,8 @@ export class Packet extends Graphics {
     this.interactive = true;
     this.cursor = "pointer";
     this.on("click", this.onClick, this);
+    // NOTE: this is "click" for mobile devices
+    this.on("tap", this.onClick, this);
   }
 
   onClick(e: FederatedPointerEvent) {

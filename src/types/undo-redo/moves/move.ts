@@ -1,4 +1,3 @@
-import { DeviceType, layerFromType } from "../../devices/device";
 import { Layer, layerIncluded } from "../../devices/layer";
 import { ViewGraph } from "../../graphs/viewgraph";
 

@@ -11,6 +11,12 @@ body {
   background-color: #f2f2f2; /* Sets a light gray background for the page */
 }
 
+/* Make SVGs take all the space from their parent */
+svg {
+  width: 95%;
+  height: 95%;
+}
+
 /* Custom scrollbar styles */
 
 /* Scrollbar width */
