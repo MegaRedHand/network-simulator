@@ -71,9 +71,14 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Delete" || event.key === "Backspace") {
     if (selectedElement) {
       let data;
+      const currLayer = selectedElement.viewgraph.getLayer();
       if (isDevice(selectedElement)) {
         data = selectedElement.getCreateDevice();
-        const move = new RemoveDeviceMove(data, selectedElement.viewgraph);
+        const move = new RemoveDeviceMove(
+          currLayer,
+          data,
+          selectedElement.viewgraph,
+        );
         selectedElement.delete();
         urManager.push(move);
       } else if (isEdge(selectedElement)) {
@@ -87,6 +92,7 @@ document.addEventListener("keydown", (event) => {
 
         // Crear movimiento con las tablas de enrutamiento
         const move = new RemoveEdgeMove(
+          currLayer,
           selectedElement.connectedNodes,
           new Map([
             [selectedElement.connectedNodes.n1, routingTable1],
@@ -134,7 +140,7 @@ export function addDevice(ctx: GlobalContext, type: DeviceType) {
   // Add the Device to the graph
   const newDevice = viewgraph.addDevice(deviceData);
 
-  const move = new AddDeviceMove(deviceData);
+  const move = new AddDeviceMove(viewgraph.getLayer(), deviceData);
   urManager.push(move);
 
   console.log(

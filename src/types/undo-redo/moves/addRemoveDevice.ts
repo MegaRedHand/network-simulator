@@ -1,4 +1,4 @@
-import { DeviceType } from "../../devices/device";
+import { DeviceType, Layer } from "../../devices/device";
 import { CreateDevice } from "../../devices/utils";
 import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
@@ -6,15 +6,12 @@ import { BaseMove, TypeMove } from "./move";
 
 // Superclass for AddDeviceMove and RemoveDeviceMove
 export abstract class AddRemoveDeviceMove extends BaseMove {
-  type: TypeMove;
   data: CreateDevice;
-  abstract undo(viewgraph: ViewGraph): void;
-  abstract redo(viewgraph: ViewGraph): void;
 
-  constructor(data: CreateDevice) {
+  constructor(layer: Layer, data: CreateDevice) {
     // NOTE: we have to deep-copy the data to stop the data from
     // being modified by the original
-    super();
+    super(layer);
     this.data = structuredClone(data);
   }
 
@@ -25,14 +22,14 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
     const deviceInfo = structuredClone(this.data.node);
     datagraph.addDevice(this.data.id, deviceInfo);
 
-    this.adjustLayer(viewgraph, this.data.node.type);
+    this.adjustLayer(viewgraph);
 
     const deviceData = structuredClone(this.data);
     viewgraph.addDevice(deviceData);
   }
 
   removeDevice(viewgraph: ViewGraph) {
-    this.adjustLayer(viewgraph, this.data.node.type);
+    this.adjustLayer(viewgraph);
     const device = viewgraph.getDevice(this.data.id);
     if (device == undefined) {
       throw new Error(`Device with ID ${this.data.id} not found.`);
@@ -60,10 +57,11 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
   private storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>;
 
   constructor(
+    layer: Layer,
     data: CreateDevice,
     viewgraph: ViewGraph, // Pasamos la vista para obtener las tablas de enrutamiento
   ) {
-    super(data);
+    super(layer, data);
     this.storedRoutingTables = new Map();
 
     // Guardar la tabla de enrutamiento del dispositivo eliminado si es un router

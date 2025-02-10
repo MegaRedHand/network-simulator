@@ -118,8 +118,8 @@ export abstract class Device extends Sprite {
     return { id: this.id, node };
   }
 
-  addConnection(adyacentId: DeviceId) {
-    this.connections.add(adyacentId);
+  addConnection(adjacentId: DeviceId) {
+    this.connections.add(adjacentId);
   }
 
   removeConnection(id: DeviceId) {
@@ -172,18 +172,21 @@ export abstract class Device extends Sprite {
     this.parent.on("pointerup", onPointerUp);
   }
 
-  connectTo(adyacentId: DeviceId): boolean {
+  connectTo(adjacentId: DeviceId): boolean {
     // Connects both devices with an edge.
     // console.log("Entered connectTo");
 
-    const edgeId = this.viewgraph.addEdge(this.id, adyacentId);
+    const edgeId = this.viewgraph.addEdge(this.id, adjacentId);
     if (edgeId) {
-      const adyacentDevice = this.viewgraph.getDevice(adyacentId);
-      this.addConnection(adyacentId);
-      adyacentDevice.addConnection(this.id);
+      const adjacentDevice = this.viewgraph.getDevice(adjacentId);
+      this.addConnection(adjacentId);
+      adjacentDevice.addConnection(this.id);
 
       // Register move
-      const move = new AddEdgeMove({ n1: this.id, n2: adyacentId });
+      const move = new AddEdgeMove(this.viewgraph.getLayer(), {
+        n1: this.id,
+        n2: adjacentId,
+      });
       urManager.push(move);
 
       return true;
@@ -314,6 +317,7 @@ function onPointerUp(): void {
       );
     } else {
       const move = new DragDeviceMove(
+        this.viewgraph.getLayer(),
         Device.dragTarget.id,
         Device.startPosition,
         endPosition,

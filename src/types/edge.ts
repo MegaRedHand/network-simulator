@@ -129,6 +129,7 @@ export class Edge extends Graphics {
 
         // Crear el movimiento de eliminación de la arista con la información adicional
         const move = new RemoveEdgeMove(
+          this.viewgraph.getLayer(),
           this.connectedNodes,
           new Map([
             [this.connectedNodes.n1, routingTable1],

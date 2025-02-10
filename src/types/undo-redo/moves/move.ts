@@ -1,5 +1,5 @@
 import { DeviceType, layerFromType } from "../../devices/device";
-import { layerIncluded } from "../../devices/layer";
+import { Layer, layerIncluded } from "../../devices/layer";
 import { ViewGraph } from "../../graphs/viewgraph";
 
 export enum TypeMove {
@@ -12,20 +12,25 @@ export enum TypeMove {
 
 export interface Move {
   type: TypeMove;
+  layerInMove: Layer;
   undo(viewgraph: ViewGraph): void;
   redo(viewgraph: ViewGraph): void;
 }
 
 export abstract class BaseMove implements Move {
   abstract type: TypeMove;
+  layerInMove: Layer;
   abstract undo(viewgraph: ViewGraph): void;
   abstract redo(viewgraph: ViewGraph): void;
 
-  adjustLayer(viewgraph: ViewGraph, deviceType: DeviceType) {
-    const deviceLayer = layerFromType(deviceType);
-    if (!layerIncluded(deviceLayer, viewgraph.getLayer())) {
+  constructor(layer: Layer) {
+    this.layerInMove = layer;
+  }
+
+  adjustLayer(viewgraph: ViewGraph) {
+    if (!layerIncluded(this.layerInMove, viewgraph.getLayer())) {
       console.log("Entre a cambiar el layer del viewgraph");
-      viewgraph.changeCurrLayer(deviceLayer);
+      viewgraph.changeCurrLayer(this.layerInMove);
     }
   }
 }
