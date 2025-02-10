@@ -1,39 +1,45 @@
 import { Position } from "../../common";
+import { Layer } from "../../devices/layer";
 import { DeviceId } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
-import { Move, TypeMove } from "./move";
+import { BaseMove, TypeMove } from "./move";
 
-export class DragDeviceMove implements Move {
+export class DragDeviceMove extends BaseMove {
   type: TypeMove = TypeMove.DragDevice;
   did: DeviceId;
   startPosition: Position;
   endPosition: Position;
 
-  constructor(did: DeviceId, startPosition: Position, endPosition: Position) {
+  constructor(
+    layer: Layer,
+    did: DeviceId,
+    startPosition: Position,
+    endPosition: Position,
+  ) {
+    super(layer);
     this.did = did;
     this.startPosition = startPosition;
     this.endPosition = endPosition;
   }
 
-  undo(viewgraph: ViewGraph): void {
+  private moveDevice(viewgraph: ViewGraph, position: Position) {
+    this.adjustLayer(viewgraph);
+
     const device = viewgraph.getDevice(this.did);
     if (!device) {
-      throw new Error(`Device with ID ${this.did} not found.`);
+      throw new Error(`Device with ID ${this.did} not found in viewgraph.`);
     }
 
-    device.x = this.startPosition.x;
-    device.y = this.startPosition.y;
+    device.x = position.x;
+    device.y = position.y;
     viewgraph.deviceMoved(this.did);
   }
 
-  redo(viewgraph: ViewGraph): void {
-    const device = viewgraph.getDevice(this.did);
-    if (!device) {
-      throw new Error(`Device with ID ${this.did} not found.`);
-    }
+  undo(viewgraph: ViewGraph): void {
+    this.moveDevice(viewgraph, this.startPosition);
+  }
 
-    device.x = this.endPosition.x;
-    device.y = this.endPosition.y;
-    viewgraph.deviceMoved(this.did);
+  redo(viewgraph: ViewGraph): void {
+    this.moveDevice(viewgraph, this.endPosition);
   }
 }

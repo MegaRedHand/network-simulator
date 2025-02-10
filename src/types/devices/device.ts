@@ -137,8 +137,8 @@ export abstract class Device extends Container {
     return { id: this.id, node };
   }
 
-  addConnection(adyacentId: DeviceId) {
-    this.connections.add(adyacentId);
+  addConnection(adjacentId: DeviceId) {
+    this.connections.add(adjacentId);
   }
 
   removeConnection(id: DeviceId) {
@@ -166,9 +166,6 @@ export abstract class Device extends Container {
 
   delete(): void {
     this.viewgraph.removeDevice(this.id);
-    // Clear connections
-    this.connections.clear();
-    deselectElement();
     console.log(`Device ${this.id} deleted`);
     this.destroy();
   }
@@ -188,16 +185,21 @@ export abstract class Device extends Container {
     this.parent.on("pointerup", onPointerUp);
   }
 
-  connectTo(adyacentId: DeviceId): boolean {
+  connectTo(adjacentId: DeviceId): boolean {
     // Connects both devices with an edge.
-    const edgeId = this.viewgraph.addEdge(this.id, adyacentId);
+    // console.log("Entered connectTo");
+
+    const edgeId = this.viewgraph.addEdge(this.id, adjacentId);
     if (edgeId) {
-      const adyacentDevice = this.viewgraph.getDevice(adyacentId);
-      this.addConnection(adyacentId);
-      adyacentDevice.addConnection(this.id);
+      const adjacentDevice = this.viewgraph.getDevice(adjacentId);
+      this.addConnection(adjacentId);
+      adjacentDevice.addConnection(this.id);
 
       // Register move
-      const move = new AddEdgeMove({ n1: this.id, n2: adyacentId });
+      const move = new AddEdgeMove(this.viewgraph.getLayer(), {
+        n1: this.id,
+        n2: adjacentId,
+      });
       urManager.push(move);
 
       return true;
@@ -277,16 +279,18 @@ export abstract class Device extends Container {
     Device.connectionTarget = null;
   }
 
-  // Cleans up related resources
-  destroy() {
-    // do nothing
-  }
-
   // Return the device’s type.
   abstract getType(): DeviceType;
 
   // Return the device’s layer.
   abstract getLayer(): Layer;
+
+  destroy() {
+    // Clear connections
+    this.connections.clear();
+    deselectElement();
+    super.destroy();
+  }
 }
 
 function onPointerMove(event: FederatedPointerEvent): void {
@@ -323,6 +327,7 @@ function onPointerUp(): void {
       );
     } else {
       const move = new DragDeviceMove(
+        Device.dragTarget.viewgraph.getLayer(),
         Device.dragTarget.id,
         Device.startPosition,
         endPosition,
