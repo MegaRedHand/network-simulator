@@ -65,7 +65,6 @@ export class Router extends Device {
     return result === undefined ? null : result.iface;
   }
 
-
   receivePacket(packet: Packet): DeviceId | null {
     if (this.ip.equals(packet.rawPacket.destinationAddress)) {
       this.handlePacket(packet);
