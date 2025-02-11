@@ -1,48 +1,51 @@
-/* pause-button.css */
-
-/* Redesigned Pause button styles */
+/* Botón de pausa */
 .pause-button {
-  background-color: #228b22; /* Default green background */
-  color: #ffffff; /* White text */
-  border: 2px solid #000000; /* Black border */
-  padding: 0; /* No internal padding */
-  cursor: pointer; /* Pointer on hover */
-  width: 40px; /* Slightly larger button */
-  height: 40px; /* Slightly larger button */
-  border-radius: 12px; /* Rounded but not circular */
-  display: flex; /* Uses flexbox for centering */
-  align-items: center; /* Vertically centers content */
-  justify-content: center; /* Horizontally centers content */
-  transition: background-color 0.3s ease; /* Smooth transitions */
-  position: absolute; /* Position over the canvas */
-  top: 15px; /* Adjusted distance from the top */
-  left: 20px; /* Adjusted distance from the left */
-  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.4); /* Adds a subtle shadow */
-  outline: none; /* Removes focus outline */
+  background-color: #228b22; /* Verde por defecto */
+  color: #ffffff; /* Texto blanco */
+  border: 0.3vh solid #000000; /* Borde negro */
+  padding: 0; /* Sin padding interno */
+  cursor: pointer; /* Cursor de puntero */
+  width: 6vh; /* Tamaño relativo */
+  height: 6vh;
+  border-radius: 1vh; /* Bordes redondeados */
+  display: flex; /* Centrar contenido */
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+  position: absolute; /* Sobre el canvas */
+  top: 2vh;
+  left: 2vw;
+  box-shadow: 0.4vh 0.4vh 0.8vh rgba(0, 0, 0, 0.4); /* Sombra sutil */
+  outline: none; /* Elimina borde de foco */
 }
 
-/* Hover effect for pause button */
+/* Hover effect */
 .pause-button:hover {
-  background-color: #006400; /* Darker green on hover */
+  background-color: #006400;
 }
 
-/* Active effect for pause button */
+/* Active effect */
 .pause-button:active {
-  background-color: #004d00; /* Even darker green when clicked */
+  background-color: #004d00;
 }
 
-/* Styles for paused state */
+/* Estado pausado */
 .pause-button.paused {
-  background-color: #f44336; /* Red background when paused */
+  background-color: #f44336;
 }
 
-/* Prevent focus outline when using keyboard */
-.pause-button:focus {
-  outline: none;
-}
-
-/* Icon inside the pause button */
+/* Icono dentro del botón */
 .pause-button img {
-  width: 60%; /* Original icon size */
-  height: 60%; /* Original icon size */
+  width: 60%;
+  height: 60%;
+}
+
+/* Ajustes responsivos */
+@media (max-width: 768px) {
+  .pause-button {
+    width: 4.5vh;
+    height: 4.5vh;
+    top: 1.5vh;
+    left: 1.5vw;
+  }
 }

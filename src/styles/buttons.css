@@ -7,10 +7,15 @@
   background-color: #007bff; /* Blue background */
   color: #ffffff; /* White text */
   border: none; /* Removes borders */
-  padding: 8px 16px; /* Adds internal spacing */
+  padding: 1vh 2vw; /* Adds internal spacing */
   cursor: pointer; /* Changes cursor to pointer on hover */
-  margin-right: 10px; /* Adds spacing between buttons */
-  border-radius: 5px; /* Rounds the button corners */
+  margin-right: 1vw; /* Adds spacing between buttons */
+  border-radius: 0.5rem; /* Rounds the button corners */
+  font-size: 1rem; /* Relative font size */
+  text-align: center;
+  width: auto; /* Allow flexibility */
+  min-width: 4vw; /* Ensure buttons have a minimum width */
+  max-width: 5vw; /* Prevent them from being too large */
 }
 
 /* Hover effect for general buttons */
@@ -18,4 +23,25 @@
 .save-button:hover,
 .load-button:hover {
   background-color: #162a6d; /* Darker blue on hover */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .new-button,
+  .save-button,
+  .load-button {
+    padding: 0.8vh 1.5vw; /* Slightly smaller padding */
+    font-size: 0.9rem; /* Reduce font size for smaller screens */
+    min-width: 10vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .new-button,
+  .save-button,
+  .load-button {
+    padding: 0.6vh 1vw; /* Even smaller padding */
+    font-size: 0.8rem; /* Reduce font size more */
+    min-width: 12vw;
+  }
 }

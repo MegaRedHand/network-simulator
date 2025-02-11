@@ -1,0 +1,44 @@
+/* Contenedor de controles en la izquierda */
+#left-controls {
+    position: absolute;
+    top: 2vh;
+    left: 2vw;
+    display: flex;
+    align-items: center;
+    gap: 1vw; /* Reduce la separación */
+}
+
+/* Contenedor de controles en la derecha */
+#right-controls {
+    position: absolute;
+    top: 2vh;
+    right: 2vw;
+    display: flex;
+    align-items: center;
+    gap: 1vw;
+    flex-wrap: wrap; /* Permite que los elementos se ajusten */
+    max-width: 90vw; /* Evita que se salgan del viewport */
+}
+
+/* Ajustes responsivos para pantallas más pequeñas */
+@media (max-width: 768px) { 
+    #left-controls,
+    #right-controls {
+        position: relative;
+        top: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        flex-direction: row; /* Mantiene los elementos en fila */
+        justify-content: center;
+        width: 100%;
+        max-width: 400px;
+        gap: 2vw;
+        margin-top: 1vh;
+    }
+
+    #left-controls > *,
+    #right-controls > * {
+        min-width: 30%; /* Evita que sean demasiado pequeños */
+        text-align: center;
+    }
+}

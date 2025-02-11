@@ -1,74 +1,80 @@
-/* Styles for tables in the right sidebar */
+/* table.css - Tabla en la barra lateral */
 .toggle-table-container table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 1rem;
   text-align: center;
   transition: opacity 0.5s ease-out;
-  border-radius: 8px;
+  border-radius: 1rem;
   overflow: hidden;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.5vh 1vh rgba(0, 0, 0, 0.1);
 }
 
 .toggle-table-container th {
-  background-color: #333333;
+  background-color: #333;
   color: white;
-  padding: 8px;
-  border: 1px solid #ddd;
+  padding: 1vh;
+  border: 0.2vh solid #ddd;
   text-align: center;
-  width: calc(100% / 3);
+  width: 33%;
   box-sizing: border-box;
 }
 
-/* Data cells in the table */
 .toggle-table-container td {
-  padding: 8px;
-  border: 1px solid #ddd;
+  padding: 1vh;
+  border: 0.2vh solid #ddd;
   text-align: center;
-  transition: background-color 0.3s ease-in-out; /* Smooth transition for hover effect */
+  transition: background-color 0.3s ease-in-out;
 }
 
-/* Add hover effect on table cells */
 .toggle-table-container td:hover {
-  background-color: #f0f0f0; /* Light gray when hovering over a cell */
-  cursor: pointer; /* Change cursor to pointer */
+  background-color: #f0f0f0;
+  cursor: pointer;
 }
 
-/* Alternating row colors for better readability */
 .toggle-table-container tr:nth-child(even) {
   background-color: #f9f9f9;
 }
 
 .toggle-table-container tr:nth-child(odd) {
-  background-color: #ffffff;
+  background-color: #fff;
 }
 
-/* Table caption styles */
 .toggle-table-container caption {
-  font-size: 16px;
+  font-size: 1.4rem;
   font-weight: bold;
-  margin-bottom: 5px;
-  color: #333333;
+  margin-bottom: 1vh;
+  color: #333;
   text-align: center;
 }
 
-/* Hidden table (used for toggling visibility) */
 .toggle-table-container table.hidden {
   display: none;
 }
 
-/* Ensure input fields fit properly within table cells */
-.toggle-table-container td input {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  padding: 5px;
-  font-size: 12px;
-  text-align: center;
-  pointer-events: none; /* Prevent text cursor on input fields unless focused */
+/* Ajustes responsivos para la tabla */
+@media (max-width: 768px) {
+  .toggle-table-container {
+    overflow-x: auto; /* Permite desplazamiento horizontal si es necesario */
+  }
+
+  .toggle-table-container table {
+    font-size: 0.9rem; /* Reduce el tamaño de la fuente en pantallas pequeñas */
+  }
+
+  .toggle-table-container th,
+  .toggle-table-container td {
+    padding: 0.5vh; /* Reduce el padding en pantallas pequeñas */
+  }
 }
 
-/* Allow input to be edited only when clicked */
-.toggle-table-container td input:focus {
-  pointer-events: auto; /* Allow editing on focus */
+@media (max-width: 480px) {
+  .toggle-table-container table {
+    font-size: 0.8rem; /* Reduce aún más la fuente en pantallas pequeñas */
+  }
+
+  .toggle-table-container th,
+  .toggle-table-container td {
+    padding: 0.4vh; /* Aún menos padding */
+  }
 }

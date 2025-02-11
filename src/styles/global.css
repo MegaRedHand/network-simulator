@@ -1,49 +1,47 @@
 /* global.css */
 
-/* General styles for the page: setting full width, height, and removing default margins */
+/* Estilos generales */
 html,
 body {
-  margin: 0; /* Removes default margins of the page */
-  padding: 0; /* Removes default padding of the page */
-  width: 100%; /* Makes the page take up the entire viewport width */
-  height: 100%; /* Makes the page take up the entire viewport height */
-  overflow: hidden; /* Prevents scrolling on the page */
-  background-color: #f2f2f2; /* Sets a light gray background for the page */
+  margin: 0;
+  padding: 0;
+  width: 100vw; /* Ocupa todo el ancho del viewport */
+  height: 100vh; /* Ocupa todo el alto del viewport */
+  overflow: hidden; /* Evita scroll innecesario */
+  background-color: #f2f2f2;
 }
 
-/* Make SVGs take all the space from their parent */
+/* SVGs ocupan todo el espacio disponible dentro de su contenedor */
 svg {
-  width: 95%;
-  height: 95%;
+  width: 100%;
+  height: 100%;
 }
 
-/* Custom scrollbar styles */
-
-/* Scrollbar width */
+/* ✅ Barra de desplazamiento personalizada */
 ::-webkit-scrollbar {
-  width: 10px; /* Sets the width of the scrollbar */
+  width: 0.6rem; /* Usamos `rem` para escalabilidad */
 }
 
-/* Scrollbar track (background area) */
+/* Fondo del scrollbar */
 ::-webkit-scrollbar-track {
-  background: #f1f1f1; /* Light gray background for the track */
+  background: #e0e0e0; /* Color más neutro */
 }
 
-/* Scrollbar thumb (the draggable part) */
+/* Parte desplazable */
 ::-webkit-scrollbar-thumb {
-  background: #888; /* Medium gray color for the thumb */
+  background: #888;
+  border-radius: 0.3rem;
 }
 
-/* Thumb hover effect */
+/* Hover en scrollbar */
 ::-webkit-scrollbar-thumb:hover {
-  background: #555; /* Darker gray on hover */
+  background: #555;
 }
 
-/* Main flexbox container for the layout of sidebars and canvas */
+/* ✅ Contenedor principal con flexbox para estructurar la interfaz */
 .container {
-  display: flex; /* Uses flexbox to organize child elements in a row */
-  height: calc(
-    100vh - 40px
-  ); /* Full viewport height minus the top bar's height (40px) */
-  width: 100%; /* Makes the container span the entire width of the viewport */
+  display: flex;
+  flex-direction: row;
+  height: 100vh; /* Todo el viewport */
+  width: 100vw;
 }

@@ -1,29 +1,49 @@
+/* Botones Undo y Redo */
 .undo-button,
 .redo-button {
-  cursor: pointer; /* Changes cursor to pointer on hover */
-  width: 45px; /* Fixed width for the circular button */
-  height: 45px; /* Fixed height for the circular button */
-  border-radius: 50%; /* Makes the button circular */
-  display: flex; /* Uses flexbox for centering */
-  align-items: center; /* Vertically centers content */
-  justify-content: center; /* Horizontally centers content */
-  transition: background-color 0.3s ease; /* Smooth color transition */
+  cursor: pointer; /* Cambia el cursor a puntero en hover */
+  width: 8vh; /* Tamaño relativo */
+  height: 8vh;
+  border-radius: 50%; /* Hace el botón circular */
+  display: flex; /* Centra contenido con flexbox */
+  align-items: center; /* Alineación vertical */
+  justify-content: center; /* Alineación horizontal */
+  transition: background-color 0.3s ease; /* Transición suave */
   position: absolute; /* Permite colocarlo sobre el canvas */
 }
 
+/* Posición relativa de Undo */
 .undo-button {
-  top: 10px;
-  left: 70px;
+  top: 1.5vh;
+  left: 7vw;
 }
 
+/* Posición relativa de Redo */
 .redo-button {
-  top: 10px;
-  left: 110px;
+  top: 1.5vh;
+  left: 10vw;
 }
 
-/* Icon inside the pause button */
+/* Icono dentro de los botones */
 .undo-button img,
 .redo-button img {
-  width: 60%; /* Scales the icon to fit the button */
-  height: 60%; /* Scales the icon to fit the button */
+  width: 60%; /* Escala el icono dentro del botón */
+  height: 60%;
+}
+
+/* Ajustes responsivos */
+@media (max-width: 768px) {
+  .undo-button,
+  .redo-button {
+    width: 4.5vh;
+    height: 4.5vh;
+  }
+
+  .undo-button {
+    left: 6vw;
+  }
+
+  .redo-button {
+    left: 10vw;
+  }
 }

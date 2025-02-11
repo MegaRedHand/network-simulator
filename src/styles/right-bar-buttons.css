@@ -1,70 +1,94 @@
-/* right-bar-buttons.css */
-
-/* Style for buttons in the right bar */
+/* right-bar-buttons.css - Botones de la barra lateral */
 .right-bar-button {
   background-color: #007bff;
   border: none;
   color: white;
-  padding: 6px 12px;
+  padding: 1vh 2vw;
   text-align: center;
   text-decoration: none;
-  display: block; /* Change to block to occupy full width */
-  font-size: 14px;
-  margin: 5px 0; /* Adjust margin for spacing between buttons */
+  display: block;
+  font-size: 1rem;
+  margin: 1vh 0;
   cursor: pointer;
-  border-radius: 4px;
-  width: 100%; /* Occupies 100% of the right-bar width */
-  box-sizing: border-box; /* Includes padding in the total width */
-  transition:
-    background-color 0.3s ease,
-    transform 0.2s ease;
+  border-radius: 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-/* Hover effect for right sidebar buttons */
 .right-bar-button:hover {
-  background-color: #162a6d; /* Darker blue on hover */
-  transform: scale(1.02); /* Slight enlargement on hover */
+  background-color: #162a6d;
+  transform: scale(1.02);
 }
 
-/* Selected button style */
-.right-bar-button.selected-button {
-  background-color: #162a6d; /* Darker blue background */
-  color: white; /* White text */
-}
-
-/* Delete button in the right sidebar */
 .right-bar-delete-button {
-  background-color: #f44336; /* Red background for delete button */
+  background-color: #f44336;
 }
 
 .right-bar-delete-button:hover {
-  background-color: #d32f2f; /* Darker red on hover */
+  background-color: #d32f2f;
+}
+
+/* Botón desplegable con flecha */
+.right-bar-toggle-button {
+  background-color: #007bff;
+  border: none;
+  color: white;
+  padding: 1vh 2vw;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1rem;
+  margin: 1vh 0;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.right-bar-toggle-button::after {
+  content: "";
+  display: inline-block;
+  position: absolute;
+  right: 2vw;
+  width: 0;
+  height: 0;
+  border-left: 0.6rem solid transparent;
+  border-right: 0.6rem solid transparent;
+  border-top: 0.6rem solid white;
+  transition: transform 0.3s ease;
+}
+
+.right-bar-toggle-button.open::after {
+  transform: rotate(180deg);
 }
 
 /* Container for packet options */
 .packet-options-container {
   display: flex;
   flex-direction: column;
-  gap: 8px; /* Reduce gap */
+  gap: 0.8vh; /* Espacio relativo */
   width: 100%;
-  margin-top: 8px; /* Reduce top margin */
+  margin-top: 0.8vh; /* Margen superior relativo */
 }
 
 /* Style for labels in the right bar */
 .right-bar-label {
   font-weight: bold;
-  margin-bottom: 2px; /* Reduce bottom margin */
-  font-size: 12px; /* Reduce font size */
+  margin-bottom: 0.2vh; /* Margen inferior relativo */
+  font-size: 0.9rem; /* Tamaño de fuente relativo */
   color: #333333;
 }
 
 /* Style for dropdowns (selectors) */
 .right-bar-select {
   width: 100%;
-  padding: 6px; /* Reduce padding */
-  font-size: 14px; /* Reduce font size */
-  border-radius: 4px;
-  border: 1px solid #cccccc;
+  padding: 0.6vh 0.8vw; /* Padding relativo */
+  font-size: 1rem; /* Tamaño de fuente relativo */
+  border-radius: 0.4rem;
+  border: 0.1rem solid #cccccc;
   background-color: #f1f1f1;
   cursor: pointer;
 }
@@ -72,58 +96,11 @@
 .right-bar-select:focus {
   outline: none;
   border-color: #007bff;
-  box-shadow: 0 0 4px rgba(0, 123, 255, 0.4); /* Slightly reduce shadow */
+  box-shadow: 0 0 0.4vh rgba(0, 123, 255, 0.4); /* Sombra con valores relativos */
 }
 
 /* Optional: Style to make the entire dropdown area compact */
 .dropdown-container {
-  margin-bottom: 8px; /* Reduce bottom margin */
+  margin-bottom: 0.8vh; /* Margen inferior relativo */
 }
 
-/* Style for buttons in the right bar*/
-.right-bar-toggle-button {
-  background-color: #007bff;
-  border: none;
-  color: white;
-  padding: 6px 12px;
-  text-align: center; /* Center text horizontally */
-  text-decoration: none;
-  display: flex; /* Use flexbox to organize text and arrow */
-  justify-content: center; /* Center content horizontally */
-  align-items: center; /* Center content vertically */
-  font-size: 14px;
-  margin: 5px 0; /* Adjust margin between buttons */
-  cursor: pointer;
-  border-radius: 4px; /* Rounded borders */
-  width: 100%;
-  box-sizing: border-box; /* Include padding on all length */
-  transition:
-    background-color 0.3s ease,
-    transform 0.2s ease;
-  position: relative; /* To position internal elements like the arrow */
-}
-
-/* Hover effect for toggle buttons */
-.right-bar-toggle-button:hover {
-  background-color: #162a6d;
-  transform: scale(1.02); /* Slight enlargement on hover */
-}
-
-/* Arrow icon on toggle buttons */
-.right-bar-toggle-button::after {
-  content: ""; /* Adds an empty content box for the icon */
-  display: inline-block; /* Ensures it's displayed properly */
-  position: absolute; /* Positions the arrow relative to the button */
-  right: 12px; /* Positions it 12px from the right edge */
-  width: 0;
-  height: 0;
-  border-left: 6px solid transparent; /* Transparent left side of the triangle */
-  border-right: 6px solid transparent; /* Transparent right side of the triangle */
-  border-top: 6px solid white; /* White triangle */
-  transition: transform 0.3s ease; /* Smooth rotation on toggle */
-}
-
-/* Rotated arrow for open state */
-.right-bar-toggle-button.open::after {
-  transform: rotate(180deg); /* Rotates the arrow upward */
-}

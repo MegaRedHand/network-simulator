@@ -1,12 +1,12 @@
-/* Estilos base para el contenedor */
+/* info.css - Información en la barra lateral */
 .toggle-info-container {
   overflow: hidden;
   text-align: left;
   margin: 0;
   padding: 0;
+  font-size: 1rem;
 }
 
-/* Ajustes para el texto de la lista */
 .toggle-info-container .right-bar-info {
   margin: 0;
   padding: 0;
@@ -14,28 +14,41 @@
 }
 
 .toggle-info-container .right-bar-info li {
-  margin: 20px 0px;
+  margin: 2vh 0;
   padding: 0;
-  text-align: flex;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Asegura que el texto y el `select` queden alineados */
 }
 
-/* Estilo para el pre que contiene el payload */
+.toggle-info-container .right-bar-info li label {
+  font-weight: bold;
+  margin-bottom: 0.5vh; /* Espacio entre el label y el input */
+}
+
+.toggle-info-container .right-bar-info li select {
+  width: 100%;
+  padding: 0.8vh;
+  font-size: 1rem;
+  border: 0.1rem solid #ccc;
+  border-radius: 0.5rem;
+  background-color: #fff;
+}
+
 .toggle-info-container .right-bar-info li pre {
   background-color: #000;
   color: #fff;
-  padding: 10px;
-  border-radius: 4px;
+  padding: 1vh;
+  border-radius: 0.5rem;
   font-family: monospace;
   white-space: pre-wrap;
   overflow-x: auto;
 }
 
-/* Elementos abiertos */
 .toggle-info-container .right-bar-info.open {
   display: block;
 }
 
-/* Transiciones para una experiencia más fluida */
 .toggle-info-container .hidden {
   display: none;
 }
