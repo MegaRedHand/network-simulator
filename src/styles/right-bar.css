@@ -23,3 +23,31 @@
   color: #333;
 }
 
+/* Ajustes en móviles para evitar desbordes */
+@media (max-width: 480px) {
+  .right-bar h2 {
+    font-size: 1.5rem; /* Reduce el tamaño del título */
+  }
+}
+
+/* Evitar que el contenido se desborde en pantallas chicas */
+@media (max-width: 480px) {
+  .info-content {
+    font-size: 3rem; /* Ajusta tamaño del texto para no cortar */
+  }
+}
+
+/* Asegurar que la barra derecha no se rompa en pantallas pequeñas */
+@media (max-width: 768px) {
+  .right-bar {
+    flex: 0 0 30vw; /* Reduce el tamaño en tablets */
+    max-height: 100vh; /* Permite mayor espacio en pantallas más chicas */
+  }
+}
+
+@media (max-width: 480px) {
+  .right-bar {
+    flex: 0 0 35vw; /* Ajusta para móviles sin romper el diseño */
+    padding: 2vh; /* Reduce padding para mayor espacio */
+  }
+}

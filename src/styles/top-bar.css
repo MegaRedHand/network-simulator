@@ -8,30 +8,20 @@
   position: relative; /* Needed for absolute positioning */
   z-index: 10; /* Keeps it above other elements */
   min-height: 6vh; /* Ensures a dynamic height */
-}
-
-/* 🔹 Container for left-side buttons */
-#top-bar .left-buttons {
-  display: flex; /* Aligns buttons in a row */
-  gap: 0.3em; /* Small spacing between buttons */
-}
-
-/* 🔹 Container for right-side buttons */
-#top-bar .right-buttons {
-  display: flex; /* Aligns buttons in a row */
-  gap: 0.3em; /* Small spacing between buttons */
+  flex-wrap: nowrap; /* Prevents wrapping */
 }
 
 /* 🔹 Small buttons */
 #top-bar button {
-  font-size: 0.8rem; /* Reduces font size for a compact look */
-  padding: 0.5em 1em; /* Keeps buttons small but readable */
+  font-size: 0.8rem; /* Keeps font compact */
+  padding: 0.5em 1em; /* Maintains button size */
   background-color: #007bff; /* Primary blue */
   color: white; /* White text for contrast */
   border: none; /* Removes default button border */
   border-radius: 0.3em; /* Soft rounded corners */
   cursor: pointer; /* Changes cursor to pointer for interactivity */
   transition: background 0.3s ease; /* Smooth hover effect */
+  white-space: nowrap; /* Prevents text from breaking */
 }
 
 #top-bar button:hover {
@@ -49,3 +39,71 @@
   white-space: nowrap; /* Prevents text from wrapping */
 }
 
+/* 🔹 Ensures layout remains intact on small screens */
+@media (max-width: 768px) {
+  #top-bar {
+    flex-wrap: nowrap; /* Prevents breaking layout */
+    justify-content: space-between; /* Maintains spacing */
+  }
+  #top-bar button {
+    padding: 0.4em 0.8em; /* Adjusts padding slightly */
+    font-size: 0.75rem; /* Maintains button size without breaking */
+  }
+}
+
+@media (max-width: 480px) {
+  #app-title {
+    font-size: 1.5rem; /* Slightly smaller title */
+  }
+  #top-bar button {
+    padding: 0.4em 0.6em; /* Ensures touch-friendly size */
+  }
+}
+
+/* buttons.css */
+
+/* General button styles */
+.new-button,
+.save-button,
+.load-button {
+  background-color: #007bff; /* Blue background */
+  color: #ffffff; /* White text */
+  border: none; /* Removes borders */
+  padding: 1vh 2vw; /* Adds internal spacing */
+  cursor: pointer; /* Changes cursor to pointer on hover */
+  margin-right: 1vw; /* Adds spacing between buttons */
+  border-radius: 0.5rem; /* Rounds the button corners */
+  font-size: 1rem; /* Relative font size */
+  text-align: center;
+  width: auto; /* Allow flexibility */
+  min-width: 4vw; /* Ensure buttons have a minimum width */
+  max-width: 5vw; /* Prevent them from being too large */
+}
+
+/* Hover effect for general buttons */
+.new-button:hover,
+.save-button:hover,
+.load-button:hover {
+  background-color: #162a6d; /* Darker blue on hover */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .new-button,
+  .save-button,
+  .load-button {
+    padding: 0.8vh 1.5vw; /* Slightly smaller padding */
+    font-size: 0.9rem; /* Reduce font size for smaller screens */
+    min-width: 10vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .new-button,
+  .save-button,
+  .load-button {
+    padding: 0.6vh 1vw; /* Even smaller padding */
+    font-size: 0.8rem; /* Reduce font size more */
+    min-width: 12vw;
+  }
+}

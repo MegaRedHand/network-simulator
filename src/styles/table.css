@@ -1,4 +1,9 @@
 /* table.css - Tabla en la barra lateral */
+.toggle-table-container {
+  width: 100%;
+  overflow-x: auto; /* Permite desplazamiento horizontal si es necesario */
+}
+
 .toggle-table-container table {
   width: 100%;
   border-collapse: collapse;
@@ -8,6 +13,15 @@
   border-radius: 1rem;
   overflow: hidden;
   box-shadow: 0 0.5vh 1vh rgba(0, 0, 0, 0.1);
+  table-layout: auto; /* Evita que las columnas se expandan demasiado */
+}
+
+/* Asegura que las columnas no se desborden */
+.toggle-table-container th,
+.toggle-table-container td {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .toggle-table-container th {
@@ -54,10 +68,6 @@
 
 /* Ajustes responsivos para la tabla */
 @media (max-width: 768px) {
-  .toggle-table-container {
-    overflow-x: auto; /* Permite desplazamiento horizontal si es necesario */
-  }
-
   .toggle-table-container table {
     font-size: 0.9rem; /* Reduce el tamaño de la fuente en pantallas pequeñas */
   }
@@ -77,4 +87,4 @@
   .toggle-table-container td {
     padding: 0.4vh; /* Aún menos padding */
   }
-}
+} 

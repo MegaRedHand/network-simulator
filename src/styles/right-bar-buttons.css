@@ -16,6 +16,21 @@
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
+/* Evita que los botones se deformen en pantallas pequeñas */
+@media (max-width: 768px) {
+  .right-bar-button {
+    font-size: 0.9rem;
+    padding: 1.2vh 2.5vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .right-bar-button {
+    font-size: 0.85rem;
+    padding: 1.2vh 3vw;
+  }
+}
+
 .right-bar-button:hover {
   background-color: #162a6d;
   transform: scale(1.02);
@@ -48,6 +63,14 @@
   position: relative;
 }
 
+/* Asegurar que el botón desplegable no se rompa en móviles */
+@media (max-width: 480px) {
+  .right-bar-toggle-button {
+    font-size: 0.9rem;
+    padding: 1.2vh 2vw;
+  }
+}
+
 .right-bar-toggle-button::after {
   content: "";
   display: inline-block;
@@ -69,38 +92,52 @@
 .packet-options-container {
   display: flex;
   flex-direction: column;
-  gap: 0.8vh; /* Espacio relativo */
+  gap: 0.8vh;
   width: 100%;
-  margin-top: 0.8vh; /* Margen superior relativo */
+  margin-top: 0.8vh;
+}
+
+/* Evitar que los elementos de selección se deformen */
+@media (max-width: 480px) {
+  .packet-options-container {
+    gap: 0.5vh;
+  }
 }
 
 /* Style for labels in the right bar */
 .right-bar-label {
   font-weight: bold;
-  margin-bottom: 0.2vh; /* Margen inferior relativo */
-  font-size: 0.9rem; /* Tamaño de fuente relativo */
+  margin-bottom: 0.2vh;
+  font-size: 0.9rem;
   color: #333333;
 }
 
 /* Style for dropdowns (selectors) */
 .right-bar-select {
   width: 100%;
-  padding: 0.6vh 0.8vw; /* Padding relativo */
-  font-size: 1rem; /* Tamaño de fuente relativo */
+  padding: 0.6vh 0.8vw;
+  font-size: 1rem;
   border-radius: 0.4rem;
   border: 0.1rem solid #cccccc;
   background-color: #f1f1f1;
   cursor: pointer;
 }
 
+/* Asegurar que los select no se deformen en pantallas pequeñas */
+@media (max-width: 480px) {
+  .right-bar-select {
+    font-size: 0.9rem;
+    padding: 0.5vh 1vw;
+  }
+}
+
 .right-bar-select:focus {
   outline: none;
   border-color: #007bff;
-  box-shadow: 0 0 0.4vh rgba(0, 123, 255, 0.4); /* Sombra con valores relativos */
+  box-shadow: 0 0 0.4vh rgba(0, 123, 255, 0.4);
 }
 
 /* Optional: Style to make the entire dropdown area compact */
 .dropdown-container {
-  margin-bottom: 0.8vh; /* Margen inferior relativo */
+  margin-bottom: 0.8vh;
 }
-

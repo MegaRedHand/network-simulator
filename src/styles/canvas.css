@@ -1,24 +1,52 @@
-/* 🔹 Main canvas container */
+/* 🔹 Contenedor del Canvas */
 .canvas-container {
-  flex: 1; /* Takes up all available space */
-  display: flex; /* Enables flexible layout */
-  position: relative; /* Ensures proper positioning */
-  background-color: #a09f9f; /* Light gray background */
-  overflow: hidden; /* Prevents content overflow */
-  min-height: 0; /* Avoids flexbox height issues */
+  flex: 1;
+  display: flex;
+  position: relative;
+  background-color: #a09f9f;
+  overflow: hidden;
+  min-height: 0;
+  width: 100%;
 }
 
-/* 🔹 Wrapper for the canvas and floating elements */
+/* 🔹 Wrapper para asegurar que el canvas ocupe todo el espacio */
 #canvas-wrapper {
-  position: relative; /* Allows elements inside to be positioned */
-  width: 100%; /* Takes full width */
-  height: 100%; /* Takes full height */
-  display: flex; /* Ensures full stretching inside */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
 }
 
-/* 🔹 Canvas occupying all available space */
+/* 🔹 Canvas ocupando todo el espacio */
 #canvas {
-  width: 100%; /* Stretches to full width */
-  height: 100%; /* Stretches to full height */
-  display: block; /* Removes unwanted spacing */
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 📌 Ajustes para tablets */
+@media (max-width: 1024px) {
+  .canvas-container {
+    background-color: #b0b0b0;
+  }
+  
+  #canvas-wrapper {
+    padding: 1rem;
+  }
+}
+
+/* 📌 Ajustes para pantallas más pequeñas */
+@media (max-width: 768px) {
+  .canvas-container {
+    background-color: #c0c0c0;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  #canvas {
+    width: 95%;
+    height: auto;
+  }
 }

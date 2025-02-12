@@ -44,4 +44,26 @@ svg {
   flex-direction: row;
   height: 100vh; /* Todo el viewport */
   width: 100vw;
+  overflow: hidden; /* Evita desbordamientos en pantallas chicas */
+}
+
+/* 🔹 Ajustes responsivos */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column; /* Permite que los elementos se acomoden sin romperse */
+    height: auto; /* Evita que se corte contenido en pantallas pequeñas */
+    min-height: 100vh;
+  }
+
+  html, body {
+    height: auto; /* Asegura que no haya problemas con el scroll */
+    overflow-y: auto; /* Permite desplazamiento si es necesario */
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    flex-direction: column;
+    width: 100%;
+  }
 }
