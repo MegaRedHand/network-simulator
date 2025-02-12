@@ -110,19 +110,18 @@ export class RightBar {
 }
 
 // Function to create a toggle button
-function createToggleButton(
+export function createToggleButton(
   title: string,
   buttonClass: string,
-  table: HTMLTableElement,
+  element: HTMLElement,
 ) {
   const button = document.createElement("button");
   button.classList.add(buttonClass);
   button.textContent = title;
 
   button.onclick = () => {
-    const isHidden = table.classList.contains("hidden");
-    table.classList.toggle("hidden", !isHidden);
-    button.classList.toggle("open", isHidden);
+    element.classList.toggle("hidden");
+    button.classList.toggle("open");
   };
 
   return button;
@@ -140,11 +139,9 @@ function updateRoutingTableUI(
   }
   router.routingTable = newTableData;
 
-  const tableContainer = document.querySelector(".toggle-table-container");
-  if (!tableContainer)
-    return console.warn("Routing table container not found.");
+  const existingTable: HTMLTableElement | null =
+    document.querySelector("table.toggle-table");
 
-  const existingTable = tableContainer.querySelector("table");
   if (!existingTable)
     return console.warn("Existing table not found inside container.");
 
@@ -155,15 +152,15 @@ function updateRoutingTableUI(
   console.log(`Routing table for router ID ${deviceId} updated successfully.`);
 }
 
-function createTable(
+export function createTable(
   headers: string[],
   rows: string[][],
-  tableClass: string,
+  tableClasses: string[],
   viewgraph: ViewGraph,
   deviceId: DeviceId,
 ): HTMLTableElement {
   const table = document.createElement("table");
-  table.classList.add(tableClass, "hidden");
+  table.classList.add(...tableClasses);
 
   const headerRow = document.createElement("tr");
   headers.forEach((header) => {
@@ -191,7 +188,7 @@ function createTable(
 
 function clearTableRows(table: HTMLTableElement): void {
   const rows = Array.from(table.querySelectorAll("tr"));
-  rows.slice(1).forEach((row) => row.remove()); // Mantener solo el encabezado
+  rows.slice(1).forEach((row) => row.remove()); // Keep the header only
 }
 
 function createTableRow(
@@ -210,13 +207,13 @@ function createTableRow(
 
     cell.addEventListener("keydown", (event) => {
       if (event.key === "Delete" || event.key === "Backspace") {
-        event.stopPropagation(); // Evita que el evento borre la fila en la tabla
+        event.stopPropagation(); // Avoid the event to clear the table's row
       }
     });
 
     cell.addEventListener("blur", () => {
       const updatedRowIndex =
-        Array.from(table.querySelectorAll("tr")).indexOf(rowElement) - 1; // Ajuste dinámico del índice
+        Array.from(table.querySelectorAll("tr")).indexOf(rowElement) - 1;
       const newValue = cell.textContent?.trim() || "";
 
       let isValid = false;
@@ -226,7 +223,7 @@ function createTableRow(
 
       if (!isValid) {
         console.warn(`Invalid input for column ${colIndex}: ${newValue}`);
-        cell.textContent = cellData; // Revertir cambio si es inválido
+        cell.textContent = cellData; // Revert change if invalid
         return;
       }
 
@@ -334,13 +331,12 @@ export function createToggleTable(
   rows: string[][],
   viewgraph: ViewGraph,
   deviceId: number,
-  buttonClass = "right-bar-toggle-button",
-  tableClass = "right-bar-table",
 ) {
   const container = document.createElement("div");
-  container.classList.add("toggle-table-container");
+  const tableClasses = ["right-bar-table", "hidden", "toggle-table"];
+  const buttonClass = "right-bar-toggle-button";
 
-  const table = createTable(headers, rows, tableClass, viewgraph, deviceId);
+  const table = createTable(headers, rows, tableClasses, viewgraph, deviceId);
   const button = createToggleButton(title, buttonClass, table);
 
   container.appendChild(button);
@@ -375,7 +371,7 @@ export function createToggleInfo(
   // Add details to the list
   Object.entries(details).forEach(([key, value]) => {
     const listItem = document.createElement("li");
-    if (key === "Payload") {
+    if (typeof value === "object" && value !== null) {
       // Format the payload as JSON
       const pre = document.createElement("pre");
       pre.textContent = JSON.stringify(value, null, 2); // Pretty-print JSON

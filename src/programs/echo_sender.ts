@@ -82,16 +82,22 @@ export class EchoServer extends ProgramBase {
   }
 
   private tick(ticker: Ticker) {
-    const delay = this.delay;
-    this.progress += ticker.deltaMS * this.viewgraph.getSpeed().value;
-    if (this.progress < delay) {
+    if (!this.echoProgram) {
+      console.error("EchoProgram is not initialized");
+      this._stop();
       return;
     }
-    this.echoProgram.run(() => {
-      // do nothing
-    });
-    this.progress -= delay;
-  }
+  
+    const delay = this.delay;
+    this.progress += ticker.deltaMS * this.viewgraph.getSpeed().value;
+  
+    if (this.progress >= delay) {
+      this.echoProgram.run(() => {
+        // Do nothing
+      });
+      this.progress -= delay;
+    }
+  }  
 
   protected _stop() {
     Ticker.shared.remove(this.tick, this);

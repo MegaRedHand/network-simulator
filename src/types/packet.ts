@@ -11,8 +11,10 @@ import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
 import { IPv4Packet } from "../packets/ip";
-import { EchoRequest, EchoReply } from "../packets/icmp";
+import { Layer } from "../types/devices/layer";
+//import { EchoMessage } from "../packets/icmp";
 import { DeviceId, isRouter } from "./graphs/datagraph";
+import { EchoRequest, EchoReply } from "../packets/icmp";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
@@ -74,43 +76,18 @@ export class Packet extends Graphics {
     this.removeHighlight();
   }
 
-  private getPacketDetails(packet: IPv4Packet) {
-    // Creates a dictionary with the data of the packet
-    const packetDetails: Record<string, string | number | object> = {
-      Version: packet.version,
-      "Internet Header Length": packet.internetHeaderLength,
-      "Type of Service": packet.typeOfService,
-      "Total Length": packet.totalLength,
-      Identification: packet.identification,
-      Flags: packet.flags,
-      "Fragment Offset": packet.fragmentOffset,
-      "Time to Live": packet.timeToLive,
-      Protocol: packet.protocol,
-      "Header Checksum": packet.headerChecksum,
-    };
+  private getPacketDetails(layer: Layer,rawPacket: IPv4Packet) {
+    
+    let packetDetails = {};
 
-    // Add payload details if available
-    if (packet.payload instanceof EchoRequest) {
-      const echoRequest = packet.payload as EchoRequest;
-      packetDetails.Payload = {
-        type: "EchoRequest",
-        identifier: echoRequest.identifier,
-        sequenceNumber: echoRequest.sequenceNumber,
-        data: Array.from(echoRequest.data),
-      };
-    } else if (packet.payload instanceof EchoReply) {
-      const echoReply = packet.payload as EchoReply;
-      packetDetails.Payload = {
-        type: "EchoReply",
-        identifier: echoReply.identifier,
-        sequenceNumber: echoReply.sequenceNumber,
-        data: Array.from(echoReply.data),
-      };
-    } else {
-      packetDetails.Payload = {
-        type: "Unknown",
-        protocol: packet.payload.protocol(),
-      };
+    if (rawPacket.payload instanceof EchoRequest) {
+      const icmpPacket = rawPacket.payload as EchoRequest;
+      packetDetails = icmpPacket.getPacketDetails(layer,rawPacket);
+    }
+
+    if (rawPacket.payload instanceof EchoReply) {
+      const icmpPacket = rawPacket.payload as EchoReply;
+      packetDetails = icmpPacket.getPacketDetails(layer,rawPacket);
     }
 
     return packetDetails;
@@ -143,7 +120,7 @@ export class Packet extends Graphics {
     );
 
     // Add a toggle info section for packet details
-    const packetDetails = this.getPacketDetails(this.rawPacket);
+    const packetDetails = this.getPacketDetails(this.viewgraph.getLayer(),this.rawPacket);
 
     rightbar.addToggleButton("Packet Details", packetDetails);
   }
