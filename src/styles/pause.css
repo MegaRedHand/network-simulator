@@ -1,5 +1,23 @@
 /* Botón de pausa */
+/* 🔹 Botón de pausa */
 .pause-button {
+  background-color: #228b22;
+  color: #ffffff; /* Texto blanco */
+  border: 0.3vh solid #000000; /* Borde negro */
+  width: 6vh;
+  height: 6vh;
+  border-radius: 1vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+  box-shadow: 0.4vh 0.4vh 0.8vh rgba(0, 0, 0, 0.4);
+  outline: none; /* Elimina borde de foco */
+  padding: 0; /* Sin padding interno */
+  cursor: pointer; /* Cursor de puntero */
+}
+
+.pause-button2 {
   background-color: #228b22; /* Verde por defecto */
   color: #ffffff; /* Texto blanco */
   border: 0.3vh solid #000000; /* Borde negro */

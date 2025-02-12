@@ -1,32 +1,26 @@
-/* Botones Undo y Redo */
+/* 🔹 Contenedor de Undo y Redo */
+.undo-redo-container {
+  display: flex;
+  align-items: center;
+  gap: 1vw; /* Espacio uniforme entre botones */
+  margin-left: 2vw; /* Separa Undo y Redo de Pause */
+}
+
+/* 🔹 Botones Undo y Redo */
 .undo-button,
 .redo-button {
-  cursor: pointer; /* Cambia el cursor a puntero en hover */
-  width: 8vh; /* Tamaño relativo */
-  height: 8vh;
-  border-radius: 50%; /* Hace el botón circular */
-  display: flex; /* Centra contenido con flexbox */
-  align-items: center; /* Alineación vertical */
-  justify-content: center; /* Alineación horizontal */
-  transition: background-color 0.3s ease; /* Transición suave */
-  position: absolute; /* Permite colocarlo sobre el canvas */
+  cursor: pointer;
+  width: 5vh;
+  height: 5vh;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Posición relativa de Undo */
-.undo-button {
-  top: 1.5vh;
-  left: 7vw;
-}
-
-/* Posición relativa de Redo */
-.redo-button {
-  top: 1.5vh;
-  left: 10vw;
-}
-
-/* Icono dentro de los botones */
+/* 🔹 Asegurar que los iconos se ajusten bien */
 .undo-button img,
 .redo-button img {
-  width: 60%; /* Escala el icono dentro del botón */
+  width: 60%;
   height: 60%;
 }

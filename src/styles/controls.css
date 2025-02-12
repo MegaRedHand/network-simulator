@@ -1,22 +1,52 @@
-/* Contenedor de controles en la izquierda */
+/* 🔹 Contenedor de controles en la izquierda */
 #left-controls {
-    position: absolute;
-    top: 2vh;
-    left: 2vw;
-    display: flex;
-    align-items: center;
-    gap: 1vw; /* Reduce la separación */
-}
-
-/* Contenedor de controles en la derecha */
-#right-controls {
-    position: absolute;
-    top: 2vh;
-    right: 2vw;
     display: flex;
     align-items: center;
     gap: 1vw;
-    flex-wrap: wrap; /* Permite que los elementos se ajusten */
-    max-width: 90vw; /* Evita que se salgan del viewport */
+    flex-wrap: nowrap; /* Evita que se amontonen en varias líneas */
+    justify-content: flex-start; /* Mantiene la alineación izquierda */
+    position: absolute;
+    top: 1.5vh;
+    left: 2vw;
 }
 
+#right-controls {
+    display: flex;
+    align-items: center;
+    gap: 6vw;
+    flex-wrap: wrap; /* Evita que los elementos se superpongan */
+    justify-content: flex-end;
+    max-width: 90vw; /* Evita que se salgan del viewport */
+    position: absolute;
+    top: 1.5vh;
+    right: 2vw;
+  }
+
+/* 🔹 Ajuste en pantallas pequeñas */
+@media (max-width: 768px) {
+    #left-controls {
+        gap: 1vw;
+        flex-wrap: wrap; /* Permite que se ajusten si el espacio es muy pequeño */
+    }
+
+    .pause-button {
+        width: 5vh;
+        height: 5vh;
+    }
+
+    .undo-button,
+    .redo-button {
+        width: 4.5vh;
+        height: 4.5vh;
+    }
+
+    .undo-redo-container {
+        margin-left: 1vw;
+        flex-wrap: nowrap; /* No permite que se desordenen */
+    }
+
+    #right-controls {
+        gap: 3vw; /* Reduce el espacio entre controles */
+        flex-wrap: wrap; /* Permite ajuste en pantallas pequeñas */
+    }
+}

@@ -65,3 +65,28 @@
 .load-button:hover {
   background-color: #162a6d; /* Darker blue on hover */
 }
+
+/* 🔹 Ajuste responsivo */
+@media (max-width: 768px) {
+  #top-bar {
+    flex-wrap: wrap; /* Permite que los elementos se acomoden en dos líneas */
+    justify-content: space-between;
+  }
+
+  #app-title {
+    position: relative;
+    transform: none;
+    left: auto;
+    order: -1; /* Mueve el título a la primera línea */
+    width: 100%;
+    text-align: center;
+  }
+
+  .new-button,
+  .save-button,
+  .load-button {
+    flex: none; /* Evita que los botones se estiren */
+    min-width: 10vw;
+    max-width: 12vw;
+  }
+}
