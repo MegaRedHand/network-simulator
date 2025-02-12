@@ -82,29 +82,3 @@
   min-width: 3vw;
   text-align: right;
 }
-
-/* Ajustes responsivos */
-@media (max-width: 768px) {
-  .wheel-container {
-    flex-direction: column; /* Cambia a vertical en pantallas pequeñas */
-    align-items: center;
-    width: 100%;
-    padding: 1vh;
-    gap: 0.5vh;
-  }
-
-  .circular-slider {
-    width: 80%;
-  }
-
-  .value-display {
-    min-width: unset;
-    text-align: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .circular-slider {
-    width: 100%;
-  }
-}

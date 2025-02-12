@@ -65,26 +65,3 @@
 .toggle-table-container table.hidden {
   display: none;
 }
-
-/* Ajustes responsivos para la tabla */
-@media (max-width: 768px) {
-  .toggle-table-container table {
-    font-size: 0.9rem; /* Reduce el tamaño de la fuente en pantallas pequeñas */
-  }
-
-  .toggle-table-container th,
-  .toggle-table-container td {
-    padding: 0.5vh; /* Reduce el padding en pantallas pequeñas */
-  }
-}
-
-@media (max-width: 480px) {
-  .toggle-table-container table {
-    font-size: 0.8rem; /* Reduce aún más la fuente en pantallas pequeñas */
-  }
-
-  .toggle-table-container th,
-  .toggle-table-container td {
-    padding: 0.4vh; /* Aún menos padding */
-  }
-} 

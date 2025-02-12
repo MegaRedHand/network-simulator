@@ -20,25 +20,3 @@
     max-width: 90vw; /* Evita que se salgan del viewport */
 }
 
-/* Ajustes responsivos para pantallas más pequeñas */
-@media (max-width: 768px) { 
-    #left-controls,
-    #right-controls {
-        position: relative;
-        top: auto;
-        left: 50%;
-        transform: translateX(-50%);
-        flex-direction: row; /* Mantiene los elementos en fila */
-        justify-content: center;
-        width: 100%;
-        max-width: 400px;
-        gap: 2vw;
-        margin-top: 1vh;
-    }
-
-    #left-controls > *,
-    #right-controls > * {
-        min-width: 30%; /* Evita que sean demasiado pequeños */
-        text-align: center;
-    }
-}

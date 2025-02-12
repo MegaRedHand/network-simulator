@@ -1,5 +1,4 @@
 import { Application, Assets } from "pixi.js";
-
 import {
   deselectElement,
   loadFromFile,
@@ -15,7 +14,6 @@ import { Viewport } from "./graphics/viewport";
 import { GlobalContext } from "./context";
 
 // Assets
-// Doing this includes the file in the build
 import "./styles";
 import RouterSvg from "./assets/router.svg";
 import SwitchSvg from "./assets/switch.svg";
@@ -43,7 +41,14 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
 // IIFE to avoid errors
 (async () => {
-  // Initialization
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+
+  // Obtener referencias a la UI
+  const canvasPlaceholder = document.getElementById("canvas");
+  const lBar = document.getElementById("left-bar");
+  const rBar = document.getElementById("right-bar");
+  const tBar = document.getElementById("top-bar");
+
   const app = new Application();
   const appInitPromise = app.init({
     width: window.innerWidth,
@@ -52,47 +57,54 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     autoDensity: true,
     antialias: true,
   });
-  await loadAssets([appInitPromise]);
 
-  const canvasPlaceholder = document.getElementById("canvas");
+  await loadAssets([appInitPromise]);
   canvasPlaceholder.replaceWith(app.canvas);
 
-  // Background container initialization
+  // Inicializar el viewport
   const viewport = new Viewport(app.renderer.events);
   app.stage.addChild(viewport);
 
-  // Context initialization
+  // Contexto global
   const ctx = new GlobalContext(viewport);
 
-  // Get the layer’s menu
-  const layerSelect = document.getElementById(
-    "layer-select",
-  ) as HTMLSelectElement;
-
+  // Obtener menú de capas
+  const layerSelect = document.getElementById("layer-select") as HTMLSelectElement;
   layerSelect.value = layerToName(ctx.getCurrentLayer());
 
-  // Initialize RightBar
+  // Inicializar la barra derecha
   RightBar.getInstance();
 
-  // Left bar logic
+  // Lógica de la barra izquierda
   const leftBar = LeftBar.getFrom(document, ctx);
   leftBar.setButtonsByLayer(layerSelect.value);
 
-  const lBar = document.getElementById("left-bar");
-  const rBar = document.getElementById("right-bar");
-  const tBar = document.getElementById("top-bar");
-
-  // Resize logic
   function resize() {
-    const newWidth = window.innerWidth - lBar.offsetWidth - rBar.offsetWidth;
-    const newHeight = window.innerHeight - tBar.offsetHeight;
-
-    app.renderer.resize(newWidth, newHeight);
-    viewport.resize(newWidth, newHeight);
+    requestAnimationFrame(() => {
+      // Obtener medidas de las barras
+      const isStacked = window.innerWidth <= 768; // 🔥 Si es una pantalla chica, los elementos están apilados
+      const leftSize = isStacked ? lBar?.offsetHeight || 0 : lBar?.offsetWidth || 0;
+      const rightSize = isStacked ? rBar?.offsetHeight || 0 : rBar?.offsetWidth || 0;
+      const topHeight = tBar?.offsetHeight || 0;
+  
+      let newWidth = window.innerWidth - (isStacked ? 0 : leftSize + rightSize);
+      let newHeight = window.innerHeight - (isStacked ? leftSize + rightSize : topHeight);
+  
+      // 🔥 Evitar que el tamaño sea demasiado pequeño
+      newWidth = Math.max(300, newWidth);
+      newHeight = Math.max(200, newHeight);
+  
+      console.log("📏 Resizing canvas to:", newWidth, "x", newHeight);
+  
+      app.renderer.resize(newWidth, newHeight);
+      viewport.resize(newWidth, newHeight);
+  
+    });
   }
+  
 
+  // Ejecutar resize al inicio y en cambios de tamaño
   resize();
-
   window.addEventListener("resize", resize);
 
   const newButton = document.getElementById("new-button");
@@ -266,5 +278,20 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   // Initialize with default value
   valueDisplay.textContent = `${(speedWheel as HTMLInputElement).value}x`;
 
-  console.log("initialized!");
+  const canvasWrapper = document.getElementById("canvas-wrapper");
+
+  if (canvasWrapper) {
+    // Cuando el mouse entra al canvas, desactiva el scroll
+    canvasWrapper.addEventListener("mouseenter", () => {
+      document.body.classList.add("no-scroll");
+    });
+  
+    // Cuando el mouse sale del canvas, vuelve a habilitar el scroll
+    canvasWrapper.addEventListener("mouseleave", () => {
+      document.body.classList.remove("no-scroll");
+    });
+  }
+  
+
+  console.log("✅ Initialized!");
 })();

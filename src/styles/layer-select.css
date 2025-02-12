@@ -54,18 +54,3 @@
     background-color: #444444;
     color: #ffffff;
 }
-
-/* Ajustes responsive */
-@media (max-width: 768px) {
-    #layer-select {
-        width: 18vw; /* Ajusta el ancho en pantallas medianas */
-        font-size: 0.9rem;
-    }
-}
-
-@media (max-width: 480px) {
-    #layer-select {
-        width: 20vw; /* Ajusta aún más el ancho en pantallas pequeñas */
-        font-size: 0.85rem;
-    }
-}

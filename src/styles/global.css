@@ -11,6 +11,12 @@ body {
   background-color: #f2f2f2;
 }
 
+/* Cuando el canvas está en foco, el scroll se desactiva */
+body.no-scroll {
+  overflow: hidden !important;
+}
+
+
 /* SVGs ocupan todo el espacio disponible dentro de su contenedor */
 svg {
   width: 100%;
@@ -47,23 +53,92 @@ svg {
   overflow: hidden; /* Evita desbordamientos en pantallas chicas */
 }
 
-/* 🔹 Ajustes responsivos */
 @media (max-width: 768px) {
+  /* 🔹 Contenedor principal */
   .container {
-    flex-direction: column; /* Permite que los elementos se acomoden sin romperse */
-    height: auto; /* Evita que se corte contenido en pantallas pequeñas */
-    min-height: 100vh;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    overflow-y: auto !important; /* 🔥 Habilita scroll si es necesario */
   }
 
   html, body {
-    height: auto; /* Asegura que no haya problemas con el scroll */
-    overflow-y: auto; /* Permite desplazamiento si es necesario */
+    width: 100vw !important;
+    height: 100vh !important;
+    overflow-y: auto !important; /* 🔥 Permite desplazamiento */
   }
+
+  /* 🔹 Top Bar */
+  .top-bar {
+    width: 100% !important;
+    height: 8vh !important;
+    background-color: #333 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0.5rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 🔹 Left Bar: Ocupar TODO el ancho */
+  .left-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-evenly !important;
+    align-items: center !important;
+    width: 100vw !important;
+    height: 10vh !important;
+    background-color: #f1f1f1 !important;
+    flex-shrink: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  /* 🔹 Ajustar botones de la Left Bar */
+  .icon-button {
+    flex: 1 !important;
+    max-width: 20% !important;
+    height: 4rem !important;
+    margin: 0 0.5rem !important;
+  }
+
+  /* 🔹 Canvas: Ahora sí es clickeable y ocupa bien el espacio */
+  .canvas-container {
+    flex-grow: 1 !important;
+    width: 100vw !important;
+    height: calc(100vh - 18vh) !important; /* 🔥 Ajuste dinámico */
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background-color: #e0e0e0 !important;
+    position: relative !important;
+    z-index: 1 !important;
+    pointer-events: auto !important; /* 🔥 Asegura que se pueda hacer click */
+    overflow: hidden !important; /* 🔥 Evita que se desborde */
+  }
+
+  /* 🔹 Asegurar que el canvas en sí sea CLICKEABLE */
+  #canvas-wrapper, #canvas {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    pointer-events: auto !important; /* 🔥 Permite interacción */
+  }
+
+  /* 🔹 Right Bar (Información) al final SIN RECORTES */
+  /* 🔹 Right Bar: Se ajusta abajo del canvas y ocupa el ancho */
+  .right-bar {
+    width: auto !important; /* 🔥 Ocupa todo el ancho */
+    height: auto !important; /* 🔥 Se adapta al contenido */
+    background-color: white !important; /* 🔥 Fondo blanco */
+    flex-shrink: 0 !important;
+    padding: 1rem !important;
+    overflow-y: auto !important; /* 🔥 Permitir scroll si el contenido es grande */
+  }
+
 }
 
-@media (max-width: 480px) {
-  .container {
-    flex-direction: column;
-    width: 100%;
-  }
-}

@@ -4,31 +4,12 @@
   flex-direction: column; /* Stacks items (buttons) vertically */
   align-items: center; /* Centers buttons horizontally */
   justify-content: flex-start; /* Aligns from the top */
-  min-width: 14vh; /* Prevents excessive shrinking */
-  max-width: 15vh; /* Prevents excessive growth */
   height: 100vh; /* Full viewport height */
   background-color: #f1f1f1; /* Light gray background */
   box-shadow: 0.2em 0 0.5em rgba(0, 0, 0, 0.2); /* Subtle shadow */
   padding-top: 2vh; /* More adaptive top padding */
   gap: 1.2vh; /* Better spacing between buttons */
   overflow-y: auto; /* Enables scrolling if needed */
-}
-
-/* 🔹 Prevents issues on smaller screens */
-@media (max-width: 768px) {
-  .left-bar {
-    min-width: 12vh; /* Slightly smaller on tablets */
-    max-width: 13vh;
-    height: 100vh;
-  }
-}
-
-@media (max-width: 480px) {
-  .left-bar {
-    min-width: 10vh; /* Reduces width but keeps usability */
-    max-width: 12vh;
-    padding-top: 1vh; /* Adjust top padding */
-  }
 }
 
 /* 🔹 Buttons inside the left sidebar */
@@ -44,13 +25,6 @@
   align-items: center; /* Aligns icon inside */
   justify-content: center; /* Centers the icon */
   transition: background 0.3s ease; /* Smooth hover transition */
-}
-
-/* 🔹 Ensures buttons remain touch-friendly on mobile */
-@media (max-width: 480px) {
-  .icon-button {
-    width: 90%; /* Slightly larger for touch accessibility */
-  }
 }
 
 /* 🔹 Hover effect for buttons */

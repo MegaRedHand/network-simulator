@@ -16,21 +16,6 @@
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-/* Evita que los botones se deformen en pantallas pequeñas */
-@media (max-width: 768px) {
-  .right-bar-button {
-    font-size: 0.9rem;
-    padding: 1.2vh 2.5vw;
-  }
-}
-
-@media (max-width: 480px) {
-  .right-bar-button {
-    font-size: 0.85rem;
-    padding: 1.2vh 3vw;
-  }
-}
-
 .right-bar-button:hover {
   background-color: #162a6d;
   transform: scale(1.02);
@@ -63,14 +48,6 @@
   position: relative;
 }
 
-/* Asegurar que el botón desplegable no se rompa en móviles */
-@media (max-width: 480px) {
-  .right-bar-toggle-button {
-    font-size: 0.9rem;
-    padding: 1.2vh 2vw;
-  }
-}
-
 .right-bar-toggle-button::after {
   content: "";
   display: inline-block;
@@ -97,13 +74,6 @@
   margin-top: 0.8vh;
 }
 
-/* Evitar que los elementos de selección se deformen */
-@media (max-width: 480px) {
-  .packet-options-container {
-    gap: 0.5vh;
-  }
-}
-
 /* Style for labels in the right bar */
 .right-bar-label {
   font-weight: bold;
@@ -123,14 +93,6 @@
   cursor: pointer;
 }
 
-/* Asegurar que los select no se deformen en pantallas pequeñas */
-@media (max-width: 480px) {
-  .right-bar-select {
-    font-size: 0.9rem;
-    padding: 0.5vh 1vw;
-  }
-}
-
 .right-bar-select:focus {
   outline: none;
   border-color: #007bff;
@@ -140,4 +102,28 @@
 /* Optional: Style to make the entire dropdown area compact */
 .dropdown-container {
   margin-bottom: 0.8vh;
+}
+
+@media (max-width: 768px) {
+  /* 🔹 Botones en móvil: más compactos */
+  .right-bar-button,
+  .right-bar-toggle-button {
+    padding: 0.6vh 2vw !important; /* 🔥 Menos padding */
+    font-size: 0.85rem !important; /* 🔥 Texto más compacto */
+    margin: 0.5vh 0 !important; /* 🔥 Menos separación entre botones */
+  }
+
+  /* 🔹 Ajustar botón de despliegue */
+  .right-bar-toggle-button::after {
+    right: 1vw !important; /* 🔥 Ajusta la flecha */
+    border-left: 0.5rem solid transparent;
+    border-right: 0.5rem solid transparent;
+    border-top: 0.5rem solid white;
+  }
+
+  /* 🔹 Dropdowns más compactos */
+  .right-bar-select {
+    padding: 0.4vh 1vw !important;
+    font-size: 0.85rem !important;
+  }
 }

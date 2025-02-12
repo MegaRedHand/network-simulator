@@ -39,27 +39,6 @@
   white-space: nowrap; /* Prevents text from wrapping */
 }
 
-/* 🔹 Ensures layout remains intact on small screens */
-@media (max-width: 768px) {
-  #top-bar {
-    flex-wrap: nowrap; /* Prevents breaking layout */
-    justify-content: space-between; /* Maintains spacing */
-  }
-  #top-bar button {
-    padding: 0.4em 0.8em; /* Adjusts padding slightly */
-    font-size: 0.75rem; /* Maintains button size without breaking */
-  }
-}
-
-@media (max-width: 480px) {
-  #app-title {
-    font-size: 1.5rem; /* Slightly smaller title */
-  }
-  #top-bar button {
-    padding: 0.4em 0.6em; /* Ensures touch-friendly size */
-  }
-}
-
 /* buttons.css */
 
 /* General button styles */
@@ -85,25 +64,4 @@
 .save-button:hover,
 .load-button:hover {
   background-color: #162a6d; /* Darker blue on hover */
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .new-button,
-  .save-button,
-  .load-button {
-    padding: 0.8vh 1.5vw; /* Slightly smaller padding */
-    font-size: 0.9rem; /* Reduce font size for smaller screens */
-    min-width: 10vw;
-  }
-}
-
-@media (max-width: 480px) {
-  .new-button,
-  .save-button,
-  .load-button {
-    padding: 0.6vh 1vw; /* Even smaller padding */
-    font-size: 0.8rem; /* Reduce font size more */
-    min-width: 12vw;
-  }
 }

@@ -30,20 +30,3 @@
   width: 60%; /* Escala el icono dentro del botón */
   height: 60%;
 }
-
-/* Ajustes responsivos */
-@media (max-width: 768px) {
-  .undo-button,
-  .redo-button {
-    width: 4.5vh;
-    height: 4.5vh;
-  }
-
-  .undo-button {
-    left: 6vw;
-  }
-
-  .redo-button {
-    left: 10vw;
-  }
-}
