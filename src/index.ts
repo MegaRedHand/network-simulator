@@ -43,7 +43,6 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 (async () => {
   await new Promise((resolve) => requestAnimationFrame(resolve));
 
-  // Obtener referencias a la UI
   const canvasPlaceholder = document.getElementById("canvas");
   const lBar = document.getElementById("left-bar");
   const rBar = document.getElementById("right-bar");
@@ -61,49 +60,46 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   await loadAssets([appInitPromise]);
   canvasPlaceholder.replaceWith(app.canvas);
 
-  // Inicializar el viewport
   const viewport = new Viewport(app.renderer.events);
   app.stage.addChild(viewport);
 
-  // Contexto global
   const ctx = new GlobalContext(viewport);
 
-  // Obtener menú de capas
-  const layerSelect = document.getElementById("layer-select") as HTMLSelectElement;
+  const layerSelect = document.getElementById(
+    "layer-select",
+  ) as HTMLSelectElement;
   layerSelect.value = layerToName(ctx.getCurrentLayer());
 
-  // Inicializar la barra derecha
   RightBar.getInstance();
 
-  // Lógica de la barra izquierda
   const leftBar = LeftBar.getFrom(document, ctx);
   leftBar.setButtonsByLayer(layerSelect.value);
 
   function resize() {
     requestAnimationFrame(() => {
-      // Obtener medidas de las barras
-      const isStacked = window.innerWidth <= 768; // 🔥 Si es una pantalla chica, los elementos están apilados
-      const leftSize = isStacked ? lBar?.offsetHeight || 0 : lBar?.offsetWidth || 0;
-      const rightSize = isStacked ? rBar?.offsetHeight || 0 : rBar?.offsetWidth || 0;
+      const isStacked = window.innerWidth <= 768;
+      const leftSize = isStacked
+        ? lBar?.offsetHeight || 0
+        : lBar?.offsetWidth || 0;
+      const rightSize = isStacked
+        ? rBar?.offsetHeight || 0
+        : rBar?.offsetWidth || 0;
       const topHeight = tBar?.offsetHeight || 0;
-  
+
       let newWidth = window.innerWidth - (isStacked ? 0 : leftSize + rightSize);
-      let newHeight = window.innerHeight - (isStacked ? leftSize + rightSize : topHeight);
-  
-      // 🔥 Evitar que el tamaño sea demasiado pequeño
+      let newHeight =
+        window.innerHeight - (isStacked ? leftSize + rightSize : topHeight);
+
       newWidth = Math.max(300, newWidth);
       newHeight = Math.max(200, newHeight);
-  
+
       console.log("📏 Resizing canvas to:", newWidth, "x", newHeight);
-  
+
       app.renderer.resize(newWidth, newHeight);
       viewport.resize(newWidth, newHeight);
-  
     });
   }
-  
 
-  // Ejecutar resize al inicio y en cambios de tamaño
   resize();
   window.addEventListener("resize", resize);
 
@@ -281,17 +277,14 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   const canvasWrapper = document.getElementById("canvas-wrapper");
 
   if (canvasWrapper) {
-    // Cuando el mouse entra al canvas, desactiva el scroll
     canvasWrapper.addEventListener("mouseenter", () => {
       document.body.classList.add("no-scroll");
     });
-  
-    // Cuando el mouse sale del canvas, vuelve a habilitar el scroll
+
     canvasWrapper.addEventListener("mouseleave", () => {
       document.body.classList.remove("no-scroll");
     });
   }
-  
 
   console.log("✅ Initialized!");
 })();

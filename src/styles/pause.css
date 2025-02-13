@@ -1,59 +1,59 @@
-/* Botón de pausa */
-/* 🔹 Botón de pausa */
+/* 🔹 Pause button */
 .pause-button {
-  background-color: #228b22;
-  color: #ffffff; /* Texto blanco */
-  border: 0.3vh solid #000000; /* Borde negro */
-  width: 6vh;
+  background-color: #228b22; /* Default green color */
+  color: #ffffff; /* White text for contrast */
+  border: 0.3vh solid #000000; /* Black border */
+  width: 6vh; /* Square button with relative sizing */
   height: 6vh;
-  border-radius: 1vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s ease;
-  box-shadow: 0.4vh 0.4vh 0.8vh rgba(0, 0, 0, 0.4);
-  outline: none; /* Elimina borde de foco */
-  padding: 0; /* Sin padding interno */
-  cursor: pointer; /* Cursor de puntero */
+  border-radius: 1vh; /* Rounded corners */
+  display: flex; /* Flexbox for centering */
+  align-items: center; /* Centers content vertically */
+  justify-content: center; /* Centers content horizontally */
+  transition: background-color 0.3s ease; /* Smooth transition */
+  box-shadow: 0.4vh 0.4vh 0.8vh rgba(0, 0, 0, 0.4); /* Subtle shadow for depth */
+  outline: none; /* Removes focus outline */
+  padding: 0; /* No internal padding */
+  cursor: pointer; /* Pointer cursor for interactivity */
 }
 
+/* 🔹 Alternate pause button (positioned on canvas) */
 .pause-button2 {
-  background-color: #228b22; /* Verde por defecto */
-  color: #ffffff; /* Texto blanco */
-  border: 0.3vh solid #000000; /* Borde negro */
-  padding: 0; /* Sin padding interno */
-  cursor: pointer; /* Cursor de puntero */
-  width: 6vh; /* Tamaño relativo */
+  background-color: #228b22; /* Default green color */
+  color: #ffffff; /* White text */
+  border: 0.3vh solid #000000; /* Black border */
+  padding: 0; /* No internal padding */
+  cursor: pointer; /* Pointer cursor for interactivity */
+  width: 6vh; /* Consistent size */
   height: 6vh;
-  border-radius: 1vh; /* Bordes redondeados */
-  display: flex; /* Centrar contenido */
+  border-radius: 1vh; /* Rounded corners */
+  display: flex; /* Centers content */
   align-items: center;
   justify-content: center;
-  transition: background-color 0.3s ease;
-  position: absolute; /* Sobre el canvas */
-  top: 2vh;
-  left: 2vw;
-  box-shadow: 0.4vh 0.4vh 0.8vh rgba(0, 0, 0, 0.4); /* Sombra sutil */
-  outline: none; /* Elimina borde de foco */
+  transition: background-color 0.3s ease; /* Smooth transition */
+  position: absolute; /* Positioned above the canvas */
+  top: 2vh; /* Offset from the top */
+  left: 2vw; /* Offset from the left */
+  box-shadow: 0.4vh 0.4vh 0.8vh rgba(0, 0, 0, 0.4); /* Subtle shadow */
+  outline: none; /* Removes focus outline */
 }
 
-/* Hover effect */
+/* 🔹 Hover effect */
 .pause-button:hover {
-  background-color: #006400;
+  background-color: #006400; /* Darker green on hover */
 }
 
-/* Active effect */
+/* 🔹 Active (clicked) effect */
 .pause-button:active {
-  background-color: #004d00;
+  background-color: #004d00; /* Even darker green when clicked */
 }
 
-/* Estado pausado */
+/* 🔹 Paused state */
 .pause-button.paused {
-  background-color: #f44336;
+  background-color: #f44336; /* Red when paused */
 }
 
-/* Icono dentro del botón */
+/* 🔹 Icon inside the button */
 .pause-button img {
-  width: 60%;
+  width: 60%; /* Icon takes 60% of the button */
   height: 60%;
 }

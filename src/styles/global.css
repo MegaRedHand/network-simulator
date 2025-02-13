@@ -1,72 +1,74 @@
 /* global.css */
 
-/* Estilos generales */
+/* 🔹 General styles */
 html,
 body {
-  margin: 0;
-  padding: 0;
-  width: 100vw; /* Ocupa todo el ancho del viewport */
-  height: 100vh; /* Ocupa todo el alto del viewport */
-  overflow: hidden; /* Evita scroll innecesario */
-  background-color: #f2f2f2;
+  margin: 0; /* Removes default margin */
+  padding: 0; /* Removes default padding */
+  width: 100vw; /* Takes up the full viewport width */
+  height: 100vh; /* Takes up the full viewport height */
+  overflow: hidden; /* Prevents unnecessary scrolling */
+  background-color: #f2f2f2; /* Light gray background */
 }
 
-/* Cuando el canvas está en foco, el scroll se desactiva */
+/* 🔹 Disable scrolling when the canvas is focused */
 body.no-scroll {
-  overflow: hidden !important;
+  overflow: hidden !important; /* Prevents scrolling */
 }
 
-
-/* SVGs ocupan todo el espacio disponible dentro de su contenedor */
+/* 🔹 SVGs take up the full available space */
 svg {
   width: 100%;
   height: 100%;
 }
 
-/* ✅ Barra de desplazamiento personalizada */
+/* ✅ Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 0.6rem; /* Usamos `rem` para escalabilidad */
+  width: 0.6rem; /* Uses `rem` for scalability */
 }
 
-/* Fondo del scrollbar */
+/* Scrollbar track background */
 ::-webkit-scrollbar-track {
-  background: #e0e0e0; /* Color más neutro */
+  background: #e0e0e0; /* Neutral background */
 }
 
-/* Parte desplazable */
+/* Scrollbar thumb (draggable part) */
 ::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 0.3rem;
+  background: #888; /* Medium gray */
+  border-radius: 0.3rem; /* Slight rounding for a softer look */
 }
 
-/* Hover en scrollbar */
+/* Scrollbar hover effect */
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #555; /* Darker gray for contrast */
 }
 
-/* ✅ Contenedor principal con flexbox para estructurar la interfaz */
+/* ✅ Main container using flexbox for layout structure */
 .container {
   display: flex;
   flex-direction: row;
-  height: 100vh; /* Todo el viewport */
-  width: 100vw;
-  overflow: hidden; /* Evita desbordamientos en pantallas chicas */
+  height: 100vh; /* Full viewport height */
+  width: 100vw; /* Full viewport width */
+  overflow: hidden; /* Prevents overflow on small screens */
 }
 
+/* 🔹 Responsive adjustments for screens smaller than 768px */
 @media (max-width: 768px) {
-  /* 🔹 Contenedor principal */
+  /* 🔹 Main container adjustments */
   .container {
     display: flex !important;
     flex-direction: column !important;
     width: 100vw !important;
     height: 100vh !important;
-    overflow-y: auto !important; /* 🔥 Habilita scroll si es necesario */
+    overflow-y: auto !important; /* 🔥 Enables scrolling if necessary */
   }
 
-  html, body {
+  /* 🔹 Ensure body and HTML allow scrolling */
+  html,
+  body {
     width: 100vw !important;
     height: 100vh !important;
-    overflow-y: auto !important; /* 🔥 Permite desplazamiento */
+    overflow-y: auto !important; /* 🔥 Allows scrolling */
   }
 
   /* 🔹 Top Bar */
@@ -81,7 +83,7 @@ svg {
     flex-shrink: 0 !important;
   }
 
-  /* 🔹 Left Bar: Ocupar TODO el ancho */
+  /* 🔹 Left Bar: Full width on small screens */
   .left-bar {
     display: flex !important;
     flex-direction: row !important;
@@ -95,7 +97,7 @@ svg {
     gap: 0 !important;
   }
 
-  /* 🔹 Ajustar botones de la Left Bar */
+  /* 🔹 Adjust buttons in the Left Bar */
   .icon-button {
     flex: 1 !important;
     max-width: 20% !important;
@@ -103,42 +105,41 @@ svg {
     margin: 0 0.5rem !important;
   }
 
-  /* 🔹 Canvas: Ahora sí es clickeable y ocupa bien el espacio */
+  /* 🔹 Make the canvas clickable and occupy the right space */
   .canvas-container {
     flex-grow: 1 !important;
     width: 100vw !important;
-    height: calc(100vh - 18vh) !important; /* 🔥 Ajuste dinámico */
+    height: calc(100vh - 18vh) !important; /* 🔥 Dynamic adjustment */
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
     background-color: #e0e0e0 !important;
     position: relative !important;
     z-index: 1 !important;
-    pointer-events: auto !important; /* 🔥 Asegura que se pueda hacer click */
-    overflow: hidden !important; /* 🔥 Evita que se desborde */
+    pointer-events: auto !important; /* 🔥 Ensures interactivity */
+    overflow: hidden !important; /* 🔥 Prevents overflow */
   }
 
-  /* 🔹 Asegurar que el canvas en sí sea CLICKEABLE */
-  #canvas-wrapper, #canvas {
+  /* 🔹 Ensure the canvas itself is clickable */
+  #canvas-wrapper,
+  #canvas {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
     height: 100% !important;
     display: flex !important;
-    pointer-events: auto !important; /* 🔥 Permite interacción */
+    pointer-events: auto !important; /* 🔥 Allows interaction */
   }
 
-  /* 🔹 Right Bar (Información) al final SIN RECORTES */
-  /* 🔹 Right Bar: Se ajusta abajo del canvas y ocupa el ancho */
+  /* 🔹 Right Bar (Information) at the bottom without cropping */
+  /* 🔹 Right Bar adjusts below the canvas and takes full width */
   .right-bar {
-    width: auto !important; /* 🔥 Ocupa todo el ancho */
-    height: auto !important; /* 🔥 Se adapta al contenido */
-    background-color: white !important; /* 🔥 Fondo blanco */
+    width: auto !important; /* 🔥 Takes full width */
+    height: auto !important; /* 🔥 Adapts to content */
+    background-color: white !important; /* 🔥 White background */
     flex-shrink: 0 !important;
     padding: 1rem !important;
-    overflow-y: auto !important; /* 🔥 Permitir scroll si el contenido es grande */
+    overflow-y: auto !important; /* 🔥 Allows scrolling for large content */
   }
-
 }
-

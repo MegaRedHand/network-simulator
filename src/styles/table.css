@@ -1,67 +1,71 @@
-/* table.css - Tabla en la barra lateral */
+/* table.css - Table in the sidebar */
 .toggle-table-container {
-  width: 100%;
-  overflow-x: auto; /* Permite desplazamiento horizontal si es necesario */
+  width: 100%; /* Ensures the container takes full width */
+  overflow-x: auto; /* Enables horizontal scrolling if needed */
 }
 
 .toggle-table-container table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 1rem;
-  text-align: center;
-  transition: opacity 0.5s ease-out;
-  border-radius: 1rem;
-  overflow: hidden;
-  box-shadow: 0 0.5vh 1vh rgba(0, 0, 0, 0.1);
-  table-layout: auto; /* Evita que las columnas se expandan demasiado */
+  width: 100%; /* Makes the table span the full container width */
+  border-collapse: collapse; /* Removes spacing between table borders */
+  font-size: 1rem; /* Sets a readable font size */
+  text-align: center; /* Centers text in all cells */
+  transition: opacity 0.5s ease-out; /* Smooth fade-in effect */
+  border-radius: 1rem; /* Softens table edges */
+  overflow: hidden; /* Prevents content from overflowing rounded corners */
+  box-shadow: 0 0.5vh 1vh rgba(0, 0, 0, 0.1); /* Adds subtle shadow for depth */
+  table-layout: auto; /* Prevents columns from stretching too much */
 }
 
-/* Asegura que las columnas no se desborden */
+/* Ensures columns do not overflow */
 .toggle-table-container th,
 .toggle-table-container td {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  white-space: normal;
+  word-wrap: break-word; /* Wraps long words */
+  overflow-wrap: break-word; /* Ensures proper text wrapping */
+  white-space: normal; /* Allows text to wrap naturally */
 }
 
 .toggle-table-container th {
-  background-color: #333;
-  color: white;
-  padding: 1vh;
-  border: 0.2vh solid #ddd;
-  text-align: center;
-  width: 33%;
-  box-sizing: border-box;
+  background-color: #333; /* Dark background for contrast */
+  color: white; /* White text for readability */
+  padding: 1vh; /* Adds spacing inside header cells */
+  border: 0.2vh solid #ddd; /* Adds subtle borders */
+  text-align: center; /* Centers text */
+  width: 33%; /* Distributes column width evenly */
+  box-sizing: border-box; /* Ensures width includes padding and borders */
 }
 
 .toggle-table-container td {
-  padding: 1vh;
-  border: 0.2vh solid #ddd;
-  text-align: center;
-  transition: background-color 0.3s ease-in-out;
+  padding: 1vh; /* Adds spacing inside table cells */
+  border: 0.2vh solid #ddd; /* Adds subtle borders */
+  text-align: center; /* Centers text */
+  transition: background-color 0.3s ease-in-out; /* Smooth hover effect */
 }
 
+/* Hover effect for table cells */
 .toggle-table-container td:hover {
-  background-color: #f0f0f0;
-  cursor: pointer;
+  background-color: #f0f0f0; /* Light gray on hover */
+  cursor: pointer; /* Indicates interactivity */
 }
 
+/* Alternating row colors for better readability */
 .toggle-table-container tr:nth-child(even) {
-  background-color: #f9f9f9;
+  background-color: #f9f9f9; /* Light gray for even rows */
 }
 
 .toggle-table-container tr:nth-child(odd) {
-  background-color: #fff;
+  background-color: #fff; /* White for odd rows */
 }
 
+/* Table caption styling */
 .toggle-table-container caption {
-  font-size: 1.4rem;
-  font-weight: bold;
-  margin-bottom: 1vh;
-  color: #333;
-  text-align: center;
+  font-size: 1.4rem; /* Makes caption slightly larger */
+  font-weight: bold; /* Emphasizes caption */
+  margin-bottom: 1vh; /* Adds spacing below the caption */
+  color: #333; /* Dark text for contrast */
+  text-align: center; /* Centers caption */
 }
 
+/* Hides table when the 'hidden' class is applied */
 .toggle-table-container table.hidden {
   display: none;
 }

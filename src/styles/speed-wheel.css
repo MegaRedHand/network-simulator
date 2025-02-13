@@ -1,84 +1,86 @@
-/* Contenedor del control de velocidad */
+/* 🔹 Speed control container */
 .wheel-container {
-  display: flex;
-  align-items: center;
-  gap: 1vw;
-  background-color: #333333;
-  padding: 0.8vh 1.5vw; /* Aumenta ligeramente el padding */
-  border-radius: 0.5rem;
-  z-index: 1000;
+  display: flex; /* Uses flexbox for alignment */
+  align-items: center; /* Vertically centers elements */
+  gap: 1vw; /* Creates space between elements */
+  background-color: #333333; /* Dark background for contrast */
+  padding: 0.8vh 1.5vw; /* Slightly increases padding for spacing */
+  border-radius: 0.5rem; /* Softens corners */
+  z-index: 1000; /* Ensures it stays above other elements */
 }
 
-/* Texto de etiqueta de velocidad */
+/* 🔹 Speed label text */
 .wheel-label {
-  font-size: 1rem;
-  color: white;
-  white-space: nowrap;
-  margin: 0;
+  font-size: 1rem; /* Readable font size */
+  color: white; /* White text for contrast */
+  white-space: nowrap; /* Prevents text from wrapping */
+  margin: 0; /* Removes default margin */
 }
 
-/* Contenedor del slider */
+/* 🔹 Slider container */
 .circular-slider {
-  position: relative;
-  width: 10vw; /* Ancho relativo */
-  height: 3vh; /* Altura relativa */
-  margin: 0;
+  position: relative; /* Positions slider elements correctly */
+  width: 10vw; /* Relative width for responsiveness */
+  height: 3vh; /* Relative height for responsiveness */
+  margin: 0; /* Removes default margin */
 }
 
-/* Slider input */
+/* 🔹 Slider input */
 .circular-slider input[type="range"] {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: none;
-  -webkit-appearance: none;
-  cursor: pointer;
+  position: absolute; /* Positions input within container */
+  width: 100%; /* Full width for smooth interaction */
+  height: 100%; /* Full height */
+  background: none; /* Removes default background */
+  -webkit-appearance: none; /* Removes default styling on WebKit browsers */
+  cursor: pointer; /* Changes cursor for interactivity */
 }
 
-/* Estilo del pulgar (thumb) del slider */
+/* 🔹 Thumb (slider handle) styling for WebKit browsers */
 .circular-slider input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 1.5vh;
-  height: 1.5vh;
-  border-radius: 50%;
-  background: #007bff;
-  border: 0.2vh solid #fff;
-  box-shadow: 0 0 0.5vh rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-  margin-top: -0.5vh;
+  -webkit-appearance: none; /* Removes default styling */
+  width: 1.5vh; /* Defines size of the thumb */
+  height: 1.5vh; /* Ensures a circular shape */
+  border-radius: 50%; /* Makes the thumb round */
+  background: #007bff; /* Blue color for visibility */
+  border: 0.2vh solid #fff; /* White border for contrast */
+  box-shadow: 0 0 0.5vh rgba(0, 0, 0, 0.2); /* Adds subtle shadow */
+  cursor: pointer; /* Ensures interactive behavior */
+  margin-top: -0.5vh; /* Centers thumb on track */
 }
 
-/* Estilo de la pista (track) del slider */
+/* 🔹 Track (slider bar) styling for WebKit browsers */
 .circular-slider input[type="range"]::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 0.5vh;
-  background: #555;
-  border-radius: 0.25vh;
+  width: 100%; /* Full width */
+  height: 0.5vh; /* Defines track height */
+  background: #555; /* Dark gray background */
+  border-radius: 0.25vh; /* Softens track edges */
 }
 
+/* 🔹 Thumb styling for Firefox */
 .circular-slider input[type="range"]::-moz-range-thumb {
-  width: 1.5vh;
-  height: 1.5vh;
-  border-radius: 50%;
-  background: #007bff;
-  border: 0.2vh solid #fff;
-  box-shadow: 0 0 0.5vh rgba(0, 0, 0, 0.2);
-  cursor: pointer;
+  width: 1.5vh; /* Matches WebKit thumb size */
+  height: 1.5vh; /* Ensures circular shape */
+  border-radius: 50%; /* Makes the thumb round */
+  background: #007bff; /* Consistent blue color */
+  border: 0.2vh solid #fff; /* White border for contrast */
+  box-shadow: 0 0 0.5vh rgba(0, 0, 0, 0.2); /* Adds subtle shadow */
+  cursor: pointer; /* Ensures interactive behavior */
 }
 
+/* 🔹 Track styling for Firefox */
 .circular-slider input[type="range"]::-moz-range-track {
-  width: 100%;
-  height: 0.5vh;
-  background: #444;
-  border-radius: 0.25vh;
+  width: 100%; /* Full width */
+  height: 0.5vh; /* Defines track height */
+  background: #444; /* Slightly darker track color */
+  border-radius: 0.25vh; /* Softens track edges */
 }
 
-/* Valor de velocidad */
+/* 🔹 Speed value display */
 .value-display {
-  font-size: 1rem;
-  color: white;
-  margin: 0;
-  white-space: nowrap;
-  min-width: 3vw;
-  text-align: right;
+  font-size: 1rem; /* Readable font size */
+  color: white; /* White text for contrast */
+  margin: 0; /* Removes default margin */
+  white-space: nowrap; /* Prevents text wrapping */
+  min-width: 3vw; /* Ensures minimum width */
+  text-align: right; /* Aligns text to the right */
 }

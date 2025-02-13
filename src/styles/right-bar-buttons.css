@@ -1,127 +1,135 @@
-/* right-bar-buttons.css - Botones de la barra lateral */
+/* right-bar-buttons.css - Sidebar buttons */
 .right-bar-button {
-  background-color: #007bff;
-  border: none;
-  color: white;
-  padding: 1vh 2vw;
-  text-align: center;
-  text-decoration: none;
-  display: block;
-  font-size: 1rem;
-  margin: 1vh 0;
-  cursor: pointer;
-  border-radius: 0.5rem;
-  width: 100%;
-  box-sizing: border-box;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  background-color: #007bff; /* Primary blue background */
+  border: none; /* Removes default border */
+  color: white; /* White text for contrast */
+  padding: 1vh 2vw; /* Balanced padding */
+  text-align: center; /* Centers text */
+  text-decoration: none; /* Removes default link styling */
+  display: block; /* Ensures full width */
+  font-size: 1rem; /* Readable font size */
+  margin: 1vh 0; /* Adds vertical spacing between buttons */
+  cursor: pointer; /* Changes cursor to pointer for interactivity */
+  border-radius: 0.5rem; /* Rounded corners */
+  width: 100%; /* Full width button */
+  box-sizing: border-box; /* Ensures padding and borders are included in width */
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease; /* Smooth hover effect */
 }
 
+/* 🔹 Hover effect for general buttons */
 .right-bar-button:hover {
-  background-color: #162a6d;
-  transform: scale(1.02);
+  background-color: #162a6d; /* Darker blue on hover */
+  transform: scale(1.02); /* Slight zoom effect */
 }
 
+/* 🔹 Delete button styling */
 .right-bar-delete-button {
-  background-color: #f44336;
+  background-color: #f44336; /* Red background for delete action */
 }
 
 .right-bar-delete-button:hover {
-  background-color: #d32f2f;
+  background-color: #d32f2f; /* Darker red on hover */
 }
 
-/* Botón desplegable con flecha */
+/* 🔹 Toggle button with dropdown arrow */
 .right-bar-toggle-button {
-  background-color: #007bff;
+  background-color: #007bff; /* Matches general buttons */
   border: none;
   color: white;
-  padding: 1vh 2vw;
+  padding: 1vh 2vw; /* Same padding as regular buttons */
   text-align: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: flex; /* Flexbox for better alignment */
+  justify-content: center; /* Centers text */
+  align-items: center; /* Vertically aligns elements */
   font-size: 1rem;
   margin: 1vh 0;
   cursor: pointer;
   border-radius: 0.5rem;
   width: 100%;
   box-sizing: border-box;
-  position: relative;
+  position: relative; /* Needed for positioning arrow */
 }
 
+/* 🔹 Dropdown arrow styling */
 .right-bar-toggle-button::after {
-  content: "";
+  content: ""; /* Adds an empty element for the arrow */
   display: inline-block;
   position: absolute;
-  right: 2vw;
+  right: 2vw; /* Positions the arrow */
   width: 0;
   height: 0;
-  border-left: 0.6rem solid transparent;
+  border-left: 0.6rem solid transparent; /* Creates arrow effect */
   border-right: 0.6rem solid transparent;
-  border-top: 0.6rem solid white;
-  transition: transform 0.3s ease;
+  border-top: 0.6rem solid white; /* White arrow pointing down */
+  transition: transform 0.3s ease; /* Smooth transition for opening */
 }
 
+/* 🔹 Rotate arrow when button is active */
 .right-bar-toggle-button.open::after {
-  transform: rotate(180deg);
+  transform: rotate(180deg); /* Rotates arrow upwards */
 }
 
-/* Container for packet options */
+/* 🔹 Container for packet options */
 .packet-options-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8vh;
-  width: 100%;
-  margin-top: 0.8vh;
+  display: flex; /* Uses flexbox for layout */
+  flex-direction: column; /* Stacks elements vertically */
+  gap: 0.8vh; /* Adds spacing between elements */
+  width: 100%; /* Ensures full width */
+  margin-top: 0.8vh; /* Adds spacing above */
 }
 
-/* Style for labels in the right bar */
+/* 🔹 Label styling in the right sidebar */
 .right-bar-label {
-  font-weight: bold;
-  margin-bottom: 0.2vh;
-  font-size: 0.9rem;
-  color: #333333;
+  font-weight: bold; /* Makes labels stand out */
+  margin-bottom: 0.2vh; /* Adds a small spacing */
+  font-size: 0.9rem; /* Slightly smaller font */
+  color: #333333; /* Dark gray for readability */
 }
 
-/* Style for dropdowns (selectors) */
+/* 🔹 Dropdown (select) styling */
 .right-bar-select {
-  width: 100%;
-  padding: 0.6vh 0.8vw;
-  font-size: 1rem;
-  border-radius: 0.4rem;
-  border: 0.1rem solid #cccccc;
-  background-color: #f1f1f1;
-  cursor: pointer;
+  width: 100%; /* Full width */
+  padding: 0.6vh 0.8vw; /* Balanced padding */
+  font-size: 1rem; /* Readable font size */
+  border-radius: 0.4rem; /* Rounded corners */
+  border: 0.1rem solid #cccccc; /* Light gray border */
+  background-color: #f1f1f1; /* Light background */
+  cursor: pointer; /* Changes cursor on hover */
 }
 
+/* 🔹 Focus effect for dropdown */
 .right-bar-select:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0.4vh rgba(0, 123, 255, 0.4);
+  outline: none; /* Removes default focus outline */
+  border-color: #007bff; /* Highlights selection */
+  box-shadow: 0 0 0.4vh rgba(0, 123, 255, 0.4); /* Subtle glow */
 }
 
-/* Optional: Style to make the entire dropdown area compact */
+/* 🔹 Compact styling for dropdown area */
 .dropdown-container {
-  margin-bottom: 0.8vh;
+  margin-bottom: 0.8vh; /* Adds spacing below dropdown */
 }
 
+/* 🔹 Responsive adjustments for smaller screens */
 @media (max-width: 768px) {
-  /* 🔹 Botones en móvil: más compactos */
+  /* 🔹 More compact buttons on mobile */
   .right-bar-button,
   .right-bar-toggle-button {
-    padding: 0.6vh 2vw !important; /* 🔥 Menos padding */
-    font-size: 0.85rem !important; /* 🔥 Texto más compacto */
-    margin: 0.5vh 0 !important; /* 🔥 Menos separación entre botones */
+    padding: 0.6vh 2vw !important; /* 🔥 Reduced padding */
+    font-size: 0.85rem !important; /* 🔥 Smaller text */
+    margin: 0.5vh 0 !important; /* 🔥 Less spacing between buttons */
   }
 
-  /* 🔹 Ajustar botón de despliegue */
+  /* 🔹 Adjust dropdown toggle button arrow */
   .right-bar-toggle-button::after {
-    right: 1vw !important; /* 🔥 Ajusta la flecha */
+    right: 1vw !important; /* 🔥 Adjusts arrow position */
     border-left: 0.5rem solid transparent;
     border-right: 0.5rem solid transparent;
     border-top: 0.5rem solid white;
   }
 
-  /* 🔹 Dropdowns más compactos */
+  /* 🔹 Make dropdowns more compact */
   .right-bar-select {
     padding: 0.4vh 1vw !important;
     font-size: 0.85rem !important;

@@ -1,24 +1,26 @@
-/* right-bar.css - Barra lateral derecha */
+/* right-bar.css - Right sidebar */
 .right-bar {
-  flex: 0 0 clamp(25vw, 25%, 40vw);
-  background-color: #f1f1f1;
-  box-shadow: -0.2vw 0 0.5vw rgba(0, 0, 0, 0.2);
-  padding: 3vh;
-  overflow-y: auto;
-  max-height: 90vh;
+  flex: 0 0 clamp(25vw, 25%, 40vw); /* Sets flexible width with a range */
+  background-color: #f1f1f1; /* Light gray background for contrast */
+  box-shadow: -0.2vw 0 0.5vw rgba(0, 0, 0, 0.2); /* Adds subtle shadow for depth */
+  padding: 3vh; /* Adds internal spacing */
+  overflow-y: auto; /* Enables vertical scrolling if needed */
+  max-height: 90vh; /* Limits the maximum height */
 }
 
+/* 🔹 Sidebar title */
 .right-bar h2 {
-  text-align: center;
-  margin: 0;
-  padding-bottom: 2vh;
-  font-size: 2rem;
-  font-weight: bold;
-  color: #333;
+  text-align: center; /* Centers the title */
+  margin: 0; /* Removes default margin */
+  padding-bottom: 2vh; /* Adds spacing below the title */
+  font-size: 2rem; /* Increases font size */
+  font-weight: bold; /* Emphasizes title */
+  color: #333; /* Dark gray text for readability */
 }
 
+/* 🔹 Information content */
 .info-content {
-  font-size: 5rem;
-  font-weight: bold;
-  color: #333;
+  font-size: 5rem; /* Large font for emphasis */
+  font-weight: bold; /* Makes text stand out */
+  color: #333; /* Dark gray text */
 }

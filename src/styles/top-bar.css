@@ -30,9 +30,9 @@
 
 /* 🔹 Centered application title */
 #app-title {
-  position: absolute; /* Ensures absolute positioning */
-  left: 50%; /* Moves the title to the middle */
-  transform: translateX(-50%); /* Centers it perfectly */
+  position: absolute; /* Enables absolute positioning */
+  left: 50%; /* Moves the title to the center */
+  transform: translateX(-50%); /* Perfectly centers the title */
   font-size: 2rem; /* Increases font size for better visibility */
   font-weight: bold; /* Makes the title stand out */
   color: white; /* White text for contrast */
@@ -54,9 +54,9 @@
   border-radius: 0.5rem; /* Rounds the button corners */
   font-size: 1rem; /* Relative font size */
   text-align: center;
-  width: auto; /* Allow flexibility */
-  min-width: 4vw; /* Ensure buttons have a minimum width */
-  max-width: 5vw; /* Prevent them from being too large */
+  width: auto; /* Allows flexibility */
+  min-width: 4vw; /* Ensures buttons have a minimum width */
+  max-width: 5vw; /* Prevents them from becoming too large */
 }
 
 /* Hover effect for general buttons */
@@ -66,26 +66,26 @@
   background-color: #162a6d; /* Darker blue on hover */
 }
 
-/* 🔹 Ajuste responsivo */
+/* 🔹 Responsive adjustment */
 @media (max-width: 768px) {
   #top-bar {
-    flex-wrap: wrap; /* Permite que los elementos se acomoden en dos líneas */
+    flex-wrap: wrap; /* Allows elements to arrange into two lines */
     justify-content: space-between;
   }
 
   #app-title {
-    position: relative;
+    position: relative; /* Adjusts positioning for small screens */
     transform: none;
     left: auto;
-    order: -1; /* Mueve el título a la primera línea */
+    order: -1; /* Moves the title to the first line */
     width: 100%;
-    text-align: center;
+    text-align: center; /* Centers the title */
   }
 
   .new-button,
   .save-button,
   .load-button {
-    flex: none; /* Evita que los botones se estiren */
+    flex: none; /* Prevents buttons from stretching */
     min-width: 10vw;
     max-width: 12vw;
   }

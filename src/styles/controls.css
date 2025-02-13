@@ -1,52 +1,57 @@
-/* 🔹 Contenedor de controles en la izquierda */
+/* 🔹 Left controls container */
 #left-controls {
-    display: flex;
-    align-items: center;
-    gap: 1vw;
-    flex-wrap: nowrap; /* Evita que se amontonen en varias líneas */
-    justify-content: flex-start; /* Mantiene la alineación izquierda */
-    position: absolute;
-    top: 1.5vh;
-    left: 2vw;
+  display: flex; /* Uses flexbox for layout */
+  align-items: center; /* Vertically aligns elements */
+  gap: 1vw; /* Adds spacing between elements */
+  flex-wrap: nowrap; /* Prevents wrapping into multiple lines */
+  justify-content: flex-start; /* Keeps alignment to the left */
+  position: absolute; /* Positions element absolutely */
+  top: 1.5vh; /* Places it slightly below the top */
+  left: 2vw; /* Positions it from the left */
 }
 
+/* 🔹 Right controls container */
 #right-controls {
-    display: flex;
-    align-items: center;
-    gap: 6vw;
-    flex-wrap: wrap; /* Evita que los elementos se superpongan */
-    justify-content: flex-end;
-    max-width: 90vw; /* Evita que se salgan del viewport */
-    position: absolute;
-    top: 1.5vh;
-    right: 2vw;
+  display: flex; /* Uses flexbox */
+  align-items: center; /* Centers elements vertically */
+  gap: 6vw; /* Adds a large space between elements */
+  flex-wrap: wrap; /* Allows wrapping to prevent overlapping */
+  justify-content: flex-end; /* Aligns elements to the right */
+  max-width: 90vw; /* Ensures controls do not exceed viewport width */
+  position: absolute; /* Positions element absolutely */
+  top: 1.5vh; /* Aligns it near the top */
+  right: 2vw; /* Positions it from the right */
+}
+
+/* 🔹 Adjustments for small screens */
+@media (max-width: 768px) {
+  #left-controls {
+    gap: 1vw; /* Keeps spacing compact */
+    flex-wrap: wrap; /* Allows wrapping if space is limited */
   }
 
-/* 🔹 Ajuste en pantallas pequeñas */
-@media (max-width: 768px) {
-    #left-controls {
-        gap: 1vw;
-        flex-wrap: wrap; /* Permite que se ajusten si el espacio es muy pequeño */
-    }
+  /* 🔹 Smaller pause button on small screens */
+  .pause-button {
+    width: 5vh;
+    height: 5vh;
+  }
 
-    .pause-button {
-        width: 5vh;
-        height: 5vh;
-    }
+  /* 🔹 Smaller undo and redo buttons */
+  .undo-button,
+  .redo-button {
+    width: 4.5vh;
+    height: 4.5vh;
+  }
 
-    .undo-button,
-    .redo-button {
-        width: 4.5vh;
-        height: 4.5vh;
-    }
+  /* 🔹 Undo/Redo container adjustments */
+  .undo-redo-container {
+    margin-left: 1vw; /* Adds slight left margin */
+    flex-wrap: nowrap; /* Prevents elements from rearranging */
+  }
 
-    .undo-redo-container {
-        margin-left: 1vw;
-        flex-wrap: nowrap; /* No permite que se desordenen */
-    }
-
-    #right-controls {
-        gap: 3vw; /* Reduce el espacio entre controles */
-        flex-wrap: wrap; /* Permite ajuste en pantallas pequeñas */
-    }
+  /* 🔹 Right controls adjustments */
+  #right-controls {
+    gap: 3vw; /* Reduces spacing between controls */
+    flex-wrap: wrap; /* Allows wrapping for better fit */
+  }
 }

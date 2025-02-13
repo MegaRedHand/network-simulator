@@ -1,29 +1,29 @@
-/* 🔹 Contenedor del Canvas */
+/* 🔹 Canvas container */
 .canvas-container {
-  flex: 1;
-  display: flex;
-  position: relative;
-  background-color: #a09f9f;
-  overflow: hidden;
-  min-height: 0;
-  width: 100%;
+  flex: 1; /* Allows the canvas to take up all available space */
+  display: flex; /* Uses flexbox for layout */
+  position: relative; /* Enables absolute positioning for child elements */
+  background-color: #a09f9f; /* Neutral background color */
+  overflow: hidden; /* Prevents overflow issues */
+  min-height: 0; /* Ensures flexibility in height */
+  width: 100%; /* Takes full width of the parent container */
 }
 
-/* 🔹 Wrapper para asegurar que el canvas ocupe todo el espacio */
+/* 🔹 Wrapper to ensure the canvas occupies all available space */
 #canvas-wrapper {
-  position: absolute;
+  position: absolute; /* Positions the wrapper to fill the container */
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
+  width: 100%; /* Ensures full width */
+  height: 100%; /* Ensures full height */
+  display: flex; /* Uses flexbox for potential child alignment */
 }
 
-/* 🔹 Canvas ocupando todo el espacio */
+/* 🔹 Canvas occupying the entire space */
 #canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-  min-width: 1px !important; /* 🔥 Evita valores negativos */
-  min-height: 1px !important;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  display: block; /* Ensures it behaves as a block element */
+  min-width: 1px !important; /* 🔥 Prevents negative values */
+  min-height: 1px !important; /* 🔥 Ensures a valid minimum size */
 }
