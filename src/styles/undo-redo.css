@@ -2,7 +2,7 @@
 .undo-redo-container {
   display: flex; /* Uses flexbox for alignment */
   align-items: center; /* Vertically centers elements */
-  gap: 1vw; /* Uniform space between buttons */
+  gap: 0.3vw; /* Uniform space between buttons */
   margin-left: 2vw; /* Separates Undo and Redo from Pause */
 }
 
@@ -10,8 +10,8 @@
 .undo-button,
 .redo-button {
   cursor: pointer; /* Changes cursor to pointer for interactivity */
-  width: 5vh; /* Sets a square size based on viewport height */
-  height: 5vh; /* Ensures equal width and height */
+  width: 7vh; /* Sets a square size based on viewport height */
+  height: 7vh; /* Ensures equal width and height */
   border-radius: 50%; /* Makes the buttons circular */
   display: flex; /* Uses flexbox for centering */
   align-items: center; /* Centers the icon vertically */
