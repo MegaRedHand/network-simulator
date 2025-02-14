@@ -100,7 +100,8 @@ class EchoMessage extends IcmpPacket {
     }
     if (layer == Layer.Transport) {
       return {
-        Note: "ICMP does not use the Transport layer.",
+        Warning:
+          "ICMP operates directly on top of IP at the Network layer, bypassing the Transport layer (TCP/UDP). This is because ICMP is primarily used for network diagnostics and error reporting, not for end-to-end data transport.",
       };
     }
     if (layer == Layer.Network) {

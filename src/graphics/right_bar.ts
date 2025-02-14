@@ -377,6 +377,21 @@ export function createToggleInfo(
       pre.textContent = JSON.stringify(value, null, 2); // Pretty-print JSON
       listItem.innerHTML = `<strong>${key}:</strong>`;
       listItem.appendChild(pre);
+    } else if (key === "Warning") {
+      const warningSign = document.createElement("div");
+      warningSign.classList.add("warning-sign");
+
+      const warningTitle = document.createElement("h3");
+      warningTitle.classList.add("warning-title");
+      warningTitle.textContent = key;
+
+      const warningMessage = document.createElement("p");
+      warningMessage.classList.add("warning-message");
+      warningMessage.textContent = String(value);
+
+      warningSign.appendChild(warningTitle);
+      warningSign.appendChild(warningMessage);
+      listItem.appendChild(warningSign);
     } else {
       listItem.innerHTML = `<strong>${key}:</strong> ${value}`;
     }

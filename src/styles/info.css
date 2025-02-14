@@ -39,3 +39,35 @@
 .toggle-info-container .hidden {
   display: none;
 }
+
+/* Style for the warning sign container */
+.warning-sign {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #ffcc3d;
+  border-radius: 8px;
+  margin: 10px 0;
+  overflow: hidden;
+  max-width: 300px;
+}
+
+/* Title style for the warning */
+.warning-sign .warning-title {
+  background-color: #ffcc3d;
+  color: #000;
+  font-weight: bold;
+  font-size: 20px;
+  padding: 5px;
+  margin: 0;
+  text-align: center;
+  width: 100%;
+}
+
+/* Message style for the warning */
+.warning-sign .warning-message {
+  padding: 10px;
+  margin: 0;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1.4;
+}
