@@ -1,5 +1,5 @@
 import { Viewport } from "./graphics/viewport";
-import { DataGraph } from "./types/graphs/datagraph";
+import { DataGraph, isNetworkNode } from "./types/graphs/datagraph";
 import { ViewGraph } from "./types/graphs/viewgraph";
 import {
   loadFromLocalStorage,
@@ -132,9 +132,11 @@ export class GlobalContext {
   private setIpGenerator() {
     let maxIp = IpAddress.parse("10.0.0.0");
     this.datagraph.getDevices().forEach((device) => {
-      const ip = IpAddress.parse(device.ip);
-      if (maxIp.octets < ip.octets) {
-        maxIp = ip;
+      if (isNetworkNode(device)) {
+        const ip = IpAddress.parse(device.ip);
+        if (maxIp.octets < ip.octets) {
+          maxIp = ip;
+        }
       }
     });
     // TODO: we should use IpAddress instead of string here and in Datagraph

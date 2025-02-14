@@ -1,5 +1,5 @@
 import { IpAddress } from "../../packets/ip";
-import { GraphNode } from "../graphs/datagraph";
+import { GraphNode, isNetworkNode } from "../graphs/datagraph";
 import { DeviceId } from "../graphs/datagraph";
 import { ViewGraph } from "../graphs/viewgraph";
 import { Device, DeviceType } from "./device";
@@ -17,8 +17,13 @@ export function createDevice(
   viewgraph: ViewGraph,
 ): Device {
   const position: { x: number; y: number } = deviceInfo.node;
-  const ip = IpAddress.parse(deviceInfo.node.ip);
-  const mask = IpAddress.parse(deviceInfo.node.mask);
+  let ip: IpAddress;
+  let mask: IpAddress;
+
+  if (isNetworkNode(deviceInfo.node)) {
+    ip = IpAddress.parse(deviceInfo.node.ip);
+    mask = IpAddress.parse(deviceInfo.node.mask);
+  }
 
   switch (deviceInfo.node.type) {
     case DeviceType.Router:

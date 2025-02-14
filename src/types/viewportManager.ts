@@ -13,6 +13,7 @@ import {
   RemoveEdgeMove,
 } from "./undo-redo";
 import { SpeedMultiplier } from "./devices/speedMultiplier";
+import { Viewport } from "pixi-viewport";
 
 type Selectable = Device | Edge | Packet;
 
@@ -118,21 +119,29 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-// Function to add a device at the center of the viewport
-export function addDevice(ctx: GlobalContext, type: DeviceType) {
-  console.log(`Entered addDevice with ${type}`);
-  const viewgraph = ctx.getViewGraph();
-  const datagraph = ctx.getDataGraph();
+function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType) {
   const viewport = ctx.getViewport();
-
   // Get the center coordinates of the world after zoom
   const { x, y } = viewport.toWorld(
     viewport.screenWidth / 2,
     viewport.screenHeight / 2,
   );
-
+  if (type == DeviceType.Switch) {
+    return { x, y, type };
+  }
   const { ip, mask } = ctx.getNextIp();
-  const id = datagraph.addNewDevice({ x, y, type, ip, mask });
+  return { x, y, type, ip, mask };
+}
+
+// Function to add a device at the center of the viewport
+export function addDevice(ctx: GlobalContext, type: DeviceType) {
+  console.log(`Entered addDevice with ${type}`);
+  const viewgraph = ctx.getViewGraph();
+  const datagraph = ctx.getDataGraph();
+
+  const deviceInfo = setUpDeviceInfo(ctx, type);
+
+  const id = datagraph.addNewDevice(deviceInfo);
   const node = datagraph.getDevice(id);
 
   const deviceData: CreateDevice = { id, node };
