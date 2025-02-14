@@ -345,10 +345,10 @@ export class DataGraph {
     if (!isRouter(router)) return;
 
     router.routingTable = this.generateRoutingTable(id, true);
-    console.log(
-      `Routing table regenerated for router ID ${id}:`,
-      router.routingTable,
-    );
+    // console.log(
+    //   `Routing table regenerated for router ID ${id}:`,
+    //   router.routingTable,
+    // );
   }
 
   private generateRoutingTable(
@@ -360,9 +360,9 @@ export class DataGraph {
       return [];
     }
 
-    console.log(
-      `Regenerating ${preserveEdits ? "full" : "clean"} routing table for ID ${id}`,
-    );
+    // console.log(
+    //   `Regenerating ${preserveEdits ? "full" : "clean"} routing table for ID ${id}`,
+    // );
     const parents = new Map<DeviceId, DeviceId>();
     parents.set(id, id);
     const queue = [id];

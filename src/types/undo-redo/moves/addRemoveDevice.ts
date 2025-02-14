@@ -1,19 +1,17 @@
-import { DeviceType } from "../../devices/device";
+import { DeviceType, Layer } from "../../devices/device";
 import { CreateDevice } from "../../devices/utils";
 import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
-import { Move, TypeMove } from "./move";
+import { BaseMove, TypeMove } from "./move";
 
 // Superclass for AddDeviceMove and RemoveDeviceMove
-export abstract class AddRemoveDeviceMove implements Move {
-  type: TypeMove;
+export abstract class AddRemoveDeviceMove extends BaseMove {
   data: CreateDevice;
-  abstract undo(viewgraph: ViewGraph): void;
-  abstract redo(viewgraph: ViewGraph): void;
 
-  constructor(data: CreateDevice) {
+  constructor(layer: Layer, data: CreateDevice) {
     // NOTE: we have to deep-copy the data to stop the data from
     // being modified by the original
+    super(layer);
     this.data = structuredClone(data);
   }
 
@@ -21,13 +19,19 @@ export abstract class AddRemoveDeviceMove implements Move {
     const datagraph = viewgraph.getDataGraph();
 
     // Add the device to the datagraph and the viewgraph
-    datagraph.addDevice(this.data.id, this.data.node);
-    viewgraph.addDevice(this.data);
+    const deviceInfo = structuredClone(this.data.node);
+    datagraph.addDevice(this.data.id, deviceInfo);
+
+    this.adjustLayer(viewgraph);
+
+    const deviceData = structuredClone(this.data);
+    viewgraph.addDevice(deviceData);
   }
 
   removeDevice(viewgraph: ViewGraph) {
+    this.adjustLayer(viewgraph);
     const device = viewgraph.getDevice(this.data.id);
-    if (!device) {
+    if (device == undefined) {
       throw new Error(`Device with ID ${this.data.id} not found.`);
     }
     device.delete();
@@ -50,17 +54,14 @@ export class AddDeviceMove extends AddRemoveDeviceMove {
 // Check if the viewgraph is the best place to load the move into the manager
 export class RemoveDeviceMove extends AddRemoveDeviceMove {
   type: TypeMove = TypeMove.RemoveDevice;
-  data: CreateDevice; // Data of the removed device
-  connections: DeviceId[];
   private storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>;
 
   constructor(
+    layer: Layer,
     data: CreateDevice,
-    connections: DeviceId[],
     viewgraph: ViewGraph, // Pasamos la vista para obtener las tablas de enrutamiento
   ) {
-    super(data);
-    this.connections = connections;
+    super(layer, data);
     this.storedRoutingTables = new Map();
 
     // Guardar la tabla de enrutamiento del dispositivo eliminado si es un router
@@ -72,7 +73,7 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
     }
 
     // Guardar las tablas de los dispositivos conectados
-    connections.forEach((adjacentId) => {
+    data.node.connections.forEach((adjacentId) => {
       const routingTable = viewgraph.getRoutingTable(adjacentId);
       if (routingTable) {
         this.storedRoutingTables.set(adjacentId, [...routingTable]);
@@ -87,22 +88,6 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
 
   undo(viewgraph: ViewGraph): void {
     this.addDevice(viewgraph);
-    const device = viewgraph.getDevice(this.data.id);
-
-    // Restaurar conexiones con los dispositivos adyacentes
-    this.connections.forEach((adjacentId) => {
-      const adjacentDevice = viewgraph.getDevice(adjacentId);
-
-      if (adjacentDevice) {
-        viewgraph.addEdge(this.data.id, adjacentId);
-        device.addConnection(adjacentId);
-        adjacentDevice.addConnection(this.data.id);
-      } else {
-        console.warn(
-          `Adjacent Device ${adjacentId} not found while reconnecting Device ${device.id}`,
-        );
-      }
-    });
 
     // Restaurar las tablas de enrutamiento de todos los dispositivos involucrados
     this.storedRoutingTables.forEach((table, deviceId) => {
