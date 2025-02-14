@@ -76,18 +76,17 @@ export class Packet extends Graphics {
     this.removeHighlight();
   }
 
-  private getPacketDetails(layer: Layer,rawPacket: IPv4Packet) {
-    
+  private getPacketDetails(layer: Layer, rawPacket: IPv4Packet) {
     let packetDetails = {};
 
     if (rawPacket.payload instanceof EchoRequest) {
       const icmpPacket = rawPacket.payload as EchoRequest;
-      packetDetails = icmpPacket.getPacketDetails(layer,rawPacket);
+      packetDetails = icmpPacket.getPacketDetails(layer, rawPacket);
     }
 
     if (rawPacket.payload instanceof EchoReply) {
       const icmpPacket = rawPacket.payload as EchoReply;
-      packetDetails = icmpPacket.getPacketDetails(layer,rawPacket);
+      packetDetails = icmpPacket.getPacketDetails(layer, rawPacket);
     }
 
     return packetDetails;
@@ -120,7 +119,10 @@ export class Packet extends Graphics {
     );
 
     // Add a toggle info section for packet details
-    const packetDetails = this.getPacketDetails(this.viewgraph.getLayer(),this.rawPacket);
+    const packetDetails = this.getPacketDetails(
+      this.viewgraph.getLayer(),
+      this.rawPacket,
+    );
 
     rightbar.addToggleButton("Packet Details", packetDetails);
   }

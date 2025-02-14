@@ -1,4 +1,9 @@
-import { ICMP_PROTOCOL_NUMBER, IPv4Packet, IpPayload, computeIpChecksum } from "./ip";
+import {
+  ICMP_PROTOCOL_NUMBER,
+  IPv4Packet,
+  IpPayload,
+  computeIpChecksum,
+} from "./ip";
 import { Layer } from "../types/devices/layer";
 
 // More info in RFC-792
@@ -83,7 +88,10 @@ class EchoMessage extends IcmpPacket {
     ]);
   }
 
-  getPacketDetails(layer: number,rawPacket: IPv4Packet): Record<string, string | number | object> {
+  getPacketDetails(
+    layer: number,
+    rawPacket: IPv4Packet,
+  ): Record<string, string | number | object> {
     if (layer == Layer.App) {
       return {
         Application: "Echo Server",
@@ -98,21 +106,21 @@ class EchoMessage extends IcmpPacket {
     if (layer == Layer.Network) {
       return {
         Version: rawPacket.version,
-       "Internet Header Length": rawPacket.internetHeaderLength,
-       "Type of Service": rawPacket.typeOfService,
-       "Total Length": rawPacket.totalLength,
-       Identification: rawPacket.identification,
-       Flags: rawPacket.flags,
-       "Fragment Offset": rawPacket.fragmentOffset,
-       "Time to Live": rawPacket.timeToLive,
-       Protocol: rawPacket.protocol,
-       "Header Checksum": rawPacket.headerChecksum,
-      "Payload": {
-        type: this.type == 8 ? "EchoRequest" : "EchoReply",
-        Identifier: this.identifier,
-        "Sequence Number": this.sequenceNumber,
-        Data: Array.from(this.data),
-      },
+        "Internet Header Length": rawPacket.internetHeaderLength,
+        "Type of Service": rawPacket.typeOfService,
+        "Total Length": rawPacket.totalLength,
+        Identification: rawPacket.identification,
+        Flags: rawPacket.flags,
+        "Fragment Offset": rawPacket.fragmentOffset,
+        "Time to Live": rawPacket.timeToLive,
+        Protocol: rawPacket.protocol,
+        "Header Checksum": rawPacket.headerChecksum,
+        Payload: {
+          type: this.type == 8 ? "EchoRequest" : "EchoReply",
+          Identifier: this.identifier,
+          "Sequence Number": this.sequenceNumber,
+          Data: Array.from(this.data),
+        },
       };
     }
     if (layer == Layer.Link) {
