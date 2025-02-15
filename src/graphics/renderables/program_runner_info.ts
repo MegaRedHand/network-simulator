@@ -19,7 +19,7 @@ export class ProgramRunnerInfo implements Renderable {
     this.runner = runner;
 
     this.addPrograms(programInfos);
-    this.addRunningProgramsList(runner);
+    this.addRunningProgramsList();
   }
 
   private addPrograms(programs: ProgramInfo[]) {
@@ -55,14 +55,9 @@ export class ProgramRunnerInfo implements Renderable {
     );
   }
 
-  private addRunningProgramsList(runner: ProgramRunner) {
-    const runningPrograms = runner.getRunningPrograms();
-    if (runningPrograms.length === 0) {
-      return;
-    }
-    const table = this.createProgramsTable(runner, runningPrograms);
-    this.runningProgramsTable = table;
-    this.inputFields.push(table);
+  private addRunningProgramsList() {
+    this.runningProgramsTable = this.generateProgramsTable();
+    this.inputFields.push(this.runningProgramsTable);
   }
 
   private createProgramsTable(
@@ -83,20 +78,22 @@ export class ProgramRunnerInfo implements Renderable {
     const headers = ["PID", "Name", "Inputs"];
     // TODO: make table editable?
     const table = createTable(headers, rows, { onDelete });
-    table.id = "running-programs-table";
     table.classList.add("right-bar-table");
     return table;
   }
 
   private refreshTable() {
-    const runningPrograms = this.runner.getRunningPrograms();
-    let newTable;
-    if (runningPrograms.length === 0) {
-      newTable = document.createElement("table");
-    } else {
-      newTable = this.createProgramsTable(this.runner, runningPrograms);
-    }
+    const newTable = this.generateProgramsTable();
     this.runningProgramsTable.replaceWith(newTable);
+  }
+
+  private generateProgramsTable() {
+    const runningPrograms = this.runner.getRunningPrograms();
+    if (runningPrograms.length === 0) {
+      return document.createElement("table");
+    } else {
+      return this.createProgramsTable(this.runner, runningPrograms);
+    }
   }
 
   toHTML() {
