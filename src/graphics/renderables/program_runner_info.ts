@@ -23,27 +23,35 @@ export class ProgramRunnerInfo implements Renderable {
   }
 
   private addPrograms(programs: ProgramInfo[]) {
+    let selectedProgram = programs[0];
+
     const programOptions = programs.map(({ name }, i) => {
       return { value: i.toString(), text: name };
     });
     const programInputs = document.createElement("div");
-    let selectedProgram = programs[0];
     programInputs.replaceChildren(...selectedProgram.toHTML());
-    this.inputFields.push(
-      // Dropdown for selecting program
-      createDropdown("Program", programOptions, "program-selector", (v) => {
+    // Dropdown for selecting program
+    const selectProgramDropdown = createDropdown(
+      "Program",
+      programOptions,
+      "program-selector",
+      (v) => {
         selectedProgram = programs[parseInt(v)];
         programInputs.replaceChildren(...selectedProgram.toHTML());
-      }),
+      },
+    );
+    // Button to run program
+    const startProgramButton = createRightBarButton("Start program", () => {
+      const { name } = selectedProgram;
+      console.log("Started program: ", name);
+      const inputs = selectedProgram.getInputValues();
+      this.runner.addRunningProgram(name, inputs);
+      this.refreshTable();
+    });
+    this.inputFields.push(
+      selectProgramDropdown,
       programInputs,
-      // Button to run program
-      createRightBarButton("Start program", () => {
-        const { name } = selectedProgram;
-        console.log("Started program: ", name);
-        const inputs = selectedProgram.getInputValues();
-        this.runner.addRunningProgram(name, inputs);
-        this.refreshTable();
-      }),
+      startProgramButton,
     );
   }
 
