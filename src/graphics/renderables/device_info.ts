@@ -88,6 +88,9 @@ export class DeviceInfo extends StyledInfo {
     runner: ProgramRunner,
     runningPrograms: RunningProgram[],
   ) {
+    if (runningPrograms.length === 0) {
+      return;
+    }
     const table = createProgramsTable(runner, runningPrograms);
     this.inputFields.push(table);
   }
@@ -139,8 +142,7 @@ function createProgramsTable(
   const onDelete = (row: number) => {
     const { pid } = runningPrograms[row];
     runner.removeRunningProgram(pid);
-    // Update the running programs list
-    runningPrograms.splice(row, 1);
+    refreshElement();
     return true;
   };
   const rows = runningPrograms.map((program) => [
