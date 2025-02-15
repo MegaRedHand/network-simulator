@@ -6,9 +6,9 @@ import { RemoveDeviceMove } from "../../types/undo-redo";
 import { urManager } from "../../types/viewportManager";
 import {
   createDropdown,
-  createToggleTable,
   createRightBarButton,
   createTable,
+  createRoutingTable,
 } from "../right_bar";
 import { ProgramInfo } from "./program_info";
 import { StyledInfo } from "./styled_info";
@@ -109,7 +109,7 @@ export class DeviceInfo extends StyledInfo {
       `eth${entry.iface}`,
     ]);
 
-    const dynamicTable = createToggleTable(
+    const dynamicTable = createRoutingTable(
       "Routing Table",
       ["IP", "Mask", "Interface"],
       rows,

@@ -128,17 +128,25 @@ export function createToggleButton(
 }
 
 export function createRoutingTable(
+  title: string,
   headers: string[],
   rows: string[][],
-  tableClasses: string[],
   viewgraph: ViewGraph,
-  deviceId: DeviceId,
+  deviceId: number,
 ) {
+  const container = document.createElement("div");
+  const tableClasses = ["right-bar-table", "hidden", "toggle-table"];
+  const buttonClass = "right-bar-toggle-button";
+
   const regenerateButton = createRegenerateButton(deviceId, viewgraph);
   const { onEdit, onDelete } = routingTableCallbacks(viewgraph, deviceId);
   const options = { onEdit, onDelete, specialButton: regenerateButton };
   const table = createTable(headers, rows, options);
   table.classList.add(...tableClasses);
+  const button = createToggleButton(title, buttonClass, table);
+
+  container.appendChild(button);
+  container.appendChild(table);
   return table;
 }
 
@@ -361,32 +369,6 @@ function isValidIP(ip: string): boolean {
 function isValidInterface(interfaceStr: string): boolean {
   const interfacePattern = /^eth[0-9]+$/;
   return interfacePattern.test(interfaceStr);
-}
-
-export function createToggleTable(
-  title: string,
-  headers: string[],
-  rows: string[][],
-  viewgraph: ViewGraph,
-  deviceId: number,
-) {
-  const container = document.createElement("div");
-  const tableClasses = ["right-bar-table", "hidden", "toggle-table"];
-  const buttonClass = "right-bar-toggle-button";
-
-  const table = createRoutingTable(
-    headers,
-    rows,
-    tableClasses,
-    viewgraph,
-    deviceId,
-  );
-  const button = createToggleButton(title, buttonClass, table);
-
-  container.appendChild(button);
-  container.appendChild(table);
-
-  return container;
 }
 
 export function createToggleInfo(
