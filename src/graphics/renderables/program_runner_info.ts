@@ -1,5 +1,4 @@
 import { ProgramRunner, RunningProgram } from "../../programs";
-import { refreshElement } from "../../types/viewportManager";
 import {
   createDropdown,
   createRightBarButton,
@@ -66,9 +65,12 @@ export class ProgramRunnerInfo implements Renderable {
   ) {
     const onDelete = (row: number) => {
       const { pid } = runningPrograms[row];
-      runner.removeRunningProgram(pid);
-      this.refreshTable();
-      return true;
+      const removedProgram = runner.removeRunningProgram(pid);
+      runningPrograms = runningPrograms.filter((p) => p.pid !== pid);
+      if (runningPrograms.length === 0) {
+        this.refreshTable();
+      }
+      return removedProgram;
     };
     const rows = runningPrograms.map((program) => [
       program.pid.toString(),

@@ -1,15 +1,10 @@
-import { ProgramRunner, RunningProgram } from "../../programs";
+import { ProgramRunner } from "../../programs";
 import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { RemoveDeviceMove } from "../../types/undo-redo";
-import { refreshElement, urManager } from "../../types/viewportManager";
-import {
-  createDropdown,
-  createRightBarButton,
-  createTable,
-  createRoutingTable,
-} from "../right_bar";
+import { urManager } from "../../types/viewportManager";
+import { createRightBarButton, createRoutingTable } from "../right_bar";
 import { ProgramInfo } from "./program_info";
 import { ProgramRunnerInfo } from "./program_runner_info";
 import { StyledInfo } from "./styled_info";
