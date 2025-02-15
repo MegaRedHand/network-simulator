@@ -78,6 +78,7 @@ export class Host extends Device {
       device.runningPrograms.push(runningProgram);
     });
     this.runProgram(runningProgram);
+    return runningProgram;
   }
 
   removeRunningProgram(pid: Pid) {
@@ -93,10 +94,11 @@ export class Host extends Device {
     const program = this.runningPrograms.get(pid);
     if (!program) {
       console.error("Program not found");
-      return;
+      return false;
     }
     program.stop();
     this.runningPrograms.delete(pid);
+    return true;
   }
 
   private getRunningPrograms() {
