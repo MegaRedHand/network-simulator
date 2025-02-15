@@ -87,6 +87,7 @@ export class ProgramRunnerInfo implements Renderable {
   private refreshTable() {
     const newTable = this.generateProgramsTable();
     this.runningProgramsTable.replaceWith(newTable);
+    this.runningProgramsTable = newTable;
   }
 
   private generateProgramsTable() {
