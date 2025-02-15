@@ -148,21 +148,7 @@ function updateRoutingTableUI(
   clearTableRows(existingTable);
   newTableData.forEach((entry) => {
     const row = [entry.ip, entry.mask, `eth${entry.iface}`];
-    const onEdit = (row: number, col: number, newValue: string) => {
-      let isValid = false;
-      if (col === 0) isValid = isValidIP(newValue);
-      else if (col === 1) isValid = isValidIP(newValue);
-      else if (col === 2) isValid = isValidInterface(newValue);
-
-      if (isValid) {
-        viewgraph.getDataGraph().saveManualChange(deviceId, row, col, newValue);
-      }
-      return isValid;
-    };
-    const onDelete = (row: number) => {
-      viewgraph.getDataGraph().removeRoutingTableRow(deviceId, row);
-      return true;
-    };
+    const { onEdit, onDelete } = routingTableCallbacks(viewgraph, deviceId);
     createTableRow(row, existingTable, onEdit, onDelete);
   });
   console.log(`Routing table for router ID ${deviceId} updated successfully.`);
@@ -195,21 +181,7 @@ export function createTable(
   table.appendChild(headerRow);
 
   rows.forEach((row) => {
-    const onEdit = (row: number, col: number, newValue: string) => {
-      let isValid = false;
-      if (col === 0) isValid = isValidIP(newValue);
-      else if (col === 1) isValid = isValidIP(newValue);
-      else if (col === 2) isValid = isValidInterface(newValue);
-
-      if (isValid) {
-        viewgraph.getDataGraph().saveManualChange(deviceId, row, col, newValue);
-      }
-      return isValid;
-    };
-    const onDelete = (row: number) => {
-      viewgraph.getDataGraph().removeRoutingTableRow(deviceId, row);
-      return true;
-    };
+    const { onEdit, onDelete } = routingTableCallbacks(viewgraph, deviceId);
     createTableRow(row, table, onEdit, onDelete);
   });
 
@@ -327,6 +299,25 @@ function createDeleteButton(
 
   deleteCell.appendChild(deleteButton);
   return deleteCell;
+}
+
+function routingTableCallbacks(viewgraph: ViewGraph, deviceId: DeviceId) {
+  const onEdit = (row: number, col: number, newValue: string) => {
+    let isValid = false;
+    if (col === 0) isValid = isValidIP(newValue);
+    else if (col === 1) isValid = isValidIP(newValue);
+    else if (col === 2) isValid = isValidInterface(newValue);
+
+    if (isValid) {
+      viewgraph.getDataGraph().saveManualChange(deviceId, row, col, newValue);
+    }
+    return isValid;
+  };
+  const onDelete = (row: number) => {
+    viewgraph.getDataGraph().removeRoutingTableRow(deviceId, row);
+    return true;
+  };
+  return { onEdit, onDelete };
 }
 
 // Function to validate IP format
