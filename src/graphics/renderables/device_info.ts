@@ -91,7 +91,7 @@ export class DeviceInfo extends StyledInfo {
     const rows = runningPrograms.map((program) => [
       program.pid.toString(),
       program.name,
-      program.inputs.join(", "),
+      JSON.stringify(program.inputs),
     ]);
     const headers = ["PID", "Name", "Inputs"];
     // TODO: make table editable?
