@@ -87,24 +87,14 @@ export class DeviceInfo extends StyledInfo {
     runner: ProgramRunner,
     runningPrograms: RunningProgram[],
   ) {
+    const { onEdit, onDelete } = programTableCallbacks(runner, runningPrograms);
     const rows = runningPrograms.map((program) => [
       program.pid.toString(),
       program.name,
       program.inputs.join(", "),
     ]);
-    const table = createTable(
-      ["PID", "Name", "Inputs"],
-      rows,
-      () => {
-        // TODO: allow editting inputs?
-        return false;
-      },
-      (row: number) => {
-        const { pid } = runningPrograms[row];
-        runner.removeRunningProgram(pid);
-        return true;
-      },
-    );
+    const headers = ["PID", "Name", "Inputs"];
+    const table = createTable(headers, rows, onEdit, onDelete);
     table.classList.add("right-bar-table");
     this.inputFields.push(table);
   }
@@ -147,4 +137,20 @@ function getTypeName(device: Device): string {
     case DeviceType.Switch:
       return "Switch";
   }
+}
+
+function programTableCallbacks(
+  runner: ProgramRunner,
+  runningPrograms: RunningProgram[],
+) {
+  const onEdit = () => {
+    // TODO: allow editting inputs?
+    return false;
+  };
+  const onDelete = (row: number) => {
+    const { pid } = runningPrograms[row];
+    runner.removeRunningProgram(pid);
+    return true;
+  };
+  return { onEdit, onDelete };
 }

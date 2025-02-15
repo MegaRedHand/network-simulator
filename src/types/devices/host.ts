@@ -92,7 +92,12 @@ export class Host extends Device {
         (p) => p.pid !== pid,
       );
     });
-    this.runningPrograms.get(pid)?.stop();
+    const program = this.runningPrograms.get(pid);
+    if (!program) {
+      console.error("Program not found");
+      return;
+    }
+    program.stop();
     this.runningPrograms.delete(pid);
   }
 
