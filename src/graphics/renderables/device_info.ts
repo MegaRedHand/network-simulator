@@ -3,12 +3,13 @@ import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { RemoveDeviceMove } from "../../types/undo-redo";
-import { urManager } from "../../types/viewportManager";
+import { refreshElement, urManager } from "../../types/viewportManager";
 import {
   createDropdown,
   createRightBarButton,
   createTable,
   createRoutingTable,
+  RightBar,
 } from "../right_bar";
 import { ProgramInfo } from "./program_info";
 import { StyledInfo } from "./styled_info";
@@ -79,6 +80,7 @@ export class DeviceInfo extends StyledInfo {
         console.log("Started program: ", name);
         const inputs = selectedProgram.getInputValues();
         runner.addRunningProgram(name, inputs);
+        refreshElement();
       }),
     );
   }
