@@ -147,6 +147,8 @@ function programTableCallbacks(
   const onDelete = (row: number) => {
     const { pid } = runningPrograms[row];
     runner.removeRunningProgram(pid);
+    // Update the running programs list
+    runningPrograms.splice(row, 1);
     return true;
   };
   return { onDelete };
