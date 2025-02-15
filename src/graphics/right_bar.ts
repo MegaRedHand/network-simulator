@@ -147,7 +147,7 @@ export function createRoutingTable(
 
   container.appendChild(button);
   container.appendChild(table);
-  return table;
+  return container;
 }
 
 function updateRoutingTableUI(
