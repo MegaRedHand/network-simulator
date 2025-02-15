@@ -92,6 +92,7 @@ export class Host extends Device {
         (p) => p.pid !== pid,
       );
     });
+    this.runningPrograms.get(pid)?.stop();
     this.runningPrograms.delete(pid);
   }
 
