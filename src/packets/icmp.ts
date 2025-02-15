@@ -1,10 +1,11 @@
 import {
   ICMP_PROTOCOL_NUMBER,
-  IPv4Packet,
   IpPayload,
   computeIpChecksum,
 } from "./ip";
 import { Layer } from "../types/devices/layer";
+
+const ICMP_WARNING = "ICMP operates directly on top of IP at the Network layer, bypassing the Transport layer (TCP/UDP). This is because ICMP is primarily used for network diagnostics and error reporting, not for end-to-end data transport."
 
 // More info in RFC-792
 //   0                   1                   2                   3
@@ -55,6 +56,8 @@ abstract class IcmpPacket implements IpPayload {
   getPacketType(): string {
     return `ICMP-${this.type}`;
   }
+
+  abstract getDetails(layer: Layer): Record<string, string | number | object>;
 }
 
 class EchoMessage extends IcmpPacket {
@@ -88,51 +91,21 @@ class EchoMessage extends IcmpPacket {
     ]);
   }
 
-  getPacketDetails(
+  getDetails(
     layer: number,
-    rawPacket: IPv4Packet,
   ): Record<string, string | number | object> {
-    if (layer == Layer.App) {
-      return {
-        Application: "Echo Server",
-        Task: this.type == 8 ? "Echo Request" : "Echo Reply",
-      };
-    }
     if (layer == Layer.Transport) {
       return {
-        Warning:
-          "ICMP operates directly on top of IP at the Network layer, bypassing the Transport layer (TCP/UDP). This is because ICMP is primarily used for network diagnostics and error reporting, not for end-to-end data transport.",
+        "Type": this.type,
+        "Identifier": this.identifier,
+        "Sequence Number": this.sequenceNumber,
+        "Data": this.data,
+        "Warning": ICMP_WARNING,
       };
     }
-    if (layer == Layer.Network) {
-      return {
-        Version: rawPacket.version,
-        "Internet Header Length": rawPacket.internetHeaderLength,
-        "Type of Service": rawPacket.typeOfService,
-        "Total Length": rawPacket.totalLength,
-        Identification: rawPacket.identification,
-        Flags: rawPacket.flags,
-        "Fragment Offset": rawPacket.fragmentOffset,
-        "Time to Live": rawPacket.timeToLive,
-        Protocol: rawPacket.protocol,
-        "Header Checksum": rawPacket.headerChecksum,
-        Payload: {
-          type: this.type == 8 ? "EchoRequest" : "EchoReply",
-          Identifier: this.identifier,
-          "Sequence Number": this.sequenceNumber,
-          Data: Array.from(this.data),
-        },
-      };
-    }
-    if (layer == Layer.Link) {
-      return {
-        "Ethernet Header": "---",
-        "Destination MAC": "---",
-        "Source MAC": "---",
-        "Ether Type": "0x0800",
-      };
-    }
+    return {};
   }
+
 }
 
 export class EchoRequest extends EchoMessage {

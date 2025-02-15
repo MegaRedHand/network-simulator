@@ -4,6 +4,7 @@ import {
   IpPayload,
   TCP_PROTOCOL_NUMBER,
 } from "./ip";
+import { Layer } from "../types/devices/layer";
 
 export class Flags {
   // Urgent Pointer field significant
@@ -177,6 +178,11 @@ export class TcpSegment implements IpPayload {
     ]);
     const totalBytes = Uint8Array.from([...pseudoHeaderBytes, ...segmentBytes]);
     return computeIpChecksum(totalBytes);
+  }
+
+  // Dummy Method for the moment
+  getDetails(layer:Layer) {
+    return {Layer: layer};
   }
 
   // ### IpPayload ###

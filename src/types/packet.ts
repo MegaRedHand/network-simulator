@@ -14,7 +14,6 @@ import { IPv4Packet } from "../packets/ip";
 import { Layer } from "../types/devices/layer";
 //import { EchoMessage } from "../packets/icmp";
 import { DeviceId, isRouter } from "./graphs/datagraph";
-import { EchoRequest, EchoReply } from "../packets/icmp";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
@@ -77,19 +76,7 @@ export class Packet extends Graphics {
   }
 
   private getPacketDetails(layer: Layer, rawPacket: IPv4Packet) {
-    let packetDetails = {};
-
-    if (rawPacket.payload instanceof EchoRequest) {
-      const icmpPacket = rawPacket.payload as EchoRequest;
-      packetDetails = icmpPacket.getPacketDetails(layer, rawPacket);
-    }
-
-    if (rawPacket.payload instanceof EchoReply) {
-      const icmpPacket = rawPacket.payload as EchoReply;
-      packetDetails = icmpPacket.getPacketDetails(layer, rawPacket);
-    }
-
-    return packetDetails;
+    return rawPacket.getDetails(layer);
   }
 
   showInfo() {

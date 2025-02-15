@@ -1,4 +1,6 @@
 import { FramePayload, IP_PROTOCOL_TYPE } from "./ethernet";
+import { Layer } from "../types/devices/layer";
+
 
 // Taken from here: https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
 export const ICMP_PROTOCOL_NUMBER = 1;
@@ -15,6 +17,10 @@ export class EmptyPayload implements IpPayload {
   }
   getPacketType(): string {
     return "EMPTY-PROTOCOL";
+  }
+
+  getDetails() {
+    return {};
   }
 }
 
@@ -119,6 +125,8 @@ export interface IpPayload {
   protocol(): number;
   // Packet protocol name
   getPacketType(): string;
+  // Get details of the payload
+  getDetails(layer:Layer): Record<string, string | number | object>;
 }
 
 // Info taken from the original RFC: https://datatracker.ietf.org/doc/html/rfc791#section-3.1
@@ -251,6 +259,28 @@ export class IPv4Packet implements FramePayload {
 
   type(): number {
     return IP_PROTOCOL_TYPE;
+  }
+
+  getDetails(layer:Layer) {
+    if (layer == Layer.Network) {
+      return {
+        Version: this.version,
+        "Internet Header Length": this.internetHeaderLength,
+        "Type of Service": this.typeOfService,
+        "Total Length": this.totalLength,
+        Identification: this.identification,
+        Flags: this.flags,
+        "Fragment Offset": this.fragmentOffset,
+        "Time to Live": this.timeToLive,
+        Protocol: this.protocol,
+        "Header Checksum": this.headerChecksum,
+        "Source Address": this.sourceAddress.toString(),
+        "Destination Address": this.destinationAddress.toString(),
+        Payload: this.payload,
+      };
+    } else {
+      return this.payload.getDetails(layer);
+    }
   }
 }
 
