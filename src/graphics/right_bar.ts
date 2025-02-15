@@ -146,14 +146,30 @@ function updateRoutingTableUI(
     return console.warn("Existing table not found inside container.");
 
   clearTableRows(existingTable);
-  newTableData.forEach((entry) =>
-    createTableRow(entry, existingTable, deviceId, viewgraph),
-  );
+  newTableData.forEach((entry) => {
+    const row = [entry.ip, entry.mask, `eth${entry.iface}`];
+    const onEdit = (row: number, col: number, newValue: string) => {
+      let isValid = false;
+      if (col === 0) isValid = isValidIP(newValue);
+      else if (col === 1) isValid = isValidIP(newValue);
+      else if (col === 2) isValid = isValidInterface(newValue);
+
+      if (isValid) {
+        viewgraph.getDataGraph().saveManualChange(deviceId, row, col, newValue);
+      }
+      return isValid;
+    };
+    const onDelete = (row: number) => {
+      viewgraph.getDataGraph().removeRoutingTableRow(deviceId, row);
+      return true;
+    };
+    createTableRow(row, existingTable, onEdit, onDelete);
+  });
   console.log(`Routing table for router ID ${deviceId} updated successfully.`);
 }
 
 export function createTable(
-  headers: string[],
+  headers: (string | HTMLElement)[],
   rows: string[][],
   tableClasses: string[],
   viewgraph: ViewGraph,
@@ -165,7 +181,11 @@ export function createTable(
   const headerRow = document.createElement("tr");
   headers.forEach((header) => {
     const th = document.createElement("th");
-    th.textContent = header;
+    if (header instanceof HTMLElement) {
+      th.appendChild(header);
+    } else {
+      th.textContent = header;
+    }
     headerRow.appendChild(th);
   });
 
@@ -175,12 +195,22 @@ export function createTable(
   table.appendChild(headerRow);
 
   rows.forEach((row) => {
-    createTableRow(
-      { ip: row[0], mask: row[1], iface: parseInt(row[2].replace("eth", "")) },
-      table,
-      deviceId,
-      viewgraph,
-    );
+    const onEdit = (row: number, col: number, newValue: string) => {
+      let isValid = false;
+      if (col === 0) isValid = isValidIP(newValue);
+      else if (col === 1) isValid = isValidIP(newValue);
+      else if (col === 2) isValid = isValidInterface(newValue);
+
+      if (isValid) {
+        viewgraph.getDataGraph().saveManualChange(deviceId, row, col, newValue);
+      }
+      return isValid;
+    };
+    const onDelete = (row: number) => {
+      viewgraph.getDataGraph().removeRoutingTableRow(deviceId, row);
+      return true;
+    };
+    createTableRow(row, table, onEdit, onDelete);
   });
 
   return table;
@@ -192,14 +222,14 @@ function clearTableRows(table: HTMLTableElement): void {
 }
 
 function createTableRow(
-  entry: RoutingTableEntry,
+  row: string[],
   table: HTMLTableElement,
-  deviceId: DeviceId,
-  viewgraph: ViewGraph,
+  onEdit: (row: number, col: number, newValue: string) => boolean,
+  onDelete: (row: number) => boolean,
 ): void {
   const rowElement = document.createElement("tr");
 
-  [entry.ip, entry.mask, `eth${entry.iface}`].forEach((cellData, colIndex) => {
+  row.forEach((cellData, colIndex) => {
     const cell = document.createElement("td");
     cell.textContent = cellData;
     cell.classList.add("editable-cell");
@@ -212,14 +242,15 @@ function createTableRow(
     });
 
     cell.addEventListener("blur", () => {
-      const updatedRowIndex =
-        Array.from(table.querySelectorAll("tr")).indexOf(rowElement) - 1;
+      // Ignore header updates. They shouldn't happen anyways.
+      if (rowElement.rowIndex === 0) {
+        return;
+      }
+      // Don't count the header row
+      const rowIndex = rowElement.rowIndex - 1;
       const newValue = cell.textContent?.trim() || "";
 
-      let isValid = false;
-      if (colIndex === 0) isValid = isValidIP(newValue);
-      else if (colIndex === 1) isValid = isValidIP(newValue);
-      else if (colIndex === 2) isValid = isValidInterface(newValue);
+      const isValid = onEdit(rowIndex, colIndex, newValue);
 
       if (!isValid) {
         console.warn(`Invalid input for column ${colIndex}: ${newValue}`);
@@ -227,20 +258,15 @@ function createTableRow(
         return;
       }
 
-      viewgraph
-        .getDataGraph()
-        .saveManualChange(deviceId, updatedRowIndex, colIndex, newValue);
       console.log(
-        `Updated cell at row ${updatedRowIndex}, column ${colIndex} with value: ${newValue}`,
+        `Updated cell at row ${rowIndex}, column ${colIndex} with value: ${newValue}`,
       );
     });
 
     rowElement.appendChild(cell);
   });
 
-  rowElement.appendChild(
-    createDeleteButton(rowElement, table, deviceId, viewgraph),
-  );
+  rowElement.appendChild(createDeleteButton(rowElement, table, onDelete));
   table.appendChild(rowElement);
 }
 
@@ -274,8 +300,7 @@ function createRegenerateButton(
 function createDeleteButton(
   rowElement: HTMLTableRowElement,
   table: HTMLTableElement,
-  deviceId: DeviceId,
-  viewgraph: ViewGraph,
+  onDelete: (row: number) => boolean,
 ): HTMLTableCellElement {
   const deleteCell = document.createElement("td");
   const deleteButton = document.createElement("button");
@@ -285,31 +310,23 @@ function createDeleteButton(
   deleteButton.style.cursor = "pointer";
   deleteButton.title = "Delete row";
 
-  deleteButton.addEventListener("click", () =>
-    handleDeleteRow(rowElement, table, deviceId, viewgraph),
-  );
+  deleteButton.addEventListener("click", () => {
+    // Ignore header updates. They shouldn't happen anyways.
+    if (rowElement.rowIndex === 0) {
+      return;
+    }
+    // Don't count the header row
+    const rowIndex = rowElement.rowIndex - 1;
+    const isValid = onDelete(rowIndex);
+    if (!isValid) {
+      return;
+    }
+    table.removeChild(rowElement);
+    console.log(`Deleted row ${rowIndex}`);
+  });
 
   deleteCell.appendChild(deleteButton);
   return deleteCell;
-}
-
-function handleDeleteRow(
-  rowElement: HTMLTableRowElement,
-  table: HTMLTableElement,
-  deviceId: DeviceId,
-  viewgraph: ViewGraph,
-): void {
-  const updatedRowIndex =
-    Array.from(table.querySelectorAll("tr")).indexOf(rowElement) - 1; // Ajuste dinámico del índice
-
-  if (updatedRowIndex < 0) {
-    console.warn("Cannot delete header row");
-    return;
-  }
-
-  table.removeChild(rowElement);
-  viewgraph.getDataGraph().removeRoutingTableRow(deviceId, updatedRowIndex);
-  console.log(`Deleted row ${updatedRowIndex} from device ${deviceId}`);
 }
 
 // Function to validate IP format
