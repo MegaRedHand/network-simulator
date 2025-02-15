@@ -136,7 +136,8 @@ export function createRoutingTable(
 ) {
   const regenerateButton = createRegenerateButton(deviceId, viewgraph);
   const { onEdit, onDelete } = routingTableCallbacks(viewgraph, deviceId);
-  const table = createTable(headers, rows, onEdit, onDelete, regenerateButton);
+  const options = { onEdit, onDelete, specialButton: regenerateButton };
+  const table = createTable(headers, rows, options);
   table.classList.add(...tableClasses);
   return table;
 }
@@ -171,13 +172,18 @@ function updateRoutingTableUI(
 type OnEditCallback = (row: number, col: number, newValue: string) => boolean;
 type OnDeleteCallback = (row: number) => boolean;
 
+type TableOptions = {
+  onEdit?: OnEditCallback;
+  onDelete?: OnDeleteCallback;
+  specialButton?: HTMLElement;
+};
+
 export function createTable(
   headers: string[],
   rows: string[][],
-  onEdit: OnEditCallback,
-  onDelete: OnDeleteCallback,
-  specialButton?: HTMLElement,
+  options: TableOptions = {},
 ): HTMLTableElement {
+  let { onEdit, onDelete, specialButton } = options;
   const table = document.createElement("table");
 
   const headerRow = document.createElement("tr");
@@ -209,50 +215,61 @@ function clearTableRows(table: HTMLTableElement): void {
 function createTableRow(
   row: string[],
   table: HTMLTableElement,
-  onEdit: OnEditCallback,
-  onDelete: OnDeleteCallback,
+  onEdit?: OnEditCallback,
+  onDelete?: OnDeleteCallback,
 ): void {
   const rowElement = document.createElement("tr");
+  table.appendChild(rowElement);
 
   row.forEach((cellData, colIndex) => {
     const cell = document.createElement("td");
     cell.textContent = cellData;
-    cell.classList.add("editable-cell");
-    cell.contentEditable = "true";
-
-    cell.addEventListener("keydown", (event) => {
-      if (event.key === "Delete" || event.key === "Backspace") {
-        event.stopPropagation(); // Avoid the event to clear the table's row
-      }
-    });
-
-    cell.addEventListener("blur", () => {
-      // Ignore header updates. They shouldn't happen anyways.
-      if (rowElement.rowIndex === 0) {
-        return;
-      }
-      // Don't count the header row
-      const rowIndex = rowElement.rowIndex - 1;
-      const newValue = cell.textContent?.trim() || "";
-
-      const isValid = onEdit(rowIndex, colIndex, newValue);
-
-      if (!isValid) {
-        console.warn(`Invalid input for column ${colIndex}: ${newValue}`);
-        cell.textContent = cellData; // Revert change if invalid
-        return;
-      }
-
-      console.log(
-        `Updated cell at row ${rowIndex}, column ${colIndex} with value: ${newValue}`,
-      );
-    });
 
     rowElement.appendChild(cell);
+
+    const rowIndex = rowElement.rowIndex;
+    // Ignore header row
+    if (rowIndex !== 0 && onEdit) {
+      makeEditable(rowIndex - 1, colIndex, cell, onEdit);
+    }
   });
 
   rowElement.appendChild(createDeleteButton(rowElement, table, onDelete));
-  table.appendChild(rowElement);
+}
+
+function makeEditable(
+  rowIndex: number,
+  colIndex: number,
+  cell: HTMLTableCellElement,
+  onEdit: OnEditCallback,
+) {
+  cell.classList.add("editable-cell");
+  cell.contentEditable = "true";
+  const originalContent = cell.textContent;
+
+  // Avoid deleting the router while editing
+  cell.addEventListener("keydown", (event) => {
+    if (event.key === "Delete" || event.key === "Backspace") {
+      event.stopPropagation();
+    }
+  });
+
+  // Handle edits
+  cell.addEventListener("blur", () => {
+    const newValue = cell.textContent?.trim() || "";
+
+    const isValid = onEdit(rowIndex, colIndex, newValue);
+
+    if (!isValid) {
+      console.warn(`Invalid input for column ${colIndex}: ${newValue}`);
+      cell.textContent = originalContent; // Revert change if invalid
+      return;
+    }
+
+    console.log(
+      `Updated cell at row ${rowIndex}, column ${colIndex} with value: ${newValue}`,
+    );
+  });
 }
 
 function createRegenerateButton(

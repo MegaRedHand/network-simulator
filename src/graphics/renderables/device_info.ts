@@ -87,14 +87,15 @@ export class DeviceInfo extends StyledInfo {
     runner: ProgramRunner,
     runningPrograms: RunningProgram[],
   ) {
-    const { onEdit, onDelete } = programTableCallbacks(runner, runningPrograms);
+    const { onDelete } = programTableCallbacks(runner, runningPrograms);
     const rows = runningPrograms.map((program) => [
       program.pid.toString(),
       program.name,
       program.inputs.join(", "),
     ]);
     const headers = ["PID", "Name", "Inputs"];
-    const table = createTable(headers, rows, onEdit, onDelete);
+    // TODO: make table editable?
+    const table = createTable(headers, rows, { onDelete });
     table.classList.add("right-bar-table");
     this.inputFields.push(table);
   }
@@ -143,14 +144,10 @@ function programTableCallbacks(
   runner: ProgramRunner,
   runningPrograms: RunningProgram[],
 ) {
-  const onEdit = () => {
-    // TODO: allow editting inputs?
-    return false;
-  };
   const onDelete = (row: number) => {
     const { pid } = runningPrograms[row];
     runner.removeRunningProgram(pid);
     return true;
   };
-  return { onEdit, onDelete };
+  return { onDelete };
 }
