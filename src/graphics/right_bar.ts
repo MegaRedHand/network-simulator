@@ -180,18 +180,18 @@ function updateRoutingTableUI(
 type OnEditCallback = (row: number, col: number, newValue: string) => boolean;
 type OnDeleteCallback = (row: number) => boolean;
 
-type TableOptions = {
+interface TableOptions {
   onEdit?: OnEditCallback;
   onDelete?: OnDeleteCallback;
   specialButton?: HTMLElement;
-};
+}
 
 export function createTable(
   headers: string[],
   rows: string[][],
   options: TableOptions = {},
 ): HTMLTableElement {
-  let { onEdit, onDelete, specialButton } = options;
+  const { onEdit, onDelete, specialButton } = options;
   const table = document.createElement("table");
 
   const headerRow = document.createElement("tr");

@@ -9,7 +9,6 @@ import {
   createRightBarButton,
   createTable,
   createRoutingTable,
-  RightBar,
 } from "../right_bar";
 import { ProgramInfo } from "./program_info";
 import { StyledInfo } from "./styled_info";
