@@ -20,6 +20,13 @@ export interface ProgramRunner {
    * @returns the running program data
    */
   addRunningProgram(name: string, inputs: string[]): RunningProgram;
+
+  /**
+   * Lists running programs.
+   * @returns the list of running programs
+   */
+  getRunningPrograms(): RunningProgram[];
+
   /**
    * Stops a running program.
    * @param pid running program ID

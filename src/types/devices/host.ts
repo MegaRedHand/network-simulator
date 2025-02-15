@@ -101,7 +101,7 @@ export class Host extends Device {
     return true;
   }
 
-  private getRunningPrograms() {
+  getRunningPrograms() {
     const thisDevice = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!isHost(thisDevice)) {
       console.error("Node is not a Host");
