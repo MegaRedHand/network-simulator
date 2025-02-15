@@ -127,6 +127,20 @@ export function createToggleButton(
   return button;
 }
 
+export function createRoutingTable(
+  headers: string[],
+  rows: string[][],
+  tableClasses: string[],
+  viewgraph: ViewGraph,
+  deviceId: DeviceId,
+) {
+  const regenerateButton = createRegenerateButton(deviceId, viewgraph);
+  const { onEdit, onDelete } = routingTableCallbacks(viewgraph, deviceId);
+  const table = createTable(headers, rows, onEdit, onDelete, regenerateButton);
+  table.classList.add(...tableClasses);
+  return table;
+}
+
 function updateRoutingTableUI(
   deviceId: DeviceId,
   newTableData: RoutingTableEntry[],
@@ -155,33 +169,29 @@ function updateRoutingTableUI(
 }
 
 export function createTable(
-  headers: (string | HTMLElement)[],
+  headers: string[],
   rows: string[][],
-  tableClasses: string[],
-  viewgraph: ViewGraph,
-  deviceId: DeviceId,
+  onEdit: (row: number, col: number, newValue: string) => boolean,
+  onDelete: (row: number) => boolean,
+  specialButton?: HTMLElement,
 ): HTMLTableElement {
   const table = document.createElement("table");
-  table.classList.add(...tableClasses);
 
   const headerRow = document.createElement("tr");
   headers.forEach((header) => {
     const th = document.createElement("th");
-    if (header instanceof HTMLElement) {
-      th.appendChild(header);
-    } else {
-      th.textContent = header;
-    }
+    th.textContent = header;
     headerRow.appendChild(th);
   });
 
   const actionsHeader = document.createElement("th");
-  actionsHeader.appendChild(createRegenerateButton(deviceId, viewgraph));
+  if (specialButton) {
+    actionsHeader.appendChild(specialButton);
+  }
   headerRow.appendChild(actionsHeader);
   table.appendChild(headerRow);
 
   rows.forEach((row) => {
-    const { onEdit, onDelete } = routingTableCallbacks(viewgraph, deviceId);
     createTableRow(row, table, onEdit, onDelete);
   });
 
@@ -344,7 +354,13 @@ export function createToggleTable(
   const tableClasses = ["right-bar-table", "hidden", "toggle-table"];
   const buttonClass = "right-bar-toggle-button";
 
-  const table = createTable(headers, rows, tableClasses, viewgraph, deviceId);
+  const table = createRoutingTable(
+    headers,
+    rows,
+    tableClasses,
+    viewgraph,
+    deviceId,
+  );
   const button = createToggleButton(title, buttonClass, table);
 
   container.appendChild(button);

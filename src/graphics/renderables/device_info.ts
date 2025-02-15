@@ -95,10 +95,10 @@ export class DeviceInfo extends StyledInfo {
     const table = createTable(
       ["PID", "Name", "Inputs"],
       rows,
-      ["right-bar-table"],
-      this.device.viewgraph,
-      this.device.id,
+      () => false,
+      () => false,
     );
+    table.classList.add("right-bar-table");
     this.inputFields.push(table);
   }
 
