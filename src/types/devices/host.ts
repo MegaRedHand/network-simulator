@@ -47,10 +47,8 @@ export class Host extends Device {
 
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
-    info.addProgramList(this, programList);
-    if (runningProgramsList.length > 0) {
-      info.addRunningProgramsList(this, runningProgramsList);
-    }
+    info.addProgramRunner(this, programList);
+    info.addRunningProgramsList(this, runningProgramsList);
     RightBar.getInstance().renderInfo(info);
   }
 

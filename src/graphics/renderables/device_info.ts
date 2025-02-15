@@ -59,7 +59,7 @@ export class DeviceInfo extends StyledInfo {
   }
 
   // First argument is to avoid a circular dependency
-  addProgramList(runner: ProgramRunner, programs: ProgramInfo[]) {
+  addProgramRunner(runner: ProgramRunner, programs: ProgramInfo[]) {
     const programOptions = programs.map(({ name }, i) => {
       return { value: i.toString(), text: name };
     });
@@ -87,16 +87,7 @@ export class DeviceInfo extends StyledInfo {
     runner: ProgramRunner,
     runningPrograms: RunningProgram[],
   ) {
-    const { onDelete } = programTableCallbacks(runner, runningPrograms);
-    const rows = runningPrograms.map((program) => [
-      program.pid.toString(),
-      program.name,
-      JSON.stringify(program.inputs),
-    ]);
-    const headers = ["PID", "Name", "Inputs"];
-    // TODO: make table editable?
-    const table = createTable(headers, rows, { onDelete });
-    table.classList.add("right-bar-table");
+    const table = createProgramsTable(runner, runningPrograms);
     this.inputFields.push(table);
   }
 
@@ -140,7 +131,7 @@ function getTypeName(device: Device): string {
   }
 }
 
-function programTableCallbacks(
+function createProgramsTable(
   runner: ProgramRunner,
   runningPrograms: RunningProgram[],
 ) {
@@ -151,5 +142,15 @@ function programTableCallbacks(
     runningPrograms.splice(row, 1);
     return true;
   };
-  return { onDelete };
+  const rows = runningPrograms.map((program) => [
+    program.pid.toString(),
+    program.name,
+    JSON.stringify(program.inputs),
+  ]);
+  const headers = ["PID", "Name", "Inputs"];
+  // TODO: make table editable?
+  const table = createTable(headers, rows, { onDelete });
+  table.id = "running-programs-table";
+  table.classList.add("right-bar-table");
+  return table;
 }
