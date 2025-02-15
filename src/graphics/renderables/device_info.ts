@@ -95,8 +95,15 @@ export class DeviceInfo extends StyledInfo {
     const table = createTable(
       ["PID", "Name", "Inputs"],
       rows,
-      () => false,
-      () => false,
+      () => {
+        // TODO: allow editting inputs?
+        return false;
+      },
+      (row: number) => {
+        const { pid } = runningPrograms[row];
+        runner.removeRunningProgram(pid);
+        return true;
+      },
     );
     table.classList.add("right-bar-table");
     this.inputFields.push(table);

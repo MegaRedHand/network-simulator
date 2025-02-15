@@ -168,11 +168,14 @@ function updateRoutingTableUI(
   console.log(`Routing table for router ID ${deviceId} updated successfully.`);
 }
 
+type OnEditCallback = (row: number, col: number, newValue: string) => boolean;
+type OnDeleteCallback = (row: number) => boolean;
+
 export function createTable(
   headers: string[],
   rows: string[][],
-  onEdit: (row: number, col: number, newValue: string) => boolean,
-  onDelete: (row: number) => boolean,
+  onEdit: OnEditCallback,
+  onDelete: OnDeleteCallback,
   specialButton?: HTMLElement,
 ): HTMLTableElement {
   const table = document.createElement("table");
@@ -206,8 +209,8 @@ function clearTableRows(table: HTMLTableElement): void {
 function createTableRow(
   row: string[],
   table: HTMLTableElement,
-  onEdit: (row: number, col: number, newValue: string) => boolean,
-  onDelete: (row: number) => boolean,
+  onEdit: OnEditCallback,
+  onDelete: OnDeleteCallback,
 ): void {
   const rowElement = document.createElement("tr");
 
@@ -282,7 +285,7 @@ function createRegenerateButton(
 function createDeleteButton(
   rowElement: HTMLTableRowElement,
   table: HTMLTableElement,
-  onDelete: (row: number) => boolean,
+  onDelete: OnDeleteCallback,
 ): HTMLTableCellElement {
   const deleteCell = document.createElement("td");
   const deleteButton = document.createElement("button");
