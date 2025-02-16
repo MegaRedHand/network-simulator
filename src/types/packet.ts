@@ -170,7 +170,7 @@ export class Packet extends Graphics {
     Ticker.shared.add(this.animationTick, this);
   }
 
-  animationTick(ticker: Ticker) {
+  async animationTick(ticker: Ticker) {
     if (this.progress >= 1) {
       const deleteSelf = () => {
         this.destroy();
@@ -194,7 +194,7 @@ export class Packet extends Graphics {
       }
 
       this.currentStart = newStart;
-      const newEndId = newStartDevice.receivePacket(this);
+      const newEndId = await newStartDevice.receivePacket(this);
 
       if (newEndId === null) {
         deleteSelf();
