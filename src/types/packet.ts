@@ -194,7 +194,11 @@ export class Packet extends Graphics {
       }
 
       this.currentStart = newStart;
+      // TODO: remove this dirty hack
+      // Remove and re-add from ticker to avoid multiple frames processing being triggered at once.
+      ticker.remove(this.animationTick, this);
       const newEndId = await newStartDevice.receivePacket(this);
+      ticker.add(this.animationTick, this);
 
       if (newEndId === null) {
         deleteSelf();
