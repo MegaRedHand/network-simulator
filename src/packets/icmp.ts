@@ -96,14 +96,23 @@ class EchoMessage extends IcmpPacket {
   ): Record<string, string | number | object> {
     if (layer == Layer.Transport) {
       return {
-        "Type": this.type,
-        "Identifier": this.identifier,
-        "Sequence Number": this.sequenceNumber,
-        "Data": this.data,
+        Type: this.type == 8 ? "Echo Request" : "Echo Reply",
         "Warning": ICMP_WARNING,
       };
     }
-    return {};
+    
+    // TODO: If we decide to hide ICMP packets on Application layer, this should be removed
+    if (this.type == 8) {
+      return {
+        "Application": "Ping",
+        "Task": "Echo Request",
+    }
+    } else {
+      return {
+        "Application": "Ping",
+        "Task": "Echo Reply",
+      }
+    } 
   }
 
 }
