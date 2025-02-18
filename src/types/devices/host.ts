@@ -1,4 +1,4 @@
-import { Device, DeviceType } from "./device";
+import { DeviceType, NetworkDevice } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
@@ -16,8 +16,9 @@ import {
 } from "../../programs";
 import { Packet } from "../packet";
 import { Texture } from "pixi.js";
+import { MacAddress } from "../../packets/ethernet";
 
-export class Host extends Device {
+export class Host extends NetworkDevice {
   static DEVICE_TEXTURE: Texture;
 
   static getTexture() {
@@ -34,10 +35,11 @@ export class Host extends Device {
     id: DeviceId,
     viewgraph: ViewGraph,
     position: Position,
+    mac: MacAddress,
     ip: IpAddress,
     mask: IpAddress,
   ) {
-    super(id, Host.getTexture(), viewgraph, position, ip, mask);
+    super(id, Host.getTexture(), viewgraph, position, mac, ip, mask);
     this.loadRunningPrograms();
   }
 

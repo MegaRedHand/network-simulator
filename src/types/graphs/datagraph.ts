@@ -13,7 +13,7 @@ interface CommonGraphNode {
 
 interface LinkGraphNode extends CommonGraphNode {
   mac: string;
-  arcTable: Map<string, string>;
+  arpTable: Map<string, string>;
 }
 
 interface NetworkGraphNode extends LinkGraphNode {
@@ -86,7 +86,7 @@ interface CommonDataNode {
 
 interface LinkDataNode extends CommonDataNode {
   mac: string;
-  arcTable: Map<string, string>;
+  arpTable: Map<string, string>;
 }
 
 interface NetworkDataNode extends LinkDataNode {
@@ -164,25 +164,9 @@ export class DataGraph {
         connections: Array.from(info.connections.values()),
       };
       graphData.push(graphNode);
-      // if (isRouter(info)) {
-      //   graphData.push({ ...graphNode, routingTable: info.routingTable, ip: info.ip, mask: info.mask });
-      // } else if (isHost(info)) {
-      //   graphData.push({ ...graphNode, runningPrograms: info.runningPrograms });
-      // } else if (isSwitch(info)) {
-      //   graphData.push({ ...graphNode });
-      // }
     });
     return graphData;
   }
-
-  // static createGraphNode(deviceInfo: NewDevice) {
-  //   const commonNode: CommonGraphNode = {
-  //     ...deviceInfo,
-  //     connections: new Set<DeviceId>()
-  //   };
-
-  //   // const node: GraphNode = {}
-  // }
 
   // Add a new device to the graph
   addNewDevice(deviceInfo: NewDevice): DeviceId {
@@ -193,7 +177,7 @@ export class DataGraph {
       connections: new Set<number>(),
       routingTable: [],
       runningPrograms: [],
-      arcTable: new Map(),
+      arpTable: new Map(),
     };
     this.devices.set(id, graphnode);
     console.log(`Device added with ID ${id}`);

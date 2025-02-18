@@ -5,7 +5,7 @@ import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
 import { SpeedMultiplier } from "../devices/speedMultiplier";
 import { CreateDevice, createDevice } from "../devices/utils";
-import { layerFromType } from "../devices/device";
+import { layerFromType, NetworkDevice } from "../devices/device";
 import { IpAddress } from "../../packets/ip";
 
 export type EdgeId = string;
@@ -322,7 +322,10 @@ export class ViewGraph {
 
   getDeviceByIP(ipAddress: IpAddress) {
     return this.getDevices().find((device) => {
-      return device.ip == ipAddress;
+      if (device instanceof NetworkDevice) {
+        return device.ip == ipAddress;
+      }
+      return false;
     });
   }
 

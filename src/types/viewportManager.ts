@@ -13,7 +13,6 @@ import {
   RemoveEdgeMove,
 } from "./undo-redo";
 import { SpeedMultiplier } from "./devices/speedMultiplier";
-import { Viewport } from "pixi-viewport";
 
 type Selectable = Device | Edge | Packet;
 
@@ -126,11 +125,12 @@ function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType) {
     viewport.screenWidth / 2,
     viewport.screenHeight / 2,
   );
+  const mac = ctx.getNextMac();
   if (type == DeviceType.Switch) {
-    return { x, y, type };
+    return { x, y, type, mac };
   }
   const { ip, mask } = ctx.getNextIp();
-  return { x, y, type, ip, mask };
+  return { x, y, type, mac, ip, mask };
 }
 
 // Function to add a device at the center of the viewport

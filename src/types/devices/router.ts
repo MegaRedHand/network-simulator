@@ -1,4 +1,4 @@
-import { Device, DeviceType, Layer } from "./device";
+import { DeviceType, Layer, NetworkDevice } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import RouterImage from "../../assets/router.svg";
 import { Position } from "../common";
@@ -7,8 +7,9 @@ import { IpAddress } from "../../packets/ip";
 import { DeviceId, isRouter } from "../graphs/datagraph";
 import { Packet } from "../packet";
 import { Texture } from "pixi.js";
+import { MacAddress } from "../../packets/ethernet";
 
-export class Router extends Device {
+export class Router extends NetworkDevice {
   static DEVICE_TEXTURE: Texture;
 
   static getTexture() {
@@ -22,10 +23,11 @@ export class Router extends Device {
     id: DeviceId,
     viewgraph: ViewGraph,
     position: Position,
+    mac: MacAddress,
     ip: IpAddress,
     mask: IpAddress,
   ) {
-    super(id, Router.getTexture(), viewgraph, position, ip, mask);
+    super(id, Router.getTexture(), viewgraph, position, mac, ip, mask);
   }
 
   showInfo(): void {

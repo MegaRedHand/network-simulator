@@ -43,6 +43,34 @@ export class MacAddress {
   }
 }
 
+export class MacAddressGenerator {
+  private baseMac: bigint;
+  private currentMac: bigint;
+
+  constructor(baseMac: string) {
+    this.baseMac = MacAddressGenerator.macToNumber(baseMac);
+    this.currentMac = this.baseMac + BigInt(1); // Start on first valid MAC
+  }
+
+  // Generate next valid IP
+  getNextMac(): string {
+    const nextMac = MacAddressGenerator.numberToMac(this.currentMac);
+    this.currentMac++;
+    return nextMac;
+  }
+
+  // Turn MAC into a number
+  static macToNumber(mac: string): bigint {
+    // leaves an hexadecimal string of 6 bytes, then parse it to bigint
+    return BigInt("0x" + mac.replace(/:/g, ""));
+  }
+
+  // Turn number into IP
+  static numberToMac(num: bigint): string {
+    return num.toString(16).padStart(12, "0").match(/.{2}/g)!.join(":");
+  }
+}
+
 const crc32 = new CRC32();
 
 const MINIMUM_PAYLOAD_SIZE = 46;

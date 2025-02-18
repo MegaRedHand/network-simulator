@@ -1,5 +1,5 @@
 import { Viewport } from "./graphics/viewport";
-import { DataGraph, isNetworkNode } from "./types/graphs/datagraph";
+import { DataGraph, isLinkNode, isNetworkNode } from "./types/graphs/datagraph";
 import { ViewGraph } from "./types/graphs/viewgraph";
 import {
   loadFromLocalStorage,
@@ -10,6 +10,7 @@ import { Layer } from "./types/devices/device";
 import { IpAddress, IpAddressGenerator } from "./packets/ip";
 import { layerFromName } from "./types/devices/layer";
 import { SpeedMultiplier } from "./types/devices/speedMultiplier";
+import { MacAddress, MacAddressGenerator } from "./packets/ethernet";
 
 export class GlobalContext {
   private viewport: Viewport = null;
@@ -17,6 +18,7 @@ export class GlobalContext {
   private viewgraph: ViewGraph;
   private saveIntervalId: NodeJS.Timeout | null = null;
   private ipGenerator: IpAddressGenerator;
+  private macGenerator: MacAddressGenerator;
 
   constructor(viewport: Viewport) {
     this.viewport = viewport;
@@ -25,10 +27,15 @@ export class GlobalContext {
     loadFromLocalStorage(this);
 
     this.setIpGenerator();
+    this.setMacGenerator();
   }
 
   getNextIp(): { ip: string; mask: string } {
     return this.ipGenerator.getNextIp();
+  }
+
+  getNextMac(): string {
+    return this.macGenerator.getNextMac();
   }
 
   private setNetwork(
@@ -44,6 +51,7 @@ export class GlobalContext {
     this.viewgraph = new ViewGraph(this.datagraph, this.viewport, layer);
     this.viewgraph.setSpeed(speedMultiplier?.value || 1);
     this.setIpGenerator();
+    this.setMacGenerator();
   }
 
   private setSpeedMultiplier(speedMultiplier: SpeedMultiplier) {
@@ -143,6 +151,21 @@ export class GlobalContext {
     const baseIp = maxIp.toString();
     const mask = "255.255.255.255";
     this.ipGenerator = new IpAddressGenerator(baseIp, mask);
+  }
+
+  private setMacGenerator() {
+    let maxMac = MacAddress.parse("00:00:10:00:00:00");
+    this.datagraph.getDevices().forEach((device) => {
+      if (isLinkNode(device)) {
+        const mac = MacAddress.parse(device.mac);
+        if (maxMac.octets < mac.octets) {
+          maxMac = mac;
+        }
+      }
+    });
+    // TODO: we should use MacAddress instead of string here and in Datagraph
+    const baseMac = maxMac.toString();
+    this.macGenerator = new MacAddressGenerator(baseMac);
   }
 
   print() {

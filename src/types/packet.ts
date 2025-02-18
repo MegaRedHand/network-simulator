@@ -13,6 +13,7 @@ import { ViewGraph } from "./graphs/viewgraph";
 import { IPv4Packet } from "../packets/ip";
 import { EchoRequest, EchoReply } from "../packets/icmp";
 import { DeviceId, isRouter } from "./graphs/datagraph";
+import { NetworkDevice } from "./devices/device";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
@@ -288,7 +289,10 @@ export function sendRawPacket(
   let firstEdge = originConnections.find((edge) => {
     const otherId = edge.otherEnd(srcId);
     const otherDevice = viewgraph.getDevice(otherId);
-    return otherDevice.ip.equals(dstIp);
+    if (otherDevice instanceof NetworkDevice) {
+      return otherDevice.ip.equals(dstIp);
+    }
+    return false;
   });
   if (firstEdge === undefined) {
     const datagraph = viewgraph.getDataGraph();

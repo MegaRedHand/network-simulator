@@ -25,6 +25,7 @@ import { Layer } from "./layer";
 import { Packet, sendRawPacket } from "../packet";
 import { EchoReply } from "../../packets/icmp";
 import { CreateDevice } from "./utils";
+import { MacAddress } from "../../packets/ethernet";
 
 export { Layer } from "./layer";
 
@@ -65,12 +66,11 @@ export abstract class Device extends Container {
     return this.sprite.height;
   }
 
-  ip: IpAddress;
-  ipMask: IpAddress;
-
-  // Each type of device has different ways of handling a received packet.
-  // Returns the DevicedId for the next device to send the packet to, or
-  // null if there’s no next device to send the packet.
+  /**
+   * Each type of device has different ways of handling a received packet.
+   * Returns the id for the next device to send the packet to, or
+   * null if there’s no next device to send the packet.
+   * */
   // TODO: Might be general for all device in the future.
   abstract receivePacket(packet: Packet): DeviceId | null;
 
@@ -79,15 +79,11 @@ export abstract class Device extends Container {
     texture: Texture,
     viewgraph: ViewGraph,
     position: Position,
-    ip: IpAddress,
-    ipMask: IpAddress,
   ) {
     super();
 
     this.id = id;
     this.viewgraph = viewgraph;
-    this.ip = ip;
-    this.ipMask = ipMask;
 
     this.sprite = new Sprite(texture);
 
@@ -143,25 +139,6 @@ export abstract class Device extends Container {
 
   removeConnection(id: DeviceId) {
     this.connections.delete(id);
-  }
-
-  // TODO: Most probably it will be different for each type of device
-  handlePacket(packet: Packet) {
-    switch (packet.type) {
-      case "ICMP-8": {
-        const dstDevice = this.viewgraph.getDeviceByIP(
-          packet.rawPacket.sourceAddress,
-        );
-        if (dstDevice) {
-          const echoReply = new EchoReply(0);
-          const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
-          sendRawPacket(this.viewgraph, this.id, ipPacket);
-        }
-        break;
-      }
-      default:
-        console.warn("Packet's type unrecognized");
-    }
   }
 
   delete(): void {
@@ -342,5 +319,62 @@ function onPointerUp(): void {
     Device.dragTarget.parent.off("pointermove", onPointerMove);
     Device.dragTarget.parent.off("pointerup", onPointerUp);
     Device.dragTarget = null;
+  }
+}
+
+export abstract class LinkDevice extends Device {
+  mac: MacAddress;
+  arpTable: Map<IpAddress, MacAddress> = new Map();
+
+  constructor(
+    id: DeviceId,
+    texture: Texture,
+    viewgraph: ViewGraph,
+    position: Position,
+    mac: MacAddress,
+  ) {
+    super(id, texture, viewgraph, position);
+    this.mac = mac;
+  }
+}
+
+export abstract class NetworkDevice extends LinkDevice {
+  ip: IpAddress;
+  ipMask: IpAddress;
+
+  constructor(
+    id: DeviceId,
+    texture: Texture,
+    viewgraph: ViewGraph,
+    position: Position,
+    mac: MacAddress,
+    ip: IpAddress,
+    ipMask: IpAddress,
+  ) {
+    super(id, texture, viewgraph, position, mac);
+    this.ip = ip;
+    this.ipMask = ipMask;
+  }
+
+  // TODO: Most probably it will be different for each type of device
+  handlePacket(packet: Packet) {
+    const dstDevice = this.viewgraph.getDeviceByIP(
+      packet.rawPacket.sourceAddress,
+    );
+    if (!(dstDevice instanceof NetworkDevice)) {
+      return;
+    }
+    switch (packet.type) {
+      case "ICMP-8": {
+        if (dstDevice) {
+          const echoReply = new EchoReply(0);
+          const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
+          sendRawPacket(this.viewgraph, this.id, ipPacket);
+        }
+        break;
+      }
+      default:
+        console.warn("Packet's type unrecognized");
+    }
   }
 }

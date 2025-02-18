@@ -1,4 +1,4 @@
-import { Device, DeviceType, Layer } from "./device";
+import { Device, DeviceType, Layer, LinkDevice } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import SwitchImage from "../../assets/switch.svg";
 import { Position } from "../common";
@@ -6,8 +6,9 @@ import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { DeviceId } from "../graphs/datagraph";
 import { Packet } from "../packet";
 import { Texture } from "pixi.js";
+import { MacAddress } from "../../packets/ethernet";
 
-export class Switch extends Device {
+export class Switch extends LinkDevice {
   static DEVICE_TEXTURE: Texture;
 
   static getTexture() {
@@ -17,8 +18,13 @@ export class Switch extends Device {
     return Switch.DEVICE_TEXTURE;
   }
 
-  constructor(id: DeviceId, viewgraph: ViewGraph, position: Position) {
-    super(id, Switch.getTexture(), viewgraph, position, null, null);
+  constructor(
+    id: DeviceId,
+    viewgraph: ViewGraph,
+    position: Position,
+    mac: MacAddress,
+  ) {
+    super(id, Switch.getTexture(), viewgraph, position, mac);
   }
 
   showInfo(): void {

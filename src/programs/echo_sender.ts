@@ -6,6 +6,7 @@ import { ViewGraph } from "../types/graphs/viewgraph";
 import { ProgramInfo } from "../graphics/renderables/device_info";
 import { EchoRequest } from "../packets/icmp";
 import { IPv4Packet } from "../packets/ip";
+import { NetworkDevice } from "../types/devices/device";
 
 function adjacentDevices(viewgraph: ViewGraph, srcId: DeviceId) {
   const adjacentDevices = viewgraph
@@ -44,6 +45,13 @@ export class SingleEcho extends ProgramBase {
     const srcDevice = this.viewgraph.getDevice(this.srcId);
     if (!dstDevice) {
       console.error("Destination device not found");
+      return;
+    }
+    if (
+      !(
+        srcDevice instanceof NetworkDevice && dstDevice instanceof NetworkDevice
+      )
+    ) {
       return;
     }
     const echoRequest = new EchoRequest(0);
