@@ -91,7 +91,6 @@ class EchoMessage extends IcmpPacket {
   getDetails(layer: number): Record<string, string | number | object> {
     if (layer == Layer.Transport) {
       return {
-        Type: this.type == 8 ? "Echo Request" : "Echo Reply",
         Warning: ICMP_WARNING,
       };
     }

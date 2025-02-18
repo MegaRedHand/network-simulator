@@ -261,6 +261,24 @@ export class IPv4Packet implements FramePayload {
   }
 
   getDetails(layer: Layer) {
+    // TODO: Refactor Packet Building Process
+    //
+    // Current Implementation:
+    // - Packet building starts at the Network layer
+    // - Frame payload data is directly included here
+    //
+    // Desired Implementation:
+    // - Move frame-specific data to EthernetFrame class
+    // - Implement packet sending using MAC addresses at device level
+    if (layer == Layer.Link) {
+      return {
+        "Ethernet Header": "---",
+        "Destination MAC": "---",
+        "Source MAC": "---",
+        EtherType: "0x0800",
+      };
+    }
+
     if (layer == Layer.Network) {
       return {
         Version: this.version,
