@@ -181,8 +181,8 @@ export class TcpSegment implements IpPayload {
   }
 
   // Dummy Method for the moment
-  getDetails(layer:Layer) {
-    return {Layer: layer};
+  getDetails(layer: Layer) {
+    return { Layer: layer };
   }
 
   // ### IpPayload ###

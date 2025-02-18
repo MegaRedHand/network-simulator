@@ -1,11 +1,8 @@
-import {
-  ICMP_PROTOCOL_NUMBER,
-  IpPayload,
-  computeIpChecksum,
-} from "./ip";
+import { ICMP_PROTOCOL_NUMBER, IpPayload, computeIpChecksum } from "./ip";
 import { Layer } from "../types/devices/layer";
 
-const ICMP_WARNING = "ICMP operates directly on top of IP at the Network layer, bypassing the Transport layer (TCP/UDP). This is because ICMP is primarily used for network diagnostics and error reporting, not for end-to-end data transport."
+const ICMP_WARNING =
+  "ICMP operates directly on top of IP at the Network layer, bypassing the Transport layer (TCP/UDP). This is because ICMP is primarily used for network diagnostics and error reporting, not for end-to-end data transport.";
 
 // More info in RFC-792
 //   0                   1                   2                   3
@@ -91,30 +88,27 @@ class EchoMessage extends IcmpPacket {
     ]);
   }
 
-  getDetails(
-    layer: number,
-  ): Record<string, string | number | object> {
+  getDetails(layer: number): Record<string, string | number | object> {
     if (layer == Layer.Transport) {
       return {
         Type: this.type == 8 ? "Echo Request" : "Echo Reply",
-        "Warning": ICMP_WARNING,
+        Warning: ICMP_WARNING,
       };
     }
-    
+
     // TODO: If we decide to hide ICMP packets on Application layer, this should be removed
     if (this.type == 8) {
       return {
-        "Application": "Ping",
-        "Task": "Echo Request",
-    }
+        Application: "Ping",
+        Task: "Echo Request",
+      };
     } else {
       return {
-        "Application": "Ping",
-        "Task": "Echo Reply",
-      }
-    } 
+        Application: "Ping",
+        Task: "Echo Reply",
+      };
+    }
   }
-
 }
 
 export class EchoRequest extends EchoMessage {

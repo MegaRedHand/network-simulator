@@ -87,7 +87,12 @@ export class RightBar {
     buttonClass = "right-bar-toggle-button",
     infoClass = "right-bar-info",
   ) {
-    const container = createToggleInfo(title, details, buttonClass, infoClass);
+    const container = createToggleInfo({
+      title,
+      details,
+      buttonClass,
+      infoClass,
+    });
     const infoContent = document.getElementById("info-content");
 
     if (infoContent) {
@@ -110,18 +115,19 @@ export class RightBar {
 }
 
 // Function to create a toggle button
-export function createToggleButton(
+function createToggleButton(
   title: string,
   buttonClass: string,
-  element: HTMLElement,
+  table: HTMLTableElement,
 ) {
   const button = document.createElement("button");
   button.classList.add(buttonClass);
   button.textContent = title;
 
   button.onclick = () => {
-    element.classList.toggle("hidden");
-    button.classList.toggle("open");
+    const isHidden = table.classList.contains("hidden");
+    table.classList.toggle("hidden", !isHidden);
+    button.classList.toggle("open", isHidden);
   };
 
   return button;
@@ -139,9 +145,11 @@ function updateRoutingTableUI(
   }
   router.routingTable = newTableData;
 
-  const existingTable: HTMLTableElement | null =
-    document.querySelector("table.toggle-table");
+  const tableContainer = document.querySelector(".toggle-table-container");
+  if (!tableContainer)
+    return console.warn("Routing table container not found.");
 
+  const existingTable = tableContainer.querySelector("table");
   if (!existingTable)
     return console.warn("Existing table not found inside container.");
 
@@ -152,15 +160,15 @@ function updateRoutingTableUI(
   console.log(`Routing table for router ID ${deviceId} updated successfully.`);
 }
 
-export function createTable(
+function createTable(
   headers: string[],
   rows: string[][],
-  tableClasses: string[],
+  tableClass: string,
   viewgraph: ViewGraph,
   deviceId: DeviceId,
 ): HTMLTableElement {
   const table = document.createElement("table");
-  table.classList.add(...tableClasses);
+  table.classList.add(tableClass, "hidden");
 
   const headerRow = document.createElement("tr");
   headers.forEach((header) => {
@@ -188,7 +196,7 @@ export function createTable(
 
 function clearTableRows(table: HTMLTableElement): void {
   const rows = Array.from(table.querySelectorAll("tr"));
-  rows.slice(1).forEach((row) => row.remove()); // Keep the header only
+  rows.slice(1).forEach((row) => row.remove()); // Mantener solo el encabezado
 }
 
 function createTableRow(
@@ -207,13 +215,13 @@ function createTableRow(
 
     cell.addEventListener("keydown", (event) => {
       if (event.key === "Delete" || event.key === "Backspace") {
-        event.stopPropagation(); // Avoid the event to clear the table's row
+        event.stopPropagation(); // Evita que el evento borre la fila en la tabla
       }
     });
 
     cell.addEventListener("blur", () => {
       const updatedRowIndex =
-        Array.from(table.querySelectorAll("tr")).indexOf(rowElement) - 1;
+        Array.from(table.querySelectorAll("tr")).indexOf(rowElement) - 1; // Ajuste dinámico del índice
       const newValue = cell.textContent?.trim() || "";
 
       let isValid = false;
@@ -223,7 +231,7 @@ function createTableRow(
 
       if (!isValid) {
         console.warn(`Invalid input for column ${colIndex}: ${newValue}`);
-        cell.textContent = cellData; // Revert change if invalid
+        cell.textContent = cellData; // Revertir cambio si es inválido
         return;
       }
 
@@ -331,12 +339,13 @@ export function createToggleTable(
   rows: string[][],
   viewgraph: ViewGraph,
   deviceId: number,
+  buttonClass = "right-bar-toggle-button",
+  tableClass = "right-bar-table",
 ) {
   const container = document.createElement("div");
-  const tableClasses = ["right-bar-table", "hidden", "toggle-table"];
-  const buttonClass = "right-bar-toggle-button";
+  container.classList.add("toggle-table-container");
 
-  const table = createTable(headers, rows, tableClasses, viewgraph, deviceId);
+  const table = createTable(headers, rows, tableClass, viewgraph, deviceId);
   const button = createToggleButton(title, buttonClass, table);
 
   container.appendChild(button);
@@ -345,60 +354,63 @@ export function createToggleTable(
   return container;
 }
 
-export function createToggleInfo(
-  title: string,
-  details: Record<string, string | number | object>,
-  buttonClass = "right-bar-toggle-button",
-  infoClass = "right-bar-info",
-) {
-  const container = document.createElement("div");
-  container.classList.add("toggle-info-container");
+interface ToggleInfoConfig {
+  title: string;
+  details: Record<string, string | number | object>;
+  buttonClass?: string;
+  infoClass?: string;
+}
 
-  // Create toggle button
+// Function to create warning element
+function createWarningElement(key: string, value: string): HTMLLIElement {
+  const listItem = document.createElement("li");
+  const warningSign = document.createElement("div");
+  warningSign.classList.add("warning-sign");
+
+  const warningTitle = document.createElement("h3");
+  warningTitle.classList.add("warning-title");
+  warningTitle.textContent = key;
+
+  const warningMessage = document.createElement("p");
+  warningMessage.classList.add("warning-message");
+  warningMessage.textContent = String(value);
+
+  warningSign.appendChild(warningTitle);
+  warningSign.appendChild(warningMessage);
+  listItem.appendChild(warningSign);
+
+  return listItem;
+}
+
+// Function to create payload element
+function createPayloadElement(key: string, value: object): HTMLLIElement {
+  const listItem = document.createElement("li");
+  const pre = document.createElement("pre");
+  pre.textContent = JSON.stringify(value, null, 2); // Pretty-print JSON
+  listItem.innerHTML = `<strong>${key}:</strong>`;
+  listItem.appendChild(pre);
+
+  return listItem;
+}
+
+// Function to create regular detail element
+function createDetailElement(key: string, value: string): HTMLLIElement {
+  const listItem = document.createElement("li");
+  listItem.innerHTML = `<strong>${key}:</strong> ${value}`;
+  return listItem;
+}
+
+// Function to create toggle button
+function createInfoToggleButton(
+  buttonClass: string,
+  list: HTMLUListElement,
+  container: HTMLDivElement,
+  header: HTMLHeadingElement,
+): HTMLButtonElement {
   const button = document.createElement("button");
   button.classList.add(buttonClass);
   button.textContent = "Show Details";
 
-  // Create Packet Details title
-  const header = document.createElement("h3");
-  header.classList.toggle("hidden", true);
-  header.textContent = title;
-
-  // Create info list
-  const list = document.createElement("ul");
-  list.classList.add(infoClass, "hidden");
-
-  // Add details to the list
-  Object.entries(details).forEach(([key, value]) => {
-    const listItem = document.createElement("li");
-    if (typeof value === "object" && value !== null) {
-      // Format the payload as JSON
-      const pre = document.createElement("pre");
-      pre.textContent = JSON.stringify(value, null, 2); // Pretty-print JSON
-      listItem.innerHTML = `<strong>${key}:</strong>`;
-      listItem.appendChild(pre);
-    } else if (key === "Warning") {
-      const warningSign = document.createElement("div");
-      warningSign.classList.add("warning-sign");
-
-      const warningTitle = document.createElement("h3");
-      warningTitle.classList.add("warning-title");
-      warningTitle.textContent = key;
-
-      const warningMessage = document.createElement("p");
-      warningMessage.classList.add("warning-message");
-      warningMessage.textContent = String(value);
-
-      warningSign.appendChild(warningTitle);
-      warningSign.appendChild(warningMessage);
-      listItem.appendChild(warningSign);
-    } else {
-      listItem.innerHTML = `<strong>${key}:</strong> ${value}`;
-    }
-    list.appendChild(listItem);
-  });
-
-  // Toggle when clicking on button
   button.onclick = () => {
     const isHidden = list.classList.contains("hidden");
     list.classList.toggle("hidden", !isHidden);
@@ -410,7 +422,43 @@ export function createToggleInfo(
     button.textContent = isHidden ? "Hide Details" : "Show Details";
   };
 
-  // Add elements to container
+  return button;
+}
+
+// Main function to create toggle info
+export function createToggleInfo({
+  title,
+  details,
+  buttonClass = "right-bar-toggle-button",
+  infoClass = "right-bar-info",
+}: ToggleInfoConfig): HTMLDivElement {
+  const container = document.createElement("div");
+  container.classList.add("toggle-info-container");
+
+  const header = document.createElement("h3");
+  header.classList.toggle("hidden", true);
+  header.textContent = title;
+
+  const list = document.createElement("ul");
+  list.classList.add(infoClass, "hidden");
+
+  // Process details
+  Object.entries(details).forEach(([key, value]) => {
+    let listItem: HTMLLIElement;
+
+    if (typeof value === "object" && value !== null) {
+      listItem = createPayloadElement(key, value);
+    } else if (key === "Warning") {
+      listItem = createWarningElement(key, value as string);
+    } else {
+      listItem = createDetailElement(key, value as string);
+    }
+
+    list.appendChild(listItem);
+  });
+
+  const button = createInfoToggleButton(buttonClass, list, container, header);
+
   container.appendChild(button);
   container.appendChild(header);
   container.appendChild(list);

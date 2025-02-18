@@ -1,7 +1,6 @@
 import { FramePayload, IP_PROTOCOL_TYPE } from "./ethernet";
 import { Layer } from "../types/devices/layer";
 
-
 // Taken from here: https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
 export const ICMP_PROTOCOL_NUMBER = 1;
 export const TCP_PROTOCOL_NUMBER = 6;
@@ -126,7 +125,7 @@ export interface IpPayload {
   // Packet protocol name
   getPacketType(): string;
   // Get details of the payload
-  getDetails(layer:Layer): Record<string, string | number | object>;
+  getDetails(layer: Layer): Record<string, string | number | object>;
 }
 
 // Info taken from the original RFC: https://datatracker.ietf.org/doc/html/rfc791#section-3.1
@@ -261,7 +260,7 @@ export class IPv4Packet implements FramePayload {
     return IP_PROTOCOL_TYPE;
   }
 
-  getDetails(layer:Layer) {
+  getDetails(layer: Layer) {
     if (layer == Layer.Network) {
       return {
         Version: this.version,
