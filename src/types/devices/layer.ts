@@ -27,7 +27,7 @@ export function layerToName(layer: Layer): string {
   return layerToNameMap.get(layer);
 }
 
-export function layerIncluded(layer1: Layer, layer2: Layer) {
-  // Determines whether layer1 is included within layer2’s abstraction.
-  return layer1 >= layer2;
+export function layerIncluded(minorLayer: Layer, majorLayer: Layer) {
+  // Determines whether minorLayer is included within majorLayer’s abstraction.
+  return minorLayer >= majorLayer;
 }

@@ -36,7 +36,7 @@ export class GlobalContext {
     this.datagraph = datagraph;
     this.viewport.clear();
     if (this.viewgraph) {
-      this.viewgraph.destroy();
+      this.viewgraph.clear();
     }
     this.viewgraph = new ViewGraph(this.datagraph, this, layer);
     this.setIpGenerator();
@@ -91,7 +91,6 @@ export class GlobalContext {
 
   changeViewGraph(selectedLayer: string) {
     const layer = layerFromName(selectedLayer);
-    urManager.reset();
     this.setNetwork(this.datagraph, layer);
   }
 
@@ -136,5 +135,12 @@ export class GlobalContext {
     const baseIp = maxIp.toString();
     const mask = "255.255.255.255";
     this.ipGenerator = new IpAddressGenerator(baseIp, mask);
+  }
+
+  print() {
+    console.log("VieGraph:");
+    console.log(this.viewgraph);
+    console.log("DataGraph");
+    console.log(this.datagraph);
   }
 }

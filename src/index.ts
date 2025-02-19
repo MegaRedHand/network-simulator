@@ -1,5 +1,4 @@
 import { Application, Assets } from "pixi.js";
-
 import {
   deselectElement,
   loadFromFile,
@@ -15,7 +14,6 @@ import { Viewport } from "./graphics/viewport";
 import { GlobalContext } from "./context";
 
 // Assets
-// Doing this includes the file in the build
 import "./styles";
 import RouterSvg from "./assets/router.svg";
 import SwitchSvg from "./assets/switch.svg";
@@ -42,7 +40,11 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
 // IIFE to avoid errors
 (async () => {
-  // Initialization
+  const canvasPlaceholder = document.getElementById("canvas");
+  const lBar = document.getElementById("left-bar");
+  const rBar = document.getElementById("right-bar");
+  const tBar = document.getElementById("top-bar");
+
   const app = new Application();
   const appInitPromise = app.init({
     width: window.innerWidth,
@@ -51,52 +53,67 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     autoDensity: true,
     antialias: true,
   });
-  await loadAssets([appInitPromise]);
 
-  const canvasPlaceholder = document.getElementById("canvas");
+  await loadAssets([appInitPromise]);
   canvasPlaceholder.replaceWith(app.canvas);
 
-  // Background container initialization
   const viewport = new Viewport(app.renderer.events);
   app.stage.addChild(viewport);
 
-  // Context initialization
   const ctx = new GlobalContext(viewport);
 
-  // Get the layer’s menu
   const layerSelect = document.getElementById(
     "layer-select",
   ) as HTMLSelectElement;
-
   layerSelect.value = layerToName(ctx.getCurrentLayer());
 
-  // Initialize RightBar
   RightBar.getInstance();
 
-  // Left bar logic
   const leftBar = LeftBar.getFrom(document, ctx);
   leftBar.setButtonsByLayer(layerSelect.value);
 
-  const lBar = document.getElementById("left-bar");
-  const rBar = document.getElementById("right-bar");
-  const tBar = document.getElementById("top-bar");
-
-  // Resize logic
   function resize() {
-    const newWidth = window.innerWidth - lBar.offsetWidth - rBar.offsetWidth;
-    const newHeight = window.innerHeight - tBar.offsetHeight;
+    // Check if the layout should be stacked (based on window width)
+    const isStacked = window.innerWidth <= 768;
 
+    // Determine the size of the left bar (width if not stacked, height if stacked)
+    const leftSize = isStacked
+      ? lBar?.offsetHeight || 0
+      : lBar?.offsetWidth || 0;
+
+    // Determine the size of the right bar (width if not stacked, height if stacked)
+    const rightSize = isStacked
+      ? rBar?.offsetHeight || 0
+      : rBar?.offsetWidth || 0;
+
+    // Get the height of the top bar
+    const topHeight = tBar?.offsetHeight || 0;
+
+    // Calculate the new width and height for the canvas
+    // If stacked, reduce height by left and right sizes; otherwise, reduce width
+    let newWidth = window.innerWidth - (isStacked ? 0 : leftSize + rightSize);
+    let newHeight =
+      window.innerHeight - (isStacked ? leftSize + rightSize : topHeight);
+
+    // Ensure minimum dimensions to prevent the canvas from becoming too small
+    newWidth = Math.max(300, newWidth);
+    newHeight = Math.max(200, newHeight);
+
+    // Log the new dimensions for debugging
+    console.log("📏 Resizing canvas to:", newWidth, "x", newHeight);
+
+    // Resize the app renderer and viewport accordingly
     app.renderer.resize(newWidth, newHeight);
     viewport.resize(newWidth, newHeight);
   }
 
   resize();
-
   window.addEventListener("resize", resize);
 
   const newButton = document.getElementById("new-button");
   const loadButton = document.getElementById("load-button");
   const saveButton = document.getElementById("save-button");
+  const printButton = document.getElementById("print-button");
 
   newButton.onclick = () => {
     deselectElement();
@@ -109,6 +126,9 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   loadButton.onclick = () => {
     deselectElement();
     loadFromFile(ctx);
+  };
+  printButton.onclick = () => {
+    ctx.print();
   };
   // Undo button’s logic
   const undoButton = document.getElementById(
@@ -213,7 +233,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     valueDisplay.textContent = `${value}x`;
   }
 
-  // (!) For layer abstraction functionality
+  // For layer abstraction logic
   const selectNewLayer = (event: Event) => {
     const selectedLayer = (event.target as HTMLSelectElement).value;
     console.log(`Layer selected: ${selectedLayer}`);
@@ -223,11 +243,16 @@ async function loadAssets(otherPromises: Promise<void>[]) {
       saveToLocalStorage(ctx);
       // LeftBar is reset
       leftBar.setButtonsByLayer(selectedLayer);
-      deselectElement();
+      deselectElement(); // not needed
     }
   };
 
   layerSelect.onchange = selectNewLayer;
+  layerSelect.addEventListener("layerChanged", () => {
+    const currLayer = layerToName(ctx.getCurrentLayer());
+    layerSelect.value = currLayer;
+    leftBar.setButtonsByLayer(currLayer);
+  });
 
   document.body.onkeyup = function (e) {
     if (e.key === " " || e.code === "Space") {
@@ -255,5 +280,21 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   // Initialize with default value
   valueDisplay.textContent = `${(speedWheel as HTMLInputElement).value}x`;
 
-  console.log("initialized!");
+  // Get the element with the ID "canvas-wrapper"
+  const canvasWrapper = document.getElementById("canvas-wrapper");
+
+  // Check if the element exists before adding event listeners
+  if (canvasWrapper) {
+    // When the mouse enters the canvas wrapper, prevent scrolling
+    canvasWrapper.addEventListener("mouseenter", () => {
+      document.body.classList.add("no-scroll");
+    });
+
+    // When the mouse leaves the canvas wrapper, allow scrolling again
+    canvasWrapper.addEventListener("mouseleave", () => {
+      document.body.classList.remove("no-scroll");
+    });
+  }
+
+  console.log("✅ Initialized!");
 })();

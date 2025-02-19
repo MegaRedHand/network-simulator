@@ -15,34 +15,20 @@ function adjacentDevices(viewgraph: ViewGraph, srcId: DeviceId) {
   return adjacentDevices;
 }
 
-export abstract class EchoSender extends ProgramBase {
+export class SingleEcho extends ProgramBase {
+  static readonly PROGRAM_NAME = "Send ICMP echo";
+
   protected dstId: DeviceId;
 
   protected _parseInputs(inputs: string[]): void {
     if (inputs.length !== 1) {
       console.error(
-        "Program requires 1 input. " + inputs.length + " were given.",
+        "SingleEcho requires 1 input. " + inputs.length + " were given.",
       );
       return;
     }
     this.dstId = parseInt(inputs[0]);
   }
-
-  protected sendSingleEcho() {
-    const dstDevice = this.viewgraph.getDevice(this.dstId);
-    const srcDevice = this.viewgraph.getDevice(this.srcId);
-    if (!dstDevice) {
-      console.error("Destination device not found");
-      return;
-    }
-    const echoRequest = new EchoRequest(0);
-    const ipPacket = new IPv4Packet(srcDevice.ip, dstDevice.ip, echoRequest);
-    sendRawPacket(this.viewgraph, this.srcId, ipPacket);
-  }
-}
-
-export class SingleEcho extends EchoSender {
-  static readonly PROGRAM_NAME = "Send ICMP echo";
 
   protected _run() {
     this.sendSingleEcho();
@@ -53,6 +39,18 @@ export class SingleEcho extends EchoSender {
     // Nothing to do
   }
 
+  private sendSingleEcho() {
+    const dstDevice = this.viewgraph.getDevice(this.dstId);
+    const srcDevice = this.viewgraph.getDevice(this.srcId);
+    if (!dstDevice) {
+      console.error("Destination device not found");
+      return;
+    }
+    const echoRequest = new EchoRequest(0);
+    const ipPacket = new IPv4Packet(srcDevice.ip, dstDevice.ip, echoRequest);
+    sendRawPacket(this.viewgraph, this.srcId, ipPacket);
+  }
+
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);
     programInfo.withDropdown("Destination", adjacentDevices(viewgraph, srcId));
@@ -60,24 +58,38 @@ export class SingleEcho extends EchoSender {
   }
 }
 
-const DEFAULT_ECHO_DELAY_MS = 250;
-
-export class EchoServer extends EchoSender {
+export class EchoServer extends ProgramBase {
   static readonly PROGRAM_NAME = "Echo server";
 
-  progress = 0;
+  private echoProgram: SingleEcho;
+  private progress = 0;
+
+  private delay: number;
+
+  protected _parseInputs(inputs: string[]): void {
+    if (inputs.length !== 2) {
+      console.error(
+        "EchoServer requires 2 inputs. " + inputs.length + " were given.",
+      );
+      return;
+    }
+    this.echoProgram = new SingleEcho(this.viewgraph, this.srcId, [inputs[0]]);
+    this.delay = parseInt(inputs[1]);
+  }
 
   protected _run() {
     Ticker.shared.add(this.tick, this);
   }
 
   private tick(ticker: Ticker) {
-    const delay = DEFAULT_ECHO_DELAY_MS;
+    const delay = this.delay;
     this.progress += ticker.deltaMS * this.viewgraph.getSpeed();
     if (this.progress < delay) {
       return;
     }
-    this.sendSingleEcho();
+    this.echoProgram.run(() => {
+      // do nothing
+    });
     this.progress -= delay;
   }
 
@@ -86,8 +98,18 @@ export class EchoServer extends EchoSender {
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
+    // TODO: make this a slider or text field
+    const delayOptions = [
+      { value: "250", text: "250ms" },
+      { value: "500", text: "500ms" },
+      { value: "1000", text: "1s" },
+      { value: "5000", text: "5s" },
+      { value: "15000", text: "15s" },
+    ];
+
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);
     programInfo.withDropdown("Destination", adjacentDevices(viewgraph, srcId));
+    programInfo.withDropdown("Time between pings", delayOptions);
     return programInfo;
   }
 }
