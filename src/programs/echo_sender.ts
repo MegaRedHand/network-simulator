@@ -82,14 +82,12 @@ export class EchoServer extends ProgramBase {
   }
 
   private tick(ticker: Ticker) {
-    if (!this.echoProgram) {
-      console.error("EchoProgram is not initialized");
-      this._stop();
+    const delay = this.delay;
+    this.progress += ticker.deltaMS * this.viewgraph.getSpeed();
+    if (this.progress < delay) {
       return;
     }
-
-    const delay = this.delay;
-    this.progress += ticker.deltaMS * this.viewgraph.getSpeed().value;
+    this.progress += ticker.deltaMS * this.viewgraph.getSpeed();
 
     if (this.progress >= delay) {
       this.echoProgram.run(() => {

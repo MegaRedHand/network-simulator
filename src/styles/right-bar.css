@@ -1,30 +1,26 @@
-/* right-bar.css */
-
-/* Styles for the right sidebar */
+/* right-bar.css - Right sidebar */
 .right-bar {
-  flex: 0 0 300px; /* Fixed width of 300px */
-  background-color: #f1f1f1; /* Light gray background for the sidebar */
-  box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.2); /* Adds a shadow on the left for depth */
-  padding: 20px; /* Adds internal spacing */
-  overflow-y: auto; /* Enables vertical scrolling if content overflows */
-  max-height: calc(
-    100vh - 40px
-  ); /* Ensures the sidebar fits within the viewport */
+  flex: 0 0 clamp(25vw, 25%, 40vw); /* Sets flexible width with a range */
+  background-color: #f1f1f1; /* Light gray background for contrast */
+  box-shadow: -0.2vw 0 0.5vw rgba(0, 0, 0, 0.2); /* Adds subtle shadow for depth */
+  padding: 3vh; /* Adds internal spacing */
+  overflow-y: auto; /* Enables vertical scrolling if needed */
+  max-height: 90vh; /* Limits the maximum height */
 }
 
-/* Title inside the right sidebar */
+/* 🔹 Sidebar title */
 .right-bar h2 {
-  text-align: center; /* Centers the title horizontally */
-  margin: 0; /* Removes default margins */
-  padding-bottom: 15px; /* Adds space below the title */
-  font-size: 22px; /* Sets the font size */
-  font-weight: bold; /* Makes the title text bold */
-  color: #333333; /* Dark gray color for the title */
+  text-align: center; /* Centers the title */
+  margin: 0; /* Removes default margin */
+  padding-bottom: 2vh; /* Adds spacing below the title */
+  font-size: 2rem; /* Increases font size */
+  font-weight: bold; /* Emphasizes title */
+  color: #333; /* Dark gray text for readability */
 }
 
-/* Style for the information content in the right bar */
+/* 🔹 Information content */
 .info-content {
-  font-size: 15px; /* Adjust font size */
-  font-weight: bold; /* Makes the text thicker */
-  color: #333333; /* Dark gray text color */
+  font-size: 5rem; /* Large font for emphasis */
+  font-weight: bold; /* Makes text stand out */
+  color: #333; /* Dark gray text */
 }

@@ -1,42 +1,62 @@
-/* Estilos base para el contenedor */
+/* info.css - Information in the sidebar */
 .toggle-info-container {
-  overflow: hidden;
-  text-align: left;
-  margin: 0;
-  padding: 0;
+  overflow: hidden; /* Prevents content from overflowing */
+  text-align: left; /* Aligns text to the left */
+  margin: 0; /* Removes default margin */
+  padding: 0; /* Removes default padding */
+  font-size: 1rem; /* Sets a standard font size */
 }
 
-/* Ajustes para el texto de la lista */
+/* 🔹 Unordered list containing info items */
 .toggle-info-container .right-bar-info {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  margin: 0; /* Removes default margin */
+  padding: 0; /* Removes default padding */
+  list-style: none; /* Removes bullet points */
 }
 
+/* 🔹 Individual list items */
 .toggle-info-container .right-bar-info li {
-  margin: 20px 0px;
-  padding: 0;
-  text-align: flex;
+  margin: 2vh 0; /* Adds vertical spacing between items */
+  padding: 0; /* Removes default padding */
+  display: flex; /* Uses flexbox for layout */
+  flex-direction: column; /* Stacks elements vertically */
+  align-items: flex-start; /* Ensures label and select align properly */
 }
 
-/* Estilo para el pre que contiene el payload */
+/* 🔹 Labels inside the list */
+.toggle-info-container .right-bar-info li label {
+  font-weight: bold; /* Makes labels stand out */
+  margin-bottom: 0.5vh; /* Adds spacing between label and input */
+}
+
+/* 🔹 Dropdowns inside the list */
+.toggle-info-container .right-bar-info li select {
+  width: 100%; /* Makes select dropdown full width */
+  padding: 0.8vh; /* Adds padding for a better UI */
+  font-size: 1rem; /* Matches the general text size */
+  border: 0.1rem solid #ccc; /* Light gray border */
+  border-radius: 0.5rem; /* Rounded corners */
+  background-color: #fff; /* White background */
+}
+
+/* 🔹 Preformatted text box */
 .toggle-info-container .right-bar-info li pre {
-  background-color: #000;
-  color: #fff;
-  padding: 10px;
-  border-radius: 4px;
-  font-family: monospace;
-  white-space: pre-wrap;
-  overflow-x: auto;
+  background-color: #000; /* Black background */
+  color: #fff; /* White text for contrast */
+  padding: 1vh; /* Adds internal spacing */
+  border-radius: 0.5rem; /* Rounded corners */
+  font-family: monospace; /* Uses monospaced font */
+  white-space: pre-wrap; /* Ensures text wraps properly */
+  overflow-x: auto; /* Allows horizontal scrolling if needed */
 }
 
-/* Elementos abiertos */
+/* 🔹 Open state for info container */
 .toggle-info-container .right-bar-info.open {
-  display: block;
+  display: block; /* Ensures it is visible */
 }
 
-/* Transiciones para una experiencia más fluida */
-.toggle-info-container .hidden {
+/* Hide any container with 'hidden' class */
+.hidden {
   display: none;
 }
 
