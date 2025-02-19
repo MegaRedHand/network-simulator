@@ -1,0 +1,57 @@
+/* 🔹 Left controls container */
+#left-controls {
+  display: flex; /* Uses flexbox for layout */
+  align-items: center; /* Vertically aligns elements */
+  gap: 1vw; /* Adds spacing between elements */
+  flex-wrap: nowrap; /* Prevents wrapping into multiple lines */
+  justify-content: flex-start; /* Keeps alignment to the left */
+  position: absolute; /* Positions element absolutely */
+  top: 1.5vh; /* Places it slightly below the top */
+  left: 2vw; /* Positions it from the left */
+}
+
+/* 🔹 Right controls container */
+#right-controls {
+  display: flex; /* Uses flexbox */
+  align-items: center; /* Centers elements vertically */
+  gap: 6vw; /* Adds a large space between elements */
+  flex-wrap: wrap; /* Allows wrapping to prevent overlapping */
+  justify-content: flex-end; /* Aligns elements to the right */
+  max-width: 90vw; /* Ensures controls do not exceed viewport width */
+  position: absolute; /* Positions element absolutely */
+  top: 1.5vh; /* Aligns it near the top */
+  right: 2vw; /* Positions it from the right */
+}
+
+/* 🔹 Adjustments for small screens */
+@media (max-width: 768px) {
+  #left-controls {
+    gap: 1vw; /* Keeps spacing compact */
+    flex-wrap: wrap; /* Allows wrapping if space is limited */
+  }
+
+  /* 🔹 Smaller pause button on small screens */
+  .pause-button {
+    width: 5vh;
+    height: 5vh;
+  }
+
+  /* 🔹 Smaller undo and redo buttons */
+  .undo-button,
+  .redo-button {
+    width: 4.5vh;
+    height: 4.5vh;
+  }
+
+  /* 🔹 Undo/Redo container adjustments */
+  .undo-redo-container {
+    margin-left: 1vw; /* Adds slight left margin */
+    flex-wrap: nowrap; /* Prevents elements from rearranging */
+  }
+
+  /* 🔹 Right controls adjustments */
+  #right-controls {
+    gap: 3vw; /* Reduces spacing between controls */
+    flex-wrap: wrap; /* Allows wrapping for better fit */
+  }
+}

@@ -12,35 +12,47 @@
       <button id="print-button" class="load-button" title="Print">Print</button>
       <div id="app-title">GEduNet</div>
     </div>
+
     <div id="bottom-screen" class="row container">
       <div id="left-bar" class="left-bar"></div>
+
       <div class="canvas-container">
-        <canvas id="canvas"></canvas>
-        <button id="pause-button" class="pause-button" title="Pause"></button>
-        <i id="undo-button" class="undo-button" title="Undo"></i>
-        <i id="redo-button" class="redo-button" title="Redo"></i>
-        <div class="wheel-container">
-          <div class="wheel-label">Speed</div>
-          <div class="circular-slider">
-            <input
-              type="range"
-              id="speed-wheel"
-              min="0.5"
-              max="4"
-              step="0.1"
-              value="1"
-            />
+        <div id="canvas-wrapper">
+          <canvas id="canvas"></canvas>
+
+          <!-- Contenedor de controles en la izquierda -->
+          <div id="left-controls">
+            <button id="pause-button" class="pause-button" title="Pause"></button>
+            <div class="undo-redo-container">
+              <i id="undo-button" class="undo-button" title="Undo"></i>
+              <i id="redo-button" class="redo-button" title="Redo"></i>
+            </div>
           </div>
-          <div class="value-display">1x</div>
+
+          <!-- Contenedor de controles en la derecha -->
+          <div id="right-controls">
+            <div class="wheel-container">
+              <div class="wheel-label">Speed</div>
+              <div class="circular-slider">
+                <input type="range" id="speed-wheel" min="0.5" max="4" step="0.1" value="1" />
+              </div>
+              <div class="value-display">1x</div>
+            </div>
+
+            <div class="layer-container">
+              <select id="layer-select" class="dropdown-menu">
+                <option value="application">App Layer</option>
+                <option value="transport">Transport Layer</option>
+                <option value="network">Network Layer</option>
+                <option value="link">Link Layer</option>
+              </select>
+            </div>
+          </div>
         </div>
-        <select id="layer-select" class="dropdown-menu">
-          <option value="application">App Layer</option>
-          <option value="transport">Transport Layer</option>
-          <option value="network">Network Layer</option>
-          <option value="link">Link Layer</option>
-        </select>
       </div>
+
       <div id="right-bar" class="right-bar"></div>
     </div>
   </body>
 </html>
+
