@@ -3,10 +3,10 @@ import { Edge, EdgeEdges } from "./../edge";
 import { DataGraph, DeviceId, GraphNode } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
-import { SpeedMultiplier } from "../devices/speedMultiplier";
 import { CreateDevice, createDevice } from "../devices/utils";
 import { layerFromType } from "../devices/device";
 import { IpAddress } from "../../packets/ip";
+import { GlobalContext } from "../../context";
 
 export type EdgeId = string;
 
@@ -18,18 +18,18 @@ function parseConnectionKey(key: string): { id1: number; id2: number } {
 }
 
 export class ViewGraph {
+  private ctx: GlobalContext;
   private devices: Map<DeviceId, Device> = new Map<DeviceId, Device>();
   private edges: Map<EdgeId, Edge> = new Map<EdgeId, Edge>();
   private datagraph: DataGraph;
   private layer: Layer;
-  private speedMultiplier: SpeedMultiplier;
   viewport: Viewport;
 
-  constructor(datagraph: DataGraph, viewport: Viewport, layer: Layer) {
+  constructor(datagraph: DataGraph, ctx: GlobalContext, layer: Layer) {
+    this.ctx = ctx;
     this.datagraph = datagraph;
-    this.viewport = viewport;
+    this.viewport = ctx.getViewport();
     this.layer = layer;
-    this.speedMultiplier = new SpeedMultiplier(1);
     this.constructView();
   }
 
@@ -185,19 +185,8 @@ export class ViewGraph {
     layerSelect.dispatchEvent(event);
   }
 
-  getSpeed(): SpeedMultiplier {
-    if (!this.speedMultiplier) {
-      this.speedMultiplier = new SpeedMultiplier(1);
-    }
-    return this.speedMultiplier;
-  }
-
-  setSpeed(speed: number) {
-    if (this.speedMultiplier) {
-      this.speedMultiplier.value = speed;
-    } else {
-      this.speedMultiplier = new SpeedMultiplier(speed);
-    }
+  getSpeed(): number {
+    return this.ctx.getCurrentSpeed().value;
   }
 
   // Get all connections of a device

@@ -23,7 +23,6 @@ import PauseSvg from "./assets/pause-icon.svg";
 import UndoSvg from "./assets/left-curve-arrow.svg";
 import RedoSvg from "./assets/right-curve-arrow.svg";
 import { layerToName } from "./types/devices/layer";
-import { SpeedMultiplier } from "./types/devices/speedMultiplier";
 
 const assets = [
   RouterSvg,
@@ -262,7 +261,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     }
   };
 
-  let speedMultiplier = ctx.getCurrentSpeed();
+  const speedMultiplier = ctx.getCurrentSpeed();
   console.log("Current Speed Multiplier: ", speedMultiplier);
 
   const speedWheel = document.getElementById("speed-wheel") as HTMLInputElement;
@@ -273,10 +272,9 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   speedWheel.addEventListener("input", (event) => {
     const value = parseFloat((event.target as HTMLInputElement).value);
-    speedMultiplier = SpeedMultiplier.parse(value);
-    valueDisplay.textContent = speedMultiplier.multiplier;
+    valueDisplay.textContent = `${value}x`;
 
-    ctx.changeSpeedMultiplier(speedMultiplier.value);
+    ctx.changeSpeedMultiplier(value);
   });
 
   // Initialize with default value

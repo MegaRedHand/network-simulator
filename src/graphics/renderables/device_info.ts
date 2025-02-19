@@ -1,4 +1,4 @@
-import { ProgramRunner } from "../../programs";
+import { ProgramRunner, RunningProgram } from "../../programs";
 import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
 import { ViewGraph } from "../../types/graphs/viewgraph";
@@ -60,6 +60,17 @@ export class DeviceInfo extends StyledInfo {
     this.inputFields.push(...programRunnerInfo.toHTML());
   }
 
+  addRunningProgramsList(
+    runner: ProgramRunner,
+    runningPrograms: RunningProgram[],
+  ) {
+    if (runningPrograms.length === 0) {
+      return;
+    }
+    const table = createProgramsTable(runner, runningPrograms);
+    this.inputFields.push(table);
+  }
+
   addRoutingTable(viewgraph: ViewGraph, deviceId: number) {
     const entries = viewgraph.getRoutingTable(deviceId);
 
@@ -98,4 +109,27 @@ function getTypeName(device: Device): string {
     case DeviceType.Switch:
       return "Switch";
   }
+}
+
+function createProgramsTable(
+  runner: ProgramRunner,
+  runningPrograms: RunningProgram[],
+) {
+  const onDelete = (row: number) => {
+    const { pid } = runningPrograms[row];
+    runner.removeRunningProgram(pid);
+    refreshElement();
+    return true;
+  };
+  const rows = runningPrograms.map((program) => [
+    program.pid.toString(),
+    program.name,
+    JSON.stringify(program.inputs),
+  ]);
+  const headers = ["PID", "Name", "Inputs"];
+  // TODO: make table editable?
+  const table = createTable(headers, rows, { onDelete });
+  table.id = "running-programs-table";
+  table.classList.add("right-bar-table");
+  return table;
 }

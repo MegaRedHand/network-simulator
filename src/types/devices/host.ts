@@ -43,6 +43,7 @@ export class Host extends Device {
 
   showInfo(): void {
     const programList = getProgramList(this.viewgraph, this.id);
+    const runningProgramsList = this.getRunningPrograms();
 
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
