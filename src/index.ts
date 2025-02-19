@@ -41,8 +41,6 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
 // IIFE to avoid errors
 (async () => {
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-
   const canvasPlaceholder = document.getElementById("canvas");
   const lBar = document.getElementById("left-bar");
   const rBar = document.getElementById("right-bar");
@@ -76,28 +74,38 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   leftBar.setButtonsByLayer(layerSelect.value);
 
   function resize() {
-    requestAnimationFrame(() => {
-      const isStacked = window.innerWidth <= 768;
-      const leftSize = isStacked
-        ? lBar?.offsetHeight || 0
-        : lBar?.offsetWidth || 0;
-      const rightSize = isStacked
-        ? rBar?.offsetHeight || 0
-        : rBar?.offsetWidth || 0;
-      const topHeight = tBar?.offsetHeight || 0;
+    // Check if the layout should be stacked (based on window width)
+    const isStacked = window.innerWidth <= 768;
 
-      let newWidth = window.innerWidth - (isStacked ? 0 : leftSize + rightSize);
-      let newHeight =
-        window.innerHeight - (isStacked ? leftSize + rightSize : topHeight);
+    // Determine the size of the left bar (width if not stacked, height if stacked)
+    const leftSize = isStacked
+      ? lBar?.offsetHeight || 0
+      : lBar?.offsetWidth || 0;
 
-      newWidth = Math.max(300, newWidth);
-      newHeight = Math.max(200, newHeight);
+    // Determine the size of the right bar (width if not stacked, height if stacked)
+    const rightSize = isStacked
+      ? rBar?.offsetHeight || 0
+      : rBar?.offsetWidth || 0;
 
-      console.log("📏 Resizing canvas to:", newWidth, "x", newHeight);
+    // Get the height of the top bar
+    const topHeight = tBar?.offsetHeight || 0;
 
-      app.renderer.resize(newWidth, newHeight);
-      viewport.resize(newWidth, newHeight);
-    });
+    // Calculate the new width and height for the canvas
+    // If stacked, reduce height by left and right sizes; otherwise, reduce width
+    let newWidth = window.innerWidth - (isStacked ? 0 : leftSize + rightSize);
+    let newHeight =
+      window.innerHeight - (isStacked ? leftSize + rightSize : topHeight);
+
+    // Ensure minimum dimensions to prevent the canvas from becoming too small
+    newWidth = Math.max(300, newWidth);
+    newHeight = Math.max(200, newHeight);
+
+    // Log the new dimensions for debugging
+    console.log("📏 Resizing canvas to:", newWidth, "x", newHeight);
+
+    // Resize the app renderer and viewport accordingly
+    app.renderer.resize(newWidth, newHeight);
+    viewport.resize(newWidth, newHeight);
   }
 
   resize();
@@ -274,13 +282,17 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   // Initialize with default value
   valueDisplay.textContent = `${(speedWheel as HTMLInputElement).value}x`;
 
+  // Get the element with the ID "canvas-wrapper"
   const canvasWrapper = document.getElementById("canvas-wrapper");
 
+  // Check if the element exists before adding event listeners
   if (canvasWrapper) {
+    // When the mouse enters the canvas wrapper, prevent scrolling
     canvasWrapper.addEventListener("mouseenter", () => {
       document.body.classList.add("no-scroll");
     });
 
+    // When the mouse leaves the canvas wrapper, allow scrolling again
     canvasWrapper.addEventListener("mouseleave", () => {
       document.body.classList.remove("no-scroll");
     });
