@@ -55,7 +55,7 @@
   display: block; /* Ensures it is visible */
 }
 
-/* Transiciones para una experiencia más fluida */
+/* Hide any container with 'hidden' class */
 .hidden {
   display: none;
 }
