@@ -1,65 +1,57 @@
-/* Styles for tables in the right sidebar */
+/* table.css - Table in the sidebar */
+.right-bar-table {
+  width: 100%; /* Ensures the container takes full width */
+  overflow-x: auto; /* Enables horizontal scrolling if needed */
+}
+
 table.right-bar-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  text-align: center;
-  transition: opacity 0.5s ease-out;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%; /* Makes the table span the full container width */
+  border-collapse: collapse; /* Removes spacing between table borders */
+  font-size: 1rem; /* Sets a readable font size */
+  text-align: center; /* Centers text in all cells */
+  transition: opacity 0.5s ease-out; /* Smooth fade-in effect */
+  border-radius: 1rem; /* Softens table edges */
+  overflow: hidden; /* Prevents content from overflowing rounded corners */
+  box-shadow: 0 0.5vh 1vh rgba(0, 0, 0, 0.1); /* Adds subtle shadow for depth */
+  table-layout: auto; /* Prevents columns from stretching too much */
+}
+
+/* Ensures columns do not overflow */
+.right-bar-table th,
+.right-bar-table td {
+  word-wrap: break-word; /* Wraps long words */
+  overflow-wrap: break-word; /* Ensures proper text wrapping */
+  white-space: normal; /* Allows text to wrap naturally */
 }
 
 .right-bar-table th {
-  background-color: #333333;
-  color: white;
-  padding: 8px;
-  border: 1px solid #ddd;
-  text-align: center;
-  width: calc(100% / 3);
-  box-sizing: border-box;
+  background-color: #333; /* Dark background for contrast */
+  color: white; /* White text for readability */
+  padding: 1vh; /* Adds spacing inside header cells */
+  border: 0.2vh solid #ddd; /* Adds subtle borders */
+  text-align: center; /* Centers text */
+  width: 33%; /* Distributes column width evenly */
+  box-sizing: border-box; /* Ensures width includes padding and borders */
 }
 
-/* Data cells in the table */
 .right-bar-table td {
-  padding: 8px;
-  border: 1px solid #ddd;
-  text-align: center;
-  transition: background-color 0.3s ease-in-out; /* Smooth transition for hover effect */
+  padding: 1vh; /* Adds spacing inside table cells */
+  border: 0.2vh solid #ddd; /* Adds subtle borders */
+  text-align: center; /* Centers text */
+  transition: background-color 0.3s ease-in-out; /* Smooth hover effect */
 }
 
-/* Add hover effect on table cells */
+/* Hover effect for table cells */
 .right-bar-table td:hover {
-  background-color: #f0f0f0; /* Light gray when hovering over a cell */
-  cursor: pointer; /* Change cursor to pointer */
+  background-color: #f0f0f0; /* Light gray on hover */
+  cursor: pointer; /* Indicates interactivity */
 }
 
 /* Alternating row colors for better readability */
 .right-bar-table tr:nth-child(even) {
-  background-color: #f9f9f9;
+  background-color: #f9f9f9; /* Light gray for even rows */
 }
 
 .right-bar-table tr:nth-child(odd) {
-  background-color: #ffffff;
-}
-
-/* Hidden table (used for toggling visibility) */
-.hidden {
-  display: none;
-}
-
-/* Ensure input fields fit properly within table cells */
-.right-bar-table td input {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  padding: 5px;
-  font-size: 12px;
-  text-align: center;
-  pointer-events: none; /* Prevent text cursor on input fields unless focused */
-}
-
-/* Allow input to be edited only when clicked */
-.right-bar-table td input:focus {
-  pointer-events: auto; /* Allow editing on focus */
+  background-color: #fff; /* White for odd rows */
 }
