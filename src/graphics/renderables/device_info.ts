@@ -3,10 +3,14 @@ import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { RemoveDeviceMove } from "../../types/undo-redo";
-import { urManager } from "../../types/viewportManager";
-import { createRightBarButton, createRoutingTable } from "../right_bar";
+import { refreshElement, urManager } from "../../types/viewportManager";
+import {
+  createDropdown,
+  createRightBarButton,
+  createTable,
+  createRoutingTable,
+} from "../right_bar";
 import { ProgramInfo } from "./program_info";
-import { ProgramRunnerInfo } from "./program_runner_info";
 import { StyledInfo } from "./styled_info";
 
 export { ProgramInfo } from "./program_info";
@@ -56,8 +60,28 @@ export class DeviceInfo extends StyledInfo {
 
   // First argument is to avoid a circular dependency
   addProgramRunner(runner: ProgramRunner, programs: ProgramInfo[]) {
-    const programRunnerInfo = new ProgramRunnerInfo(runner, programs);
-    this.inputFields.push(...programRunnerInfo.toHTML());
+    const programOptions = programs.map(({ name }, i) => {
+      return { value: i.toString(), text: name };
+    });
+    const inputsContainer = document.createElement("div");
+    let selectedProgram = programs[0];
+    inputsContainer.replaceChildren(...selectedProgram.toHTML());
+    this.inputFields.push(
+      // Dropdown for selecting program
+      createDropdown("Program", programOptions, "program-selector", (v) => {
+        selectedProgram = programs[parseInt(v)];
+        inputsContainer.replaceChildren(...selectedProgram.toHTML());
+      }),
+      inputsContainer,
+      // Button to send a packet
+      createRightBarButton("Start program", () => {
+        const { name } = selectedProgram;
+        console.log("Started program: ", name);
+        const inputs = selectedProgram.getInputValues();
+        runner.addRunningProgram(name, inputs);
+        refreshElement();
+      }),
+    );
   }
 
   addRunningProgramsList(
