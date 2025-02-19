@@ -55,7 +55,7 @@
   display: block; /* Ensures it is visible */
 }
 
-/* 🔹 Hidden state */
-.toggle-info-container .hidden {
-  display: none; /* Completely hides the element */
+/* Hide any container with 'hidden' class */
+.hidden {
+  display: none;
 }

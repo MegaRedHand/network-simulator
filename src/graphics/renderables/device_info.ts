@@ -1,13 +1,14 @@
-import { ProgramRunner } from "../../programs";
+import { ProgramRunner, RunningProgram } from "../../programs";
 import { Device } from "../../types/devices";
 import { DeviceType } from "../../types/devices/device";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { RemoveDeviceMove } from "../../types/undo-redo";
-import { urManager } from "../../types/viewportManager";
+import { refreshElement, urManager } from "../../types/viewportManager";
 import {
   createDropdown,
-  createToggleTable,
   createRightBarButton,
+  createTable,
+  createRoutingTable,
 } from "../right_bar";
 import { ProgramInfo } from "./program_info";
 import { StyledInfo } from "./styled_info";
@@ -58,7 +59,7 @@ export class DeviceInfo extends StyledInfo {
   }
 
   // First argument is to avoid a circular dependency
-  addProgramList(runner: ProgramRunner, programs: ProgramInfo[]) {
+  addProgramRunner(runner: ProgramRunner, programs: ProgramInfo[]) {
     const programOptions = programs.map(({ name }, i) => {
       return { value: i.toString(), text: name };
     });
@@ -78,8 +79,20 @@ export class DeviceInfo extends StyledInfo {
         console.log("Started program: ", name);
         const inputs = selectedProgram.getInputValues();
         runner.addRunningProgram(name, inputs);
+        refreshElement();
       }),
     );
+  }
+
+  addRunningProgramsList(
+    runner: ProgramRunner,
+    runningPrograms: RunningProgram[],
+  ) {
+    if (runningPrograms.length === 0) {
+      return;
+    }
+    const table = createProgramsTable(runner, runningPrograms);
+    this.inputFields.push(table);
   }
 
   addRoutingTable(viewgraph: ViewGraph, deviceId: number) {
@@ -91,7 +104,7 @@ export class DeviceInfo extends StyledInfo {
       `eth${entry.iface}`,
     ]);
 
-    const dynamicTable = createToggleTable(
+    const dynamicTable = createRoutingTable(
       "Routing Table",
       ["IP", "Mask", "Interface"],
       rows,
@@ -120,4 +133,27 @@ function getTypeName(device: Device): string {
     case DeviceType.Switch:
       return "Switch";
   }
+}
+
+function createProgramsTable(
+  runner: ProgramRunner,
+  runningPrograms: RunningProgram[],
+) {
+  const onDelete = (row: number) => {
+    const { pid } = runningPrograms[row];
+    runner.removeRunningProgram(pid);
+    refreshElement();
+    return true;
+  };
+  const rows = runningPrograms.map((program) => [
+    program.pid.toString(),
+    program.name,
+    JSON.stringify(program.inputs),
+  ]);
+  const headers = ["PID", "Name", "Inputs"];
+  // TODO: make table editable?
+  const table = createTable(headers, rows, { onDelete });
+  table.id = "running-programs-table";
+  table.classList.add("right-bar-table");
+  return table;
 }

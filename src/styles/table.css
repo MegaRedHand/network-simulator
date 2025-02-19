@@ -1,10 +1,10 @@
 /* table.css - Table in the sidebar */
-.toggle-table-container {
+.right-bar-table {
   width: 100%; /* Ensures the container takes full width */
   overflow-x: auto; /* Enables horizontal scrolling if needed */
 }
 
-.toggle-table-container table {
+table.right-bar-table {
   width: 100%; /* Makes the table span the full container width */
   border-collapse: collapse; /* Removes spacing between table borders */
   font-size: 1rem; /* Sets a readable font size */
@@ -17,14 +17,14 @@
 }
 
 /* Ensures columns do not overflow */
-.toggle-table-container th,
-.toggle-table-container td {
+.right-bar-table th,
+.right-bar-table td {
   word-wrap: break-word; /* Wraps long words */
   overflow-wrap: break-word; /* Ensures proper text wrapping */
   white-space: normal; /* Allows text to wrap naturally */
 }
 
-.toggle-table-container th {
+.right-bar-table th {
   background-color: #333; /* Dark background for contrast */
   color: white; /* White text for readability */
   padding: 1vh; /* Adds spacing inside header cells */
@@ -34,7 +34,7 @@
   box-sizing: border-box; /* Ensures width includes padding and borders */
 }
 
-.toggle-table-container td {
+.right-bar-table td {
   padding: 1vh; /* Adds spacing inside table cells */
   border: 0.2vh solid #ddd; /* Adds subtle borders */
   text-align: center; /* Centers text */
@@ -42,30 +42,16 @@
 }
 
 /* Hover effect for table cells */
-.toggle-table-container td:hover {
+.right-bar-table td:hover {
   background-color: #f0f0f0; /* Light gray on hover */
   cursor: pointer; /* Indicates interactivity */
 }
 
 /* Alternating row colors for better readability */
-.toggle-table-container tr:nth-child(even) {
+.right-bar-table tr:nth-child(even) {
   background-color: #f9f9f9; /* Light gray for even rows */
 }
 
-.toggle-table-container tr:nth-child(odd) {
+.right-bar-table tr:nth-child(odd) {
   background-color: #fff; /* White for odd rows */
-}
-
-/* Table caption styling */
-.toggle-table-container caption {
-  font-size: 1.4rem; /* Makes caption slightly larger */
-  font-weight: bold; /* Emphasizes caption */
-  margin-bottom: 1vh; /* Adds spacing below the caption */
-  color: #333; /* Dark text for contrast */
-  text-align: center; /* Centers caption */
-}
-
-/* Hides table when the 'hidden' class is applied */
-.toggle-table-container table.hidden {
-  display: none;
 }

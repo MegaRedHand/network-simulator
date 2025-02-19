@@ -14,6 +14,7 @@ export interface RunningProgram {
 // Currently used only for Host, due to a circular dependency
 export interface ProgramRunner {
   addRunningProgram(name: string, inputs: string[]): void;
+  removeRunningProgram(pid: Pid): void;
 }
 
 export interface Program {

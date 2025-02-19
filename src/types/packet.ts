@@ -168,7 +168,6 @@ export class Packet extends Graphics {
     this.currentEdge.addChild(this);
     this.updatePosition();
     Ticker.shared.add(this.animationTick, this);
-    console.log("Termino traverseEdge");
   }
 
   animationTick(ticker: Ticker) {

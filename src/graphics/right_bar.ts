@@ -110,22 +110,44 @@ export class RightBar {
 }
 
 // Function to create a toggle button
-function createToggleButton(
+export function createToggleButton(
   title: string,
   buttonClass: string,
-  table: HTMLTableElement,
+  element: HTMLElement,
 ) {
   const button = document.createElement("button");
   button.classList.add(buttonClass);
   button.textContent = title;
 
   button.onclick = () => {
-    const isHidden = table.classList.contains("hidden");
-    table.classList.toggle("hidden", !isHidden);
-    button.classList.toggle("open", isHidden);
+    element.classList.toggle("hidden");
+    button.classList.toggle("open");
   };
 
   return button;
+}
+
+export function createRoutingTable(
+  title: string,
+  headers: string[],
+  rows: string[][],
+  viewgraph: ViewGraph,
+  deviceId: number,
+) {
+  const container = document.createElement("div");
+  const tableClasses = ["right-bar-table", "hidden", "toggle-table"];
+  const buttonClass = "right-bar-toggle-button";
+
+  const regenerateButton = createRegenerateButton(deviceId, viewgraph);
+  const { onEdit, onDelete } = routingTableCallbacks(viewgraph, deviceId);
+  const options = { onEdit, onDelete, specialButton: regenerateButton };
+  const table = createTable(headers, rows, options);
+  table.classList.add(...tableClasses);
+  const button = createToggleButton(title, buttonClass, table);
+
+  container.appendChild(button);
+  container.appendChild(table);
+  return container;
 }
 
 function updateRoutingTableUI(
@@ -140,30 +162,37 @@ function updateRoutingTableUI(
   }
   router.routingTable = newTableData;
 
-  const tableContainer = document.querySelector(".toggle-table-container");
-  if (!tableContainer)
-    return console.warn("Routing table container not found.");
+  const existingTable: HTMLTableElement | null =
+    document.querySelector("table.toggle-table");
 
-  const existingTable = tableContainer.querySelector("table");
   if (!existingTable)
     return console.warn("Existing table not found inside container.");
 
   clearTableRows(existingTable);
-  newTableData.forEach((entry) =>
-    createTableRow(entry, existingTable, deviceId, viewgraph),
-  );
+  newTableData.forEach((entry) => {
+    const row = [entry.ip, entry.mask, `eth${entry.iface}`];
+    const { onEdit, onDelete } = routingTableCallbacks(viewgraph, deviceId);
+    createTableRow(row, existingTable, onEdit, onDelete);
+  });
   console.log(`Routing table for router ID ${deviceId} updated successfully.`);
 }
 
-function createTable(
+type OnEditCallback = (row: number, col: number, newValue: string) => boolean;
+type OnDeleteCallback = (row: number) => boolean;
+
+interface TableOptions {
+  onEdit?: OnEditCallback;
+  onDelete?: OnDeleteCallback;
+  specialButton?: HTMLElement;
+}
+
+export function createTable(
   headers: string[],
   rows: string[][],
-  tableClass: string,
-  viewgraph: ViewGraph,
-  deviceId: DeviceId,
+  options: TableOptions = {},
 ): HTMLTableElement {
+  const { onEdit, onDelete, specialButton } = options;
   const table = document.createElement("table");
-  table.classList.add(tableClass, "hidden");
 
   const headerRow = document.createElement("tr");
   headers.forEach((header) => {
@@ -173,17 +202,14 @@ function createTable(
   });
 
   const actionsHeader = document.createElement("th");
-  actionsHeader.appendChild(createRegenerateButton(deviceId, viewgraph));
+  if (specialButton) {
+    actionsHeader.appendChild(specialButton);
+  }
   headerRow.appendChild(actionsHeader);
   table.appendChild(headerRow);
 
   rows.forEach((row) => {
-    createTableRow(
-      { ip: row[0], mask: row[1], iface: parseInt(row[2].replace("eth", "")) },
-      table,
-      deviceId,
-      viewgraph,
-    );
+    createTableRow(row, table, onEdit, onDelete);
   });
 
   return table;
@@ -191,60 +217,67 @@ function createTable(
 
 function clearTableRows(table: HTMLTableElement): void {
   const rows = Array.from(table.querySelectorAll("tr"));
-  rows.slice(1).forEach((row) => row.remove()); // Mantener solo el encabezado
+  rows.slice(1).forEach((row) => row.remove()); // Keep the header only
 }
 
 function createTableRow(
-  entry: RoutingTableEntry,
+  row: string[],
   table: HTMLTableElement,
-  deviceId: DeviceId,
-  viewgraph: ViewGraph,
+  onEdit?: OnEditCallback,
+  onDelete?: OnDeleteCallback,
 ): void {
   const rowElement = document.createElement("tr");
+  table.appendChild(rowElement);
 
-  [entry.ip, entry.mask, `eth${entry.iface}`].forEach((cellData, colIndex) => {
+  row.forEach((cellData, colIndex) => {
     const cell = document.createElement("td");
     cell.textContent = cellData;
-    cell.classList.add("editable-cell");
-    cell.contentEditable = "true";
-
-    cell.addEventListener("keydown", (event) => {
-      if (event.key === "Delete" || event.key === "Backspace") {
-        event.stopPropagation(); // Evita que el evento borre la fila en la tabla
-      }
-    });
-
-    cell.addEventListener("blur", () => {
-      const updatedRowIndex =
-        Array.from(table.querySelectorAll("tr")).indexOf(rowElement) - 1; // Ajuste dinámico del índice
-      const newValue = cell.textContent?.trim() || "";
-
-      let isValid = false;
-      if (colIndex === 0) isValid = isValidIP(newValue);
-      else if (colIndex === 1) isValid = isValidIP(newValue);
-      else if (colIndex === 2) isValid = isValidInterface(newValue);
-
-      if (!isValid) {
-        console.warn(`Invalid input for column ${colIndex}: ${newValue}`);
-        cell.textContent = cellData; // Revertir cambio si es inválido
-        return;
-      }
-
-      viewgraph
-        .getDataGraph()
-        .saveManualChange(deviceId, updatedRowIndex, colIndex, newValue);
-      console.log(
-        `Updated cell at row ${updatedRowIndex}, column ${colIndex} with value: ${newValue}`,
-      );
-    });
 
     rowElement.appendChild(cell);
+
+    const rowIndex = rowElement.rowIndex;
+    // Ignore header row
+    if (rowIndex !== 0 && onEdit) {
+      makeEditable(rowIndex - 1, colIndex, cell, onEdit);
+    }
   });
 
-  rowElement.appendChild(
-    createDeleteButton(rowElement, table, deviceId, viewgraph),
-  );
-  table.appendChild(rowElement);
+  rowElement.appendChild(createDeleteButton(rowElement, table, onDelete));
+}
+
+function makeEditable(
+  rowIndex: number,
+  colIndex: number,
+  cell: HTMLTableCellElement,
+  onEdit: OnEditCallback,
+) {
+  cell.classList.add("editable-cell");
+  cell.contentEditable = "true";
+  const originalContent = cell.textContent;
+
+  // Avoid deleting the router while editing
+  cell.addEventListener("keydown", (event) => {
+    if (event.key === "Delete" || event.key === "Backspace") {
+      event.stopPropagation();
+    }
+  });
+
+  // Handle edits
+  cell.addEventListener("blur", () => {
+    const newValue = cell.textContent?.trim() || "";
+
+    const isValid = onEdit(rowIndex, colIndex, newValue);
+
+    if (!isValid) {
+      console.warn(`Invalid input for column ${colIndex}: ${newValue}`);
+      cell.textContent = originalContent; // Revert change if invalid
+      return;
+    }
+
+    console.log(
+      `Updated cell at row ${rowIndex}, column ${colIndex} with value: ${newValue}`,
+    );
+  });
 }
 
 function createRegenerateButton(
@@ -277,8 +310,7 @@ function createRegenerateButton(
 function createDeleteButton(
   rowElement: HTMLTableRowElement,
   table: HTMLTableElement,
-  deviceId: DeviceId,
-  viewgraph: ViewGraph,
+  onDelete: OnDeleteCallback,
 ): HTMLTableCellElement {
   const deleteCell = document.createElement("td");
   const deleteButton = document.createElement("button");
@@ -288,31 +320,42 @@ function createDeleteButton(
   deleteButton.style.cursor = "pointer";
   deleteButton.title = "Delete row";
 
-  deleteButton.addEventListener("click", () =>
-    handleDeleteRow(rowElement, table, deviceId, viewgraph),
-  );
+  deleteButton.addEventListener("click", () => {
+    // Ignore header updates. They shouldn't happen anyways.
+    if (rowElement.rowIndex === 0) {
+      return;
+    }
+    // Don't count the header row
+    const rowIndex = rowElement.rowIndex - 1;
+    const isValid = onDelete(rowIndex);
+    if (!isValid) {
+      return;
+    }
+    table.removeChild(rowElement);
+    console.log(`Deleted row ${rowIndex}`);
+  });
 
   deleteCell.appendChild(deleteButton);
   return deleteCell;
 }
 
-function handleDeleteRow(
-  rowElement: HTMLTableRowElement,
-  table: HTMLTableElement,
-  deviceId: DeviceId,
-  viewgraph: ViewGraph,
-): void {
-  const updatedRowIndex =
-    Array.from(table.querySelectorAll("tr")).indexOf(rowElement) - 1; // Ajuste dinámico del índice
+function routingTableCallbacks(viewgraph: ViewGraph, deviceId: DeviceId) {
+  const onEdit = (row: number, col: number, newValue: string) => {
+    let isValid = false;
+    if (col === 0) isValid = isValidIP(newValue);
+    else if (col === 1) isValid = isValidIP(newValue);
+    else if (col === 2) isValid = isValidInterface(newValue);
 
-  if (updatedRowIndex < 0) {
-    console.warn("Cannot delete header row");
-    return;
-  }
-
-  table.removeChild(rowElement);
-  viewgraph.getDataGraph().removeRoutingTableRow(deviceId, updatedRowIndex);
-  console.log(`Deleted row ${updatedRowIndex} from device ${deviceId}`);
+    if (isValid) {
+      viewgraph.getDataGraph().saveManualChange(deviceId, row, col, newValue);
+    }
+    return isValid;
+  };
+  const onDelete = (row: number) => {
+    viewgraph.getDataGraph().removeRoutingTableRow(deviceId, row);
+    return true;
+  };
+  return { onEdit, onDelete };
 }
 
 // Function to validate IP format
@@ -326,27 +369,6 @@ function isValidIP(ip: string): boolean {
 function isValidInterface(interfaceStr: string): boolean {
   const interfacePattern = /^eth[0-9]+$/;
   return interfacePattern.test(interfaceStr);
-}
-
-export function createToggleTable(
-  title: string,
-  headers: string[],
-  rows: string[][],
-  viewgraph: ViewGraph,
-  deviceId: number,
-  buttonClass = "right-bar-toggle-button",
-  tableClass = "right-bar-table",
-) {
-  const container = document.createElement("div");
-  container.classList.add("toggle-table-container");
-
-  const table = createTable(headers, rows, tableClass, viewgraph, deviceId);
-  const button = createToggleButton(title, buttonClass, table);
-
-  container.appendChild(button);
-  container.appendChild(table);
-
-  return container;
 }
 
 export function createToggleInfo(
