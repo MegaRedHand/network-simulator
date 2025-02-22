@@ -1,24 +1,92 @@
-/* top-bar.css */
-
-/* Styles for the top navigation bar */
+/* 🔹 Top navigation bar */
 #top-bar {
-  padding: 5px; /* Adds internal spacing around the content */
-  background-color: #333333; /* Dark gray background for the bar */
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2); /* Adds a subtle shadow for depth */
-  display: flex; /* Uses flexbox to align items in a row */
-  align-items: center; /* Vertically centers the content */
-  position: relative; /* Positions the content relative to the bar */
-  z-index: 10; /* Ensures the bar appears above other elements */
-  height: 40px; /* Fixed height for the bar */
+  padding: 0.5vh 1vw; /* Adaptive padding based on viewport */
+  background-color: #333333; /* Dark background for contrast */
+  box-shadow: 0px 0.2em 0.5em rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+  display: flex; /* Uses flexbox for layout */
+  align-items: center; /* Vertically aligns elements */
+  position: relative; /* Needed for absolute positioning */
+  z-index: 10; /* Keeps it above other elements */
+  min-height: 6vh; /* Ensures a dynamic height */
+  flex-wrap: nowrap; /* Prevents wrapping */
 }
 
-/* Styles for the title in the top bar */
+/* 🔹 Small buttons */
+#top-bar button {
+  font-size: 0.8rem; /* Keeps font compact */
+  padding: 0.5em 1em; /* Maintains button size */
+  background-color: #007bff; /* Primary blue */
+  color: white; /* White text for contrast */
+  border: none; /* Removes default button border */
+  border-radius: 0.3em; /* Soft rounded corners */
+  cursor: pointer; /* Changes cursor to pointer for interactivity */
+  transition: background 0.3s ease; /* Smooth hover effect */
+  white-space: nowrap; /* Prevents text from breaking */
+}
+
+#top-bar button:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+/* 🔹 Centered application title */
 #app-title {
-  position: absolute; /* Positions the title relative to the bar */
-  left: 50%; /* Centers the title horizontally */
-  transform: translateX(-50%); /* Shifts the title to be exactly centered */
-  margin: 0; /* Removes default margins of the title */
-  font-size: 25px; /* Sets the font size of the title */
-  font-weight: bold; /* Makes the title text bold */
-  color: #ffffff; /* White text color for the title */
+  position: absolute; /* Enables absolute positioning */
+  left: 50%; /* Moves the title to the center */
+  transform: translateX(-50%); /* Perfectly centers the title */
+  font-size: 2rem; /* Increases font size for better visibility */
+  font-weight: bold; /* Makes the title stand out */
+  color: white; /* White text for contrast */
+  white-space: nowrap; /* Prevents text from wrapping */
+}
+
+/* buttons.css */
+
+/* General button styles */
+.new-button,
+.save-button,
+.load-button {
+  background-color: #007bff; /* Blue background */
+  color: #ffffff; /* White text */
+  border: none; /* Removes borders */
+  padding: 1vh 2vw; /* Adds internal spacing */
+  cursor: pointer; /* Changes cursor to pointer on hover */
+  margin-right: 1vw; /* Adds spacing between buttons */
+  border-radius: 0.5rem; /* Rounds the button corners */
+  font-size: 1rem; /* Relative font size */
+  text-align: center;
+  width: auto; /* Allows flexibility */
+  min-width: 4vw; /* Ensures buttons have a minimum width */
+  max-width: 5vw; /* Prevents them from becoming too large */
+}
+
+/* Hover effect for general buttons */
+.new-button:hover,
+.save-button:hover,
+.load-button:hover {
+  background-color: #162a6d; /* Darker blue on hover */
+}
+
+/* 🔹 Responsive adjustment */
+@media (max-width: 768px) {
+  #top-bar {
+    flex-wrap: wrap; /* Allows elements to arrange into two lines */
+    justify-content: space-between;
+  }
+
+  #app-title {
+    position: relative; /* Adjusts positioning for small screens */
+    transform: none;
+    left: auto;
+    order: -1; /* Moves the title to the first line */
+    width: 100%;
+    text-align: center; /* Centers the title */
+  }
+
+  .new-button,
+  .save-button,
+  .load-button {
+    flex: none; /* Prevents buttons from stretching */
+    min-width: 10vw;
+    max-width: 12vw;
+  }
 }

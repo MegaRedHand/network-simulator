@@ -1,48 +1,59 @@
-/* pause-button.css */
-
-/* Redesigned Pause button styles */
+/* 🔹 Pause button */
 .pause-button {
-  background-color: #228b22; /* Default green background */
-  color: #ffffff; /* White text */
-  border: 2px solid #000000; /* Black border */
+  background-color: #228b22; /* Default green color */
+  color: #ffffff; /* White text for contrast */
+  border: 0.3vh solid #000000; /* Black border */
+  width: 6vh; /* Square button with relative sizing */
+  height: 6vh;
+  border-radius: 1vh; /* Rounded corners */
+  display: flex; /* Flexbox for centering */
+  align-items: center; /* Centers content vertically */
+  justify-content: center; /* Centers content horizontally */
+  transition: background-color 0.3s ease; /* Smooth transition */
+  box-shadow: 0.4vh 0.4vh 0.8vh rgba(0, 0, 0, 0.4); /* Subtle shadow for depth */
+  outline: none; /* Removes focus outline */
   padding: 0; /* No internal padding */
-  cursor: pointer; /* Pointer on hover */
-  width: 40px; /* Slightly larger button */
-  height: 40px; /* Slightly larger button */
-  border-radius: 12px; /* Rounded but not circular */
-  display: flex; /* Uses flexbox for centering */
-  align-items: center; /* Vertically centers content */
-  justify-content: center; /* Horizontally centers content */
-  transition: background-color 0.3s ease; /* Smooth transitions */
-  position: absolute; /* Position over the canvas */
-  top: 15px; /* Adjusted distance from the top */
-  left: 20px; /* Adjusted distance from the left */
-  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.4); /* Adds a subtle shadow */
+  cursor: pointer; /* Pointer cursor for interactivity */
+}
+
+/* 🔹 Alternate pause button (positioned on canvas) */
+.pause-button2 {
+  background-color: #228b22; /* Default green color */
+  color: #ffffff; /* White text */
+  border: 0.3vh solid #000000; /* Black border */
+  padding: 0; /* No internal padding */
+  cursor: pointer; /* Pointer cursor for interactivity */
+  width: 6vh; /* Consistent size */
+  height: 6vh;
+  border-radius: 1vh; /* Rounded corners */
+  display: flex; /* Centers content */
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease; /* Smooth transition */
+  position: absolute; /* Positioned above the canvas */
+  top: 2vh; /* Offset from the top */
+  left: 2vw; /* Offset from the left */
+  box-shadow: 0.4vh 0.4vh 0.8vh rgba(0, 0, 0, 0.4); /* Subtle shadow */
   outline: none; /* Removes focus outline */
 }
 
-/* Hover effect for pause button */
+/* 🔹 Hover effect */
 .pause-button:hover {
   background-color: #006400; /* Darker green on hover */
 }
 
-/* Active effect for pause button */
+/* 🔹 Active (clicked) effect */
 .pause-button:active {
   background-color: #004d00; /* Even darker green when clicked */
 }
 
-/* Styles for paused state */
+/* 🔹 Paused state */
 .pause-button.paused {
-  background-color: #f44336; /* Red background when paused */
+  background-color: #f44336; /* Red when paused */
 }
 
-/* Prevent focus outline when using keyboard */
-.pause-button:focus {
-  outline: none;
-}
-
-/* Icon inside the pause button */
+/* 🔹 Icon inside the button */
 .pause-button img {
-  width: 60%; /* Original icon size */
-  height: 60%; /* Original icon size */
+  width: 60%; /* Icon takes 60% of the button */
+  height: 60%;
 }

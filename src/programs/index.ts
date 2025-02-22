@@ -13,7 +13,26 @@ export interface RunningProgram {
 
 // Currently used only for Host, due to a circular dependency
 export interface ProgramRunner {
-  addRunningProgram(name: string, inputs: string[]): void;
+  /**
+   * Adds a new program to run.
+   * @param name program name
+   * @param inputs program inputs
+   * @returns the running program data
+   */
+  addRunningProgram(name: string, inputs: string[]): RunningProgram;
+
+  /**
+   * Lists running programs.
+   * @returns the list of running programs
+   */
+  getRunningPrograms(): RunningProgram[];
+
+  /**
+   * Stops a running program.
+   * @param pid running program ID
+   * @returns `true` if the program exists and was stopped, `false` otherwise
+   */
+  removeRunningProgram(pid: Pid): boolean;
 }
 
 export interface Program {

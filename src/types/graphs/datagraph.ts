@@ -593,7 +593,7 @@ export class DataGraph {
       return [];
     }
 
-    // Filtrar solo las entradas que NO estén eliminadas
+    // Remove any deleted entries
     return device.routingTable.filter((entry) => !entry.deleted);
   }
 }

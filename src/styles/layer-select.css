@@ -1,0 +1,57 @@
+/* 🔹 Layer selector container */
+.layer-container {
+  display: flex; /* Uses flexbox for alignment */
+  align-items: center; /* Vertically centers elements */
+  gap: 1vw; /* Adds spacing between elements */
+}
+
+/* 🔹 Compact and responsive layer selector */
+#layer-select {
+  width: 17vw; /* Matches the width of Speed */
+  height: 4.5vh; /* Matches the height of Speed */
+  padding: 0 1.5vw; /* Internal spacing */
+  font-size: 1rem; /* Readable font size */
+  font-family: "Arial", sans-serif; /* Ensures consistent font */
+  color: #ffffff; /* White text for contrast */
+  background-color: #333333; /* Dark background for visibility */
+  border: 0.1rem solid #666666; /* Subtle border */
+  border-radius: 0.5rem; /* Matches Speed selector */
+  box-shadow: 0 0.2vh 0.4vh rgba(0, 0, 0, 0.2); /* Soft shadow effect */
+  cursor: pointer; /* Indicates interactivity */
+  transition: all 0.3s ease; /* Smooth transitions */
+  appearance: none; /* Removes default browser styling */
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iNSIgdmlld0JveD0iMCAwIDEwIDUiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEgMUw1IDRMMTAgMUgxWiIgZmlsbD0iI0NDQ0NDQyIvPjwvc3ZnPg==");
+  /* Custom dropdown arrow (encoded SVG) */
+  background-repeat: no-repeat;
+  background-position: right 1vw center;
+  background-size: 1vw; /* Defines arrow size */
+}
+
+/* 🔹 Hover effect on selector */
+#layer-select:hover {
+  background-color: #444444; /* Slightly lighter background */
+  border-color: #888888; /* Adjusts border color */
+  box-shadow: 0 0.4vh 0.6vh rgba(0, 0, 0, 0.4); /* Enhances shadow effect */
+}
+
+/* 🔹 Focus effect on selector */
+#layer-select:focus {
+  outline: none; /* Removes default outline */
+  box-shadow: 0 0 0.8vh 0.2vh rgba(136, 136, 136, 0.5); /* Highlights focus */
+}
+
+/* 🔹 Dropdown options */
+#layer-select option {
+  font-size: 1rem; /* Matches selector font size */
+  color: #ffffff; /* White text for readability */
+  background-color: #292b2c; /* Dark background */
+  border: none; /* Removes default borders */
+  padding: 0.5vh; /* Adds spacing inside options */
+  cursor: pointer; /* Ensures interactivity */
+}
+
+/* 🔹 Hover effect on dropdown options */
+#layer-select option:hover {
+  background-color: #444444; /* Slightly lighter background */
+  color: #ffffff; /* Ensures contrast */
+}

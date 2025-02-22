@@ -1,36 +1,40 @@
-/* left-bar.css */
-
-/* Styles for the left sidebar */
+/* 🔹 Left sidebar */
 .left-bar {
-  display: flex; /* Uses flexbox to organize content */
-  padding-top: 10px; /* Adds space at the top to separate from the top bar */
+  display: flex; /* Uses flexbox for layout */
   flex-direction: column; /* Stacks items (buttons) vertically */
   align-items: center; /* Centers buttons horizontally */
-  flex: 0 0 100px; /* Fixed width of 100px */
-  background-color: #f1f1f1; /* Light gray background for the sidebar */
-  box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.2); /* Adds a shadow on the right for depth */
+  justify-content: flex-start; /* Aligns from the top */
+  height: 100vh; /* Full viewport height */
+  background-color: #f1f1f1; /* Light gray background */
+  box-shadow: 0.2em 0 0.5em rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  padding-top: 2vh; /* More adaptive top padding */
+  gap: 1.2vh; /* Better spacing between buttons */
+  overflow-y: auto; /* Enables scrolling if needed */
 }
 
-/* Buttons inside the left sidebar */
+/* 🔹 Buttons inside the left sidebar */
 .icon-button {
-  background-color: #ffffff; /* White background for buttons */
-  border: none; /* Removes borders */
-  padding: 5px; /* Adds internal spacing */
-  margin-bottom: 10px; /* Adds space between buttons */
-  cursor: pointer; /* Changes the cursor to a pointer on hover */
-  border-radius: 5px; /* Rounds the button corners */
-  width: 70px; /* Sets button width */
-  height: 70px; /* Sets button height */
+  background-color: #ffffff; /* White background */
+  border: none; /* Removes default borders */
+  cursor: pointer; /* Pointer cursor on hover */
+  border-radius: 0.4em; /* Soft rounded corners */
+  width: 80%; /* Buttons slightly larger */
+  max-width: 15vh; /* Prevents excessive growth */
+  aspect-ratio: 1/1; /* Keeps buttons square */
+  display: flex; /* Centers content inside */
+  align-items: center; /* Aligns icon inside */
+  justify-content: center; /* Centers the icon */
+  transition: background 0.3s ease; /* Smooth hover transition */
 }
 
-/* Hover effect for buttons */
+/* 🔹 Hover effect for buttons */
 .icon-button:hover {
   background-color: #f0f0f0; /* Light gray background on hover */
 }
 
-/* Images inside buttons */
+/* 🔹 Images inside buttons */
 .icon-img {
-  width: 90%; /* Makes the image take up 90% of the button width */
-  height: 90%; /* Makes the image take up 90% of the button height */
-  object-fit: contain; /* Ensures the image maintains its proportions */
+  width: 90%; /* Increased for better visibility */
+  height: 90%; /* Keeps proportions */
+  object-fit: contain; /* Ensures image fits without distortion */
 }

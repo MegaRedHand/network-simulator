@@ -16,6 +16,7 @@ export class GlobalContext {
   private viewport: Viewport = null;
   private datagraph: DataGraph;
   private viewgraph: ViewGraph;
+  private speedMultiplier: SpeedMultiplier;
   private saveIntervalId: NodeJS.Timeout | null = null;
   private ipGenerator: IpAddressGenerator;
   private macGenerator: MacAddressGenerator;
@@ -38,18 +39,13 @@ export class GlobalContext {
     return this.macGenerator.getNextMac();
   }
 
-  private setNetwork(
-    datagraph: DataGraph,
-    layer: Layer,
-    speedMultiplier?: SpeedMultiplier,
-  ) {
+  private setNetwork(datagraph: DataGraph, layer: Layer) {
     this.datagraph = datagraph;
     this.viewport.clear();
     if (this.viewgraph) {
       this.viewgraph.clear();
     }
-    this.viewgraph = new ViewGraph(this.datagraph, this.viewport, layer);
-    this.viewgraph.setSpeed(speedMultiplier?.value || 1);
+    this.viewgraph = new ViewGraph(this.datagraph, this, layer);
     this.setIpGenerator();
     this.setMacGenerator();
   }
@@ -72,7 +68,7 @@ export class GlobalContext {
   load(
     datagraph: DataGraph,
     layer: Layer = Layer.Link,
-    speedMultiplier: SpeedMultiplier = SpeedMultiplier.parse(1),
+    speedMultiplier: SpeedMultiplier = new SpeedMultiplier(1),
   ) {
     this.setNetwork(datagraph, layer);
     this.setSpeedMultiplier(speedMultiplier);
@@ -94,7 +90,7 @@ export class GlobalContext {
   }
 
   getCurrentSpeed() {
-    return this.viewgraph.getSpeed();
+    return this.speedMultiplier;
   }
 
   getDataGraph() {
@@ -103,14 +99,12 @@ export class GlobalContext {
 
   changeViewGraph(selectedLayer: string) {
     const layer = layerFromName(selectedLayer);
-    const speedMultiplier = this.getCurrentSpeed();
-    // urManager.reset();
-    this.setNetwork(this.datagraph, layer, speedMultiplier);
+    this.setNetwork(this.datagraph, layer);
   }
 
   changeSpeedMultiplier(speedMultiplier: number) {
     if (this.viewgraph) {
-      this.viewgraph.setSpeed(speedMultiplier);
+      this.speedMultiplier = new SpeedMultiplier(speedMultiplier);
       saveToLocalStorage(this);
     }
   }
