@@ -170,7 +170,7 @@ export class Packet extends Graphics {
     Ticker.shared.add(this.animationTick, this);
   }
 
-  animationTick(ticker: Ticker) {
+  async animationTick(ticker: Ticker) {
     if (this.progress >= 1) {
       const deleteSelf = () => {
         this.destroy();
@@ -194,7 +194,11 @@ export class Packet extends Graphics {
       }
 
       this.currentStart = newStart;
-      const newEndId = newStartDevice.receivePacket(this);
+      // TODO: remove this dirty hack
+      // Remove and re-add from ticker to avoid multiple frames processing being triggered at once.
+      ticker.remove(this.animationTick, this);
+      const newEndId = await newStartDevice.receivePacket(this);
+      ticker.add(this.animationTick, this);
 
       if (newEndId === null) {
         deleteSelf();

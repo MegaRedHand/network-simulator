@@ -11,6 +11,10 @@ import { Texture } from "pixi.js";
 export class Router extends Device {
   static DEVICE_TEXTURE: Texture;
 
+  private packetQueueSize = 0;
+  private maxQueueSize = 5;
+  private timePerPacket = 1000;
+
   static getTexture() {
     if (!Router.DEVICE_TEXTURE) {
       Router.DEVICE_TEXTURE = Texture.from(RouterImage);
@@ -46,11 +50,20 @@ export class Router extends Device {
     return DeviceType.Router;
   }
 
-  routePacket(packet: Packet): DeviceId | null {
+  async routePacket(packet: Packet): Promise<DeviceId | null> {
     const device = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!device || !isRouter(device)) {
       return null;
     }
+    if (this.packetQueueSize >= this.maxQueueSize) {
+      console.debug("Packet queue full, dropping packet");
+      return null;
+    }
+    this.packetQueueSize += 1;
+    console.debug("Processing packet, queue size:", this.packetQueueSize);
+    await new Promise((resolve) => setTimeout(resolve, this.timePerPacket));
+    this.packetQueueSize -= 1;
+
     const result = device.routingTable.find((entry) => {
       if (entry.deleted) {
         console.log("Skipping deleted entry:", entry);
@@ -65,7 +78,7 @@ export class Router extends Device {
     return result === undefined ? null : result.iface;
   }
 
-  receivePacket(packet: Packet): DeviceId | null {
+  async receivePacket(packet: Packet): Promise<DeviceId | null> {
     if (this.ip.equals(packet.rawPacket.destinationAddress)) {
       this.handlePacket(packet);
       return null;

@@ -34,7 +34,7 @@ export class Switch extends Device {
     return DeviceType.Switch;
   }
 
-  receivePacket(packet: Packet): DeviceId | null {
+  async receivePacket(packet: Packet): Promise<DeviceId | null> {
     console.log(packet); // lint
     throw new Error("Method not implemented.");
   }
