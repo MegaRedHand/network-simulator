@@ -48,6 +48,7 @@ export class Host extends NetworkDevice {
 
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
+    info.addField("MacAddress", this.mac.toString());
     info.addProgramList(this, programList);
     RightBar.getInstance().renderInfo(info);
   }

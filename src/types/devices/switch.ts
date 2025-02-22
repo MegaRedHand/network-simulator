@@ -24,11 +24,14 @@ export class Switch extends LinkDevice {
     position: Position,
     mac: MacAddress,
   ) {
+    console.log(mac)
     super(id, Switch.getTexture(), viewgraph, position, mac);
   }
 
   showInfo(): void {
     const info = new DeviceInfo(this);
+    info.addField("MacAddress", this.mac.toString());
+    info.addEmptySpace();
     RightBar.getInstance().renderInfo(info);
   }
 

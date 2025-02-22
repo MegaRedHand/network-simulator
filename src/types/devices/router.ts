@@ -33,6 +33,7 @@ export class Router extends NetworkDevice {
   showInfo(): void {
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
+    info.addField("MacAddress", this.mac.toString());
     info.addEmptySpace();
 
     info.addRoutingTable(this.viewgraph, this.id);
