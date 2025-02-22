@@ -291,8 +291,6 @@ export class IPv4Packet implements FramePayload {
         "Time to Live": this.timeToLive,
         Protocol: this.protocol,
         "Header Checksum": this.headerChecksum,
-        "Source Address": this.sourceAddress.toString(),
-        "Destination Address": this.destinationAddress.toString(),
         Payload: this.payload,
       };
     } else {

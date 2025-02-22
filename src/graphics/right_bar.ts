@@ -435,13 +435,18 @@ function createInfoToggleButton(
 
   button.onclick = () => {
     const isHidden = list.classList.contains("hidden");
-    list.classList.toggle("hidden", !isHidden);
-    list.classList.toggle("open", isHidden);
-    container.classList.toggle("hidden", !isHidden);
-    container.classList.toggle("open", isHidden);
-    button.classList.toggle("open", isHidden);
-    header.classList.toggle("hidden", !isHidden);
-    button.textContent = isHidden ? "Hide Details" : "Show Details";
+
+    if (isHidden) {
+      list.classList.remove("hidden");
+      header.classList.remove("hidden");
+      button.textContent = "Hide Details";
+      button.classList.add("open");
+    } else {
+      list.classList.add("hidden");
+      header.classList.add("hidden");
+      button.textContent = "Show Details";
+      button.classList.remove("open");
+    }
   };
 
   return button;
