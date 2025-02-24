@@ -58,7 +58,7 @@ export class Host extends Device {
     return DeviceType.Host;
   }
 
-  receivePacket(packet: Packet): DeviceId | null {
+  async receivePacket(packet: Packet): Promise<DeviceId | null> {
     if (this.ip.equals(packet.rawPacket.destinationAddress)) {
       this.handlePacket(packet);
     }

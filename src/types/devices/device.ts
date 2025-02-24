@@ -71,8 +71,7 @@ export abstract class Device extends Container {
   // Each type of device has different ways of handling a received packet.
   // Returns the DevicedId for the next device to send the packet to, or
   // null if there’s no next device to send the packet.
-  // TODO: Might be general for all device in the future.
-  abstract receivePacket(packet: Packet): DeviceId | null;
+  abstract receivePacket(packet: Packet): Promise<DeviceId | null>;
 
   constructor(
     id: DeviceId,
