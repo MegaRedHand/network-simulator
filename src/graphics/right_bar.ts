@@ -135,6 +135,8 @@ export function createRoutingTable(
   deviceId: number,
 ) {
   const container = document.createElement("div");
+  const tableWrapper = document.createElement("div");
+  tableWrapper.classList.add("table-wrapper");
   const tableClasses = ["right-bar-table", "hidden", "toggle-table"];
   const buttonClass = "right-bar-toggle-button";
 
@@ -145,8 +147,9 @@ export function createRoutingTable(
   table.classList.add(...tableClasses);
   const button = createToggleButton(title, buttonClass, table);
 
+  tableWrapper.appendChild(table);
   container.appendChild(button);
-  container.appendChild(table);
+  container.appendChild(tableWrapper);
   return container;
 }
 
