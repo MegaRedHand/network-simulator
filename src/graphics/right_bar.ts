@@ -404,21 +404,65 @@ function createWarningElement(key: string, value: string): HTMLLIElement {
   return listItem;
 }
 
-// Function to create payload element
+// Function to create a payload element
 function createPayloadElement(key: string, value: object): HTMLLIElement {
+  // Create the list item that will hold the payload
   const listItem = document.createElement("li");
-  const pre = document.createElement("pre");
-  pre.textContent = JSON.stringify(value, null, 2); // Pretty-print JSON
-  listItem.innerHTML = `<strong>${key}:</strong>`;
-  listItem.appendChild(pre);
+  listItem.classList.add("payload-item"); // Apply styling
 
+  // Create the key (title) element for the payload
+  const keyElement = document.createElement("strong");
+  keyElement.classList.add("payload-key");
+  keyElement.textContent = `${key}:`; // Set the text content
+
+  // Create a container to wrap the JSON content
+  const preContainer = document.createElement("div");
+  preContainer.classList.add("payload-container"); // Apply styling
+
+  // Create the <pre> element to display formatted JSON
+  const pre = document.createElement("pre");
+  pre.classList.add("payload-content");
+  pre.textContent = JSON.stringify(value, null, 2); // Pretty-print JSON for readability
+
+  // Append the <pre> element inside its container
+  preContainer.appendChild(pre);
+
+  // Append key element and preContainer to the list item
+  listItem.appendChild(keyElement);
+  listItem.appendChild(preContainer);
+
+  // Return the formatted list item
   return listItem;
 }
 
-// Function to create regular detail element
+// Function to create a regular detail element
 function createDetailElement(key: string, value: string): HTMLLIElement {
+  // Create the list item that will hold the detail
   const listItem = document.createElement("li");
-  listItem.innerHTML = `<strong>${key}:</strong> ${value}`;
+  listItem.classList.add("detail-item"); // Apply styling
+
+  // Create a container to keep key and value aligned in the same row
+  const container = document.createElement("div");
+  container.classList.add("detail-container");
+
+  // Create the key element (label)
+  const keyElement = document.createElement("span");
+  keyElement.classList.add("detail-key");
+  keyElement.textContent = `${key}:`; // Set the text content
+
+  // Create the value element
+  const valueElement = document.createElement("span");
+  valueElement.classList.add("detail-value");
+  valueElement.textContent = value; // Set the text content
+
+  // Append key and value elements to the container
+  container.appendChild(keyElement);
+  container.appendChild(valueElement);
+
+  // Append the container to the list item
+  listItem.appendChild(container);
+
+  // Return the formatted list item
   return listItem;
 }
 
