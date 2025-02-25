@@ -50,6 +50,14 @@
   width: 100%;
   box-sizing: border-box;
   position: relative; /* Needed for positioning arrow */
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease; /* Smooth hover effect */
+}
+
+.right-bar-toggle-button:hover {
+  background-color: #162a6d; /* Darker blue on hover */
+  transform: scale(1.02); /* Slight zoom effect */
 }
 
 /* 🔹 Dropdown arrow styling */
@@ -57,7 +65,7 @@
   content: ""; /* Adds an empty element for the arrow */
   display: inline-block;
   position: absolute;
-  right: 2vw; /* Positions the arrow */
+  right: 1vw; /* Positions the arrow */
   width: 0;
   height: 0;
   border-left: 0.6rem solid transparent; /* Creates arrow effect */
