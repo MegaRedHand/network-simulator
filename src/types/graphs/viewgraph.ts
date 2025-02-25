@@ -327,10 +327,10 @@ export class ViewGraph {
       return [];
     }
     const queue: [Device, DeviceId[]][] = [[startDevice, [startId]]];
-    const visited: Set<DeviceId> = new Set();
+    const visited: Set<DeviceId> = new Set<DeviceId>();
 
     while (queue.length > 0) {
-      const [device, path] = queue.shift()!;
+      const [device, path] = queue.shift();
 
       if (device.id === endId) {
         return path;

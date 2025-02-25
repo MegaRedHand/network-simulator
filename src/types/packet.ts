@@ -60,7 +60,9 @@ export class Packet extends Graphics {
     this.context = contextPerPacketType[this.type];
     this.zIndex = ZIndexLevels.Packet;
 
-    (this.srcId = srcId), (this.dstId = dstId), (this.rawPacket = rawPacket);
+    this.srcId = srcId;
+    this.dstId = dstId;
+    this.rawPacket = rawPacket;
 
     this.interactive = true;
     this.cursor = "pointer";

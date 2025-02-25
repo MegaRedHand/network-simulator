@@ -67,7 +67,8 @@ export class MacAddressGenerator {
 
   // Turn number into IP
   static numberToMac(num: bigint): string {
-    return num.toString(16).padStart(12, "0").match(/.{2}/g)!.join(":");
+    const match = num.toString(16).padStart(12, "0").match(/.{2}/g);
+    return match ? match.join(":") : "";
   }
 }
 

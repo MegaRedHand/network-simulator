@@ -52,7 +52,7 @@ export abstract class Device extends Container {
   readonly viewgraph: ViewGraph;
   connections = new Set<DeviceId>();
   mac: MacAddress;
-  arpTable: Map<IpAddress, MacAddress> = new Map();
+  arpTable: Map<IpAddress, MacAddress> = new Map<IpAddress, MacAddress>();
 
   highlightMarker: Graphics | null = null; // Marker to indicate selection
 

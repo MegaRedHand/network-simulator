@@ -25,7 +25,6 @@ export class Switch extends Device {
     position: Position,
     mac: MacAddress,
   ) {
-    console.log(mac)
     super(id, Switch.getTexture(), viewgraph, position, mac);
   }
 
