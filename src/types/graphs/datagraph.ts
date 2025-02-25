@@ -93,10 +93,31 @@ export interface NewDevice {
   mask: string;
 }
 
+// Edge logical representation
+export interface DataEdge {
+  device1: DeviceId;
+  device2: DeviceId;
+}
+
+export interface PacketProgress {
+  packetId: string;
+  currentEdge: DataEdge;
+  progress: number;
+  direction: {
+    from: DeviceId;
+    to: DeviceId;
+  };
+}
+
 export class DataGraph {
   private devices = new Map<DeviceId, GraphNode>();
   private idCounter: DeviceId = 1;
   private onChanges: (() => void)[] = [];
+  private edges: Map<string, DataEdge> = new Map<string, DataEdge>();
+  private packetProgresses: Map<string, PacketProgress> = new Map<
+    string,
+    PacketProgress
+  >();
 
   static fromData(data: GraphData): DataGraph {
     const dataGraph = new DataGraph();
@@ -125,6 +146,17 @@ export class DataGraph {
     });
 
     return dataGraph;
+  }
+
+  private generateEdgeId(device1: DeviceId, device2: DeviceId): string {
+    return [Math.min(device1, device2), Math.max(device1, device2)].join(",");
+  }
+
+  private addDataEdge(device1: DeviceId, device2: DeviceId) {
+    const edgeId = this.generateEdgeId(device1, device2);
+    if (!this.edges.has(edgeId)) {
+      this.edges.set(edgeId, { device1, device2 });
+    }
   }
 
   toData(): GraphData {
@@ -181,42 +213,40 @@ export class DataGraph {
       this.idCounter = idDevice + 1;
     }
     console.log(`Device added with ID ${idDevice}`);
+    console.log(this.edges);
+
+    // Add the logical edges for every device connection
+    deviceInfo.connections.forEach((connectedId) => {
+      if (!this.hasEdge(idDevice, connectedId)) {
+        this.addDataEdge(idDevice, connectedId);
+      }
+    });
+
     this.notifyChanges();
   }
 
   // Add a connection between two devices
   addEdge(n1Id: DeviceId, n2Id: DeviceId) {
     if (n1Id === n2Id) {
-      console.warn(
-        `Cannot create a connection between the same device (ID ${n1Id}).`,
-      );
       return;
     }
     const device1 = this.devices.get(n1Id);
     const device2 = this.devices.get(n2Id);
-    if (!device1) {
-      console.warn(`Device with ID ${n1Id} does not exist in devices.`);
+    if (!device1 || !device2) {
       return;
     }
-    if (!device2) {
-      console.warn(`Device with ID ${n2Id} does not exist in devices.`);
-      return;
-      // Check if an edge already exists between these two devices
-    }
-    if (device1.connections.has(n2Id)) {
-      console.warn(
-        `Connection between ID ${n1Id} and ID ${n2Id} already exists.`,
-      );
-      return;
-    }
-    device1.connections.add(n2Id);
-    device2.connections.add(n1Id);
 
-    console.log(
-      `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,
-    );
-    this.notifyChanges();
-    this.regenerateAllRoutingTables();
+    // Add connections if they don't exist
+    if (!device1.connections.has(n2Id)) {
+      device1.connections.add(n2Id);
+      device2.connections.add(n1Id);
+
+      // Add the data edge
+      this.addDataEdge(n1Id, n2Id);
+
+      this.notifyChanges();
+      this.regenerateAllRoutingTables();
+    }
   }
 
   updateDevicePosition(id: DeviceId, newValues: { x?: number; y?: number }) {
@@ -311,6 +341,9 @@ export class DataGraph {
       );
       return;
     }
+
+    const edgeId = this.generateEdgeId(n1Id, n2Id);
+    this.edges.delete(edgeId);
 
     // Remove the connection in both devices
     device1.connections.delete(n2Id);
@@ -574,5 +607,87 @@ export class DataGraph {
 
     // Remove any deleted entries
     return device.routingTable.filter((entry) => !entry.deleted);
+  }
+
+  initializePacketProgress(
+    packetId: string,
+    startDevice: DeviceId,
+    nextDevice: DeviceId,
+  ): void {
+    const edgeId = this.generateEdgeId(startDevice, nextDevice);
+    const edge = this.edges.get(edgeId);
+
+    if (!edge) {
+      console.warn(
+        `No edge found between devices ${startDevice} and ${nextDevice}`,
+      );
+      return;
+    }
+
+    this.packetProgresses.set(packetId, {
+      packetId,
+      currentEdge: edge,
+      progress: 0,
+      direction: {
+        from: startDevice,
+        to: nextDevice,
+      },
+    });
+  }
+
+  updatePacketProgress(packetId: string, progress: number): void {
+    const packetProgress = this.packetProgresses.get(packetId);
+    if (packetProgress) {
+      packetProgress.progress = progress;
+    }
+  }
+
+  getPacketProgress(packetId: string): PacketProgress | undefined {
+    return this.packetProgresses.get(packetId);
+  }
+
+  movePacketToNextEdge(packetId: string, nextDevice: DeviceId): boolean {
+    const currentProgress = this.packetProgresses.get(packetId);
+    if (!currentProgress) {
+      console.warn(`No progress found for packet ${packetId}`);
+      return false;
+    }
+
+    const currentDevice = currentProgress.direction.to;
+    const edgeId = this.generateEdgeId(currentDevice, nextDevice);
+    const nextEdge = this.edges.get(edgeId);
+
+    if (!nextEdge) {
+      console.warn(
+        `No edge found between devices ${currentDevice} and ${nextDevice}`,
+      );
+      return false;
+    }
+
+    this.packetProgresses.set(packetId, {
+      packetId,
+      currentEdge: nextEdge,
+      progress: 0,
+      direction: {
+        from: currentDevice,
+        to: nextDevice,
+      },
+    });
+
+    return true;
+  }
+
+  removePacketProgress(packetId: string): void {
+    this.packetProgresses.delete(packetId);
+  }
+
+  getEdgeBetween(device1: DeviceId, device2: DeviceId): DataEdge | undefined {
+    const edgeId = this.generateEdgeId(device1, device2);
+    return this.edges.get(edgeId);
+  }
+
+  hasEdge(device1: DeviceId, device2: DeviceId): boolean {
+    const edgeId = this.generateEdgeId(device1, device2);
+    return this.edges.has(edgeId);
   }
 }

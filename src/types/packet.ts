@@ -12,7 +12,6 @@ import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
 import { IPv4Packet } from "../packets/ip";
 import { Layer } from "../types/devices/layer";
-//import { EchoMessage } from "../packets/icmp";
 import { DeviceId, isRouter } from "./graphs/datagraph";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
@@ -24,6 +23,7 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
 
 export class Packet extends Graphics {
+  private packetId: string;
   speed = 100;
   progress = 0;
   viewgraph: ViewGraph;
@@ -45,19 +45,15 @@ export class Packet extends Graphics {
 
   constructor(viewgraph: ViewGraph, type: string, rawPacket: IPv4Packet) {
     super();
-
+    this.packetId = crypto.randomUUID();
     this.viewgraph = viewgraph;
     this.type = type;
-
     this.context = contextPerPacketType[this.type];
     this.zIndex = ZIndexLevels.Packet;
-
     this.rawPacket = rawPacket;
-
     this.interactive = true;
     this.cursor = "pointer";
     this.on("click", this.onClick, this);
-    // NOTE: this is "click" for mobile devices
     this.on("tap", this.onClick, this);
   }
 
@@ -130,7 +126,16 @@ export class Packet extends Graphics {
     this.progress = 0;
     this.currentEdge = edge;
     this.currentStart = start;
-    // Add packet as a child of the current edge
+
+    // Initialize logical tracking in DataGraph
+    const nextDevice = edge.otherEnd(start);
+    console.log(
+      `[DATAGRAPH]: Initializing packet ${this.packetId} on edge ${start}->${nextDevice}`,
+    );
+    this.viewgraph
+      .getDataGraph()
+      .initializePacketProgress(this.packetId, start, nextDevice);
+
     this.currentEdge.addChild(this);
     this.updatePosition();
     Ticker.shared.add(this.animationTick, this);
@@ -138,65 +143,98 @@ export class Packet extends Graphics {
 
   async animationTick(ticker: Ticker) {
     if (this.progress >= 1) {
-      const deleteSelf = () => {
-        this.destroy();
-        ticker.remove(this.animationTick, this);
-        if (isSelected(this)) {
-          deselectElement();
-        }
-        console.log("Se corto animationTick");
-      };
-
       this.progress = 0;
       this.removeFromParent();
       const newStart = this.currentEdge.otherEnd(this.currentStart);
       const newStartDevice = this.viewgraph.getDevice(newStart);
 
-      // Viewgraph may return undefined when trying to get the device
-      // as the device may have been removed by the user.
       if (!newStartDevice) {
-        deleteSelf();
+        console.log("[DATAGRAPH]: Device not found, deleting packet");
+        this.delete();
         return;
       }
 
       this.currentStart = newStart;
-      // TODO: remove this dirty hack
-      // Remove and re-add from ticker to avoid multiple frames processing being triggered at once.
       ticker.remove(this.animationTick, this);
       const newEndId = await newStartDevice.receivePacket(this);
       ticker.add(this.animationTick, this);
 
       if (newEndId === null) {
-        deleteSelf();
+        console.log("[DATAGRAPH]: No next device, deleting packet");
+        this.delete();
         return;
       }
+
+      // Store current progress before updating
+      const currentProgress = this.viewgraph
+        .getDataGraph()
+        .getPacketProgress(this.packetId);
+      if (!currentProgress) {
+        // Set the progress to 0 on the data edge
+        console.log("[DATAGRAPH]: Packet progress not found, setting to 0");
+        this.viewgraph
+          .getDataGraph()
+          .initializePacketProgress(this.packetId, newStart, newEndId);
+      }
+
+      // Update logical progress in DataGraph
+      const success = this.viewgraph
+        .getDataGraph()
+        .movePacketToNextEdge(this.packetId, newEndId);
+
+      if (!success) {
+        console.log(
+          "[DATAGRAPH]: Failed to move to next edge, deleting packet",
+        );
+        this.delete();
+        return;
+      }
+
+      console.log(
+        `[DATAGRAPH]: Moving packet from ${this.currentStart} to ${newEndId}`,
+      );
 
       this.currentEdge = this.viewgraph.getEdge(
         Edge.generateConnectionKey({ n1: this.currentStart, n2: newEndId }),
       );
 
       if (this.currentEdge === undefined) {
-        deleteSelf();
+        console.log("[DATAGRAPH]: No visual edge found, deleting packet");
+        this.delete();
         return;
       }
+
       this.currentEdge.addChild(this);
     }
 
-    // Calculate the edge length
+    // Rest of the method remains the same
     const start = this.currentEdge.startPos;
     const end = this.currentEdge.endPos;
     const edgeLength = Math.sqrt(
       Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
     );
 
-    // Normalize the speed based on edge length
-    // The longer the edge, the slower the progress increment
     const normalizedSpeed = this.speed / edgeLength;
 
-    // Update progress with normalized speed
     if (!Packet.animationPaused) {
-      this.progress +=
+      const progressIncrement =
         (ticker.deltaMS * normalizedSpeed * this.viewgraph.getSpeed()) / 1000;
+      this.progress += progressIncrement;
+
+      // Update logical progress in DataGraph
+      this.viewgraph
+        .getDataGraph()
+        .updatePacketProgress(this.packetId, this.progress);
+
+      // Log progress at 25% intervals
+      if (
+        Math.floor(this.progress * 4) >
+        Math.floor((this.progress - progressIncrement) * 4)
+      ) {
+        console.log(
+          `[DATAGRAPH]: Packet ${this.packetId} at ${(this.progress * 100).toFixed(0)}% of edge`,
+        );
+      }
     }
 
     this.updatePosition();
@@ -220,21 +258,18 @@ export class Packet extends Graphics {
   }
 
   delete() {
-    // Remove packet from Ticker to stop animation
+    // Remove logical tracking
+    console.log(`[DATAGRAPH]: Removing packet ${this.packetId}`);
+    this.viewgraph.getDataGraph().removePacketProgress(this.packetId);
+
     Ticker.shared.remove(this.animationTick, this);
-
-    // Remove all event listeners
     this.removeAllListeners();
-
-    // Remove packet from parent edge
     this.removeFromParent();
 
-    // Deselect the packet if it's selected
     if (isSelected(this)) {
       deselectElement();
     }
 
-    // Destroy the packet
     this.destroy();
   }
 }
