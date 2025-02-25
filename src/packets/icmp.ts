@@ -1,5 +1,8 @@
 import { ICMP_PROTOCOL_NUMBER, IpPayload, computeIpChecksum } from "./ip";
 
+export const ICMP_REQUEST_TYPE_NUMBER = 8;
+export const ICMP_REPLY_TYPE_NUMBER = 0;
+
 // More info in RFC-792
 //   0                   1                   2                   3
 //   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -84,9 +87,9 @@ class EchoMessage extends IcmpPacket {
 }
 
 export class EchoRequest extends EchoMessage {
-  type = 8;
+  type = ICMP_REQUEST_TYPE_NUMBER;
 }
 
 export class EchoReply extends EchoMessage {
-  type = 0;
+  type = ICMP_REPLY_TYPE_NUMBER;
 }

@@ -388,7 +388,7 @@ export class DataGraph {
     while (queue.length > 0) {
       const currentId = queue.shift();
       const current = this.devices.get(currentId);
-      if (!isRouter(current)) continue;
+      if (isHost(current)) continue;
 
       current.connections.forEach((connectedId) => {
         if (!parents.has(connectedId)) {

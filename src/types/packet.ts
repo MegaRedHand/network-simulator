@@ -12,8 +12,8 @@ import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
 import { IPv4Packet } from "../packets/ip";
 import { EchoRequest, EchoReply } from "../packets/icmp";
-import { DeviceId, isRouter } from "./graphs/datagraph";
-import { NetworkDevice } from "./devices/device";
+import { DeviceId, isRouter, isSwitch } from "./graphs/datagraph";
+import { EthernetFrame } from "../packets/ethernet";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
@@ -31,7 +31,9 @@ export class Packet extends Graphics {
   currentStart: number;
   color: number;
   type: string;
-  rawPacket: IPv4Packet;
+  rawPacket: EthernetFrame;
+  srcId: DeviceId;
+  dstId: DeviceId;
 
   static animationPaused = false;
 
@@ -43,7 +45,13 @@ export class Packet extends Graphics {
     Packet.animationPaused = false;
   }
 
-  constructor(viewgraph: ViewGraph, type: string, rawPacket: IPv4Packet) {
+  constructor(
+    viewgraph: ViewGraph,
+    type: string,
+    srcId: DeviceId,
+    dstId: DeviceId,
+    rawPacket: EthernetFrame,
+  ) {
     super();
 
     this.viewgraph = viewgraph;
@@ -52,7 +60,7 @@ export class Packet extends Graphics {
     this.context = contextPerPacketType[this.type];
     this.zIndex = ZIndexLevels.Packet;
 
-    this.rawPacket = rawPacket;
+    (this.srcId = srcId), (this.dstId = dstId), (this.rawPacket = rawPacket);
 
     this.interactive = true;
     this.cursor = "pointer";
@@ -126,10 +134,10 @@ export class Packet extends Graphics {
 
     const info = new StyledInfo("Packet Information");
     info.addField("Type", this.type);
-    info.addField("Source IP Address", this.rawPacket.sourceAddress.toString());
+    info.addField("Source MAC Address", this.rawPacket.source.toString());
     info.addField(
-      "Destination IP Address",
-      this.rawPacket.destinationAddress.toString(),
+      "Destination MAC Address",
+      this.rawPacket.destination.toString(),
     );
 
     rightbar.renderInfo(info);
@@ -144,9 +152,9 @@ export class Packet extends Graphics {
     );
 
     // Add a toggle info section for packet details
-    const packetDetails = this.getPacketDetails(this.rawPacket);
+    // const packetDetails = this.getPacketDetails(this.rawPacket);
 
-    rightbar.addToggleButton("Packet Details", packetDetails);
+    // rightbar.addToggleButton("Packet Details", packetDetails);
   }
 
   highlight() {
@@ -193,6 +201,8 @@ export class Packet extends Graphics {
         deleteSelf();
         return;
       }
+
+      console.log(newStartDevice);
 
       this.currentStart = newStart;
       const newEndId = newStartDevice.receivePacket(this);
@@ -273,11 +283,14 @@ export class Packet extends Graphics {
 export function sendRawPacket(
   viewgraph: ViewGraph,
   srcId: DeviceId,
-  rawPacket: IPv4Packet,
+  dstId: DeviceId,
+  rawPacket: EthernetFrame,
 ) {
-  const srcIp = rawPacket.sourceAddress;
-  const dstIp = rawPacket.destinationAddress;
-  console.log(`Sending frame from ${srcIp.toString()} to ${dstIp.toString()}`);
+  const srcMac = rawPacket.source;
+  const dstMac = rawPacket.destination;
+  console.log(
+    `Sending frame from ${srcMac.toString()} to ${dstMac.toString()}`,
+  );
 
   const originConnections = viewgraph.getConnections(srcId);
   if (originConnections.length === 0) {
@@ -287,25 +300,23 @@ export function sendRawPacket(
   let firstEdge = originConnections.find((edge) => {
     const otherId = edge.otherEnd(srcId);
     const otherDevice = viewgraph.getDevice(otherId);
-    if (otherDevice instanceof NetworkDevice) {
-      return otherDevice.ip.equals(dstIp);
-    }
-    return false;
+    return otherDevice.mac.equals(dstMac);
   });
   if (firstEdge === undefined) {
     const datagraph = viewgraph.getDataGraph();
     firstEdge = originConnections.find((edge) => {
       const otherId = edge.otherEnd(srcId);
-      return isRouter(datagraph.getDevice(otherId));
+      const otherDevice = datagraph.getDevice(otherId);
+      return isRouter(otherDevice) || isSwitch(otherDevice);
     });
   }
   if (firstEdge === undefined) {
     console.warn(
-      "El dispositivo de origen no está conectado al destino o a un router.",
+      "El dispositivo de origen no está conectado al destino, a un router o a un switch.",
     );
     return;
   }
   const packetType = rawPacket.payload.getPacketType();
-  const packet = new Packet(viewgraph, packetType, rawPacket);
+  const packet = new Packet(viewgraph, packetType, srcId, dstId, rawPacket);
   packet.traverseEdge(firstEdge, srcId);
 }

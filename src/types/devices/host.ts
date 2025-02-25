@@ -1,8 +1,9 @@
-import { DeviceType, NetworkDevice } from "./device";
+import { DeviceType } from "./device";
+import { NetworkDevice } from "./networkDevice";
 import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
-import { IpAddress } from "../../packets/ip";
+import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "./layer";
@@ -43,6 +44,17 @@ export class Host extends NetworkDevice {
     this.loadRunningPrograms();
   }
 
+  receiveDatagram(packet: Packet): DeviceId | null {
+    const datagram = packet.rawPacket.payload;
+    if (!(datagram instanceof IPv4Packet)) {
+      return null;
+    }
+    if (this.ip.equals(datagram.destinationAddress)) {
+      this.handlePacket(datagram);
+    }
+    return null;
+  }
+
   showInfo(): void {
     const programList = getProgramList(this.viewgraph, this.id);
 
@@ -58,13 +70,6 @@ export class Host extends NetworkDevice {
 
   getType(): DeviceType {
     return DeviceType.Host;
-  }
-
-  receivePacket(packet: Packet): DeviceId | null {
-    if (this.ip.equals(packet.rawPacket.destinationAddress)) {
-      this.handlePacket(packet);
-    }
-    return null;
   }
 
   addRunningProgram(name: string, inputs: string[]) {

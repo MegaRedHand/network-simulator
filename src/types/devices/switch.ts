@@ -1,4 +1,4 @@
-import { Device, DeviceType, Layer, LinkDevice } from "./device";
+import { Device, DeviceType, Layer } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import SwitchImage from "../../assets/switch.svg";
 import { Position } from "../common";
@@ -7,8 +7,9 @@ import { DeviceId } from "../graphs/datagraph";
 import { Packet } from "../packet";
 import { Texture } from "pixi.js";
 import { MacAddress } from "../../packets/ethernet";
+import { IPv4Packet } from "../../packets/ip";
 
-export class Switch extends LinkDevice {
+export class Switch extends Device {
   static DEVICE_TEXTURE: Texture;
 
   static getTexture() {
@@ -41,7 +42,14 @@ export class Switch extends LinkDevice {
   }
 
   receivePacket(packet: Packet): DeviceId | null {
-    console.log(packet); // lint
-    throw new Error("Method not implemented.");
+    const datagram = packet.rawPacket.payload;
+    if (datagram instanceof IPv4Packet) {
+      const dstDevice = this.viewgraph.getDeviceByIP(
+        datagram.destinationAddress,
+      );
+      const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
+      return path.length > 1 ? path[1] : null;
+    }
+    return null;
   }
 }

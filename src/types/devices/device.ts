@@ -18,12 +18,11 @@ import { RightBar } from "../../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
-import { IpAddress, IPv4Packet } from "../../packets/ip";
+import { IpAddress } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer } from "./layer";
-import { Packet, sendRawPacket } from "../packet";
-import { EchoReply } from "../../packets/icmp";
+import { Packet } from "../packet";
 import { CreateDevice } from "./utils";
 import { MacAddress } from "../../packets/ethernet";
 
@@ -52,6 +51,8 @@ export abstract class Device extends Container {
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
   connections = new Set<DeviceId>();
+  mac: MacAddress;
+  arpTable: Map<IpAddress, MacAddress> = new Map();
 
   highlightMarker: Graphics | null = null; // Marker to indicate selection
 
@@ -79,11 +80,14 @@ export abstract class Device extends Container {
     texture: Texture,
     viewgraph: ViewGraph,
     position: Position,
+    mac: MacAddress,
   ) {
     super();
 
     this.id = id;
     this.viewgraph = viewgraph;
+
+    this.mac = mac;
 
     this.sprite = new Sprite(texture);
 
@@ -319,62 +323,5 @@ function onPointerUp(): void {
     Device.dragTarget.parent.off("pointermove", onPointerMove);
     Device.dragTarget.parent.off("pointerup", onPointerUp);
     Device.dragTarget = null;
-  }
-}
-
-export abstract class LinkDevice extends Device {
-  mac: MacAddress;
-  arpTable: Map<IpAddress, MacAddress> = new Map();
-
-  constructor(
-    id: DeviceId,
-    texture: Texture,
-    viewgraph: ViewGraph,
-    position: Position,
-    mac: MacAddress,
-  ) {
-    super(id, texture, viewgraph, position);
-    this.mac = mac;
-  }
-}
-
-export abstract class NetworkDevice extends LinkDevice {
-  ip: IpAddress;
-  ipMask: IpAddress;
-
-  constructor(
-    id: DeviceId,
-    texture: Texture,
-    viewgraph: ViewGraph,
-    position: Position,
-    mac: MacAddress,
-    ip: IpAddress,
-    ipMask: IpAddress,
-  ) {
-    super(id, texture, viewgraph, position, mac);
-    this.ip = ip;
-    this.ipMask = ipMask;
-  }
-
-  // TODO: Most probably it will be different for each type of device
-  handlePacket(packet: Packet) {
-    const dstDevice = this.viewgraph.getDeviceByIP(
-      packet.rawPacket.sourceAddress,
-    );
-    if (!(dstDevice instanceof NetworkDevice)) {
-      return;
-    }
-    switch (packet.type) {
-      case "ICMP-8": {
-        if (dstDevice) {
-          const echoReply = new EchoReply(0);
-          const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
-          sendRawPacket(this.viewgraph, this.id, ipPacket);
-        }
-        break;
-      }
-      default:
-        console.warn("Packet's type unrecognized");
-    }
   }
 }

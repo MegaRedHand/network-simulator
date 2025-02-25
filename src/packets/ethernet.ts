@@ -147,4 +147,5 @@ export class EthernetFrame {
 export interface FramePayload {
   toBytes(): Uint8Array;
   type(): number;
+  getPacketType(): string;
 }

@@ -252,6 +252,10 @@ export class IPv4Packet implements FramePayload {
   type(): number {
     return IP_PROTOCOL_TYPE;
   }
+
+  getPacketType(): string {
+    return this.payload.getPacketType();
+  }
 }
 
 export function computeIpChecksum(octets: Uint8Array): number {

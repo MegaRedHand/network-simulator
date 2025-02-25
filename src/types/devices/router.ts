@@ -1,13 +1,14 @@
-import { DeviceType, Layer, NetworkDevice } from "./device";
+import { DeviceType, Layer } from "./device";
+import { NetworkDevice } from "./networkDevice";
 import { ViewGraph } from "../graphs/viewgraph";
 import RouterImage from "../../assets/router.svg";
 import { Position } from "../common";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
-import { IpAddress } from "../../packets/ip";
+import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId, isRouter } from "../graphs/datagraph";
-import { Packet } from "../packet";
 import { Texture } from "pixi.js";
 import { MacAddress } from "../../packets/ethernet";
+import { Packet } from "../packet";
 
 export class Router extends NetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -48,7 +49,7 @@ export class Router extends NetworkDevice {
     return DeviceType.Router;
   }
 
-  routePacket(packet: Packet): DeviceId | null {
+  routePacket(datagram: IPv4Packet): DeviceId | null {
     const device = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!device || !isRouter(device)) {
       return null;
@@ -61,17 +62,35 @@ export class Router extends NetworkDevice {
       const ip = IpAddress.parse(entry.ip);
       const mask = IpAddress.parse(entry.mask);
       console.log("Considering entry:", entry);
-      return packet.rawPacket.destinationAddress.isInSubnet(ip, mask);
+      return datagram.destinationAddress.isInSubnet(ip, mask);
     });
     console.log("Result:", result);
     return result === undefined ? null : result.iface;
   }
 
-  receivePacket(packet: Packet): DeviceId | null {
-    if (this.ip.equals(packet.rawPacket.destinationAddress)) {
-      this.handlePacket(packet);
+  receiveDatagram(packet: Packet): DeviceId | null {
+    console.log("LLEGUE A RECEIVE DATAGRAM");
+    const datagram = packet.rawPacket.payload;
+    if (!(datagram instanceof IPv4Packet)) {
       return null;
     }
-    return this.routePacket(packet);
+    if (this.ip.equals(datagram.destinationAddress)) {
+      this.handlePacket(datagram);
+      return null;
+    }
+    // a router changed forward datagram to destination, have to change current destination mac
+    const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
+    const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
+    let dstMac = dstDevice.mac;
+    if (!path) return null;
+    for (const id of path.slice(1)) {
+      const device = this.viewgraph.getDevice(id);
+      if (device instanceof NetworkDevice) {
+        dstMac = device.mac;
+        break;
+      }
+    }
+    packet.rawPacket.destination = dstMac;
+    return this.routePacket(datagram);
   }
 }
