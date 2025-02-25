@@ -1,3 +1,10 @@
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  display: block;
+  max-width: 100%;
+}
+
 /* table.css - Table in the sidebar */
 .right-bar-table {
   width: 100%; /* Ensures the container takes full width */
