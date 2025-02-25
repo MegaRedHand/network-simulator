@@ -68,7 +68,6 @@
   border-radius: 8px;
   margin: 10px 0;
   overflow: hidden;
-  max-width: 300px;
 }
 
 /* Title style for the warning */
@@ -86,8 +85,73 @@
 /* Message style for the warning */
 .warning-sign .warning-message {
   padding: 10px;
-  margin: 0;
+  margin: 3px;
   text-align: center;
   font-size: 18px;
   line-height: 1.4;
+}
+
+.detail-item {
+  list-style: none; /* Removes default list styling */
+  padding: 6px 10px; /* Adds padding for spacing */
+  border-bottom: 1px solid #ddd; /* Adds a subtle separator between items */
+}
+
+.detail-container {
+  display: flex; /* Uses flexbox for alignment */
+  justify-content: space-between; /* Keeps key and value on the same line */
+  align-items: center; /* Ensures vertical alignment */
+  width: 100%; /* Makes sure it takes up the full width */
+  white-space: nowrap; /* Prevents text from wrapping to the next line */
+}
+
+.detail-key {
+  font-weight: bold; /* Makes the key stand out */
+  color: #000000; /* Sets the text color to black */
+  flex-shrink: 0; /* Prevents the key from shrinking too much */
+  margin-right: 8px; /* Adds spacing between key and value */
+}
+
+.detail-value {
+  color: #000000; /* Sets the text color to black */
+  text-align: right; /* Aligns the value to the right */
+  flex-grow: 1; /* Allows the value to expand to fill available space */
+  overflow: hidden; /* Hides any overflowing text */
+  text-overflow: ellipsis; /* Adds "..." if the text is too long */
+}
+
+.payload-item {
+  display: flex;
+  flex-direction: column; /* Ensures key and JSON block are stacked */
+  width: 100%; /* Makes sure it doesn't exceed the sidebar width */
+  margin-top: 10px; /* Adds spacing above */
+}
+
+.payload-key {
+  font-weight: bold; /* Makes the key stand out */
+  margin-bottom: 5px; /* Adds spacing between the key and the payload */
+}
+
+.payload-container {
+  background-color: #f4f4f4; /* Light background for contrast */
+  border-radius: 6px; /* Rounds the corners */
+  padding: 10px; /* Adds padding inside the container */
+  border: 1px solid #ddd; /* Adds a subtle border */
+  width: 100%; /* Ensures the container occupies the full width */
+  max-width: 100%; /* Prevents it from exceeding the sidebar width */
+  overflow-x: auto; /* Enables horizontal scrolling if needed */
+  box-sizing: border-box; /* Ensures padding and border do not affect width */
+  display: block;
+}
+
+.payload-content {
+  color: #fff; /* White text for better readability */
+  font-family: monospace; /* Uses a monospace font for JSON formatting */
+  font-size: 14px; /* Ensures good readability */
+  background-color: #111; /* Dark background for better contrast */
+  padding: 10px; /* Adds spacing inside */
+  border-radius: 6px; /* Rounds the corners */
+  width: 100%; /* Ensures it takes the full width of the container */
+  max-width: 100%; /* Prevents it from exceeding the container */
+  display: block;
 }
