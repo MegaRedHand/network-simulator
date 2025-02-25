@@ -68,7 +68,6 @@
   border-radius: 8px;
   margin: 10px 0;
   overflow: hidden;
-  max-width: 300px;
 }
 
 /* Title style for the warning */
@@ -86,7 +85,7 @@
 /* Message style for the warning */
 .warning-sign .warning-message {
   padding: 10px;
-  margin: 0;
+  margin: 3px;
   text-align: center;
   font-size: 18px;
   line-height: 1.4;
