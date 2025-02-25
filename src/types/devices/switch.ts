@@ -30,7 +30,6 @@ export class Switch extends Device {
 
   showInfo(): void {
     const info = new DeviceInfo(this);
-    info.addField("MacAddress", this.mac.toString());
     info.addEmptySpace();
     RightBar.getInstance().renderInfo(info);
   }
@@ -43,14 +42,14 @@ export class Switch extends Device {
     return DeviceType.Switch;
   }
 
-  receivePacket(packet: Packet): DeviceId | null {
+  receivePacket(packet: Packet): Promise<DeviceId | null> {
     const datagram = packet.rawPacket.payload;
     if (datagram instanceof IPv4Packet) {
       const dstDevice = this.viewgraph.getDeviceByIP(
         datagram.destinationAddress,
       );
       const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
-      return path.length > 1 ? path[1] : null;
+      return Promise.resolve(path.length > 1 ? path[1] : null);
     }
     return null;
   }

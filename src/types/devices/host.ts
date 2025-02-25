@@ -44,7 +44,7 @@ export class Host extends NetworkDevice {
     this.loadRunningPrograms();
   }
 
-  receiveDatagram(packet: Packet): DeviceId | null {
+  receiveDatagram(packet: Packet): Promise<DeviceId | null> {
     const datagram = packet.rawPacket.payload;
     if (!(datagram instanceof IPv4Packet)) {
       return null;
@@ -60,7 +60,6 @@ export class Host extends NetworkDevice {
 
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
-    info.addField("MacAddress", this.mac.toString());
     info.addProgramRunner(this, programList);
     RightBar.getInstance().renderInfo(info);
   }

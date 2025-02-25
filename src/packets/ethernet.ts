@@ -1,4 +1,5 @@
 import { CRC32 } from "@tsxper/crc32";
+import { Layer } from "../types/devices/layer";
 
 // From https://en.wikipedia.org/wiki/EtherType
 export const IP_PROTOCOL_TYPE = 0x0800;
@@ -143,10 +144,25 @@ export class EthernetFrame {
       ...checksum,
     ]);
   }
+
+  getDetails(layer: Layer) {
+    if (layer == Layer.Link) {
+      return {
+        "Destination MAC": this.destination.toString(),
+        "Source MAC": this.source.toString(),
+        EtherType: this.type.toString(),
+      };
+    } else {
+      return this.payload.getDetails(layer);
+    }
+  }
 }
 
 export interface FramePayload {
+  // The bytes equivalent of the payload
   toBytes(): Uint8Array;
+  // The number of the protocol
   type(): number;
-  getPacketType(): string;
+  // Get details of the payload
+  getDetails(layer: Layer): Record<string, string | number | object>;
 }

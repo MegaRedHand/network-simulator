@@ -10,8 +10,8 @@ import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
-import { IPv4Packet } from "../packets/ip";
-import { EchoRequest, EchoReply } from "../packets/icmp";
+import { Layer } from "../types/devices/layer";
+//import { EchoMessage } from "../packets/icmp";
 import { DeviceId, isRouter, isSwitch } from "./graphs/datagraph";
 import { EthernetFrame } from "../packets/ethernet";
 
@@ -85,46 +85,8 @@ export class Packet extends Graphics {
     this.removeHighlight();
   }
 
-  private getPacketDetails(packet: IPv4Packet) {
-    // Creates a dictionary with the data of the packet
-    const packetDetails: Record<string, string | number | object> = {
-      Version: packet.version,
-      "Internet Header Length": packet.internetHeaderLength,
-      "Type of Service": packet.typeOfService,
-      "Total Length": packet.totalLength,
-      Identification: packet.identification,
-      Flags: packet.flags,
-      "Fragment Offset": packet.fragmentOffset,
-      "Time to Live": packet.timeToLive,
-      Protocol: packet.protocol,
-      "Header Checksum": packet.headerChecksum,
-    };
-
-    // Add payload details if available
-    if (packet.payload instanceof EchoRequest) {
-      const echoRequest = packet.payload as EchoRequest;
-      packetDetails.Payload = {
-        type: "EchoRequest",
-        identifier: echoRequest.identifier,
-        sequenceNumber: echoRequest.sequenceNumber,
-        data: Array.from(echoRequest.data),
-      };
-    } else if (packet.payload instanceof EchoReply) {
-      const echoReply = packet.payload as EchoReply;
-      packetDetails.Payload = {
-        type: "EchoReply",
-        identifier: echoReply.identifier,
-        sequenceNumber: echoReply.sequenceNumber,
-        data: Array.from(echoReply.data),
-      };
-    } else {
-      packetDetails.Payload = {
-        type: "Unknown",
-        protocol: packet.payload.protocol(),
-      };
-    }
-
-    return packetDetails;
+  private getPacketDetails(layer: Layer, rawPacket: EthernetFrame) {
+    return rawPacket.getDetails(layer);
   }
 
   showInfo() {
@@ -154,9 +116,12 @@ export class Packet extends Graphics {
     );
 
     // Add a toggle info section for packet details
-    // const packetDetails = this.getPacketDetails(this.rawPacket);
+    const packetDetails = this.getPacketDetails(
+      this.viewgraph.getLayer(),
+      this.rawPacket,
+    );
 
-    // rightbar.addToggleButton("Packet Details", packetDetails);
+    rightbar.addToggleButton("Packet Details", packetDetails);
   }
 
   highlight() {
@@ -181,7 +146,7 @@ export class Packet extends Graphics {
     Ticker.shared.add(this.animationTick, this);
   }
 
-  animationTick(ticker: Ticker) {
+  async animationTick(ticker: Ticker) {
     if (this.progress >= 1) {
       const deleteSelf = () => {
         this.destroy();
@@ -207,7 +172,11 @@ export class Packet extends Graphics {
       console.log(newStartDevice);
 
       this.currentStart = newStart;
-      const newEndId = newStartDevice.receivePacket(this);
+      // TODO: remove this dirty hack
+      // Remove and re-add from ticker to avoid multiple frames processing being triggered at once.
+      ticker.remove(this.animationTick, this);
+      const newEndId = await newStartDevice.receivePacket(this);
+      ticker.add(this.animationTick, this);
 
       if (newEndId === null) {
         deleteSelf();
@@ -318,7 +287,6 @@ export function sendRawPacket(
     );
     return;
   }
-  const packetType = rawPacket.payload.getPacketType();
-  const packet = new Packet(viewgraph, packetType, srcId, dstId, rawPacket);
+  const packet = new Packet(viewgraph, "ICMP-8", srcId, dstId, rawPacket);
   packet.traverseEdge(firstEdge, srcId);
 }

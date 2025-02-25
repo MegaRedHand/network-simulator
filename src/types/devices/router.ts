@@ -13,6 +13,10 @@ import { Packet } from "../packet";
 export class Router extends NetworkDevice {
   static DEVICE_TEXTURE: Texture;
 
+  private packetQueueSize = 0;
+  private maxQueueSize = 5;
+  private timePerPacket = 1000;
+
   static getTexture() {
     if (!Router.DEVICE_TEXTURE) {
       Router.DEVICE_TEXTURE = Texture.from(RouterImage);
@@ -34,7 +38,6 @@ export class Router extends NetworkDevice {
   showInfo(): void {
     const info = new DeviceInfo(this);
     info.addField("IP Address", this.ip.octets.join("."));
-    info.addField("MacAddress", this.mac.toString());
     info.addEmptySpace();
 
     info.addRoutingTable(this.viewgraph, this.id);
@@ -50,11 +53,20 @@ export class Router extends NetworkDevice {
     return DeviceType.Router;
   }
 
-  routePacket(datagram: IPv4Packet): DeviceId | null {
+  async routePacket(datagram: IPv4Packet): Promise<DeviceId | null> {
     const device = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!device || !isRouter(device)) {
       return null;
     }
+    if (this.packetQueueSize >= this.maxQueueSize) {
+      console.debug("Packet queue full, dropping packet");
+      return null;
+    }
+    this.packetQueueSize += 1;
+    console.debug("Processing packet, queue size:", this.packetQueueSize);
+    await new Promise((resolve) => setTimeout(resolve, this.timePerPacket));
+    this.packetQueueSize -= 1;
+
     const result = device.routingTable.find((entry) => {
       if (entry.deleted) {
         console.log("Skipping deleted entry:", entry);
@@ -69,8 +81,7 @@ export class Router extends NetworkDevice {
     return result === undefined ? null : result.iface;
   }
 
-  receiveDatagram(packet: Packet): DeviceId | null {
-    console.log("LLEGUE A RECEIVE DATAGRAM");
+  async receiveDatagram(packet: Packet): Promise<DeviceId | null> {
     const datagram = packet.rawPacket.payload;
     if (!(datagram instanceof IPv4Packet)) {
       return null;

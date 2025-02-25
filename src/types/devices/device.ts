@@ -51,6 +51,7 @@ export abstract class Device extends Container {
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
   connections = new Set<DeviceId>();
+
   mac: MacAddress;
   arpTable: Map<IpAddress, MacAddress> = new Map<IpAddress, MacAddress>();
 
@@ -73,7 +74,7 @@ export abstract class Device extends Container {
    * null if there’s no next device to send the packet.
    * */
   // TODO: Might be general for all device in the future.
-  abstract receivePacket(packet: Packet): DeviceId | null;
+  abstract receivePacket(packet: Packet): Promise<DeviceId | null>;
 
   constructor(
     id: DeviceId,

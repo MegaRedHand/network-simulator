@@ -26,7 +26,7 @@ export abstract class NetworkDevice extends Device {
     this.ipMask = ipMask;
   }
 
-  abstract receiveDatagram(packet: Packet): DeviceId | null;
+  abstract receiveDatagram(packet: Packet): Promise<DeviceId | null>;
 
   // TODO: Most probably it will be different for each type of device
   handlePacket(datagram: IPv4Packet) {
@@ -61,11 +61,8 @@ export abstract class NetworkDevice extends Device {
     }
   }
 
-  receivePacket(packet: Packet): DeviceId | null {
+  async receivePacket(packet: Packet): Promise<DeviceId | null> {
     const frame = packet.rawPacket;
-    console.log(
-      `ENTRO A RECEICE PACKET. ${this.mac.toString()} = ${frame.destination.toString()}`,
-    );
     if (this.mac.equals(frame.destination)) {
       return this.receiveDatagram(packet);
     }
