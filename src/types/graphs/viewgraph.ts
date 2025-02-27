@@ -1,4 +1,4 @@
-import { Device } from "./../devices/index"; // Import the Device class
+import { Device, NetworkDevice } from "./../devices";
 import { Edge, EdgeEdges } from "./../edge";
 import { DataGraph, DeviceId, GraphNode } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
@@ -311,49 +311,47 @@ export class ViewGraph {
 
   getDeviceByIP(ipAddress: IpAddress) {
     return this.getDevices().find((device) => {
-      return device.ip == ipAddress;
+      return device instanceof NetworkDevice && device.ip == ipAddress;
     });
   }
 
-  /// Returns the IDs of the edges connecting the two devices
-  getPathBetween(idA: DeviceId, idB: DeviceId): EdgeId[] {
-    if (idA === idB) {
+  /// Returns shortest path between two devices using BFS
+  getPathBetween(startId: DeviceId, endId: DeviceId): DeviceId[] {
+    // try to avoid having a host in the middle of the path
+    if (startId === endId) {
       return [];
     }
-    const a = this.devices.get(idA);
-    const b = this.devices.get(idB);
-    if (!a || !b) {
+    const startDevice = this.devices.get(startId);
+    if (!(this.devices.has(startId) && this.devices.has(endId))) {
       console.warn(`At least one device does not exist`);
       return [];
     }
-    let current = a;
-    const unvisitedNodes = [];
-    const connectingEdges = new Map<DeviceId, EdgeId>([[a.id, null]]);
-    while (current.id !== idB) {
-      for (const adjacentId of current.connections) {
-        const edgeId = Edge.generateConnectionKey({
-          n1: current.id,
-          n2: adjacentId,
+    const queue: [Device, DeviceId[]][] = [[startDevice, [startId]]];
+    const visited: Set<DeviceId> = new Set<DeviceId>();
+
+    while (queue.length > 0) {
+      const [device, path] = queue.shift();
+
+      if (device.id === endId) {
+        return path;
+      }
+
+      if (!visited.has(device.id)) {
+        visited.add(device.id);
+        device.getConnections().forEach((adjId) => {
+          const adjDevice = this.devices.get(adjId);
+          if (!adjDevice) {
+            console.warn(`Device ${adjId} for path not found in viewgraph`);
+            return;
+          }
+          if (!visited.has(adjId)) {
+            queue.push([adjDevice, [...path, adjId]]);
+          }
         });
-        if (!connectingEdges.has(adjacentId)) {
-          connectingEdges.set(adjacentId, edgeId);
-          unvisitedNodes.push(this.devices.get(adjacentId));
-        }
       }
-      if (unvisitedNodes.length === 0) {
-        return [];
-      }
-      current = unvisitedNodes.shift();
     }
-    const path = [];
-    while (current.id !== idA) {
-      const edgeId = connectingEdges.get(current.id);
-      path.push(edgeId);
-      const edge = this.edges.get(edgeId);
-      const parentId = edge.otherEnd(current.id);
-      current = this.devices.get(parentId);
-    }
-    return path.reverse();
+    console.log(`Path between devices ${startId} and ${endId} not found`);
+    return null;
   }
 
   private computeLayerConnections(source: DeviceId, connections: Set<string>) {

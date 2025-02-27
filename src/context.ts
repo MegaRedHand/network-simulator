@@ -1,5 +1,5 @@
 import { Viewport } from "./graphics/viewport";
-import { DataGraph } from "./types/graphs/datagraph";
+import { DataGraph, isLinkNode, isNetworkNode } from "./types/graphs/datagraph";
 import { ViewGraph } from "./types/graphs/viewgraph";
 import {
   loadFromLocalStorage,
@@ -10,6 +10,7 @@ import { Layer } from "./types/devices/device";
 import { IpAddress, IpAddressGenerator } from "./packets/ip";
 import { layerFromName } from "./types/devices/layer";
 import { SpeedMultiplier } from "./types/devices/speedMultiplier";
+import { MacAddress, MacAddressGenerator } from "./packets/ethernet";
 
 export class GlobalContext {
   private viewport: Viewport = null;
@@ -18,6 +19,7 @@ export class GlobalContext {
   private speedMultiplier: SpeedMultiplier;
   private saveIntervalId: NodeJS.Timeout | null = null;
   private ipGenerator: IpAddressGenerator;
+  private macGenerator: MacAddressGenerator;
 
   constructor(viewport: Viewport) {
     this.viewport = viewport;
@@ -26,10 +28,15 @@ export class GlobalContext {
     loadFromLocalStorage(this);
 
     this.setIpGenerator();
+    this.setMacGenerator();
   }
 
   getNextIp(): { ip: string; mask: string } {
     return this.ipGenerator.getNextIp();
+  }
+
+  getNextMac(): string {
+    return this.macGenerator.getNextMac();
   }
 
   private setNetwork(datagraph: DataGraph, layer: Layer) {
@@ -40,6 +47,7 @@ export class GlobalContext {
     }
     this.viewgraph = new ViewGraph(this.datagraph, this, layer);
     this.setIpGenerator();
+    this.setMacGenerator();
   }
 
   private setSpeedMultiplier(speedMultiplier: SpeedMultiplier) {
@@ -126,15 +134,32 @@ export class GlobalContext {
   private setIpGenerator() {
     let maxIp = IpAddress.parse("10.0.0.0");
     this.datagraph.getDevices().forEach((device) => {
-      const ip = IpAddress.parse(device.ip);
-      if (maxIp.octets < ip.octets) {
-        maxIp = ip;
+      if (isNetworkNode(device)) {
+        const ip = IpAddress.parse(device.ip);
+        if (maxIp.octets < ip.octets) {
+          maxIp = ip;
+        }
       }
     });
     // TODO: we should use IpAddress instead of string here and in Datagraph
     const baseIp = maxIp.toString();
     const mask = "255.255.255.255";
     this.ipGenerator = new IpAddressGenerator(baseIp, mask);
+  }
+
+  private setMacGenerator() {
+    let maxMac = MacAddress.parse("00:00:10:00:00:00");
+    this.datagraph.getDevices().forEach((device) => {
+      if (isLinkNode(device)) {
+        const mac = MacAddress.parse(device.mac);
+        if (maxMac.octets < mac.octets) {
+          maxMac = mac;
+        }
+      }
+    });
+    // TODO: we should use MacAddress instead of string here and in Datagraph
+    const baseMac = maxMac.toString();
+    this.macGenerator = new MacAddressGenerator(baseMac);
   }
 
   print() {

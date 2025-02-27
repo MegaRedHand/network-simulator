@@ -1,5 +1,6 @@
 import { RunningProgram } from "../../programs";
-import { DeviceType } from "../devices/device";
+import { DeviceType, Layer, layerFromType } from "../devices/device";
+import { layerIncluded } from "../devices/layer";
 
 export type DeviceId = number;
 
@@ -7,12 +8,20 @@ interface CommonGraphNode {
   x: number;
   y: number;
   type: DeviceType;
-  ip: string;
-  mask: string;
   connections: Set<DeviceId>;
 }
 
-interface RouterGraphNode extends CommonGraphNode {
+interface LinkGraphNode extends CommonGraphNode {
+  mac: string;
+  arpTable: Map<string, string>;
+}
+
+interface NetworkGraphNode extends LinkGraphNode {
+  ip: string;
+  mask: string;
+}
+
+interface RouterGraphNode extends NetworkGraphNode {
   type: DeviceType.Router;
   routingTable: RoutingTableEntry[];
 }
@@ -25,12 +34,12 @@ export interface RoutingTableEntry {
   deleted?: boolean;
 }
 
-interface HostGraphNode extends CommonGraphNode {
+interface HostGraphNode extends NetworkGraphNode {
   type: DeviceType.Host;
   runningPrograms: RunningProgram[];
 }
 
-interface SwitchGraphNode extends CommonGraphNode {
+interface SwitchGraphNode extends LinkGraphNode {
   type: DeviceType.Switch;
 }
 
@@ -45,6 +54,14 @@ export function isHost(node: GraphNode): node is HostGraphNode {
 
 export function isSwitch(node: GraphNode): node is SwitchGraphNode {
   return node.type === DeviceType.Switch;
+}
+
+export function isNetworkNode(node: GraphNode): node is NetworkGraphNode {
+  return layerIncluded(layerFromType(node.type), Layer.Network);
+}
+
+export function isLinkNode(node: GraphNode): node is LinkGraphNode {
+  return layerIncluded(layerFromType(node.type), Layer.Link);
 }
 
 export type GraphNode =
@@ -64,22 +81,30 @@ interface CommonDataNode {
   x: number;
   y: number;
   type: DeviceType;
-  ip: string;
-  mask: string;
   connections: DeviceId[];
 }
 
-interface RouterDataNode extends CommonDataNode {
+interface LinkDataNode extends CommonDataNode {
+  mac: string;
+  arpTable: Map<string, string>;
+}
+
+interface NetworkDataNode extends LinkDataNode {
+  ip: string;
+  mask: string;
+}
+
+interface RouterDataNode extends NetworkDataNode {
   type: DeviceType.Router;
   routingTable: RoutingTableEntry[];
 }
 
-interface HostDataNode extends CommonDataNode {
+interface HostDataNode extends NetworkDataNode {
   type: DeviceType.Host;
   runningPrograms: RunningProgram[];
 }
 
-interface SwitchDataNode extends CommonDataNode {
+interface SwitchDataNode extends LinkDataNode {
   type: DeviceType.Switch;
 }
 
@@ -89,8 +114,9 @@ export interface NewDevice {
   x: number;
   y: number;
   type: DeviceType;
-  ip: string;
-  mask: string;
+  ip?: string;
+  mask?: string;
+  mac?: string;
 }
 
 export class DataGraph {
@@ -133,21 +159,11 @@ export class DataGraph {
     // Serialize nodes
     this.getDevices().forEach((info, id) => {
       const graphNode: GraphDataNode = {
+        ...info,
         id,
-        x: info.x,
-        y: info.y,
-        type: info.type, // Save the device type (Router, Host)
-        ip: info.ip,
-        mask: info.mask,
         connections: Array.from(info.connections.values()),
       };
-      if (isRouter(info)) {
-        graphData.push({ ...graphNode, routingTable: info.routingTable });
-      } else if (isHost(info)) {
-        graphData.push({ ...graphNode, runningPrograms: info.runningPrograms });
-      } else if (isSwitch(info)) {
-        graphData.push({ ...graphNode });
-      }
+      graphData.push(graphNode);
     });
     return graphData;
   }
@@ -155,11 +171,13 @@ export class DataGraph {
   // Add a new device to the graph
   addNewDevice(deviceInfo: NewDevice): DeviceId {
     const id = this.idCounter++;
+    // const graphNode: GraphNode = DataGraph.createGraphNode(deviceInfo);
     const graphnode: GraphNode = {
       ...deviceInfo,
       connections: new Set<number>(),
       routingTable: [],
       runningPrograms: [],
+      arpTable: new Map(),
     };
     this.devices.set(id, graphnode);
     console.log(`Device added with ID ${id}`);
@@ -370,7 +388,7 @@ export class DataGraph {
     while (queue.length > 0) {
       const currentId = queue.shift();
       const current = this.devices.get(currentId);
-      if (!isRouter(current)) continue;
+      if (isHost(current)) continue;
 
       current.connections.forEach((connectedId) => {
         if (!parents.has(connectedId)) {
@@ -393,11 +411,14 @@ export class DataGraph {
       }
 
       const dst = this.devices.get(dstId);
-      newTable.push({
-        ip: dst.ip,
-        mask: dst.mask,
-        iface: childId,
-      });
+
+      if (isNetworkNode(dst)) {
+        newTable.push({
+          ip: dst.ip,
+          mask: dst.mask,
+          iface: childId,
+        });
+      }
     });
 
     if (preserveEdits) {

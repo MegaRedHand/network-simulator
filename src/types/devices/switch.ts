@@ -6,6 +6,8 @@ import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { DeviceId } from "../graphs/datagraph";
 import { Packet } from "../packet";
 import { Texture } from "pixi.js";
+import { MacAddress } from "../../packets/ethernet";
+import { IPv4Packet } from "../../packets/ip";
 
 export class Switch extends Device {
   static DEVICE_TEXTURE: Texture;
@@ -17,12 +19,18 @@ export class Switch extends Device {
     return Switch.DEVICE_TEXTURE;
   }
 
-  constructor(id: DeviceId, viewgraph: ViewGraph, position: Position) {
-    super(id, Switch.getTexture(), viewgraph, position, null, null);
+  constructor(
+    id: DeviceId,
+    viewgraph: ViewGraph,
+    position: Position,
+    mac: MacAddress,
+  ) {
+    super(id, Switch.getTexture(), viewgraph, position, mac);
   }
 
   showInfo(): void {
     const info = new DeviceInfo(this);
+    info.addEmptySpace();
     RightBar.getInstance().renderInfo(info);
   }
 
@@ -34,8 +42,15 @@ export class Switch extends Device {
     return DeviceType.Switch;
   }
 
-  async receivePacket(packet: Packet): Promise<DeviceId | null> {
-    console.log(packet); // lint
-    throw new Error("Method not implemented.");
+  receivePacket(packet: Packet): Promise<DeviceId | null> {
+    const datagram = packet.rawPacket.payload;
+    if (datagram instanceof IPv4Packet) {
+      const dstDevice = this.viewgraph.getDeviceByIP(
+        datagram.destinationAddress,
+      );
+      const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
+      return Promise.resolve(path.length > 1 ? path[1] : null);
+    }
+    return null;
   }
 }

@@ -4,6 +4,9 @@ import { Layer } from "../types/devices/layer";
 const ICMP_WARNING =
   "ICMP operates directly on top of IP at the Network layer, bypassing the Transport layer (TCP/UDP). This is because ICMP is primarily used for network diagnostics and error reporting, not for end-to-end data transport.";
 
+export const ICMP_REQUEST_TYPE_NUMBER = 8;
+export const ICMP_REPLY_TYPE_NUMBER = 0;
+
 // More info in RFC-792
 //   0                   1                   2                   3
 //   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -111,9 +114,9 @@ class EchoMessage extends IcmpPacket {
 }
 
 export class EchoRequest extends EchoMessage {
-  type = 8;
+  type = ICMP_REQUEST_TYPE_NUMBER;
 }
 
 export class EchoReply extends EchoMessage {
-  type = 0;
+  type = ICMP_REPLY_TYPE_NUMBER;
 }
