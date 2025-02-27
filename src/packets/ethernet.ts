@@ -34,7 +34,7 @@ export class MacAddress {
   // Turn to string
   toString(): string {
     return Array.from(this.octets)
-      .map((d) => d.toString(16))
+      .map((byte) => byte.toString(16).padStart(2, "0"))
       .join(":");
   }
 
