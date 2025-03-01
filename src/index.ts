@@ -23,6 +23,7 @@ import PauseSvg from "./assets/pause-icon.svg";
 import UndoSvg from "./assets/left-curve-arrow.svg";
 import RedoSvg from "./assets/right-curve-arrow.svg";
 import { layerToName } from "./types/devices/layer";
+import { captureAndDownloadViewport } from "./utils";
 
 const assets = [
   RouterSvg,
@@ -127,9 +128,12 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     deselectElement();
     loadFromFile(ctx);
   };
-  printButton.onclick = () => {
+  printButton.onclick = async () => {
+    const viewport = ctx.getViewport();
+    captureAndDownloadViewport(app, viewport);
     ctx.print();
   };
+
   // Undo button’s logic
   const undoButton = document.getElementById(
     "undo-button",
