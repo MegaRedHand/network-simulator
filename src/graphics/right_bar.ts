@@ -499,7 +499,6 @@ function createInfoToggleButton(
   return button;
 }
 
-// Main function to create toggle info
 export function createToggleInfo({
   title,
   details,
@@ -516,7 +515,7 @@ export function createToggleInfo({
   const list = document.createElement("ul");
   list.classList.add(infoClass, "hidden");
 
-  // Process details
+  // Process details before creating the button
   Object.entries(details).forEach(([key, value]) => {
     let listItem: HTMLLIElement;
 
@@ -531,13 +530,16 @@ export function createToggleInfo({
     list.appendChild(listItem);
   });
 
+  // Move the button outside the `toggle-info-container`
   const button = createInfoToggleButton(buttonClass, list, container, header);
+  const wrapper = document.createElement("div"); // New wrapper for structural consistency
+  wrapper.appendChild(button);
+  wrapper.appendChild(container); // Now the container is separate from the button
 
-  container.appendChild(button);
   container.appendChild(header);
   container.appendChild(list);
 
-  return container;
+  return wrapper; // Return the wrapper that contains the button and the info container
 }
 
 export function createRightBarButton(
