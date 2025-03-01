@@ -23,8 +23,9 @@ export class DeviceInfo extends StyledInfo {
   }
 
   private addCommonInfoFields() {
-    const { id, connections } = this.device;
+    const { id, connections, mac } = this.device;
     super.addField("ID", id.toString());
+    super.addField("MacAddress", mac.toString());
     super.addListField("Connected Devices", Array.from(connections.values()));
   }
 

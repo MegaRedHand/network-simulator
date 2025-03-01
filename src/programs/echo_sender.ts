@@ -6,6 +6,8 @@ import { ViewGraph } from "../types/graphs/viewgraph";
 import { ProgramInfo } from "../graphics/renderables/device_info";
 import { EchoRequest } from "../packets/icmp";
 import { IPv4Packet } from "../packets/ip";
+import { NetworkDevice } from "../types/devices";
+import { EthernetFrame } from "../packets/ethernet";
 
 function adjacentDevices(viewgraph: ViewGraph, srcId: DeviceId) {
   const adjacentDevices = viewgraph
@@ -46,9 +48,32 @@ export class SingleEcho extends ProgramBase {
       console.error("Destination device not found");
       return;
     }
+    if (
+      !(
+        srcDevice instanceof NetworkDevice && dstDevice instanceof NetworkDevice
+      )
+    ) {
+      console.log(
+        "At least one device between source and destination is not a network device",
+      );
+      return;
+    }
     const echoRequest = new EchoRequest(0);
     const ipPacket = new IPv4Packet(srcDevice.ip, dstDevice.ip, echoRequest);
-    sendRawPacket(this.viewgraph, this.srcId, ipPacket);
+    const path = this.viewgraph.getPathBetween(this.srcId, this.dstId);
+    let dstMac = dstDevice.mac;
+    if (!path) return;
+    console.log(path);
+    for (const id of path.slice(1)) {
+      const device = this.viewgraph.getDevice(id);
+      // if there’s a router in the middle, first send frame to router mac
+      if (device instanceof NetworkDevice) {
+        dstMac = device.mac;
+        break;
+      }
+    }
+    const ethernetFrame = new EthernetFrame(srcDevice.mac, dstMac, ipPacket);
+    sendRawPacket(this.viewgraph, this.srcId, this.dstId, ethernetFrame);
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {

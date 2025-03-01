@@ -18,13 +18,13 @@ import { RightBar } from "../../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
-import { IpAddress, IPv4Packet } from "../../packets/ip";
+import { IpAddress } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer } from "./layer";
-import { Packet, sendRawPacket } from "../packet";
-import { EchoReply } from "../../packets/icmp";
+import { Packet } from "../packet";
 import { CreateDevice } from "./utils";
+import { MacAddress } from "../../packets/ethernet";
 
 export { Layer } from "./layer";
 
@@ -52,6 +52,9 @@ export abstract class Device extends Container {
   readonly viewgraph: ViewGraph;
   connections = new Set<DeviceId>();
 
+  mac: MacAddress;
+  arpTable: Map<IpAddress, MacAddress> = new Map<IpAddress, MacAddress>();
+
   highlightMarker: Graphics | null = null; // Marker to indicate selection
 
   static dragTarget: Device | null = null;
@@ -65,12 +68,12 @@ export abstract class Device extends Container {
     return this.sprite.height;
   }
 
-  ip: IpAddress;
-  ipMask: IpAddress;
-
-  // Each type of device has different ways of handling a received packet.
-  // Returns the DevicedId for the next device to send the packet to, or
-  // null if there’s no next device to send the packet.
+  /**
+   * Each type of device has different ways of handling a received packet.
+   * Returns the id for the next device to send the packet to, or
+   * null if there’s no next device to send the packet.
+   * */
+  // TODO: Might be general for all device in the future.
   abstract receivePacket(packet: Packet): Promise<DeviceId | null>;
 
   constructor(
@@ -78,15 +81,14 @@ export abstract class Device extends Container {
     texture: Texture,
     viewgraph: ViewGraph,
     position: Position,
-    ip: IpAddress,
-    ipMask: IpAddress,
+    mac: MacAddress,
   ) {
     super();
 
     this.id = id;
     this.viewgraph = viewgraph;
-    this.ip = ip;
-    this.ipMask = ipMask;
+
+    this.mac = mac;
 
     this.sprite = new Sprite(texture);
 
@@ -142,25 +144,6 @@ export abstract class Device extends Container {
 
   removeConnection(id: DeviceId) {
     this.connections.delete(id);
-  }
-
-  // TODO: Most probably it will be different for each type of device
-  handlePacket(packet: Packet) {
-    switch (packet.type) {
-      case "ICMP-8": {
-        const dstDevice = this.viewgraph.getDeviceByIP(
-          packet.rawPacket.sourceAddress,
-        );
-        if (dstDevice) {
-          const echoReply = new EchoReply(0);
-          const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
-          sendRawPacket(this.viewgraph, this.id, ipPacket);
-        }
-        break;
-      }
-      default:
-        console.warn("Packet's type unrecognized");
-    }
   }
 
   delete(): void {

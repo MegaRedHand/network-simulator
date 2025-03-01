@@ -1,4 +1,5 @@
 import { CRC32 } from "@tsxper/crc32";
+import { Layer } from "../types/devices/layer";
 
 // From https://en.wikipedia.org/wiki/EtherType
 export const IP_PROTOCOL_TYPE = 0x0800;
@@ -33,13 +34,42 @@ export class MacAddress {
   // Turn to string
   toString(): string {
     return Array.from(this.octets)
-      .map((d) => d.toString(16))
+      .map((byte) => byte.toString(16).padStart(2, "0"))
       .join(":");
   }
 
   // Check if two MAC addresses are equal.
   equals(other: MacAddress): boolean {
     return this.octets.every((octet, index) => octet === other.octets[index]);
+  }
+}
+
+export class MacAddressGenerator {
+  private baseMac: bigint;
+  private currentMac: bigint;
+
+  constructor(baseMac: string) {
+    this.baseMac = MacAddressGenerator.macToNumber(baseMac);
+    this.currentMac = this.baseMac + BigInt(1); // Start on first valid MAC
+  }
+
+  // Generate next valid IP
+  getNextMac(): string {
+    const nextMac = MacAddressGenerator.numberToMac(this.currentMac);
+    this.currentMac++;
+    return nextMac;
+  }
+
+  // Turn MAC into a number
+  static macToNumber(mac: string): bigint {
+    // leaves an hexadecimal string of 6 bytes, then parse it to bigint
+    return BigInt("0x" + mac.replace(/:/g, ""));
+  }
+
+  // Turn number into IP
+  static numberToMac(num: bigint): string {
+    const match = num.toString(16).padStart(12, "0").match(/.{2}/g);
+    return match ? match.join(":") : "";
   }
 }
 
@@ -114,9 +144,25 @@ export class EthernetFrame {
       ...checksum,
     ]);
   }
+
+  getDetails(layer: Layer) {
+    if (layer == Layer.Link) {
+      return {
+        "Destination MAC": this.destination.toString(),
+        "Source MAC": this.source.toString(),
+        EtherType: this.type.toString(),
+      };
+    } else {
+      return this.payload.getDetails(layer);
+    }
+  }
 }
 
 export interface FramePayload {
+  // The bytes equivalent of the payload
   toBytes(): Uint8Array;
+  // The number of the protocol
   type(): number;
+  // Get details of the payload
+  getDetails(layer: Layer): Record<string, string | number | object>;
 }

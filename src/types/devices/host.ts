@@ -1,8 +1,9 @@
-import { Device, DeviceType } from "./device";
+import { DeviceType } from "./device";
+import { NetworkDevice } from "./networkDevice";
 import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
-import { IpAddress } from "../../packets/ip";
+import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "./layer";
@@ -16,8 +17,9 @@ import {
 } from "../../programs";
 import { Packet } from "../packet";
 import { Texture } from "pixi.js";
+import { MacAddress } from "../../packets/ethernet";
 
-export class Host extends Device {
+export class Host extends NetworkDevice {
   static DEVICE_TEXTURE: Texture;
 
   static getTexture() {
@@ -34,11 +36,23 @@ export class Host extends Device {
     id: DeviceId,
     viewgraph: ViewGraph,
     position: Position,
+    mac: MacAddress,
     ip: IpAddress,
     mask: IpAddress,
   ) {
-    super(id, Host.getTexture(), viewgraph, position, ip, mask);
+    super(id, Host.getTexture(), viewgraph, position, mac, ip, mask);
     this.loadRunningPrograms();
+  }
+
+  receiveDatagram(packet: Packet): Promise<DeviceId | null> {
+    const datagram = packet.rawPacket.payload;
+    if (!(datagram instanceof IPv4Packet)) {
+      return null;
+    }
+    if (this.ip.equals(datagram.destinationAddress)) {
+      this.handlePacket(datagram);
+    }
+    return null;
   }
 
   showInfo(): void {
@@ -56,13 +70,6 @@ export class Host extends Device {
 
   getType(): DeviceType {
     return DeviceType.Host;
-  }
-
-  async receivePacket(packet: Packet): Promise<DeviceId | null> {
-    if (this.ip.equals(packet.rawPacket.destinationAddress)) {
-      this.handlePacket(packet);
-    }
-    return null;
   }
 
   addRunningProgram(name: string, inputs: string[]) {
