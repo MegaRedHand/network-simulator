@@ -2,7 +2,7 @@ import { Layer } from "../../devices/layer";
 import { Edge, EdgeEdges } from "../../edge";
 import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
-import { BaseMove, TypeMove } from "./move";
+import { BaseMove } from "./move";
 
 export abstract class AddRemoveEdgeMove extends BaseMove {
   connectedNodes: EdgeEdges;
@@ -35,8 +35,6 @@ export abstract class AddRemoveEdgeMove extends BaseMove {
 }
 
 export class AddEdgeMove extends AddRemoveEdgeMove {
-  type: TypeMove = TypeMove.AddEdge;
-
   undo(viewgraph: ViewGraph): void {
     this.removeEdge(viewgraph);
   }
@@ -47,7 +45,6 @@ export class AddEdgeMove extends AddRemoveEdgeMove {
 }
 
 export class RemoveEdgeMove extends AddRemoveEdgeMove {
-  type: TypeMove = TypeMove.RemoveEdge;
   private storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>;
 
   constructor(
