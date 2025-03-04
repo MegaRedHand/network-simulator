@@ -184,9 +184,7 @@ export class Packet extends Graphics {
         return;
       }
 
-      this.currentEdge = this.viewgraph.getEdge(
-        Edge.generateConnectionKey({ n1: this.currentStart, n2: newEndId }),
-      );
+      this.currentEdge = this.viewgraph.getEdge(this.currentStart, newEndId);
 
       if (this.currentEdge === undefined) {
         deleteSelf();

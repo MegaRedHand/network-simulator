@@ -27,6 +27,13 @@ export class Graph<Vertex, Edge> {
     return this.edges.get(id)?.get(otherId);
   }
 
+  /**
+   * Returns the edges connected to a given vertex.
+   */
+  getEdges(id: VertexId): IterableIterator<[VertexId, Edge]> | undefined {
+    return this.edges.get(id)?.entries();
+  }
+
   getNeighbors(id: VertexId): VertexId[] | undefined {
     if (!this.hasVertex(id)) {
       return undefined;
@@ -34,7 +41,7 @@ export class Graph<Vertex, Edge> {
     return Array.from(this.edges.get(id).keys());
   }
 
-  getVertices(): IterableIterator<[VertexId, Vertex]> {
+  getAllVertices(): IterableIterator<[VertexId, Vertex]> {
     return this.vertices.entries();
   }
 
@@ -46,7 +53,7 @@ export class Graph<Vertex, Edge> {
    * Returns an iterator over all edges in the graph.
    * @returns an iterator over all edges in the graph, with no duplicates.
    */
-  getEdges(): IterableIterator<[VertexId, VertexId, Edge]> {
+  getAllEdges(): IterableIterator<[VertexId, VertexId, Edge]> {
     return edgeIterator(this.edges);
   }
 
@@ -83,6 +90,11 @@ export class Graph<Vertex, Edge> {
     }
     this.edges.get(id).delete(otherId);
     this.edges.get(otherId).delete(id);
+  }
+
+  clear() {
+    this.vertices.clear();
+    this.edges.clear();
   }
 }
 

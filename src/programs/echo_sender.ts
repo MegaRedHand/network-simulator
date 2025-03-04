@@ -11,7 +11,8 @@ import { EthernetFrame } from "../packets/ethernet";
 
 function adjacentDevices(viewgraph: ViewGraph, srcId: DeviceId) {
   const adjacentDevices = viewgraph
-    .getAdjacentDeviceIds(srcId)
+    .getDeviceIds()
+    .filter((id) => id !== srcId)
     .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
 
   return adjacentDevices;
