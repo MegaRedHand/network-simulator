@@ -1,4 +1,4 @@
-import { Graphics, Point } from "pixi.js";
+import { Graphics, Point, Ticker } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
 import { Device } from "./devices/index"; // Import the Device class
 import { deselectElement, selectElement, urManager } from "./viewportManager";
@@ -19,6 +19,7 @@ export class Edge extends Graphics {
   endPos: Point;
   viewgraph: ViewGraph;
   rightbar: RightBar;
+  currPackets: Map<string, {packet: Packet, progress: number}> = new Map<string, {packet: Packet, progress: number}>();
 
   static generateConnectionKey(connectedNodes: EdgeEdges): string {
     const { n1, n2 } = connectedNodes;
@@ -74,7 +75,8 @@ export class Edge extends Graphics {
 
     this.children.forEach((child) => {
       if (child instanceof Packet) {
-        child.updatePosition();
+        const {progress} = this.currPackets.get(child.packetId);
+        child.updatePosition(this.startPos, this.endPos, progress); // hay que recalcular la posicion
       }
     });
   }
@@ -180,5 +182,35 @@ export class Edge extends Graphics {
     );
 
     this.drawEdge(newStartPos, newEndPos, Colors.Lightblue);
+  }
+
+  forwardPacket(packet: Packet) {
+    const packetProgress = {packet, progress: 0};
+    this.currPackets.set(packet.packetId, packetProgress);
+    this.addChild(packet);
+    packet.updatePosition(this.startPos, this.endPos, packetProgress.progress);
+    Ticker.shared.add(this.animationTick.bind(this, packetProgress));
+  }
+
+  animationTick(ticker: Ticker, packetProgress: {packet: Packet, progress: number}) {
+    // calcular recorrido de paquete
+    // si paquete no llego al final de la arista, se termina ahi la funcion
+    // se paquete llego al final de la arista:
+    //   - se consigue el id del nuevo dispositivo
+    //   - se llama nuevamente al packet.traversePacket
+    //   - se saca el animationTick de Ticker
+    const {packet, progress} = packetProgress;
+    const edgeLength = Math.sqrt(
+      Math.pow(this.endPos.x - this.startPos.x, 2) + Math.pow(this.endPos.y - this.startPos.y, 2),
+    );
+
+    const normalizedSpeed = 100 / edgeLength;
+
+    if (!Packet.animationPaused) {
+      const progressIncrement =
+        (ticker.deltaMS * normalizedSpeed * this.viewgraph.getSpeed()) / 1000;
+      const newProgress = progress + progressIncrement;
+      packet.updatePosition(this.startPos, this.endPos, newProgress);
+    }
   }
 }

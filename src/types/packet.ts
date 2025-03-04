@@ -23,7 +23,7 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
 
 export class Packet extends Graphics {
-  private packetId: string;
+  packetId: string;
   speed = 100;
   progress = 0;
   viewgraph: ViewGraph;
@@ -147,8 +147,23 @@ export class Packet extends Graphics {
       .initializePacketProgress(this.packetId, start, nextDevice);
 
     this.currentEdge.addChild(this);
-    this.updatePosition();
+    this.updatePosition(edge,this.progress);
     Ticker.shared.add(this.animationTick, this);
+
+    // OPCION 2
+    // recibe el id de un dispositivo
+    // dispositivo <- consigo disposito con nuevoDispositivoId
+    // idArista <- dispositivo.procesarPaquete
+    // arsita <- consigo aristo con idArsita
+    // arista.sendPacket()
+  }
+
+  async forwardPacket(currDeviceID: number) {
+    const currDevice = this.viewgraph.getDevice(currDeviceID);
+    const nextDeviceID = await currDevice.receivePacket(this); // esto va a pasar a ser edgeToForwardID
+    const edgeToForward = this.viewgraph.getEdge(Edge.generateConnectionKey({ n1: currDeviceID, n2: nextDeviceID}));
+    edgeToForward.forwardPacket(this);
+        
   }
 
   async animationTick(ticker: Ticker) {
@@ -249,22 +264,14 @@ export class Packet extends Graphics {
       }
     }
 
-    this.updatePosition();
-  }
-
-  updatePosition() {
-    const startPos = this.currentEdge.nodePosition(this.currentStart);
-    const endPos = this.currentEdge.nodePosition(
-      this.currentEdge.otherEnd(this.currentStart),
-    );
-    this.setPositionAlongEdge(startPos, endPos, this.progress);
+    this.updatePosition(this.currentEdge, this.progress);
   }
 
   /// Updates the position according to the current progress.
-  setPositionAlongEdge(start: Position, end: Position, progress: number) {
+  updatePosition(start: Position, end: Position, progress: number) {
     const dx = end.x - start.x;
     const dy = end.y - start.y;
-
+  
     this.x = start.x + progress * dx;
     this.y = start.y + progress * dy;
   }
