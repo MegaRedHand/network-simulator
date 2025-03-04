@@ -1,7 +1,7 @@
 import { Layer } from "../../devices/device";
 import { CreateDevice } from "../../devices/utils";
 import { ViewGraph } from "../../graphs/viewgraph";
-import { BaseMove, TypeMove } from "./move";
+import { BaseMove } from "./move";
 
 // Superclass for AddDeviceMove and RemoveDeviceMove
 export abstract class AddRemoveDeviceMove extends BaseMove {
@@ -43,8 +43,6 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
 
 // "Move" is here because it conflicts with AddDevice from viewportManager
 export class AddDeviceMove extends AddRemoveDeviceMove {
-  type = TypeMove.AddDevice;
-
   undo(viewgraph: ViewGraph): void {
     this.removeDevice(viewgraph);
   }
@@ -55,8 +53,6 @@ export class AddDeviceMove extends AddRemoveDeviceMove {
 }
 
 export class RemoveDeviceMove extends AddRemoveDeviceMove {
-  type: TypeMove = TypeMove.RemoveDevice;
-
   undo(viewgraph: ViewGraph): void {
     this.addDevice(viewgraph);
   }

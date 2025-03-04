@@ -4,12 +4,12 @@ export class Graph<Vertex, Edge> {
   /**
    * Holds all of the Vertex data.
    */
-  private vertices: Map<VertexId, Vertex> = new Map();
+  private vertices = new Map<VertexId, Vertex>();
   /**
    * Represents a connection matrix, with `edges[x][y]` representing the edge between vertices `x` and `y`.
    * Note that edges are symmetrical, so `edges[x][y]` is the same as `edges[y][x]`.
    */
-  private edges: Map<VertexId, Map<VertexId, Edge>> = new Map();
+  private edges = new Map<VertexId, Map<VertexId, Edge>>();
 
   hasVertex(id: VertexId): boolean {
     return this.vertices.has(id);

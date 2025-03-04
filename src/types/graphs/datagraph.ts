@@ -120,7 +120,8 @@ export interface NewDevice {
 }
 
 export class DataGraph {
-  private deviceGraph = new Graph<GraphNode, {}>();
+  // NOTE: we don't store data in edges yet
+  private deviceGraph = new Graph<GraphNode, unknown>();
   private idCounter: DeviceId = 1;
   private onChanges: (() => void)[] = [];
 
@@ -301,7 +302,7 @@ export class DataGraph {
 
   regenerateAllRoutingTables() {
     console.log("Regenerating all routing tables");
-    for (const [id, _] of this.deviceGraph.getVertices()) {
+    for (const [id] of this.deviceGraph.getVertices()) {
       this.regenerateRoutingTable(id);
     }
   }

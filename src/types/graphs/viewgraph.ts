@@ -1,6 +1,6 @@
 import { Device, NetworkDevice } from "./../devices";
 import { Edge, EdgeEdges } from "./../edge";
-import { DataGraph, DeviceId, GraphNode } from "./datagraph";
+import { DataGraph, DeviceId } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
 import { CreateDevice, createDevice } from "../devices/utils";
