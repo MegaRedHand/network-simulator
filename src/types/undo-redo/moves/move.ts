@@ -10,8 +10,6 @@ export enum TypeMove {
 }
 
 export interface Move {
-  type: TypeMove;
-  layerInMove: Layer;
   undo(viewgraph: ViewGraph): void;
   redo(viewgraph: ViewGraph): void;
 }
