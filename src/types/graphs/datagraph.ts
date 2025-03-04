@@ -151,7 +151,7 @@ export class DataGraph {
     const graphData: GraphData = [];
 
     // Serialize nodes
-    for (const [id, info] of this.deviceGraph.getVertices()) {
+    for (const [id, info] of this.deviceGraph.getAllVertices()) {
       const graphNode: GraphDataNode = {
         ...info,
         id,
@@ -256,7 +256,7 @@ export class DataGraph {
 
   // Get all devices in the graph
   getDevices(): IterableIterator<[DeviceId, GraphNode]> {
-    return this.deviceGraph.getVertices();
+    return this.deviceGraph.getAllVertices();
   }
 
   // Get the number of devices in the graph
@@ -302,7 +302,7 @@ export class DataGraph {
 
   regenerateAllRoutingTables() {
     console.log("Regenerating all routing tables");
-    for (const [id] of this.deviceGraph.getVertices()) {
+    for (const [id] of this.deviceGraph.getAllVertices()) {
       this.regenerateRoutingTable(id);
     }
   }

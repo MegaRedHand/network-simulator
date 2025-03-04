@@ -1,5 +1,5 @@
 import { Layer } from "../../devices/layer";
-import { Edge, EdgeEdges } from "../../edge";
+import { EdgeEdges } from "../../edge";
 import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { BaseMove } from "./move";
@@ -24,13 +24,12 @@ export abstract class AddRemoveEdgeMove extends BaseMove {
       return;
     }
     viewgraph.addEdge(n1, n2);
-    device1.addConnection(n2);
-    device2.addConnection(n1);
   }
 
   removeEdge(viewgraph: ViewGraph) {
     this.adjustLayer(viewgraph);
-    viewgraph.removeEdge(Edge.generateConnectionKey(this.connectedNodes));
+    const { n1, n2 } = this.connectedNodes;
+    viewgraph.removeEdge(n1, n2);
   }
 }
 
