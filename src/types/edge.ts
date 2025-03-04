@@ -19,7 +19,7 @@ export class Edge extends Graphics {
   endPos: Point;
   viewgraph: ViewGraph;
   rightbar: RightBar;
-  currPackets: Map<string, {packet: Packet, progress: number}> = new Map<string, {packet: Packet, progress: number}>();
+  currPackets: Set<Packet> = new Set<Packet>();
 
   static generateConnectionKey(connectedNodes: EdgeEdges): string {
     const { n1, n2 } = connectedNodes;
@@ -75,8 +75,7 @@ export class Edge extends Graphics {
 
     this.children.forEach((child) => {
       if (child instanceof Packet) {
-        const {progress} = this.currPackets.get(child.packetId);
-        child.updatePosition(this.startPos, this.endPos, progress); // hay que recalcular la posicion
+        child.updatePosition(this); // hay que recalcular la posicion
       }
     });
   }
@@ -184,33 +183,16 @@ export class Edge extends Graphics {
     this.drawEdge(newStartPos, newEndPos, Colors.Lightblue);
   }
 
-  forwardPacket(packet: Packet) {
-    const packetProgress = {packet, progress: 0};
-    this.currPackets.set(packet.packetId, packetProgress);
+  registerPacket(packet: Packet) {
+    this.currPackets.add(packet);
     this.addChild(packet);
-    packet.updatePosition(this.startPos, this.endPos, packetProgress.progress);
-    Ticker.shared.add(this.animationTick.bind(this, packetProgress));
+    packet.updatePosition(this);
   }
 
-  animationTick(ticker: Ticker, packetProgress: {packet: Packet, progress: number}) {
-    // calcular recorrido de paquete
-    // si paquete no llego al final de la arista, se termina ahi la funcion
-    // se paquete llego al final de la arista:
-    //   - se consigue el id del nuevo dispositivo
-    //   - se llama nuevamente al packet.traversePacket
-    //   - se saca el animationTick de Ticker
-    const {packet, progress} = packetProgress;
-    const edgeLength = Math.sqrt(
-      Math.pow(this.endPos.x - this.startPos.x, 2) + Math.pow(this.endPos.y - this.startPos.y, 2),
-    );
-
-    const normalizedSpeed = 100 / edgeLength;
-
-    if (!Packet.animationPaused) {
-      const progressIncrement =
-        (ticker.deltaMS * normalizedSpeed * this.viewgraph.getSpeed()) / 1000;
-      const newProgress = progress + progressIncrement;
-      packet.updatePosition(this.startPos, this.endPos, newProgress);
+  deregisterPacket(packet: Packet) {
+    if (this.currPackets.has(packet)) {
+      this.currPackets.delete(packet);
+      this.removeChild(packet);
     }
   }
 }

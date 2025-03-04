@@ -133,21 +133,10 @@ export class Packet extends Graphics {
   }
 
   traverseEdge(edge: Edge, start: DeviceId): void {
-    this.progress = 0;
     this.currentEdge = edge;
     this.currentStart = start;
 
-    // Initialize logical tracking in DataGraph
-    const nextDevice = edge.otherEnd(start);
-    console.log(
-      `[DATAGRAPH]: Initializing packet ${this.packetId} on edge ${start}->${nextDevice}`,
-    );
-    this.viewgraph
-      .getDataGraph()
-      .initializePacketProgress(this.packetId, start, nextDevice);
-
-    this.currentEdge.addChild(this);
-    this.updatePosition(edge,this.progress);
+    this.currentEdge.registerPacket(this);
     Ticker.shared.add(this.animationTick, this);
 
     // OPCION 2
@@ -161,82 +150,23 @@ export class Packet extends Graphics {
   async forwardPacket(currDeviceID: number) {
     const currDevice = this.viewgraph.getDevice(currDeviceID);
     const nextDeviceID = await currDevice.receivePacket(this); // esto va a pasar a ser edgeToForwardID
-    const edgeToForward = this.viewgraph.getEdge(Edge.generateConnectionKey({ n1: currDeviceID, n2: nextDeviceID}));
-    edgeToForward.forwardPacket(this);
-        
+    if (!nextDeviceID) {
+      return;
+    }
+    const edgeToForward = this.viewgraph.getEdge(
+      Edge.generateConnectionKey({ n1: currDeviceID, n2: nextDeviceID }),
+    );
+    // chequear que la arista no sea undefined
+    this.currentEdge = edgeToForward;
+    edgeToForward.registerPacket(this);
+    this.progress = 0;
+    Ticker.shared.add(this.animationTick, this);
   }
 
   async animationTick(ticker: Ticker) {
-    if (this.progress >= 1) {
-      this.progress = 0;
-      this.removeFromParent();
-      const newStart = this.currentEdge.otherEnd(this.currentStart);
-      const newStartDevice = this.viewgraph.getDevice(newStart);
-
-      if (!newStartDevice) {
-        console.log("[DATAGRAPH]: Device not found, deleting packet");
-        this.delete();
-        return;
-      }
-
-      console.log(newStartDevice);
-
-      this.currentStart = newStart;
-      ticker.remove(this.animationTick, this);
-      const newEndId = await newStartDevice.receivePacket(this);
-      ticker.add(this.animationTick, this);
-
-      if (newEndId === null) {
-        console.log("[DATAGRAPH]: No next device, deleting packet");
-        this.delete();
-        return;
-      }
-
-      // Store current progress before updating
-      const currentProgress = this.viewgraph
-        .getDataGraph()
-        .getPacketProgress(this.packetId);
-      if (!currentProgress) {
-        // Set the progress to 0 on the data edge
-        console.log("[DATAGRAPH]: Packet progress not found, setting to 0");
-        this.viewgraph
-          .getDataGraph()
-          .initializePacketProgress(this.packetId, newStart, newEndId);
-      }
-
-      // Update logical progress in DataGraph
-      const success = this.viewgraph
-        .getDataGraph()
-        .movePacketToNextEdge(this.packetId, newEndId);
-
-      if (!success) {
-        console.log(
-          "[DATAGRAPH]: Failed to move to next edge, deleting packet",
-        );
-        this.delete();
-        return;
-      }
-
-      console.log(
-        `[DATAGRAPH]: Moving packet from ${this.currentStart} to ${newEndId}`,
-      );
-
-      this.currentEdge = this.viewgraph.getEdge(
-        Edge.generateConnectionKey({ n1: this.currentStart, n2: newEndId }),
-      );
-
-      if (this.currentEdge === undefined) {
-        console.log("[DATAGRAPH]: No visual edge found, deleting packet");
-        this.delete();
-        return;
-      }
-
-      this.currentEdge.addChild(this);
-    }
-
-    // Rest of the method remains the same
     const start = this.currentEdge.startPos;
     const end = this.currentEdge.endPos;
+
     const edgeLength = Math.sqrt(
       Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
     );
@@ -247,31 +177,27 @@ export class Packet extends Graphics {
       const progressIncrement =
         (ticker.deltaMS * normalizedSpeed * this.viewgraph.getSpeed()) / 1000;
       this.progress += progressIncrement;
-
-      // Update logical progress in DataGraph
-      this.viewgraph
-        .getDataGraph()
-        .updatePacketProgress(this.packetId, this.progress);
-
-      // Log progress at 25% intervals
-      if (
-        Math.floor(this.progress * 4) >
-        Math.floor((this.progress - progressIncrement) * 4)
-      ) {
-        console.log(
-          `[DATAGRAPH]: Packet ${this.packetId} at ${(this.progress * 100).toFixed(0)}% of edge`,
-        );
-      }
+      this.updatePosition(this.currentEdge);
     }
 
-    this.updatePosition(this.currentEdge, this.progress);
+    if (this.progress >= 1) {
+      this.currentEdge.deregisterPacket(this);
+      ticker.remove(this.animationTick, this);
+      this.forwardPacket(this.currentEdge.otherEnd(this.currentStart));
+    }
+  }
+
+  updatePosition(edge: Edge) {
+    const startPos = edge.nodePosition(this.currentStart);
+    const endPos = edge.nodePosition(edge.otherEnd(this.currentStart));
+    this.setPositionAlongEdge(startPos, endPos, this.progress);
   }
 
   /// Updates the position according to the current progress.
-  updatePosition(start: Position, end: Position, progress: number) {
+  setPositionAlongEdge(start: Position, end: Position, progress: number) {
     const dx = end.x - start.x;
     const dy = end.y - start.y;
-  
+
     this.x = start.x + progress * dx;
     this.y = start.y + progress * dy;
   }
@@ -281,7 +207,6 @@ export class Packet extends Graphics {
     console.log(`[DATAGRAPH]: Removing packet ${this.packetId}`);
     this.viewgraph.getDataGraph().removePacketProgress(this.packetId);
 
-    Ticker.shared.remove(this.animationTick, this);
     this.removeAllListeners();
     this.removeFromParent();
 
