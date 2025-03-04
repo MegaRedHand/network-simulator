@@ -50,7 +50,6 @@ export abstract class Device extends Container {
 
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
-  connections = new Set<DeviceId>();
 
   mac: MacAddress;
   arpTable: Map<IpAddress, MacAddress> = new Map<IpAddress, MacAddress>();
@@ -128,23 +127,11 @@ export abstract class Device extends Container {
     this.addChild(idText); // Add the ID text as a child of the device
   }
 
-  getConnections(): DeviceId[] {
-    return Array.from(this.connections.values());
-  }
-
   /// Returns the data needed to create the device
   getCreateDevice(): CreateDevice {
     const node = this.viewgraph.getDataGraph().getDevice(this.id);
     const connections = this.viewgraph.getDataGraph().getConnections(this.id);
     return { id: this.id, node, connections };
-  }
-
-  addConnection(adjacentId: DeviceId) {
-    this.connections.add(adjacentId);
-  }
-
-  removeConnection(id: DeviceId) {
-    this.connections.delete(id);
   }
 
   delete(): void {
@@ -168,16 +155,11 @@ export abstract class Device extends Container {
     this.parent.on("pointerup", onPointerUp);
   }
 
+  // TODO: why is this even here??
   connectTo(adjacentId: DeviceId): boolean {
     // Connects both devices with an edge.
-    // console.log("Entered connectTo");
-
     const edgeId = this.viewgraph.addEdge(this.id, adjacentId);
     if (edgeId) {
-      const adjacentDevice = this.viewgraph.getDevice(adjacentId);
-      this.addConnection(adjacentId);
-      adjacentDevice.addConnection(this.id);
-
       // Register move
       const move = new AddEdgeMove(this.viewgraph.getLayer(), {
         n1: this.id,
@@ -270,7 +252,6 @@ export abstract class Device extends Container {
 
   destroy() {
     // Clear connections
-    this.connections.clear();
     deselectElement();
     super.destroy();
   }

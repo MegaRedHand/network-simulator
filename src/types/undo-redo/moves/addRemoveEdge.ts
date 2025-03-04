@@ -24,8 +24,6 @@ export abstract class AddRemoveEdgeMove extends BaseMove {
       return;
     }
     viewgraph.addEdge(n1, n2);
-    device1.addConnection(n2);
-    device2.addConnection(n1);
   }
 
   removeEdge(viewgraph: ViewGraph) {

@@ -23,10 +23,13 @@ export class DeviceInfo extends StyledInfo {
   }
 
   private addCommonInfoFields() {
-    const { id, connections, mac } = this.device;
+    const { id, mac } = this.device;
+    const connections = this.device.viewgraph
+      .getConnections(id)
+      .map((edge) => edge.otherEnd(id));
     super.addField("ID", id.toString());
     super.addField("MacAddress", mac.toString());
-    super.addListField("Connected Devices", Array.from(connections.values()));
+    super.addListField("Connected Devices", connections);
   }
 
   private addCommonButtons() {
