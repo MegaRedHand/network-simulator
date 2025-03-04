@@ -15,6 +15,10 @@ export class Graph<Vertex, Edge> {
     return this.vertices.has(id);
   }
 
+  hasEdge(id: VertexId, otherId: VertexId): boolean {
+    return this.edges.has(id) && this.edges.get(id).has(otherId);
+  }
+
   getVertex(id: VertexId): Vertex | undefined {
     return this.vertices.get(id);
   }
@@ -23,11 +27,27 @@ export class Graph<Vertex, Edge> {
     return this.edges.get(id)?.get(otherId);
   }
 
-  getConnections(id: VertexId): VertexId[] | undefined {
+  getNeighbors(id: VertexId): VertexId[] | undefined {
     if (!this.hasVertex(id)) {
       return undefined;
     }
     return Array.from(this.edges.get(id).keys());
+  }
+
+  getVertices(): IterableIterator<[VertexId, Vertex]> {
+    return this.vertices.entries();
+  }
+
+  getVertexCount(): number {
+    return this.vertices.size;
+  }
+
+  /**
+   * Returns an iterator over all edges in the graph.
+   * @returns an iterator over all edges in the graph, with no duplicates.
+   */
+  getEdges(): IterableIterator<[VertexId, VertexId, Edge]> {
+    return edgeIterator(this.edges);
   }
 
   setVertex(id: VertexId, vertex: Vertex): void {
@@ -35,7 +55,7 @@ export class Graph<Vertex, Edge> {
     this.edges.set(id, new Map());
   }
 
-  setEdge(id: VertexId, otherId: VertexId, edge: Edge): void {
+  setEdge(id: VertexId, otherId: VertexId, edge: Edge = null): void {
     if (!this.hasVertex(id) || !this.hasVertex(otherId)) {
       return;
     }
@@ -61,5 +81,15 @@ export class Graph<Vertex, Edge> {
     }
     this.edges.get(id).delete(otherId);
     this.edges.get(otherId).delete(id);
+  }
+}
+
+function* edgeIterator<Edge>(
+  edges: Map<VertexId, Map<VertexId, Edge>>,
+): IterableIterator<[VertexId, VertexId, Edge]> {
+  for (const [id, nodeEdges] of edges) {
+    for (const [otherId, edge] of nodeEdges) {
+      yield [id, otherId, edge];
+    }
   }
 }
