@@ -74,11 +74,7 @@ document.addEventListener("keydown", (event) => {
       const currLayer = selectedElement.viewgraph.getLayer();
       if (isDevice(selectedElement)) {
         data = selectedElement.getCreateDevice();
-        const move = new RemoveDeviceMove(
-          currLayer,
-          data,
-          selectedElement.viewgraph,
-        );
+        const move = new RemoveDeviceMove(currLayer, data);
         selectedElement.delete();
         urManager.push(move);
       } else if (isEdge(selectedElement)) {

@@ -1,6 +1,5 @@
-import { DeviceType, Layer } from "../../devices/device";
+import { Layer } from "../../devices/device";
 import { CreateDevice } from "../../devices/utils";
-import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { BaseMove, TypeMove } from "./move";
 
@@ -24,6 +23,7 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
     const connections = Array.from(this.data.connections);
 
     datagraph.addDevice(this.data.id, deviceInfo, connections);
+    datagraph.regenerateAllRoutingTables();
 
     this.adjustLayer(viewgraph);
 
@@ -56,50 +56,9 @@ export class AddDeviceMove extends AddRemoveDeviceMove {
 
 export class RemoveDeviceMove extends AddRemoveDeviceMove {
   type: TypeMove = TypeMove.RemoveDevice;
-  private storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>;
-
-  constructor(
-    layer: Layer,
-    data: CreateDevice,
-    viewgraph: ViewGraph, // To fetch routing tables
-  ) {
-    super(layer, data);
-    this.storedRoutingTables = new Map();
-
-    // Guardar la tabla de enrutamiento del dispositivo eliminado si es un router
-    if (data.node.type === DeviceType.Router) {
-      const routingTable = viewgraph.getRoutingTable(data.id);
-      if (routingTable) {
-        this.storedRoutingTables.set(data.id, [...routingTable]);
-      }
-    }
-
-    // Guardar las tablas de los dispositivos conectados
-    data.connections.forEach((adjacentId) => {
-      const routingTable = viewgraph.getRoutingTable(adjacentId);
-      if (routingTable) {
-        this.storedRoutingTables.set(adjacentId, [...routingTable]);
-      }
-    });
-
-    console.log(
-      "Stored routing tables before removal:",
-      this.storedRoutingTables,
-    );
-  }
 
   undo(viewgraph: ViewGraph): void {
     this.addDevice(viewgraph);
-
-    // Restaurar las tablas de enrutamiento de todos los dispositivos involucrados
-    this.storedRoutingTables.forEach((table, deviceId) => {
-      viewgraph.getDataGraph().setRoutingTable(deviceId, table);
-    });
-
-    console.log(
-      `Routing tables restored for devices:`,
-      this.storedRoutingTables.keys(),
-    );
   }
 
   redo(viewgraph: ViewGraph): void {

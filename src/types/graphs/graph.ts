@@ -52,7 +52,9 @@ export class Graph<Vertex, Edge> {
 
   setVertex(id: VertexId, vertex: Vertex): void {
     this.vertices.set(id, vertex);
-    this.edges.set(id, new Map());
+    if (!this.edges.has(id)) {
+      this.edges.set(id, new Map());
+    }
   }
 
   setEdge(id: VertexId, otherId: VertexId, edge: Edge = null): void {
