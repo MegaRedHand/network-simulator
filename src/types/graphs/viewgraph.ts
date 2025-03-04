@@ -35,24 +35,25 @@ export class ViewGraph {
 
   private constructView() {
     console.log("Constructing ViewGraph from DataGraph");
-    const connections = new Set<string>();
+    const allConnections = new Set<string>();
 
-    this.datagraph.getDevices().forEach((graphNode, deviceId) => {
+    for (const [deviceId, graphNode] of this.datagraph.getDevices()) {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
-        const deviceInfo = { id: deviceId, node: graphNode };
+        const connections = this.datagraph.getConnections(deviceId);
+        const deviceInfo = { id: deviceId, node: graphNode, connections };
         this.createDevice(deviceInfo);
 
-        this.computeLayerConnections(deviceId, connections);
+        this.computeLayerConnections(deviceId, allConnections);
       }
-    });
+    }
 
-    this.addConnections(connections);
+    this.addConnections(allConnections);
     console.log("Finished constructing ViewGraph");
   }
 
   addDevice(deviceData: CreateDevice) {
     const device = this.createDevice(deviceData);
-    if (deviceData.node.connections.size !== 0) {
+    if (deviceData.connections.length !== 0) {
       const connections = new Set<string>();
       this.computeLayerConnections(deviceData.id, connections);
 
@@ -356,7 +357,7 @@ export class ViewGraph {
 
   private computeLayerConnections(source: DeviceId, connections: Set<string>) {
     this.layer_dfs(
-      this.datagraph.getDevices(),
+      this.datagraph,
       source,
       source,
       new Set([source]),
@@ -365,13 +366,13 @@ export class ViewGraph {
   }
 
   private layer_dfs(
-    graph: Map<DeviceId, GraphNode>,
+    graph: DataGraph,
     s: DeviceId, // source node
     v: DeviceId,
     visited: Set<DeviceId>,
     connections: Set<string>,
   ) {
-    graph.get(v).connections.forEach((w) => {
+    graph.getConnections(v).forEach((w) => {
       if (visited.has(w)) {
         return;
       }

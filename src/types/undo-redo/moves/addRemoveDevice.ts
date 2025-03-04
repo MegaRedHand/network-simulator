@@ -73,7 +73,7 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
     }
 
     // Guardar las tablas de los dispositivos conectados
-    data.node.connections.forEach((adjacentId) => {
+    data.connections.forEach((adjacentId) => {
       const routingTable = viewgraph.getRoutingTable(adjacentId);
       if (routingTable) {
         this.storedRoutingTables.set(adjacentId, [...routingTable]);

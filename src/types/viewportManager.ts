@@ -143,8 +143,9 @@ export function addDevice(ctx: GlobalContext, type: DeviceType) {
 
   const id = datagraph.addNewDevice(deviceInfo);
   const node = datagraph.getDevice(id);
+  const connections = datagraph.getConnections(id);
 
-  const deviceData: CreateDevice = { id, node };
+  const deviceData: CreateDevice = { id, node, connections };
 
   // Add the Device to the graph
   const newDevice = viewgraph.addDevice(deviceData);
