@@ -1,4 +1,5 @@
-import { GraphicsContext } from "pixi.js";
+import { Viewport } from "pixi-viewport";
+import { Application, GraphicsContext, RenderTexture } from "pixi.js";
 
 export enum Colors {
   Violet = 0x4b0082,
@@ -28,4 +29,47 @@ export enum ZIndexLevels {
   Edge = 15,
   Packet = 16,
   Label = 19,
+}
+
+/**
+ * Captures the current viewport and downloads it as an image.
+ * @param app - The PixiJS application instance.
+ * @param viewport - The viewport instance to capture.
+ */
+export function captureAndDownloadViewport(
+  app: Application,
+  viewport: Viewport,
+) {
+  if (!viewport) {
+    alert("Viewport not found.");
+    return;
+  }
+
+  // Step 1: Create a texture and render the viewport into it
+  const renderTexture = RenderTexture.create({
+    width: app.renderer.width,
+    height: app.renderer.height,
+  });
+
+  // Step 2: Render the viewport into the texture
+  app.renderer.render({
+    container: viewport,
+    target: renderTexture,
+  });
+
+  // Step 3: Extract the RenderTexture as a canvas
+  const extractedCanvas = app.renderer.extract.canvas(renderTexture);
+
+  // Step 4: Convert the extracted canvas to a Blob and download it
+  extractedCanvas.toBlob((blob) => {
+    if (!blob) {
+      alert("Failed to generate image.");
+      return;
+    }
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "viewport-snapshot.png";
+    link.click();
+  }, "image/png");
 }
