@@ -174,10 +174,14 @@ export class ViewGraph {
     return this.layer;
   }
 
+  // agregar paquetes:
+  //   calcular nueva 
+
   changeCurrLayer(newLayer: Layer) {
     this.layer = newLayer;
     this.clear();
     this.constructView();
+    // agregar paquetes
     const layerSelect = document.getElementById(
       "layer-select",
     ) as HTMLSelectElement;
@@ -396,10 +400,12 @@ export class ViewGraph {
   }
 
   clear() {
+    // paquetes <- llamar metodos de getCurrPackets
     this.viewport.clear();
     this.devices.forEach((device) => device.destroy());
     this.devices.clear();
     this.edges.forEach((edge) => edge.destroy());
     this.edges.clear();
+    // return paquetes
   }
 }
