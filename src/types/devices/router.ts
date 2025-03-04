@@ -92,6 +92,10 @@ export class Router extends NetworkDevice {
     }
     // a router changed forward datagram to destination, have to change current destination mac
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
+    if (!dstDevice) {
+      console.error("Destination device not found");
+      return null;
+    }
     const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
     let dstMac = dstDevice.mac;
     if (!path) return null;
