@@ -39,7 +39,6 @@ export class ViewGraph {
         this.computeLayerConnections(deviceId, allConnections);
       }
     }
-
     this.addConnections(allConnections);
     console.log("Finished constructing ViewGraph");
   }
@@ -214,6 +213,10 @@ export class ViewGraph {
       console.warn(`Device with ID ${id} does not exist in the graph.`);
       return;
     }
+
+    this.graph.getNeighbors(id).forEach((adjacentId) => {
+      this.removeEdge(id, adjacentId);
+    });
 
     // Remove device and its connections from the graph
     this.graph.removeVertex(id);
