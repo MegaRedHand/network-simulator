@@ -26,7 +26,6 @@ export abstract class BaseMove implements Move {
 
   adjustLayer(viewgraph: ViewGraph) {
     if (!layerIncluded(this.layerInMove, viewgraph.getLayer())) {
-      console.log("Entre a cambiar el layer del viewgraph");
       viewgraph.changeCurrLayer(this.layerInMove);
     }
   }

@@ -20,7 +20,10 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
 
     // Add the device to the datagraph and the viewgraph
     const deviceInfo = structuredClone(this.data.node);
-    datagraph.addDevice(this.data.id, deviceInfo);
+    // Clone array to avoid modifying the original
+    const connections = Array.from(this.data.connections);
+
+    datagraph.addDevice(this.data.id, deviceInfo, connections);
 
     this.adjustLayer(viewgraph);
 
@@ -51,7 +54,6 @@ export class AddDeviceMove extends AddRemoveDeviceMove {
   }
 }
 
-// Check if the viewgraph is the best place to load the move into the manager
 export class RemoveDeviceMove extends AddRemoveDeviceMove {
   type: TypeMove = TypeMove.RemoveDevice;
   private storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>;
@@ -59,7 +61,7 @@ export class RemoveDeviceMove extends AddRemoveDeviceMove {
   constructor(
     layer: Layer,
     data: CreateDevice,
-    viewgraph: ViewGraph, // Pasamos la vista para obtener las tablas de enrutamiento
+    viewgraph: ViewGraph, // To fetch routing tables
   ) {
     super(layer, data);
     this.storedRoutingTables = new Map();

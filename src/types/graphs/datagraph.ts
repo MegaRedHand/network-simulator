@@ -180,7 +180,7 @@ export class DataGraph {
   addDevice(
     idDevice: DeviceId,
     deviceInfo: GraphNode,
-    connections: DeviceId[] = [],
+    connections: DeviceId[],
   ) {
     if (this.deviceGraph.hasVertex(idDevice)) {
       console.warn(`Device with ID ${idDevice} already exists in the graph.`);
