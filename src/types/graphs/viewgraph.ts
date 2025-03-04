@@ -80,8 +80,6 @@ export class ViewGraph {
         return;
       }
       this.drawEdge(device1, device2);
-      device1.addConnection(device2.id);
-      device2.addConnection(device1.id);
     });
   }
 
@@ -138,7 +136,7 @@ export class ViewGraph {
 
   deviceMoved(deviceId: DeviceId) {
     const device: Device = this.graph.getVertex(deviceId);
-    device.getConnections().forEach((adjacentId) => {
+    this.graph.getNeighbors(deviceId).forEach((adjacentId) => {
       const edge = this.graph.getEdge(deviceId, adjacentId);
       // Get start and end devices directly
       const startDevice =
@@ -250,9 +248,6 @@ export class ViewGraph {
       console.warn("At least one device in connection does not exist");
       return;
     }
-    // TODO: remove `connections` field from devices
-    device1.removeConnection(n2);
-    device2.removeConnection(n1);
 
     // Remove the edge from the viewport
     this.getViewport().removeChild(edge);
@@ -310,7 +305,7 @@ export class ViewGraph {
 
       if (!visited.has(device.id)) {
         visited.add(device.id);
-        device.getConnections().forEach((adjId) => {
+        this.graph.getNeighbors(device.id).forEach((adjId) => {
           const adjDevice = this.graph.getVertex(adjId);
           if (!adjDevice) {
             console.warn(`Device ${adjId} for path not found in viewgraph`);
