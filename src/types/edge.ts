@@ -1,4 +1,4 @@
-import { Graphics, Point, Ticker } from "pixi.js";
+import { Graphics, Point } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
 import { Device } from "./devices/index"; // Import the Device class
 import { deselectElement, selectElement, urManager } from "./viewportManager";

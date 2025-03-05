@@ -149,19 +149,33 @@ export class Packet extends Graphics {
 
   async forwardPacket(currDeviceID: number) {
     const currDevice = this.viewgraph.getDevice(currDeviceID);
-    const nextDeviceID = await currDevice.receivePacket(this); // esto va a pasar a ser edgeToForwardID
+    const nextDeviceID = await currDevice.receivePacket(this);
+
+    // Packet has reached its destination
     if (!nextDeviceID) {
       return;
     }
+
     const edgeToForward = this.viewgraph.getEdge(
       Edge.generateConnectionKey({ n1: currDeviceID, n2: nextDeviceID }),
     );
-    // chequear que la arista no sea undefined
-    this.currentEdge = edgeToForward;
-    edgeToForward.registerPacket(this);
+
+    // Packet has reached a dead end
+    if (!edgeToForward) {
+      return;
+    }
+
+    // Reset progress and start traversing the next edge
     this.progress = 0;
+
+    // Update current edge and start
+    this.currentStart = currDeviceID;
+    this.currentEdge = edgeToForward;
+    
+    edgeToForward.registerPacket(this);
     Ticker.shared.add(this.animationTick, this);
   }
+  
 
   async animationTick(ticker: Ticker) {
     const start = this.currentEdge.startPos;
