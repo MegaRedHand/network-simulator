@@ -1,17 +1,21 @@
 import { Application, Assets } from "pixi.js";
 import {
   deselectElement,
-  loadFromFile,
-  saveToFile,
   saveToLocalStorage,
   urManager,
 } from "./types/viewportManager";
-import { DataGraph } from "./types/graphs/datagraph";
 import { Packet } from "./types/packet";
 import { LeftBar } from "./graphics/left_bar";
 import { RightBar } from "./graphics/right_bar";
 import { Viewport } from "./graphics/viewport";
 import { GlobalContext } from "./context";
+import {
+  triggerNew,
+  triggerSave,
+  triggerLoad,
+  triggerPrint,
+  triggerHelp,
+} from "./utils";
 
 // Assets
 import "./styles";
@@ -114,22 +118,14 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   const loadButton = document.getElementById("load-button");
   const saveButton = document.getElementById("save-button");
   const printButton = document.getElementById("print-button");
+  const helpButton = document.getElementById("help-button");
 
-  newButton.onclick = () => {
-    deselectElement();
-    ctx.load(new DataGraph());
-  };
-  saveButton.onclick = () => {
-    deselectElement();
-    saveToFile(ctx);
-  };
-  loadButton.onclick = () => {
-    deselectElement();
-    loadFromFile(ctx);
-  };
-  printButton.onclick = () => {
-    ctx.print();
-  };
+  // Asigna las funciones a los botones
+  newButton.onclick = () => triggerNew(ctx);
+  saveButton.onclick = () => triggerSave(ctx);
+  loadButton.onclick = () => triggerLoad(ctx);
+  printButton.onclick = () => triggerPrint(ctx);
+  helpButton.onclick = triggerHelp;
   // Undo button’s logic
   const undoButton = document.getElementById(
     "undo-button",
@@ -177,22 +173,55 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   // Add keyboard shortcuts for Undo (Ctrl+Z) and Redo (Ctrl+Y)
   document.addEventListener("keydown", (event) => {
-    if (!event.ctrlKey) {
-      return;
+    // Verifica si el usuario está escribiendo en un input o textarea
+    const activeElement = document.activeElement as HTMLElement;
+    if (
+      activeElement &&
+      (activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        activeElement.isContentEditable)
+    ) {
+      return; // Evita que los atajos se ejecuten si el usuario está escribiendo
     }
-    switch (event.key) {
-      case "Z": // Ctrl+Shift+Z for Redo
-        event.preventDefault(); // Prevent default browser action (like undo in text inputs)
-        triggerRedo();
-        break;
-      case "z": // Ctrl+Z for Undo
-        event.preventDefault(); // Prevent default browser action (like undo in text inputs)
-        triggerUndo();
-        break;
-      case "y": // Ctrl+Y for Redo
-        event.preventDefault(); // Prevent default browser action
-        triggerRedo();
-        break;
+
+    if (event.ctrlKey) {
+      switch (event.key) {
+        case "Z": // Ctrl+Shift+Z for Redo
+          event.preventDefault(); // Prevent default browser action (like undo in text inputs)
+          triggerRedo();
+          break;
+        case "z": // Ctrl+Z for Undo
+          event.preventDefault(); // Prevent default browser action
+          triggerUndo();
+          break;
+        case "y": // Ctrl+Y for Redo
+          event.preventDefault(); // Prevent default browser action
+          triggerRedo();
+          break;
+      }
+    } else {
+      switch (event.key.toLowerCase()) {
+        case "n":
+          event.preventDefault();
+          triggerNew(ctx);
+          break;
+        case "s":
+          event.preventDefault();
+          triggerSave(ctx);
+          break;
+        case "l":
+          event.preventDefault();
+          triggerLoad(ctx);
+          break;
+        case "p":
+          event.preventDefault();
+          triggerPrint(ctx);
+          break;
+        case "h": // Nuevo atajo para abrir el Help
+          event.preventDefault();
+          triggerHelp();
+          break;
+      }
     }
   });
 

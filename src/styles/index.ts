@@ -11,3 +11,4 @@ import "./pause.css";
 import "./undo-redo.css";
 import "./layer-select.css";
 import "./controls.css";
+import "./help.css";

@@ -11,6 +11,10 @@
   flex-wrap: nowrap; /* Prevents wrapping */
 }
 
+#top-bar button:not(#help-button) {
+  margin-right: 0.5vw; /* Espaciado entre los otros botones */
+}
+
 /* 🔹 Small buttons */
 #top-bar button {
   font-size: 0.8rem; /* Keeps font compact */
