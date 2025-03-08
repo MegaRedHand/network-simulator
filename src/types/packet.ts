@@ -171,11 +171,10 @@ export class Packet extends Graphics {
     // Update current edge and start
     this.currentStart = currDeviceID;
     this.currentEdge = edgeToForward;
-    
+
     edgeToForward.registerPacket(this);
     Ticker.shared.add(this.animationTick, this);
   }
-  
 
   async animationTick(ticker: Ticker) {
     const start = this.currentEdge.startPos;
@@ -217,6 +216,9 @@ export class Packet extends Graphics {
   }
 
   delete() {
+    // Remove packet from Ticker to stop animation
+    Ticker.shared.remove(this.animationTick, this);
+
     // Remove logical tracking
     console.log(`[DATAGRAPH]: Removing packet ${this.packetId}`);
     this.viewgraph.getDataGraph().removePacketProgress(this.packetId);
