@@ -128,8 +128,10 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   loadButton.onclick = () => triggerLoad(ctx);
   printButton.onclick = () => triggerPrint(ctx);
   // Función para abrir el modal
-  helpButton.onclick = () => configModal.open();
-
+  helpButton.onclick = () => {
+    deselectElement();
+    configModal.open();
+  }
   // Undo button’s logic
   const undoButton = document.getElementById(
     "undo-button",

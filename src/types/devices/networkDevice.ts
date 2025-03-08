@@ -7,6 +7,7 @@ import { Position } from "../common";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { Packet, sendRawPacket } from "../packet";
 import { EchoReply, EchoRequest } from "../../packets/icmp";
+import { GlobalContext } from "../../context";
 
 export abstract class NetworkDevice extends Device {
   ip: IpAddress;
@@ -16,12 +17,13 @@ export abstract class NetworkDevice extends Device {
     id: DeviceId,
     texture: Texture,
     viewgraph: ViewGraph,
+    ctx: GlobalContext,
     position: Position,
     mac: MacAddress,
     ip: IpAddress,
     ipMask: IpAddress,
   ) {
-    super(id, texture, viewgraph, position, mac);
+    super(id, texture, viewgraph, ctx, position, mac);
     this.ip = ip;
     this.ipMask = ipMask;
   }

@@ -11,6 +11,7 @@ import { IpAddress, IpAddressGenerator } from "./packets/ip";
 import { layerFromName } from "./types/devices/layer";
 import { SpeedMultiplier } from "./types/devices/speedMultiplier";
 import { MacAddress, MacAddressGenerator } from "./packets/ethernet";
+import { Colors } from "./utils";
 
 export class GlobalContext {
   private viewport: Viewport = null;
@@ -20,8 +21,10 @@ export class GlobalContext {
   private saveIntervalId: NodeJS.Timeout | null = null;
   private ipGenerator: IpAddressGenerator;
   private macGenerator: MacAddressGenerator;
+  private selectColor: number;
 
   constructor(viewport: Viewport) {
+    this.selectColor = Colors.Violet;
     this.viewport = viewport;
 
     // Sets the initial datagraph and viewgraph
@@ -167,5 +170,13 @@ export class GlobalContext {
     console.log(this.viewgraph);
     console.log("DataGraph");
     console.log(this.datagraph);
+  }
+
+  public change_select_color(color: number) {
+    this.selectColor = color;
+  }
+
+  public get_select_color() {
+    return this.selectColor;
   }
 }

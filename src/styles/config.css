@@ -19,13 +19,14 @@
     visibility 0.3s ease-in-out;
 }
 
-/* Contenedor del modal */
+/* Contenedor del modal con tamaño fijo y scroll interno */
 .modal-content {
   background: #2b2b2b; /* Fondo oscuro elegante */
   color: #ffffff;
   padding: 25px;
   width: 50%;
   max-width: 600px;
+  max-height: 80vh; /* Limita la altura al 80% de la pantalla */
   border-radius: 12px;
   text-align: center;
   box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3);
@@ -34,6 +35,9 @@
   transition:
     transform 0.2s ease-out,
     opacity 0.2s ease-out;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* Habilita el scroll interno cuando el contenido es grande */
 }
 
 /* Mostrar modal correctamente */
@@ -64,13 +68,17 @@
   color: #fff;
 }
 
-/* Lista de atajos de teclado */
+/* Lista de atajos de teclado con scroll interno */
 .modal-content ul {
   list-style: none;
   padding: 0;
   text-align: left;
+  max-height: 250px; /* Define un tamaño máximo para la lista */
+  overflow-y: auto; /* Permite scroll solo en la lista si es necesario */
+  padding-right: 10px; /* Evita que el contenido se corte con la barra de scroll */
 }
 
+/* Elementos dentro de la lista */
 .modal-content li {
   background: rgba(255, 255, 255, 0.1);
   padding: 6px 12px;
@@ -83,7 +91,7 @@
 .modal-content button,
 .modal-content select,
 .modal-content input[type="range"] {
-  background: #4fa3d1;
+  background: #007bff;
   color: white;
   border: none;
   padding: 6px 12px;
@@ -95,6 +103,74 @@
 
 .modal-content button:hover,
 .modal-content select:hover {
+  background: #162a6d;
+}
+
+/* Limit the settings container height and enable scrolling */
+.settings-container {
+  max-height: 200px; /* Limit settings height */
+  overflow-y: auto; /* Enable scrolling when too many settings */
+  border-radius: 6px;
+  padding-right: 10px;
+}
+
+/* Remove unnecessary margin/padding */
+.settings-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Each setting item stays compact */
+.setting-item {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+
+/* Contenedor del selector de color en una línea */
+.color-picker-row {
+  display: flex;
+  align-items: center; /* Alinea el texto y el selector */
+  gap: 10px; /* Espacio entre el texto y el selector */
+}
+
+/* Ajusta el selector de color */
+.setting-item input[type="color"] {
+  width: 40px;
+  height: 40px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Save button styling */
+.save-button {
+  background: #4fa3d1; /* Primary blue color */
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.1s;
+  margin-top: 15px; /* Adds spacing from settings */
+  align-self: center; /* Centers the button */
+  width: fit-content; /* Keeps the button at its natural width */
+  min-width: 120px; /* Ensures a minimum size */
+  text-align: center;
+}
+
+/* Hover effect */
+.save-button:hover {
   background: #3c8bbd;
+}
+
+/* Click effect */
+.save-button:active {
+  transform: scale(0.97);
 }
 
