@@ -16,6 +16,7 @@ import {
   triggerPrint,
   triggerHelp,
 } from "./utils";
+import { createConfigModal, openConfigModal } from "./config";
 
 // Assets
 import "./styles";
@@ -120,12 +121,15 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   const printButton = document.getElementById("print-button");
   const helpButton = document.getElementById("help-button");
 
+  createConfigModal();
   // Asigna las funciones a los botones
   newButton.onclick = () => triggerNew(ctx);
   saveButton.onclick = () => triggerSave(ctx);
   loadButton.onclick = () => triggerLoad(ctx);
   printButton.onclick = () => triggerPrint(ctx);
-  helpButton.onclick = triggerHelp;
+  // Función para abrir el modal
+  helpButton.onclick = openConfigModal; // Usa la función importada
+
   // Undo button’s logic
   const undoButton = document.getElementById(
     "undo-button",
