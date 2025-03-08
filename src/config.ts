@@ -1,15 +1,5 @@
 import { GlobalContext } from "./context";
-
-export enum Colors {
-  Violet = 0x4b0082,
-  Burgundy = 0x6d071a, // Bordo
-  Lightblue = 0x1e90ff,
-  Green = 0x008000,
-  Red = 0xff0000,
-  White = 0xffffff,
-  Black = 0x000000,
-  Yellow = 0xffff00,
-}
+import { Colors } from "./utils";
 
 export class ConfigModal {
   private ctx: GlobalContext;
@@ -28,7 +18,7 @@ export class ConfigModal {
     this.closeBtn = null;
     this.saveSettingsButton = null;
     this.colorPicker = null;
-    this.selectedColor = Colors.Lightblue; // Default saved color
+    this.selectedColor = Colors.Violet; // Default saved color
     this.tempColor = this.selectedColor; // Temporary color for selection
 
     this.createModal();
@@ -44,61 +34,99 @@ export class ConfigModal {
     }
 
     modalContainer.innerHTML = `
-      <div class="modal-overlay">
-        <div class="modal-content">
-          <span class="close">&times;</span>
-          <h2>Settings & Shortcuts</h2>
+    <div class="modal-overlay">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Settings & Shortcuts</h2>
 
-          <h3>Keyboard Shortcuts</h3>
-          <ul>
-            <li><strong>[C]</strong> - Connect devices</li>
-            <li><strong>[H]</strong> - Open Help</li>
-            <li><strong>[Delete] / [Backspace]</strong> - Delete selected element</li>
-            <li><strong>[Space]</strong> - Pause/resume simulation</li>
-            <li><strong>[Ctrl + Z]</strong> - Undo</li>
-            <li><strong>[Ctrl + Y]</strong> - Redo</li>
-            <li><strong>[N]</strong> - Create a new network</li>
-            <li><strong>[S]</strong> - Save your network</li>
-            <li><strong>[L]</strong> - Load a saved network</li>
-            <li><strong>[P]</strong> - Print the current network</li>
-          </ul>
-
-          <h3>General Settings</h3>
-          <div class="settings-container">
-            <ul class="settings-list">
-              <li class="setting-item">
-                <label for="colorPicker">Select Color:</label>
-                <input type="color" id="colorPicker" value="${this.toHex(this.selectedColor)}">
-              </li>
-              <li class="setting-item">
-              EJEMPLO DE CONFIG
-              </li>
-              <li class="setting-item">
-              EJEMPLO DE CONFIG
-              </li>
-              <li class="setting-item">
-              EJEMPLO DE CONFIG
-              </li>
-            </ul>
+        <div class="modal-body">
+          <!-- Bloque de Shortcuts -->
+          <div class="shortcuts-container">
+            <h3>Keyboard Shortcuts</h3>
+            <div class="scrollable-content">
+              <ul class="shortcuts-list">
+                <li><strong>[C]</strong> - Connect devices</li>
+                <li><strong>[H]</strong> - Open Help</li>
+                <li><strong>[Delete] / [Backspace]</strong> - Delete selected element</li>
+                <li><strong>[Space]</strong> - Pause/resume simulation</li>
+                <li><strong>[Ctrl + Z]</strong> - Undo</li>
+                <li><strong>[Ctrl + Y]</strong> - Redo</li>
+                <li><strong>[N]</strong> - Create a new network</li>
+                <li><strong>[S]</strong> - Save your network</li>
+                <li><strong>[L]</strong> - Load a saved network</li>
+                <li><strong>[P]</strong> - Print the current network</li>
+              </ul>
+            </div>
           </div>
 
-          <!-- Normal Save button outside the scrollable area -->
-          <button id="saveSettings" class="save-button">Save Settings</button>
-
+          <!-- Bloque de Settings -->
+          <div class="settings-container">
+            <h3>General Settings</h3>
+            <div class="scrollable-content">
+              <ul class="settings-list">
+                <li class="setting-item">
+                  <label for="colorPicker">Highlighter Color</label>
+                  <input type="color" id="colorPicker">
+                </li>
+                <li class="setting-item">
+                  <label for="autoConnections">Auto Connections</label>
+                  <input type="checkbox" id="autoConnections" class="switch-input">
+                </li>
+                <li class="setting-item">
+                  <label for="autoConnections">Config_1</label>
+                  <input type="checkbox" id="Config_1" class="switch-input">
+                </li>
+                <li class="setting-item">
+                  <label for="autoConnections">Config_2</label>
+                  <input type="checkbox" id="Config_2" class="switch-input">
+                </li>
+                <li class="setting-item">
+                  <label for="autoConnections">Config_3</label>
+                  <input type="checkbox" id="Config_3" class="switch-input">
+                </li>
+                <li class="setting-item">
+                  <label for="autoConnections">Config_4</label>
+                  <input type="checkbox" id="Config_4" class="switch-input">
+                </li>
+                <li class="setting-item">
+                  <label for="autoConnections">Config_5</label>
+                  <input type="checkbox" id="Config_5" class="switch-input">
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
+
+        <!-- Botón Guardar -->
+        <button id="saveSettings" class="save-button">Save Settings</button>
       </div>
-    `;
+    </div>
+  `;
 
     // Capture element references
-    this.modalOverlay = document.querySelector(".modal-overlay") as HTMLDivElement;
-    this.modalContent = document.querySelector(".modal-content") as HTMLDivElement;
+    this.modalOverlay = document.querySelector(
+      ".modal-overlay",
+    ) as HTMLDivElement;
+    this.modalContent = document.querySelector(
+      ".modal-content",
+    ) as HTMLDivElement;
     this.closeBtn = document.querySelector(".close") as HTMLSpanElement;
-    this.saveSettingsButton = document.getElementById("saveSettings") as HTMLButtonElement;
-    this.colorPicker = document.getElementById("colorPicker") as HTMLInputElement;
+    this.saveSettingsButton = document.getElementById(
+      "saveSettings",
+    ) as HTMLButtonElement;
+    this.colorPicker = document.getElementById(
+      "colorPicker",
+    ) as HTMLInputElement;
   }
 
   private setupEventListeners() {
-    if (!this.modalOverlay || !this.modalContent || !this.closeBtn || !this.saveSettingsButton || !this.colorPicker) {
+    if (
+      !this.modalOverlay ||
+      !this.modalContent ||
+      !this.closeBtn ||
+      !this.saveSettingsButton ||
+      !this.colorPicker
+    ) {
       console.error("Some modal elements were not found.");
       return;
     }
@@ -119,7 +147,9 @@ export class ConfigModal {
 
     // Event to update temp color without saving it
     this.colorPicker.oninput = () => {
-      this.tempColor = this.hexToNumber(this.colorPicker!.value);
+      if (this.colorPicker) {
+        this.tempColor = this.hexToNumber(this.colorPicker.value);
+      }
     };
   }
 
@@ -153,7 +183,9 @@ export class ConfigModal {
       this.modalContent.classList.remove("show");
 
       setTimeout(() => {
-        this.modalOverlay!.style.display = "none"; // Hide after animation
+        if (this.modalOverlay) {
+          this.modalOverlay.style.display = "none"; // Hide after animation
+        }
       }, 300);
     }
   }
@@ -162,7 +194,7 @@ export class ConfigModal {
     // Save the temp color as the actual selected color
     if (this.tempColor != this.selectedColor) {
       this.selectedColor = this.tempColor;
-      this.ctx.change_select_color(this.selectedColor);;
+      this.ctx.change_select_color(this.selectedColor);
     }
 
     console.log("Settings saved. Applied color:", this.selectedColor);

@@ -17,7 +17,7 @@ export interface CreateDevice {
 export function createDevice(
   deviceInfo: CreateDevice,
   viewgraph: ViewGraph,
-  ctx: GlobalContext
+  ctx: GlobalContext,
 ): Device {
   const position: { x: number; y: number } = deviceInfo.node;
   let mac: MacAddress;

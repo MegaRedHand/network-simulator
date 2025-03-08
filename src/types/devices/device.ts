@@ -235,7 +235,10 @@ export abstract class Device extends Container {
       color: this.ctx.get_select_color(),
       alpha: 0.6,
     });
-    this.highlightMarker.fill({ color: this.ctx.get_select_color(), alpha: 0.1 });
+    this.highlightMarker.fill({
+      color: this.ctx.get_select_color(),
+      alpha: 0.1,
+    });
     this.highlightMarker.zIndex = ZIndexLevels.Device;
 
     // Ensure the marker is in the same container as the viewport

@@ -131,7 +131,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   helpButton.onclick = () => {
     deselectElement();
     configModal.open();
-  }
+  };
   // Undo button’s logic
   const undoButton = document.getElementById(
     "undo-button",
