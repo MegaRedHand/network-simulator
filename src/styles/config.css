@@ -87,25 +87,6 @@
   font-size: 14px;
 }
 
-/* Botón y controles dentro del modal */
-.modal-content button,
-.modal-content select,
-.modal-content input[type="range"] {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.modal-content button:hover,
-.modal-content select:hover {
-  background: #162a6d;
-}
-
 /* Limit the settings container height and enable scrolling */
 .settings-container {
   max-height: 200px; /* Limit settings height */
@@ -148,8 +129,8 @@
 }
 
 /* Save button styling */
-.save-button {
-  background: #4fa3d1; /* Primary blue color */
+.modal-content .save-button {
+  background: #007bff; /* Primary blue color */
   color: white;
   border: none;
   padding: 10px 16px;
@@ -165,12 +146,12 @@
 }
 
 /* Hover effect */
-.save-button:hover {
-  background: #3c8bbd;
+.modal-content .save-button:hover {
+  background: #162a6d;
 }
 
 /* Click effect */
-.save-button:active {
+.modal-content .save-button:active {
   transform: scale(0.97);
 }
 
