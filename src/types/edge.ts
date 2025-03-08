@@ -157,6 +157,9 @@ export class Edge extends Graphics {
   }
 
   destroy() {
+    // Delete all curr packets
+    this.currPackets.forEach((packet) => this.deregisterPacket(packet));
+    
     deselectElement();
     super.destroy();
   }
@@ -194,5 +197,9 @@ export class Edge extends Graphics {
       this.currPackets.delete(packet);
       this.removeChild(packet);
     }
+  }
+
+  getPackets(): Set<Packet> {
+    return this.currPackets;
   }
 }

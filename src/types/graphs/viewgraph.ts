@@ -7,6 +7,7 @@ import { CreateDevice, createDevice } from "../devices/utils";
 import { layerFromType } from "../devices/device";
 import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
+import { PacketManager } from "../packetManager";
 
 export type EdgeId = string;
 
@@ -23,6 +24,7 @@ export class ViewGraph {
   private edges: Map<EdgeId, Edge> = new Map<EdgeId, Edge>();
   private datagraph: DataGraph;
   private layer: Layer;
+  private packetManager: PacketManager;
   viewport: Viewport;
 
   constructor(datagraph: DataGraph, ctx: GlobalContext, layer: Layer) {
@@ -30,6 +32,7 @@ export class ViewGraph {
     this.datagraph = datagraph;
     this.viewport = ctx.getViewport();
     this.layer = layer;
+    this.packetManager = new PacketManager(this);
     this.constructView();
   }
 
@@ -144,6 +147,10 @@ export class ViewGraph {
     return null;
   }
 
+  getEdges(): Map<EdgeId, Edge> {
+    return this.edges;
+  }
+
   deviceMoved(deviceId: DeviceId) {
     const device: Device = this.devices.get(deviceId);
     device.getConnections().forEach((adjacentId) => {
@@ -178,16 +185,22 @@ export class ViewGraph {
   //   calcular nueva 
 
   changeCurrLayer(newLayer: Layer) {
+    
+    const packets = this.packetManager.getCurrPackets();
+    const packetRoutes = this.packetManager.getPacketsRoutes(packets);
+    
     this.layer = newLayer;
     this.clear();
     this.constructView();
-    // agregar paquetes
+
+    this.packetManager.addPackets(packetRoutes);
+
     const layerSelect = document.getElementById(
-      "layer-select",
+        "layer-select",
     ) as HTMLSelectElement;
     const event = new CustomEvent("layerChanged");
     layerSelect.dispatchEvent(event);
-  }
+}
 
   getSpeed(): number {
     return this.ctx.getCurrentSpeed().value;
