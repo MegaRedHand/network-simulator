@@ -1,17 +1,37 @@
-export const createConfigModal = () => {
-  const modalContainer = document.getElementById("settingsModal");
+import { GlobalContext } from "./context";
 
-  if (!modalContainer) {
-    console.error("No se encontró el contenedor del modal.");
-    return;
+export class ConfigModal {
+  private ctx: GlobalContext;
+  private modalOverlay: HTMLDivElement | null;
+  private modalContent: HTMLDivElement | null;
+  private closeBtn: HTMLSpanElement | null;
+  private saveSettingsButton: HTMLButtonElement | null;
+
+  constructor(ctx: GlobalContext) {
+    this.ctx = ctx;
+    this.modalOverlay = null;
+    this.modalContent = null;
+    this.closeBtn = null;
+    this.saveSettingsButton = null;
+
+    this.createModal();
+    this.setupEventListeners();
   }
 
-  modalContainer.innerHTML = `
+  private createModal() {
+    const modalContainer = document.getElementById("settingsModal");
+
+    if (!modalContainer) {
+      console.error("No se encontró el contenedor del modal.");
+      return;
+    }
+
+    modalContainer.innerHTML = `
       <div class="modal-overlay">
         <div class="modal-content">
           <span class="close">&times;</span>
           <h2>Settings & Shortcuts</h2>
-  
+
           <h3>Keyboard Shortcuts</h3>
           <ul>
             <li><strong>[C]</strong> - Connect devices</li>
@@ -25,81 +45,63 @@ export const createConfigModal = () => {
             <li><strong>[L]</strong> - Load a saved network</li>
             <li><strong>[P]</strong> - Print the current network</li>
           </ul>
-  
+
           <h3>General Settings</h3>
-  
           <button id="saveSettings">Save Settings</button>
         </div>
       </div>
     `;
 
-  setupModalLogic(); // Asegurar que los eventos se asignen después de inyectar el modal
-};
-
-export const openConfigModal = () => {
-  const modalOverlay = document.querySelector(
-    ".modal-overlay",
-  ) as HTMLDivElement;
-  const modalContent = document.querySelector(
-    ".modal-content",
-  ) as HTMLDivElement;
-
-  if (modalOverlay && modalContent) {
-    modalOverlay.style.display = "flex"; // Primero lo hacemos visible
-    setTimeout(() => {
-      modalOverlay.classList.add("show");
-      modalContent.classList.add("show");
-    }, 10); // Pequeño delay para que la animación funcione bien
-  }
-};
-
-export const closeConfigModal = () => {
-  const modalOverlay = document.querySelector(
-    ".modal-overlay",
-  ) as HTMLDivElement;
-  const modalContent = document.querySelector(
-    ".modal-content",
-  ) as HTMLDivElement;
-
-  if (modalOverlay && modalContent) {
-    modalOverlay.classList.remove("show");
-    modalContent.classList.remove("show");
-
-    setTimeout(() => {
-      modalOverlay.style.display = "none"; // Ocultar después de la animación
-    }, 300);
-  }
-};
-
-// Asegurar que los eventos de cierre estén bien asignados
-export const setupModalLogic = () => {
-  const modalOverlay = document.querySelector(
-    ".modal-overlay",
-  ) as HTMLDivElement;
-  const closeBtn = document.querySelector(".close") as HTMLSpanElement;
-  const saveSettingsButton = document.getElementById(
-    "saveSettings",
-  ) as HTMLButtonElement;
-
-  if (!modalOverlay || !closeBtn || !saveSettingsButton) {
-    console.error("No se encontraron algunos elementos del modal.");
-    return;
+    // Capturar referencias de los elementos
+    this.modalOverlay = document.querySelector(".modal-overlay") as HTMLDivElement;
+    this.modalContent = document.querySelector(".modal-content") as HTMLDivElement;
+    this.closeBtn = document.querySelector(".close") as HTMLSpanElement;
+    this.saveSettingsButton = document.getElementById("saveSettings") as HTMLButtonElement;
   }
 
-  // Evento para cerrar modal al hacer clic en la "X"
-  closeBtn.onclick = closeConfigModal;
+  private setupEventListeners() {
+    if (!this.modalOverlay || !this.modalContent || !this.closeBtn || !this.saveSettingsButton) {
+      console.error("No se encontraron algunos elementos del modal.");
+      return;
+    }
 
-  // Evento para cerrar modal al hacer clic fuera de él
-  modalOverlay.onclick = (event) => {
-    if (event.target === modalOverlay) closeConfigModal();
-  };
+    // Evento para cerrar modal al hacer clic en la "X"
+    this.closeBtn.onclick = () => this.close();
 
-  // Evento para guardar la configuración y cerrar el modal
-  saveSettingsButton.onclick = () => {
-    // Guardar configuración en localStorage
+    // Evento para cerrar modal al hacer clic fuera de él
+    this.modalOverlay.onclick = (event) => {
+      if (event.target === this.modalOverlay) this.close();
+    };
 
-    console.log("Configuración guardada:");
+    // Evento para guardar la configuración
+    this.saveSettingsButton.onclick = () => {
+      this.saveSettings();
+    };
+  }
 
-    closeConfigModal(); // Cierra el modal después de guardar
-  };
-};
+  public open() {
+    if (this.modalOverlay && this.modalContent) {
+      this.modalOverlay.style.display = "flex"; // Primero lo hacemos visible
+      setTimeout(() => {
+        this.modalOverlay?.classList.add("show");
+        this.modalContent?.classList.add("show");
+      }, 10); // Pequeño delay para que la animación funcione bien
+    }
+  }
+
+  public close() {
+    if (this.modalOverlay && this.modalContent) {
+      this.modalOverlay.classList.remove("show");
+      this.modalContent.classList.remove("show");
+
+      setTimeout(() => {
+        this.modalOverlay!.style.display = "none"; // Ocultar después de la animación
+      }, 300);
+    }
+  }
+
+  private saveSettings() {
+    // Guardar configuración en el GlobalContext
+    console.log("Configuración guardada en el GlobalContext:", this.ctx);
+  }
+}
