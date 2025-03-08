@@ -79,10 +79,10 @@
   font-size: 14px;
 }
 
-/* Botón y controles */
-button,
-select,
-input[type="range"] {
+/* Botón y controles dentro del modal */
+.modal-content button,
+.modal-content select,
+.modal-content input[type="range"] {
   background: #4fa3d1;
   color: white;
   border: none;
@@ -93,7 +93,8 @@ input[type="range"] {
   transition: 0.3s;
 }
 
-button:hover,
-select:hover {
+.modal-content button:hover,
+.modal-content select:hover {
   background: #3c8bbd;
 }
+
