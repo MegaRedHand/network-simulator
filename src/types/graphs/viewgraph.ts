@@ -1,6 +1,6 @@
 import { Device, NetworkDevice } from "./../devices";
 import { Edge, EdgeEdges } from "./../edge";
-import { DataGraph, DeviceId } from "./datagraph";
+import { DataGraph, DeviceId, GraphNode } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
 import { CreateDevice, createDevice } from "../devices/utils";
@@ -33,8 +33,7 @@ export class ViewGraph {
     for (const [deviceId, graphNode] of this.datagraph.getDevices()) {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
         const connections = this.datagraph.getConnections(deviceId);
-        const deviceInfo = { id: deviceId, node: graphNode, connections };
-        this.createDevice(deviceInfo);
+        this.createDevice(deviceId, graphNode);
 
         this.computeLayerConnections(deviceId, allConnections);
       }
@@ -44,7 +43,7 @@ export class ViewGraph {
   }
 
   addDevice(deviceData: CreateDevice) {
-    const device = this.createDevice(deviceData);
+    const device = this.createDevice(deviceData.id, deviceData.node);
     if (deviceData.connections.length !== 0) {
       const connections = new Set<EdgeId>();
       this.computeLayerConnections(deviceData.id, connections);
@@ -55,19 +54,17 @@ export class ViewGraph {
   }
 
   // Add a device to the graph
-  private createDevice(deviceData: CreateDevice): Device {
-    if (this.graph.hasVertex(deviceData.id)) {
-      console.warn(
-        `Device with ID ${deviceData.id} already exists in the graph.`,
-      );
-      return this.graph.getVertex(deviceData.id);
+  private createDevice(id: DeviceId, node: GraphNode): Device {
+    if (this.graph.hasVertex(id)) {
+      console.warn(`Device with ID ${id} already exists in the graph.`);
+      return this.graph.getVertex(id);
     }
-    const device = createDevice(deviceData.id, deviceData.node, this, this.ctx);
+    const device = createDevice(id, node, this, this.ctx);
 
     this.graph.setVertex(device.id, device);
     this.viewport.addChild(device);
     console.log(`Device added with ID ${device.id}`);
-    return this.graph.getVertex(deviceData.id);
+    return this.graph.getVertex(id);
   }
 
   private addConnections(connections: Set<EdgeId>) {
