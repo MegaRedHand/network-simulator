@@ -14,6 +14,7 @@ import { Layer } from "../types/devices/layer";
 //import { EchoMessage } from "../packets/icmp";
 import { DeviceId, isRouter, isSwitch } from "./graphs/datagraph";
 import { EthernetFrame } from "../packets/ethernet";
+import { IPv4Packet } from "../packets/ip";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
@@ -287,6 +288,14 @@ export function sendRawPacket(
     );
     return;
   }
-  const packet = new Packet(viewgraph, "ICMP-8", srcId, dstId, rawPacket);
+  let type;
+  if (rawPacket.payload instanceof IPv4Packet) {
+    const payload = rawPacket.payload as IPv4Packet;
+    type = payload.payload.getPacketType();
+  } else {
+    console.warn("Packet is not IPv4");
+    type = "ICMP-8";
+  }
+  const packet = new Packet(viewgraph, type, srcId, dstId, rawPacket);
   packet.traverseEdge(firstEdge, srcId);
 }
