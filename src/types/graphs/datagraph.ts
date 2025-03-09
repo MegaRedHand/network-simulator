@@ -5,13 +5,7 @@ import { Graph, VertexId } from "./graph";
 
 export type DeviceId = VertexId;
 
-interface CommonGraphNode {
-  x: number;
-  y: number;
-  type: DeviceType;
-}
-
-interface LinkGraphNode extends CommonGraphNode {
+interface LinkGraphNode extends CommonDataNode {
   mac: string;
   arpTable: Map<string, string>;
 }
@@ -65,10 +59,12 @@ export function isLinkNode(node: GraphNode): node is LinkGraphNode {
 }
 
 export type GraphNode =
-  | CommonGraphNode
+  | CommonDataNode
   | RouterGraphNode
   | HostGraphNode
   | SwitchGraphNode;
+
+// STORAGE DATA TYPES
 
 export type GraphDataNode =
   | CommonDataNode
@@ -81,7 +77,6 @@ interface CommonDataNode {
   x: number;
   y: number;
   type: DeviceType;
-  connections: DeviceId[];
 }
 
 interface LinkDataNode extends CommonDataNode {
@@ -108,7 +103,21 @@ interface SwitchDataNode extends LinkDataNode {
   type: DeviceType.Switch;
 }
 
-export type GraphData = GraphDataNode[];
+interface EdgeTip {
+  id: DeviceId;
+  // TODO: uncomment this
+  // iface: number;
+}
+
+interface GraphEdge {
+  from: EdgeTip;
+  to: EdgeTip;
+}
+
+export interface GraphData {
+  nodes: GraphDataNode[];
+  edges: GraphEdge[];
+}
 
 export interface NewDevice {
   x: number;
@@ -121,45 +130,37 @@ export interface NewDevice {
 
 export class DataGraph {
   // NOTE: we don't store data in edges yet
-  private deviceGraph = new Graph<GraphNode, unknown>();
+  private deviceGraph = new Graph<GraphNode, GraphEdge>();
   private idCounter: DeviceId = 1;
   private onChanges: (() => void)[] = [];
 
   static fromData(data: GraphData): DataGraph {
     const dataGraph = new DataGraph();
-    data.forEach((nodeData: GraphDataNode) => {
+
+    data.nodes.forEach((nodeData: GraphDataNode) => {
       console.log(nodeData);
+      dataGraph.addDevice(nodeData.id, nodeData, []);
+    });
 
-      let graphNode: GraphNode = nodeData;
-
-      if (nodeData.type === DeviceType.Router) {
-        // If the node is a router, include the routing table
-        const routerNode = nodeData as RouterDataNode;
-        graphNode = {
-          ...routerNode,
-          routingTable: routerNode.routingTable || [], // Ensure routingTable exists
-        };
-      }
-
-      dataGraph.addDevice(nodeData.id, graphNode, nodeData.connections);
+    data.edges.forEach((edgeData: GraphEdge) => {
+      dataGraph.deviceGraph.setEdge(edgeData.from.id, edgeData.to.id, edgeData);
     });
 
     return dataGraph;
   }
 
   toData(): GraphData {
-    const graphData: GraphData = [];
+    const nodes: GraphDataNode[] = [];
+    const edges: GraphEdge[] = [];
 
     // Serialize nodes
-    for (const [id, info] of this.deviceGraph.getAllVertices()) {
-      const graphNode: GraphDataNode = {
-        ...info,
-        id,
-        connections: Array.from(this.deviceGraph.getNeighbors(id)),
-      };
-      graphData.push(graphNode);
+    for (const [, node] of this.deviceGraph.getAllVertices()) {
+      nodes.push(node);
     }
-    return graphData;
+    for (const [, , edge] of this.deviceGraph.getAllEdges()) {
+      edges.push(edge);
+    }
+    return { nodes, edges };
   }
 
   // Add a new device to the graph
@@ -167,10 +168,17 @@ export class DataGraph {
     const id = this.idCounter++;
     const graphnode: GraphNode = {
       ...deviceInfo,
-      routingTable: [],
-      runningPrograms: [],
-      arpTable: new Map(),
+      id,
     };
+    if (isRouter(graphnode)) {
+      graphnode.routingTable = [];
+    }
+    if (isSwitch(graphnode)) {
+      graphnode.arpTable = new Map();
+    }
+    if (isHost(graphnode)) {
+      graphnode.runningPrograms = [];
+    }
     this.deviceGraph.setVertex(id, graphnode);
     console.log(`Device added with ID ${id}`);
     this.notifyChanges();
@@ -189,7 +197,8 @@ export class DataGraph {
     }
     this.deviceGraph.setVertex(idDevice, deviceInfo);
     connections.forEach((connectedId) => {
-      this.deviceGraph.setEdge(idDevice, connectedId);
+      const edge = { from: { id: idDevice }, to: { id: connectedId } };
+      this.deviceGraph.setEdge(idDevice, connectedId, edge);
     });
     if (this.idCounter <= idDevice) {
       this.idCounter = idDevice + 1;
@@ -220,7 +229,8 @@ export class DataGraph {
       );
       return;
     }
-    this.deviceGraph.setEdge(n1Id, n2Id);
+    const edge = { from: { id: n1Id }, to: { id: n2Id } };
+    this.deviceGraph.setEdge(n1Id, n2Id, edge);
 
     console.log(
       `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,
