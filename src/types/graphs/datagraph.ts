@@ -143,35 +143,25 @@ export class DataGraph {
 
   static fromData(data: GraphData): DataGraph {
     const dataGraph = new DataGraph();
-    const connections = new Map<DeviceId, DeviceId[]>();
-    data.edges.forEach((edgeData: GraphEdge) => {
-      const addConnection = (from: DeviceId, to: DeviceId) => {
-        let conns = connections.get(from);
-        if (!conns) {
-          conns = [];
-        }
-        conns.push(to);
-        connections.set(from, conns);
-      };
-      addConnection(edgeData.from.id, edgeData.to.id);
-      addConnection(edgeData.to.id, edgeData.from.id);
-    });
+
     data.nodes.forEach((nodeData: GraphDataNode) => {
       console.log(nodeData);
 
       let graphNode: GraphNode = nodeData;
 
-      if (nodeData.type === DeviceType.Router) {
+      if (isRouter(nodeData)) {
         // If the node is a router, include the routing table
-        const routerNode = nodeData as RouterDataNode;
         graphNode = {
-          ...routerNode,
-          routingTable: routerNode.routingTable || [], // Ensure routingTable exists
+          ...nodeData,
+          routingTable: nodeData.routingTable || [], // Ensure routingTable exists
         };
       }
 
-      const conns = connections.get(nodeData.id) || [];
-      dataGraph.addDevice(nodeData.id, graphNode, conns);
+      dataGraph.addDevice(nodeData.id, graphNode, []);
+    });
+
+    data.edges.forEach((edgeData: GraphEdge) => {
+      dataGraph.deviceGraph.setEdge(edgeData.from.id, edgeData.to.id, edgeData);
     });
 
     return dataGraph;
