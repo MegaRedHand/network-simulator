@@ -122,16 +122,11 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   const helpButton = document.getElementById("help-button");
 
   const configModal = new ConfigModal(ctx);
-  // Asigna las funciones a los botones
   newButton.onclick = () => triggerNew(ctx);
   saveButton.onclick = () => triggerSave(ctx);
   loadButton.onclick = () => triggerLoad(ctx);
   printButton.onclick = () => triggerPrint(ctx);
-  // Función para abrir el modal
-  helpButton.onclick = () => {
-    deselectElement();
-    configModal.open();
-  };
+  helpButton.onclick = () => triggerHelp(configModal);
   // Undo button’s logic
   const undoButton = document.getElementById(
     "undo-button",
@@ -177,9 +172,9 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   redoButton.onclick = triggerRedo;
 
-  // Add keyboard shortcuts for Undo (Ctrl+Z) and Redo (Ctrl+Y)
+  // Add keyboard shortcuts
   document.addEventListener("keydown", (event) => {
-    // Verifica si el usuario está escribiendo en un input o textarea
+    // Check if the user is typing in an input or textarea
     const activeElement = document.activeElement as HTMLElement;
     if (
       activeElement &&
@@ -187,13 +182,14 @@ async function loadAssets(otherPromises: Promise<void>[]) {
         activeElement instanceof HTMLTextAreaElement ||
         activeElement.isContentEditable)
     ) {
-      return; // Evita que los atajos se ejecuten si el usuario está escribiendo
+      return; // Prevent shortcuts from executing while typing
     }
 
+    // Handle Ctrl key combinations
     if (event.ctrlKey) {
       switch (event.key) {
         case "Z": // Ctrl+Shift+Z for Redo
-          event.preventDefault(); // Prevent default browser action (like undo in text inputs)
+          event.preventDefault(); // Prevent default browser action (e.g., undo in text inputs)
           triggerRedo();
           break;
         case "z": // Ctrl+Z for Undo
@@ -206,26 +202,27 @@ async function loadAssets(otherPromises: Promise<void>[]) {
           break;
       }
     } else {
+      // Handle single key shortcuts
       switch (event.key.toLowerCase()) {
-        case "n":
+        case "n": // Create a new network
           event.preventDefault();
           triggerNew(ctx);
           break;
-        case "s":
+        case "s": // Save the network
           event.preventDefault();
           triggerSave(ctx);
           break;
-        case "l":
+        case "l": // Load a network
           event.preventDefault();
           triggerLoad(ctx);
           break;
-        case "p":
+        case "p": // Print the network
           event.preventDefault();
           triggerPrint(ctx);
           break;
-        case "h": // Nuevo atajo para abrir el Help
+        case "h": // Open the Help modal
           event.preventDefault();
-          triggerHelp();
+          triggerHelp(configModal);
           break;
       }
     }
@@ -258,6 +255,13 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   pauseButton.onclick = triggerPause;
 
+  document.body.onkeyup = function (e) {
+    if (e.key === " " || e.code === "Space") {
+      triggerPause();
+      e.preventDefault();
+    }
+  };
+
   function updateSpeedWheel(value: number) {
     const speedWheel = document.getElementById(
       "speed-wheel",
@@ -288,13 +292,6 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     layerSelect.value = currLayer;
     leftBar.setButtonsByLayer(currLayer);
   });
-
-  document.body.onkeyup = function (e) {
-    if (e.key === " " || e.code === "Space") {
-      triggerPause();
-      e.preventDefault();
-    }
-  };
 
   const speedMultiplier = ctx.getCurrentSpeed();
   console.log("Current Speed Multiplier: ", speedMultiplier);

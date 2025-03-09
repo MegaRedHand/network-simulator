@@ -6,6 +6,8 @@ import {
   loadFromFile,
 } from "./types/viewportManager";
 import { GlobalContext } from "./context";
+import { Config } from "typescript-eslint";
+import { ConfigModal } from "./config";
 
 export enum Colors {
   Violet = 0x4b0082,
@@ -37,46 +39,31 @@ export enum ZIndexLevels {
   Label = 19,
 }
 
-// Función para crear una nueva red
+// Function to create a new network
 export const triggerNew = (ctx: GlobalContext) => {
-  deselectElement();
-  ctx.load(new DataGraph());
+  deselectElement(); // Deselect any currently selected element
+  ctx.load(new DataGraph()); // Load a new empty DataGraph into the context
 };
 
-// Función para guardar la red
+// Function to save the network
 export const triggerSave = (ctx: GlobalContext) => {
-  deselectElement();
-  saveToFile(ctx);
+  deselectElement(); // Deselect any currently selected element
+  saveToFile(ctx); // Save the current network to a file
 };
 
-// Función para cargar una red desde un archivo
+// Function to load a network from a file
 export const triggerLoad = (ctx: GlobalContext) => {
-  deselectElement();
-  loadFromFile(ctx);
+  deselectElement(); // Deselect any currently selected element
+  loadFromFile(ctx); // Load a network from a file into the context
 };
 
-// Función para imprimir la red
+// Function to print the network
 export const triggerPrint = (ctx: GlobalContext) => {
-  ctx.print();
+  ctx.print(); // Print the current network
 };
 
-// Función para abrir la ayuda
-export const triggerHelp = () => {
-  alert(
-    "GEduNet - Keyboard Shortcuts \n\n" +
-      "🔹 General Controls:\n" +
-      "[C] - Connect devices\n" +
-      "[H] - Open Help\n" +
-      "[Delete] or [Backspace] - Delete selected element\n" +
-      "[Space] - Pause/resume simulation\n\n" +
-      "🔹 Undo/Redo:\n" +
-      "[Ctrl + Z] - Undo last action\n" +
-      "[Ctrl + Y] - Redo last undone action\n" +
-      "[Ctrl + Shift + Z] - Alternative Redo\n\n" +
-      "🔹 Network Management:\n" +
-      "[N] - Create a new network\n" +
-      "[S] - Save your network\n" +
-      "[L] - Load a saved network\n" +
-      "[P] - Print the current network\n\n",
-  );
+// Function to open the help modal
+export const triggerHelp = (configModal: ConfigModal) => {
+  deselectElement(); // Deselect any currently selected element
+  configModal.open(); // Open the configuration/help modal
 };
