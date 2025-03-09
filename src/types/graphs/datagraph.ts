@@ -6,6 +6,7 @@ import { Graph, VertexId } from "./graph";
 export type DeviceId = VertexId;
 
 interface CommonGraphNode {
+  id: DeviceId;
   x: number;
   y: number;
   type: DeviceType;
@@ -83,7 +84,6 @@ interface CommonDataNode {
   x: number;
   y: number;
   type: DeviceType;
-  connections: DeviceId[];
 }
 
 interface LinkDataNode extends CommonDataNode {
@@ -123,6 +123,7 @@ interface GraphEdge {
 
 export interface GraphData {
   nodes: GraphDataNode[];
+  edges: GraphEdge[];
 }
 
 export interface NewDevice {
@@ -142,6 +143,19 @@ export class DataGraph {
 
   static fromData(data: GraphData): DataGraph {
     const dataGraph = new DataGraph();
+    const connections = new Map<DeviceId, DeviceId[]>();
+    data.edges.forEach((edgeData: GraphEdge) => {
+      const addConnection = (from: DeviceId, to: DeviceId) => {
+        let conns = connections.get(from);
+        if (!conns) {
+          conns = [];
+        }
+        conns.push(to);
+        connections.set(from, conns);
+      };
+      addConnection(edgeData.from.id, edgeData.to.id);
+      addConnection(edgeData.to.id, edgeData.from.id);
+    });
     data.nodes.forEach((nodeData: GraphDataNode) => {
       console.log(nodeData);
 
@@ -156,7 +170,8 @@ export class DataGraph {
         };
       }
 
-      dataGraph.addDevice(nodeData.id, graphNode, nodeData.connections);
+      const conns = connections.get(nodeData.id) || [];
+      dataGraph.addDevice(nodeData.id, graphNode, conns);
     });
 
     return dataGraph;
@@ -164,17 +179,16 @@ export class DataGraph {
 
   toData(): GraphData {
     const nodes: GraphDataNode[] = [];
+    const edges: GraphEdge[] = [];
 
     // Serialize nodes
-    for (const [id, info] of this.deviceGraph.getAllVertices()) {
-      const graphNode: GraphDataNode = {
-        ...info,
-        id,
-        connections: Array.from(this.deviceGraph.getNeighbors(id)),
-      };
-      nodes.push(graphNode);
+    for (const [, node] of this.deviceGraph.getAllVertices()) {
+      nodes.push(node);
     }
-    return { nodes };
+    for (const [, , edge] of this.deviceGraph.getAllEdges()) {
+      edges.push(edge);
+    }
+    return { nodes, edges };
   }
 
   // Add a new device to the graph
@@ -182,6 +196,7 @@ export class DataGraph {
     const id = this.idCounter++;
     const graphnode: GraphNode = {
       ...deviceInfo,
+      id,
       routingTable: [],
       runningPrograms: [],
       arpTable: new Map(),
