@@ -50,6 +50,10 @@ export class Switch extends Device {
       const dstDevice = this.viewgraph.getDeviceByIP(
         datagram.destinationAddress,
       );
+      if (!dstDevice) {
+        console.error("Destination device not found");
+        return null;
+      }
       const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
       return Promise.resolve(path.length > 1 ? path[1] : null);
     }
