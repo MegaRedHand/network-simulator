@@ -1,17 +1,22 @@
 import { Application, Assets } from "pixi.js";
 import {
   deselectElement,
-  loadFromFile,
-  saveToFile,
   saveToLocalStorage,
   urManager,
 } from "./types/viewportManager";
-import { DataGraph } from "./types/graphs/datagraph";
 import { Packet } from "./types/packet";
 import { LeftBar } from "./graphics/left_bar";
 import { RightBar } from "./graphics/right_bar";
 import { Viewport } from "./graphics/viewport";
 import { GlobalContext } from "./context";
+import {
+  triggerNew,
+  triggerSave,
+  triggerLoad,
+  triggerPrint,
+  triggerHelp,
+} from "./utils";
+import { ConfigModal } from "./config";
 
 // Assets
 import "./styles";
@@ -23,7 +28,6 @@ import PauseSvg from "./assets/pause-icon.svg";
 import UndoSvg from "./assets/left-curve-arrow.svg";
 import RedoSvg from "./assets/right-curve-arrow.svg";
 import { layerToName } from "./types/devices/layer";
-import { captureAndDownloadViewport } from "./utils";
 
 const assets = [
   RouterSvg,
@@ -115,25 +119,14 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   const loadButton = document.getElementById("load-button");
   const saveButton = document.getElementById("save-button");
   const printButton = document.getElementById("print-button");
+  const helpButton = document.getElementById("help-button");
 
-  newButton.onclick = () => {
-    deselectElement();
-    ctx.load(new DataGraph());
-  };
-  saveButton.onclick = () => {
-    deselectElement();
-    saveToFile(ctx);
-  };
-  loadButton.onclick = () => {
-    deselectElement();
-    loadFromFile(ctx);
-  };
-  printButton.onclick = async () => {
-    const viewport = ctx.getViewport();
-    captureAndDownloadViewport(app, viewport);
-    ctx.print();
-  };
-
+  const configModal = new ConfigModal(ctx);
+  newButton.onclick = () => triggerNew(ctx);
+  saveButton.onclick = () => triggerSave(ctx);
+  loadButton.onclick = () => triggerLoad(ctx);
+  printButton.onclick = () => triggerPrint(app, ctx);
+  helpButton.onclick = () => triggerHelp(configModal);
   // Undo button’s logic
   const undoButton = document.getElementById(
     "undo-button",
@@ -179,24 +172,59 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   redoButton.onclick = triggerRedo;
 
-  // Add keyboard shortcuts for Undo (Ctrl+Z) and Redo (Ctrl+Y)
+  // Add keyboard shortcuts
   document.addEventListener("keydown", (event) => {
-    if (!event.ctrlKey) {
-      return;
+    // Check if the user is typing in an input or textarea
+    const activeElement = document.activeElement as HTMLElement;
+    if (
+      activeElement &&
+      (activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        activeElement.isContentEditable)
+    ) {
+      return; // Prevent shortcuts from executing while typing
     }
-    switch (event.key) {
-      case "Z": // Ctrl+Shift+Z for Redo
-        event.preventDefault(); // Prevent default browser action (like undo in text inputs)
-        triggerRedo();
-        break;
-      case "z": // Ctrl+Z for Undo
-        event.preventDefault(); // Prevent default browser action (like undo in text inputs)
-        triggerUndo();
-        break;
-      case "y": // Ctrl+Y for Redo
-        event.preventDefault(); // Prevent default browser action
-        triggerRedo();
-        break;
+
+    // Handle Ctrl key combinations
+    if (event.ctrlKey) {
+      switch (event.key) {
+        case "Z": // Ctrl+Shift+Z for Redo
+          event.preventDefault(); // Prevent default browser action (e.g., undo in text inputs)
+          triggerRedo();
+          break;
+        case "z": // Ctrl+Z for Undo
+          event.preventDefault(); // Prevent default browser action
+          triggerUndo();
+          break;
+        case "y": // Ctrl+Y for Redo
+          event.preventDefault(); // Prevent default browser action
+          triggerRedo();
+          break;
+      }
+    } else {
+      // Handle single key shortcuts
+      switch (event.key.toLowerCase()) {
+        case "n": // Create a new network
+          event.preventDefault();
+          triggerNew(ctx);
+          break;
+        case "s": // Save the network
+          event.preventDefault();
+          triggerSave(ctx);
+          break;
+        case "l": // Load a network
+          event.preventDefault();
+          triggerLoad(ctx);
+          break;
+        case "p": // Print the network
+          event.preventDefault();
+          triggerPrint(app, ctx);
+          break;
+        case "h": // Open the Help modal
+          event.preventDefault();
+          triggerHelp(configModal);
+          break;
+      }
     }
   });
 
@@ -226,6 +254,13 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   };
 
   pauseButton.onclick = triggerPause;
+
+  document.body.onkeyup = function (e) {
+    if (e.key === " " || e.code === "Space") {
+      triggerPause();
+      e.preventDefault();
+    }
+  };
 
   function updateSpeedWheel(value: number) {
     const speedWheel = document.getElementById(
@@ -257,13 +292,6 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     layerSelect.value = currLayer;
     leftBar.setButtonsByLayer(currLayer);
   });
-
-  document.body.onkeyup = function (e) {
-    if (e.key === " " || e.code === "Space") {
-      triggerPause();
-      e.preventDefault();
-    }
-  };
 
   const speedMultiplier = ctx.getCurrentSpeed();
   console.log("Current Speed Multiplier: ", speedMultiplier);

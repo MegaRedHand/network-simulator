@@ -70,7 +70,7 @@ export class ViewGraph {
       );
       return this.devices.get(deviceData.id);
     }
-    const device = createDevice(deviceData, this);
+    const device = createDevice(deviceData, this, this.ctx);
 
     this.devices.set(device.id, device);
     this.viewport.addChild(device);

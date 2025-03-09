@@ -1,0 +1,254 @@
+/* 🟢 Modal Overlay */
+.modal-overlay {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition:
+    opacity 0.3s ease-in-out,
+    visibility 0.3s ease-in-out;
+}
+
+/* 🟢 Modal Container */
+.modal-content {
+  background: #2b2b2b;
+  color: #ffffff;
+  padding: 25px;
+  width: 60%;
+  max-width: 750px;
+  max-height: 80vh;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: scale(0.9);
+  transition:
+    transform 0.2s ease-out,
+    opacity 0.2s ease-out;
+}
+
+/* 🟢 Show Modal */
+.modal-overlay.show {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content.show {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* ❌ Close Button (X) */
+.close {
+  position: absolute;
+  right: 20px;
+  top: 15px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #ccc;
+  transition: 0.3s;
+}
+
+.close:hover {
+  color: #fff;
+}
+
+/* 🔹 Two-column layout (Shortcuts & Settings) */
+.modal-body {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+/* 🔹 Adjust columns to be equal */
+.shortcuts-container,
+.settings-container {
+  flex: 1;
+  text-align: left; /* Ensures text is left-aligned */
+  max-height: 300px;
+  overflow: hidden;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🔹 Center headers inside the blocks */
+.shortcuts-container h3,
+.settings-container h3 {
+  text-align: center; /* Centers text */
+  width: 100%;
+  font-size: 18px; /* Adjust size as needed */
+  margin-bottom: 10px; /* Space below the title */
+  display: flex;
+  justify-content: center; /* Ensures proper centering */
+}
+
+/* 🔹 Individual scroll inside each block */
+.scrollable-content {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 250px;
+  padding-right: 10px;
+}
+
+/* 🔹 Remove bullet points */
+.shortcuts-list,
+.settings-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* 🔹 List items */
+.shortcuts-list li,
+.settings-list li {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  margin-bottom: 5px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* 🔹 Configuration items */
+.setting-item {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 🔹 Switch label styles */
+.switch-label {
+  font-size: 14px;
+  font-weight: bold;
+  flex: 1; /* Takes up available space */
+}
+
+/* 🔹 Switch container */
+.switch-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+/* 🔹 Switch styles */
+.switch-input {
+  width: 40px;
+  height: 20px;
+  appearance: none;
+  background: #777;
+  border-radius: 10px;
+  outline: none;
+  cursor: pointer;
+  transition: 0.3s;
+  position: relative; /* Needed for moving the knob */
+}
+
+.switch-input:checked {
+  background: #13a341;
+}
+
+.switch-input::before {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  top: 1px;
+  left: 2px;
+  transition: 0.3s;
+}
+
+.switch-input:checked::before {
+  left: 20px;
+}
+
+/* 🟢 "Save Settings" Button (Only inside the modal) */
+.modal-content .save-button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    background 0.3s,
+    transform 0.1s;
+  margin-top: 15px;
+  align-self: center;
+  width: fit-content;
+  min-width: 120px;
+  text-align: center;
+}
+
+/* Hover effect */
+.modal-content .save-button:hover {
+  background: #162a6d;
+}
+
+/* Click effect */
+.modal-content .save-button:active {
+  transform: scale(0.97);
+}
+/* 🟢 Ensure the modal is responsive */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 85%; /* Ensures the modal stays visible on smaller screens */
+    max-width: 400px; /* Limits maximum width */
+    max-height: 85vh; /* Prevents excessive height */
+    flex-direction: column; /* Stack elements in a single column */
+    overflow: hidden; /* Prevents overflow */
+  }
+
+  .modal-body {
+    flex-direction: column; /* Stack sections vertically */
+    overflow-y: auto; /* Enable scrolling inside the modal */
+    max-height: 75vh; /* Ensure there's enough space for content */
+    padding-right: 5px;
+  }
+
+  .shortcuts-container,
+  .settings-container {
+    width: 100%; /* Each section takes full width */
+    max-height: 220px; /* Adjust height to prevent overlap */
+    overflow-y: auto; /* Allow independent scrolling inside each section */
+  }
+
+  /* 🔹 Reduce padding and margins for a compact design */
+  .modal-content h2 {
+    font-size: 18px; /* Reduce title size for smaller screens */
+  }
+
+  .shortcuts-container h3,
+  .settings-container h3 {
+    font-size: 16px; /* Adjust title size */
+    text-align: center;
+    margin-bottom: 5px;
+  }
+
+  /* 🔹 Reduce button size */
+  .modal-content .save-button {
+    padding: 8px 12px;
+    font-size: 13px;
+    min-width: 100px;
+  }
+}

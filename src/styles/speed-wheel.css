@@ -6,7 +6,7 @@
   background-color: #333333; /* Dark background for contrast */
   padding: 0.8vh 1.5vw; /* Slightly increases padding for spacing */
   border-radius: 0.5rem; /* Softens corners */
-  z-index: 1000; /* Ensures it stays above other elements */
+  z-index: 99; /* Ensures it stays above other elements */
 }
 
 /* 🔹 Speed label text */

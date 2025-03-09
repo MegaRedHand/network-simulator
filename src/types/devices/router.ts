@@ -9,6 +9,7 @@ import { DeviceId, isRouter } from "../graphs/datagraph";
 import { Texture } from "pixi.js";
 import { MacAddress } from "../../packets/ethernet";
 import { Packet } from "../packet";
+import { GlobalContext } from "../../context";
 
 export class Router extends NetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -27,12 +28,13 @@ export class Router extends NetworkDevice {
   constructor(
     id: DeviceId,
     viewgraph: ViewGraph,
+    ctx: GlobalContext,
     position: Position,
     mac: MacAddress,
     ip: IpAddress,
     mask: IpAddress,
   ) {
-    super(id, Router.getTexture(), viewgraph, position, mac, ip, mask);
+    super(id, Router.getTexture(), viewgraph, ctx, position, mac, ip, mask);
   }
 
   showInfo(): void {
