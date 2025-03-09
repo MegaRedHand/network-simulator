@@ -6,7 +6,6 @@ import {
   loadFromFile,
 } from "./types/viewportManager";
 import { GlobalContext } from "./context";
-import { Config } from "typescript-eslint";
 import { ConfigModal } from "./config";
 
 export enum Colors {
