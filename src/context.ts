@@ -133,14 +133,14 @@ export class GlobalContext {
 
   private setIpGenerator() {
     let maxIp = IpAddress.parse("10.0.0.0");
-    this.datagraph.getDevices().forEach((device) => {
+    for (const [, device] of this.datagraph.getDevices()) {
       if (isNetworkNode(device)) {
         const ip = IpAddress.parse(device.ip);
         if (maxIp.octets < ip.octets) {
           maxIp = ip;
         }
       }
-    });
+    }
     // TODO: we should use IpAddress instead of string here and in Datagraph
     const baseIp = maxIp.toString();
     const mask = "255.255.255.255";
@@ -149,14 +149,14 @@ export class GlobalContext {
 
   private setMacGenerator() {
     let maxMac = MacAddress.parse("00:00:10:00:00:00");
-    this.datagraph.getDevices().forEach((device) => {
+    for (const [, device] of this.datagraph.getDevices()) {
       if (isLinkNode(device)) {
         const mac = MacAddress.parse(device.mac);
         if (maxMac.octets < mac.octets) {
           maxMac = mac;
         }
       }
-    });
+    }
     // TODO: we should use MacAddress instead of string here and in Datagraph
     const baseMac = maxMac.toString();
     this.macGenerator = new MacAddressGenerator(baseMac);

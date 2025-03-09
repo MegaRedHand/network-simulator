@@ -135,7 +135,8 @@ export abstract class Device extends Container {
   /// Returns the data needed to create the device
   getCreateDevice(): CreateDevice {
     const node = this.viewgraph.getDataGraph().getDevice(this.id);
-    return { id: this.id, node };
+    const connections = this.viewgraph.getDataGraph().getConnections(this.id);
+    return { id: this.id, node, connections };
   }
 
   addConnection(adjacentId: DeviceId) {

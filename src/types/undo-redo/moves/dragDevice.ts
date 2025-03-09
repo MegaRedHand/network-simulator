@@ -2,10 +2,9 @@ import { Position } from "../../common";
 import { Layer } from "../../devices/layer";
 import { DeviceId } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
-import { BaseMove, TypeMove } from "./move";
+import { BaseMove } from "./move";
 
 export class DragDeviceMove extends BaseMove {
-  type: TypeMove = TypeMove.DragDevice;
   did: DeviceId;
   startPosition: Position;
   endPosition: Position;

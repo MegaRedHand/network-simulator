@@ -11,6 +11,7 @@ import { Switch } from "./switch";
 export interface CreateDevice {
   id: DeviceId;
   node: GraphNode;
+  connections: DeviceId[];
 }
 
 export function createDevice(
