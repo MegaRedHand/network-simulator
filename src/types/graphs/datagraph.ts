@@ -5,14 +5,7 @@ import { Graph, VertexId } from "./graph";
 
 export type DeviceId = VertexId;
 
-interface CommonGraphNode {
-  id: DeviceId;
-  x: number;
-  y: number;
-  type: DeviceType;
-}
-
-interface LinkGraphNode extends CommonGraphNode {
+interface LinkGraphNode extends CommonDataNode {
   mac: string;
   arpTable: Map<string, string>;
 }
@@ -66,7 +59,7 @@ export function isLinkNode(node: GraphNode): node is LinkGraphNode {
 }
 
 export type GraphNode =
-  | CommonGraphNode
+  | CommonDataNode
   | RouterGraphNode
   | HostGraphNode
   | SwitchGraphNode;
