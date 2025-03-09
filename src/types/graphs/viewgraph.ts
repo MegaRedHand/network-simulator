@@ -182,25 +182,27 @@ export class ViewGraph {
   }
 
   // agregar paquetes:
-  //   calcular nueva 
+  //   calcular nueva
 
   changeCurrLayer(newLayer: Layer) {
-    
-    const packets = this.packetManager.getCurrPackets();
-    const packetRoutes = this.packetManager.getPacketsRoutes(packets);
-    
+    const packetsInTransit = this.packetManager.getPacketsInTransit();
+
+    const formerLayer = this.layer;
     this.layer = newLayer;
     this.clear();
     this.constructView();
 
-    this.packetManager.addPackets(packetRoutes);
+    this.packetManager.addPackets(
+      packetsInTransit,
+      layerIncluded(newLayer, formerLayer),
+    );
 
     const layerSelect = document.getElementById(
-        "layer-select",
+      "layer-select",
     ) as HTMLSelectElement;
     const event = new CustomEvent("layerChanged");
     layerSelect.dispatchEvent(event);
-}
+  }
 
   getSpeed(): number {
     return this.ctx.getCurrentSpeed().value;
@@ -328,7 +330,7 @@ export class ViewGraph {
 
   getDeviceByIP(ipAddress: IpAddress) {
     return this.getDevices().find((device) => {
-      return device instanceof NetworkDevice && device.ip == ipAddress;
+      return device instanceof NetworkDevice && device.ip.equals(ipAddress);
     });
   }
 

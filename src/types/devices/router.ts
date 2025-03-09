@@ -86,6 +86,9 @@ export class Router extends NetworkDevice {
     if (!(datagram instanceof IPv4Packet)) {
       return null;
     }
+    console.debug(
+      `Dispositivo ${this.ip.toString()} recibe datagram con destino ${datagram.destinationAddress.toString()}`,
+    );
     if (this.ip.equals(datagram.destinationAddress)) {
       this.handlePacket(datagram);
       return null;

@@ -1,63 +1,69 @@
-import { Packet } from "./packet";
+import { Packet, PacketInfo } from "./packet";
 import { DeviceId } from "./graphs/datagraph";
 import { Edge } from "./edge";
 import { ViewGraph } from "./graphs/viewgraph";
 
 export class PacketManager {
-    private viewGraph: ViewGraph;
-    
-    constructor(viewGraph: ViewGraph) {
-        this.viewGraph = viewGraph;
+  private viewgraph: ViewGraph;
+
+  constructor(viewgraph: ViewGraph) {
+    this.viewgraph = viewgraph;
+  }
+
+  getPacketsInTransit(): Packet[] {
+    const packetsInTransit: Packet[] = [];
+
+    this.viewgraph.getEdges().forEach((edge) => {
+      const edgePackets = edge.getPackets();
+      packetsInTransit.push(...Array.from(edgePackets));
+    });
+
+    console.debug(`[PACKETS] All packets: ${packetsInTransit.length}`);
+    return packetsInTransit;
+  }
+
+  addPackets(packetsInTransit: Packet[], changeToUpperLayer: boolean) {
+    if (changeToUpperLayer) {
+      this.getNewDevicesForUpperLayer(packetsInTransit);
+    } else {
+      this.getNewDevicesForLowerLayer(packetsInTransit);
     }
+  }
 
-    getCurrPackets(): Set<Packet> {
-        const allPackets = new Set<Packet>();
-        
-        this.viewGraph.getEdges().forEach((edge) => {
-            const edgePackets = edge.getPackets();
-            console.log(`[PACKETS] Edge ${edge.connectedNodes} packets: ${edgePackets}`);
-            edgePackets.forEach((packet) => allPackets.add(packet));
-        });
-        
-        console.log(`[PACKETS] All packets: ${allPackets.size}`);
-        return allPackets;
-    }
+  private getNewDevicesForLowerLayer(packetsInTransit: Packet[]) {
+    packetsInTransit.forEach((packet) => {
+      const { prevDevice, nextDevice, currProgress } = packet.getPacketInfo();
+      const pathBetweenPackets = this.viewgraph.getPathBetween(
+        prevDevice,
+        nextDevice,
+      );
+      if (pathBetweenPackets.length == 2) {
+        // siga siga
+      }
+      const amountEdges = pathBetweenPackets.length - 1;
+      const idx = Math.ceil(amountEdges * currProgress);
+      const [newPrevDevice, newNextDevice] = [
+        pathBetweenPackets[idx - 1],
+        pathBetweenPackets[idx],
+      ];
+      console.debug(
+        `ReloadLocation with ${newPrevDevice} and ${newNextDevice}`,
+      );
+      packet.reloadLocation(newPrevDevice, newNextDevice);
+    });
+  }
 
-    getPacketsRoutes(currPackets: Set<Packet>): Map<Packet, DeviceId[]> {
-        const packetRoutes = new Map<Packet, DeviceId[]>();
-        currPackets.forEach((packet) => {
-            const route = this.viewGraph.getPathBetween(packet.srcId, packet.dstId);
-            packetRoutes.set(packet, route);
-        });
-
-        return packetRoutes;
-    }
-
-    addPackets(packetRoutes: Map<Packet, DeviceId[]>) {
-        const packets = new Set<Packet>();
-
-        packetRoutes.forEach((route, packet) => {
-            packets.add(packet);
-        });
-
-        const newPacketRoutes = this.getPacketsRoutes(packets);
-
-        packetRoutes.forEach((route, packet) => {
-            const newRoute = newPacketRoutes.get(packet);
-            console.log(`[ROUTES] Packet ${packet} route: ${route} new route: ${newRoute}`);
-            console.log(`[ROUTE] Current Edge ${packet.currentEdge.connectedNodes.n1}-${packet.currentEdge.connectedNodes.n2}`);
-
-            // TODO: Calcular la cantidad de saltos para poder mantener mejor el progreso del paquete
-            const n1 = newRoute[0];
-            const n2 = newRoute[1];
-
-            const edgeId = Edge.generateConnectionKey({ n1, n2 });
-            const edge = this.viewGraph.getEdge(edgeId);
-
-            if (edge) {
-                edge.registerPacket(packet);
-                packet.traverseEdge(edge, packet.srcId);
-            }
-        });
-    }
+  private getNewDevicesForUpperLayer(packetsInTransit: Packet[]) {
+    console.debug("Entro al upper");
+    packetsInTransit.forEach((packet) => {
+      const { prevDevice } = packet.getPacketInfo();
+      const pathBetweenPackets = this.viewgraph.getPathBetween(
+        prevDevice,
+        packet.dstId,
+      );
+      const newNextDevice = pathBetweenPackets[1];
+      console.debug(`ReloadLocation with ${prevDevice} and ${newNextDevice}`);
+      packet.reloadLocation(prevDevice, newNextDevice);
+    });
+  }
 }

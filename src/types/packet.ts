@@ -13,6 +13,9 @@ import { ViewGraph } from "./graphs/viewgraph";
 import { Layer } from "../types/devices/layer";
 import { DeviceId, isRouter, isSwitch } from "./graphs/datagraph";
 import { EthernetFrame } from "../packets/ethernet";
+import { Switch } from "./devices/switch";
+import { NetworkDevice } from "./devices";
+import { DeviceType } from "./devices/device";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
@@ -22,7 +25,36 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
 
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
 
+export interface PacketInfo {
+  prevDevice: DeviceId;
+  nextDevice: DeviceId;
+  currProgress: number;
+}
+
 export class Packet extends Graphics {
+  reloadLocation(newPrevDevice: number, newNextDevice: number) {
+    this.currentStart = newPrevDevice;
+    const currEdge = this.viewgraph.getEdge(
+      Edge.generateConnectionKey({ n1: newPrevDevice, n2: newNextDevice }),
+    );
+    if (!currEdge) {
+      // hacer algo
+      console.debug("CurrEdge no existe!");
+      this.delete();
+      return;
+    }
+    const nextDevice = this.viewgraph.getDevice(newNextDevice);
+    if (
+      nextDevice.getType() == DeviceType.Router ||
+      nextDevice.getType() == DeviceType.Host
+    ) {
+      this.rawPacket.destination = nextDevice.mac;
+    }
+    this.currentEdge = currEdge;
+    currEdge.registerPacket(this);
+    Ticker.shared.add(this.animationTick, this);
+  }
+
   packetId: string;
   speed = 100;
   progress = 0;
@@ -120,6 +152,15 @@ export class Packet extends Graphics {
     rightbar.addToggleButton("Packet Details", packetDetails);
   }
 
+  getPacketInfo(): PacketInfo {
+    const nextDevice = this.currentEdge.otherEnd(this.currentStart);
+    return {
+      prevDevice: this.currentStart,
+      nextDevice,
+      currProgress: this.progress,
+    };
+  }
+
   highlight() {
     this.context = highlightedPacketContext;
   }
@@ -149,10 +190,12 @@ export class Packet extends Graphics {
 
   async forwardPacket(currDeviceID: number) {
     const currDevice = this.viewgraph.getDevice(currDeviceID);
+    console.debug(`${currDeviceID} recibe el paquete`);
     const nextDeviceID = await currDevice.receivePacket(this);
 
     // Packet has reached its destination
     if (!nextDeviceID) {
+      console.debug("Paquet llego a destino!");
       return;
     }
 
@@ -162,6 +205,7 @@ export class Packet extends Graphics {
 
     // Packet has reached a dead end
     if (!edgeToForward) {
+      console.debug("no hay arista!");
       return;
     }
 

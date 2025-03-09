@@ -63,7 +63,6 @@ export class SingleEcho extends ProgramBase {
     const path = this.viewgraph.getPathBetween(this.srcId, this.dstId);
     let dstMac = dstDevice.mac;
     if (!path) return;
-    console.log(path);
     for (const id of path.slice(1)) {
       const device = this.viewgraph.getDevice(id);
       // if there’s a router in the middle, first send frame to router mac

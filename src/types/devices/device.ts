@@ -146,6 +146,10 @@ export abstract class Device extends Container {
     this.connections.delete(id);
   }
 
+  isAdjacent(deviceId: DeviceId): boolean {
+    return this.connections.has(deviceId);
+  }
+
   delete(): void {
     this.viewgraph.removeDevice(this.id);
     console.log(`Device ${this.id} deleted`);

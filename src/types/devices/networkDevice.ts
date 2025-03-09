@@ -63,6 +63,9 @@ export abstract class NetworkDevice extends Device {
 
   async receivePacket(packet: Packet): Promise<DeviceId | null> {
     const frame = packet.rawPacket;
+    console.debug(
+      `Dispositivo ${this.mac.toString()} recibe frame con destino ${frame.destination.toString()}`,
+    );
     if (this.mac.equals(frame.destination)) {
       return this.receiveDatagram(packet);
     }
