@@ -139,18 +139,7 @@ export class DataGraph {
 
     data.nodes.forEach((nodeData: GraphDataNode) => {
       console.log(nodeData);
-
-      let graphNode: GraphNode = nodeData;
-
-      if (isRouter(nodeData)) {
-        // If the node is a router, include the routing table
-        graphNode = {
-          ...nodeData,
-          routingTable: nodeData.routingTable || [], // Ensure routingTable exists
-        };
-      }
-
-      dataGraph.addDevice(nodeData.id, graphNode, []);
+      dataGraph.addDevice(nodeData.id, nodeData, []);
     });
 
     data.edges.forEach((edgeData: GraphEdge) => {
