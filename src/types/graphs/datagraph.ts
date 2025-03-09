@@ -197,10 +197,16 @@ export class DataGraph {
     const graphnode: GraphNode = {
       ...deviceInfo,
       id,
-      routingTable: [],
-      runningPrograms: [],
-      arpTable: new Map(),
     };
+    if (isRouter(graphnode)) {
+      graphnode.routingTable = [];
+    }
+    if (isSwitch(graphnode)) {
+      graphnode.arpTable = new Map();
+    }
+    if (isHost(graphnode)) {
+      graphnode.runningPrograms = [];
+    }
     this.deviceGraph.setVertex(id, graphnode);
     console.log(`Device added with ID ${id}`);
     this.notifyChanges();
