@@ -1,6 +1,4 @@
-import { Packet, PacketInfo } from "./packet";
-import { DeviceId } from "./graphs/datagraph";
-import { Edge } from "./edge";
+import { Packet } from "./packet";
 import { ViewGraph } from "./graphs/viewgraph";
 
 export class PacketManager {
@@ -32,7 +30,8 @@ export class PacketManager {
 
   private getNewDevicesForLowerLayer(packetsInTransit: Packet[]) {
     packetsInTransit.forEach((packet) => {
-      const { prevDevice, nextDevice, currProgress } = packet.getPacketInfo();
+      const { prevDevice, nextDevice, currProgress } =
+        packet.getPacketLocation();
       const pathBetweenPackets = this.viewgraph.getPathBetween(
         prevDevice,
         nextDevice,
@@ -56,7 +55,7 @@ export class PacketManager {
   private getNewDevicesForUpperLayer(packetsInTransit: Packet[]) {
     console.debug("Entro al upper");
     packetsInTransit.forEach((packet) => {
-      const { prevDevice } = packet.getPacketInfo();
+      const { prevDevice } = packet.getPacketLocation();
       const pathBetweenPackets = this.viewgraph.getPathBetween(
         prevDevice,
         packet.dstId,

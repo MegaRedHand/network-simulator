@@ -75,7 +75,7 @@ export class Edge extends Graphics {
 
     this.children.forEach((child) => {
       if (child instanceof Packet) {
-        child.updatePosition(this); // hay que recalcular la posicion
+        child.updatePosition(this);
       }
     });
   }
@@ -159,7 +159,7 @@ export class Edge extends Graphics {
   destroy() {
     // Delete all curr packets
     this.currPackets.forEach((packet) => this.deregisterPacket(packet));
-    
+
     deselectElement();
     super.destroy();
   }
