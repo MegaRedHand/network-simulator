@@ -70,6 +70,8 @@ export type GraphNode =
   | HostGraphNode
   | SwitchGraphNode;
 
+// STORAGE DATA TYPES
+
 export type GraphDataNode =
   | CommonDataNode
   | RouterDataNode
@@ -108,6 +110,17 @@ interface SwitchDataNode extends LinkDataNode {
   type: DeviceType.Switch;
 }
 
+interface EdgeTip {
+  id: DeviceId;
+  // TODO: uncomment this
+  // iface: number;
+}
+
+interface GraphEdge {
+  from: EdgeTip;
+  to: EdgeTip;
+}
+
 export type GraphData = GraphDataNode[];
 
 export interface NewDevice {
@@ -121,7 +134,7 @@ export interface NewDevice {
 
 export class DataGraph {
   // NOTE: we don't store data in edges yet
-  private deviceGraph = new Graph<GraphNode, unknown>();
+  private deviceGraph = new Graph<GraphNode, GraphEdge>();
   private idCounter: DeviceId = 1;
   private onChanges: (() => void)[] = [];
 
@@ -189,7 +202,8 @@ export class DataGraph {
     }
     this.deviceGraph.setVertex(idDevice, deviceInfo);
     connections.forEach((connectedId) => {
-      this.deviceGraph.setEdge(idDevice, connectedId);
+      const edge = { from: { id: idDevice }, to: { id: connectedId } };
+      this.deviceGraph.setEdge(idDevice, connectedId, edge);
     });
     if (this.idCounter <= idDevice) {
       this.idCounter = idDevice + 1;
@@ -220,7 +234,8 @@ export class DataGraph {
       );
       return;
     }
-    this.deviceGraph.setEdge(n1Id, n2Id);
+    const edge = { from: { id: n1Id }, to: { id: n2Id } };
+    this.deviceGraph.setEdge(n1Id, n2Id, edge);
 
     console.log(
       `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,

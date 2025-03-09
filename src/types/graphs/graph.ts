@@ -64,7 +64,7 @@ export class Graph<Vertex, Edge> {
     }
   }
 
-  setEdge(id: VertexId, otherId: VertexId, edge: Edge = null): void {
+  setEdge(id: VertexId, otherId: VertexId, edge: Edge): void {
     if (!this.hasVertex(id) || !this.hasVertex(otherId)) {
       return;
     }
