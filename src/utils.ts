@@ -1,5 +1,13 @@
-import { Viewport } from "pixi-viewport";
 import { Application, GraphicsContext, RenderTexture } from "pixi.js";
+import { DataGraph } from "./types/graphs/datagraph";
+import {
+  deselectElement,
+  saveToFile,
+  loadFromFile,
+} from "./types/viewportManager";
+import { GlobalContext } from "./context";
+import { ConfigModal } from "./config";
+import { Viewport } from "./graphics/viewport";
 
 export enum Colors {
   Violet = 0x4b0082,
@@ -31,6 +39,35 @@ export enum ZIndexLevels {
   Label = 19,
 }
 
+// Function to create a new network
+export const triggerNew = (ctx: GlobalContext) => {
+  deselectElement(); // Deselect any currently selected element
+  ctx.load(new DataGraph()); // Load a new empty DataGraph into the context
+};
+
+// Function to save the network
+export const triggerSave = (ctx: GlobalContext) => {
+  deselectElement(); // Deselect any currently selected element
+  saveToFile(ctx); // Save the current network to a file
+};
+
+// Function to load a network from a file
+export const triggerLoad = (ctx: GlobalContext) => {
+  deselectElement(); // Deselect any currently selected element
+  loadFromFile(ctx); // Load a network from a file into the context
+};
+
+// Function to print the network
+export const triggerPrint = (app: Application, ctx: GlobalContext) => {
+  captureAndDownloadViewport(app, ctx.getViewport());
+  ctx.print(); // Print the current network
+};
+
+// Function to open the help modal
+export const triggerHelp = (configModal: ConfigModal) => {
+  deselectElement(); // Deselect any currently selected element
+  configModal.open(); // Open the configuration/help modal
+};
 /**
  * Captures the current viewport and downloads it as an image.
  * @param app - The PixiJS application instance.

@@ -8,6 +8,7 @@ import { Packet } from "../packet";
 import { Texture } from "pixi.js";
 import { MacAddress } from "../../packets/ethernet";
 import { IPv4Packet } from "../../packets/ip";
+import { GlobalContext } from "../../context";
 
 export class Switch extends Device {
   static DEVICE_TEXTURE: Texture;
@@ -22,10 +23,11 @@ export class Switch extends Device {
   constructor(
     id: DeviceId,
     viewgraph: ViewGraph,
+    ctx: GlobalContext,
     position: Position,
     mac: MacAddress,
   ) {
-    super(id, Switch.getTexture(), viewgraph, position, mac);
+    super(id, Switch.getTexture(), viewgraph, ctx, position, mac);
   }
 
   showInfo(): void {

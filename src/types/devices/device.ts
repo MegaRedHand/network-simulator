@@ -25,6 +25,7 @@ import { Layer } from "./layer";
 import { Packet } from "../packet";
 import { CreateDevice } from "./utils";
 import { MacAddress } from "../../packets/ethernet";
+import { GlobalContext } from "../../context";
 
 export { Layer } from "./layer";
 
@@ -50,6 +51,7 @@ export abstract class Device extends Container {
 
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
+  ctx: GlobalContext;
 
   mac: MacAddress;
   arpTable: Map<IpAddress, MacAddress> = new Map<IpAddress, MacAddress>();
@@ -79,6 +81,7 @@ export abstract class Device extends Container {
     id: DeviceId,
     texture: Texture,
     viewgraph: ViewGraph,
+    ctx: GlobalContext,
     position: Position,
     mac: MacAddress,
   ) {
@@ -86,6 +89,7 @@ export abstract class Device extends Container {
 
     this.id = id;
     this.viewgraph = viewgraph;
+    this.ctx = ctx;
 
     this.mac = mac;
 
@@ -211,10 +215,13 @@ export abstract class Device extends Container {
     this.highlightMarker.roundRect(-width / 2, -height / 2, width, height, 5);
     this.highlightMarker.stroke({
       width: 3,
-      color: Colors.Violet,
+      color: this.ctx.get_select_color(),
       alpha: 0.6,
     });
-    this.highlightMarker.fill({ color: Colors.Violet, alpha: 0.1 });
+    this.highlightMarker.fill({
+      color: this.ctx.get_select_color(),
+      alpha: 0.1,
+    });
     this.highlightMarker.zIndex = ZIndexLevels.Device;
 
     // Ensure the marker is in the same container as the viewport

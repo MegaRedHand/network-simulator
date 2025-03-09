@@ -18,6 +18,7 @@ import {
 import { Packet } from "../packet";
 import { Texture } from "pixi.js";
 import { MacAddress } from "../../packets/ethernet";
+import { GlobalContext } from "../../context";
 
 export class Host extends NetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -35,12 +36,13 @@ export class Host extends NetworkDevice {
   constructor(
     id: DeviceId,
     viewgraph: ViewGraph,
+    ctx: GlobalContext,
     position: Position,
     mac: MacAddress,
     ip: IpAddress,
     mask: IpAddress,
   ) {
-    super(id, Host.getTexture(), viewgraph, position, mac, ip, mask);
+    super(id, Host.getTexture(), viewgraph, ctx, position, mac, ip, mask);
     this.loadRunningPrograms();
   }
 

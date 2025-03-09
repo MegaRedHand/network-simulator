@@ -1,0 +1,32 @@
+/* 🔹 Estilos para el botón de ayuda */
+#help-button {
+  width: 32px; /* Tamaño del botón */
+  height: 32px; /* Tamaño del botón */
+  border-radius: 50%; /* Hace el botón redondo */
+  background-color: #007bff; /* Color azul */
+  color: white; /* Texto en blanco */
+  font-size: 18px; /* Tamaño del símbolo '?' */
+  font-weight: bold; /* Texto en negrita */
+  border: none; /* Sin bordes */
+  cursor: pointer; /* Manito al pasar el mouse */
+  display: flex; /* Alinear el contenido */
+  align-items: center; /* Centrar verticalmente */
+  justify-content: center; /* Centrar horizontalmente */
+  margin-left: auto; /* Empuja el botón hacia la derecha */
+  margin-right: 1vw; /* Espaciado a la derecha */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Sombra para efecto 3D */
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s;
+}
+
+/* 🔹 Efecto al pasar el mouse */
+#help-button:hover {
+  background-color: #0056b3; /* Azul más oscuro */
+  transform: scale(1.1); /* Efecto de agrandado */
+}
+
+/* 🔹 Efecto al hacer clic */
+#help-button:active {
+  transform: scale(1); /* Vuelve a su tamaño normal */
+}
