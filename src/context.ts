@@ -43,9 +43,10 @@ export class GlobalContext {
     this.datagraph = datagraph;
     this.viewport.clear();
     if (this.viewgraph) {
-      this.viewgraph.clear();
+      this.viewgraph.changeCurrLayer(layer);
+    } else {
+      this.viewgraph = new ViewGraph(datagraph, this, layer);
     }
-    this.viewgraph = new ViewGraph(this.datagraph, this, layer);
     this.setIpGenerator();
     this.setMacGenerator();
   }

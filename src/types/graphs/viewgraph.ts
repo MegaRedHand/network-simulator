@@ -7,6 +7,7 @@ import { CreateDevice, createDevice } from "../devices/utils";
 import { layerFromType } from "../devices/device";
 import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
+import { PacketManager } from "../packetManager";
 
 export type EdgeId = string;
 
@@ -23,6 +24,7 @@ export class ViewGraph {
   private edges: Map<EdgeId, Edge> = new Map<EdgeId, Edge>();
   private datagraph: DataGraph;
   private layer: Layer;
+  private packetManager: PacketManager;
   viewport: Viewport;
 
   constructor(datagraph: DataGraph, ctx: GlobalContext, layer: Layer) {
@@ -30,6 +32,7 @@ export class ViewGraph {
     this.datagraph = datagraph;
     this.viewport = ctx.getViewport();
     this.layer = layer;
+    this.packetManager = new PacketManager(this);
     this.constructView();
   }
 
@@ -144,6 +147,10 @@ export class ViewGraph {
     return null;
   }
 
+  getEdges(): Map<EdgeId, Edge> {
+    return this.edges;
+  }
+
   deviceMoved(deviceId: DeviceId) {
     const device: Device = this.devices.get(deviceId);
     device.getConnections().forEach((adjacentId) => {
@@ -174,10 +181,22 @@ export class ViewGraph {
     return this.layer;
   }
 
+  // agregar paquetes:
+  //   calcular nueva
+
   changeCurrLayer(newLayer: Layer) {
+    const packetsInTransit = this.packetManager.getPacketsInTransit();
+
+    const formerLayer = this.layer;
     this.layer = newLayer;
     this.clear();
     this.constructView();
+
+    this.packetManager.addPackets(
+      packetsInTransit,
+      layerIncluded(newLayer, formerLayer),
+    );
+
     const layerSelect = document.getElementById(
       "layer-select",
     ) as HTMLSelectElement;
@@ -311,7 +330,7 @@ export class ViewGraph {
 
   getDeviceByIP(ipAddress: IpAddress) {
     return this.getDevices().find((device) => {
-      return device instanceof NetworkDevice && device.ip == ipAddress;
+      return device instanceof NetworkDevice && device.ip.equals(ipAddress);
     });
   }
 
@@ -396,10 +415,12 @@ export class ViewGraph {
   }
 
   clear() {
+    // paquetes <- llamar metodos de getCurrPackets
     this.viewport.clear();
     this.devices.forEach((device) => device.destroy());
     this.devices.clear();
     this.edges.forEach((edge) => edge.destroy());
     this.edges.clear();
+    // return paquetes
   }
 }

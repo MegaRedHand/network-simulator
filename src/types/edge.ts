@@ -19,6 +19,7 @@ export class Edge extends Graphics {
   endPos: Point;
   viewgraph: ViewGraph;
   rightbar: RightBar;
+  currPackets: Set<Packet> = new Set<Packet>();
 
   static generateConnectionKey(connectedNodes: EdgeEdges): string {
     const { n1, n2 } = connectedNodes;
@@ -74,7 +75,7 @@ export class Edge extends Graphics {
 
     this.children.forEach((child) => {
       if (child instanceof Packet) {
-        child.updatePosition();
+        child.updatePosition(this); // hay que recalcular la posicion
       }
     });
   }
@@ -156,6 +157,9 @@ export class Edge extends Graphics {
   }
 
   destroy() {
+    // Delete all curr packets
+    this.currPackets.forEach((packet) => this.deregisterPacket(packet));
+    
     deselectElement();
     super.destroy();
   }
@@ -180,5 +184,22 @@ export class Edge extends Graphics {
     );
 
     this.drawEdge(newStartPos, newEndPos, Colors.Lightblue);
+  }
+
+  registerPacket(packet: Packet) {
+    this.currPackets.add(packet);
+    this.addChild(packet);
+    packet.updatePosition(this);
+  }
+
+  deregisterPacket(packet: Packet) {
+    if (this.currPackets.has(packet)) {
+      this.currPackets.delete(packet);
+      this.removeChild(packet);
+    }
+  }
+
+  getPackets(): Set<Packet> {
+    return this.currPackets;
   }
 }
