@@ -121,7 +121,9 @@ interface GraphEdge {
   to: EdgeTip;
 }
 
-export type GraphData = GraphDataNode[];
+export interface GraphData {
+  nodes: GraphDataNode[];
+}
 
 export interface NewDevice {
   x: number;
@@ -140,7 +142,7 @@ export class DataGraph {
 
   static fromData(data: GraphData): DataGraph {
     const dataGraph = new DataGraph();
-    data.forEach((nodeData: GraphDataNode) => {
+    data.nodes.forEach((nodeData: GraphDataNode) => {
       console.log(nodeData);
 
       let graphNode: GraphNode = nodeData;
@@ -161,7 +163,7 @@ export class DataGraph {
   }
 
   toData(): GraphData {
-    const graphData: GraphData = [];
+    const nodes: GraphDataNode[] = [];
 
     // Serialize nodes
     for (const [id, info] of this.deviceGraph.getAllVertices()) {
@@ -170,9 +172,9 @@ export class DataGraph {
         id,
         connections: Array.from(this.deviceGraph.getNeighbors(id)),
       };
-      graphData.push(graphNode);
+      nodes.push(graphNode);
     }
-    return graphData;
+    return { nodes };
   }
 
   // Add a new device to the graph
