@@ -125,7 +125,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   newButton.onclick = () => triggerNew(ctx);
   saveButton.onclick = () => triggerSave(ctx);
   loadButton.onclick = () => triggerLoad(ctx);
-  printButton.onclick = () => triggerPrint(ctx);
+  printButton.onclick = () => triggerPrint(app, ctx);
   helpButton.onclick = () => triggerHelp(configModal);
   // Undo button’s logic
   const undoButton = document.getElementById(
@@ -218,7 +218,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
           break;
         case "p": // Print the network
           event.preventDefault();
-          triggerPrint(ctx);
+          triggerPrint(app, ctx);
           break;
         case "h": // Open the Help modal
           event.preventDefault();

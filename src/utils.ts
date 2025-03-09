@@ -1,4 +1,4 @@
-import { GraphicsContext } from "pixi.js";
+import { Application, GraphicsContext, RenderTexture } from "pixi.js";
 import { DataGraph } from "./types/graphs/datagraph";
 import {
   deselectElement,
@@ -7,6 +7,7 @@ import {
 } from "./types/viewportManager";
 import { GlobalContext } from "./context";
 import { ConfigModal } from "./config";
+import { Viewport } from "./graphics/viewport";
 
 export enum Colors {
   Violet = 0x4b0082,
@@ -57,7 +58,8 @@ export const triggerLoad = (ctx: GlobalContext) => {
 };
 
 // Function to print the network
-export const triggerPrint = (ctx: GlobalContext) => {
+export const triggerPrint = (app: Application, ctx: GlobalContext) => {
+  captureAndDownloadViewport(app, ctx.getViewport());
   ctx.print(); // Print the current network
 };
 
@@ -66,3 +68,45 @@ export const triggerHelp = (configModal: ConfigModal) => {
   deselectElement(); // Deselect any currently selected element
   configModal.open(); // Open the configuration/help modal
 };
+/**
+ * Captures the current viewport and downloads it as an image.
+ * @param app - The PixiJS application instance.
+ * @param viewport - The viewport instance to capture.
+ */
+export function captureAndDownloadViewport(
+  app: Application,
+  viewport: Viewport,
+) {
+  if (!viewport) {
+    alert("Viewport not found.");
+    return;
+  }
+
+  // Step 1: Create a texture and render the viewport into it
+  const renderTexture = RenderTexture.create({
+    width: app.renderer.width,
+    height: app.renderer.height,
+  });
+
+  // Step 2: Render the viewport into the texture
+  app.renderer.render({
+    container: viewport,
+    target: renderTexture,
+  });
+
+  // Step 3: Extract the RenderTexture as a canvas
+  const extractedCanvas = app.renderer.extract.canvas(renderTexture);
+
+  // Step 4: Convert the extracted canvas to a Blob and download it
+  extractedCanvas.toBlob((blob) => {
+    if (!blob) {
+      alert("Failed to generate image.");
+      return;
+    }
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "viewport-snapshot.png";
+    link.click();
+  }, "image/png");
+}
