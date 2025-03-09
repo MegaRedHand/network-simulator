@@ -62,7 +62,7 @@ export class ViewGraph {
       );
       return this.graph.getVertex(deviceData.id);
     }
-    const device = createDevice(deviceData, this, this.ctx);
+    const device = createDevice(deviceData.id, deviceData.node, this, this.ctx);
 
     this.graph.setVertex(device.id, device);
     this.viewport.addChild(device);

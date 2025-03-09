@@ -16,32 +16,33 @@ export interface CreateDevice {
 }
 
 export function createDevice(
-  deviceInfo: CreateDevice,
+  id: DeviceId,
+  node: GraphNode,
   viewgraph: ViewGraph,
   ctx: GlobalContext,
 ): Device {
-  const position: { x: number; y: number } = deviceInfo.node;
+  const position: { x: number; y: number } = node;
   let mac: MacAddress;
 
-  if (isLinkNode(deviceInfo.node)) {
-    mac = MacAddress.parse(deviceInfo.node.mac);
+  if (isLinkNode(node)) {
+    mac = MacAddress.parse(node.mac);
   }
 
   let ip: IpAddress;
   let mask: IpAddress;
 
-  if (isNetworkNode(deviceInfo.node)) {
-    ip = IpAddress.parse(deviceInfo.node.ip);
-    mask = IpAddress.parse(deviceInfo.node.mask);
-    mac = MacAddress.parse(deviceInfo.node.mac);
+  if (isNetworkNode(node)) {
+    ip = IpAddress.parse(node.ip);
+    mask = IpAddress.parse(node.mask);
+    mac = MacAddress.parse(node.mac);
   }
 
-  switch (deviceInfo.node.type) {
+  switch (node.type) {
     case DeviceType.Router:
-      return new Router(deviceInfo.id, viewgraph, ctx, position, mac, ip, mask);
+      return new Router(id, viewgraph, ctx, position, mac, ip, mask);
     case DeviceType.Host:
-      return new Host(deviceInfo.id, viewgraph, ctx, position, mac, ip, mask);
+      return new Host(id, viewgraph, ctx, position, mac, ip, mask);
     case DeviceType.Switch:
-      return new Switch(deviceInfo.id, viewgraph, ctx, position, mac);
+      return new Switch(id, viewgraph, ctx, position, mac);
   }
 }
