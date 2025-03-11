@@ -9,7 +9,7 @@ import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 import { Graph } from "./graph";
 
-export type EdgeId = [DeviceId, DeviceId];
+type EdgePair = [DeviceId, DeviceId];
 
 export class ViewGraph {
   private ctx: GlobalContext;
@@ -28,7 +28,7 @@ export class ViewGraph {
 
   private constructView() {
     console.log("Constructing ViewGraph from DataGraph");
-    const allConnections = new Set<EdgeId>();
+    const allConnections = new Map<string, EdgePair>();
 
     for (const [deviceId, graphNode] of this.datagraph.getDevices()) {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
@@ -47,7 +47,7 @@ export class ViewGraph {
   addDevice(deviceData: CreateDevice) {
     const device = this.createDevice(deviceData);
     if (deviceData.connections.length !== 0) {
-      const connections = new Set<EdgeId>();
+      const connections = new Map<string, EdgePair>();
       this.computeLayerConnections(deviceData.id, connections);
 
       this.addConnections(connections);
@@ -71,7 +71,7 @@ export class ViewGraph {
     return this.graph.getVertex(deviceData.id);
   }
 
-  private addConnections(connections: Set<EdgeId>) {
+  private addConnections(connections: Map<string, EdgePair>) {
     connections.forEach(([id1, id2]) => {
       const device1 = this.getDevice(id1);
       const device2 = this.getDevice(id2);
@@ -98,7 +98,7 @@ export class ViewGraph {
     return edge;
   }
 
-  addEdge(device1Id: DeviceId, device2Id: DeviceId): EdgeId | null {
+  addEdge(device1Id: DeviceId, device2Id: DeviceId): EdgePair | null {
     if (device1Id === device2Id) {
       console.warn(
         `Cannot create a connection between the same device (ID ${device1Id}).`,
@@ -325,7 +325,10 @@ export class ViewGraph {
     return null;
   }
 
-  private computeLayerConnections(source: DeviceId, connections: Set<EdgeId>) {
+  private computeLayerConnections(
+    source: DeviceId,
+    connections: Map<string, EdgePair>,
+  ) {
     this.layer_dfs(
       this.datagraph,
       source,
@@ -340,7 +343,7 @@ export class ViewGraph {
     s: DeviceId, // source node
     v: DeviceId,
     visited: Set<DeviceId>,
-    connections: Set<EdgeId>,
+    connections: Map<string, EdgePair>,
   ) {
     graph.getConnections(v).forEach((w) => {
       if (visited.has(w)) {
@@ -351,12 +354,10 @@ export class ViewGraph {
       visited.add(w);
 
       if (layerIncluded(layerFromType(adjacent.type), this.layer)) {
-        // add connection between s and w
-        const connectionKey: [DeviceId, DeviceId] = [w, s];
-        connectionKey.sort();
-        if (!connections.has(connectionKey)) {
-          connections.add(connectionKey);
-        }
+        // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
+        const edgePair: EdgePair = [w, s];
+        edgePair.sort();
+        connections.set(edgePair.toString(), edgePair);
       } else {
         // continue with recursive search
         this.layer_dfs(graph, s, w, visited, connections);
