@@ -324,7 +324,10 @@ export class ViewGraph {
     return null;
   }
 
-  private computeLayerConnections(source: DeviceId, connections: Map<string, EdgePair>) {
+  private computeLayerConnections(
+    source: DeviceId,
+    connections: Map<string, EdgePair>,
+  ) {
     this.layer_dfs(
       this.datagraph,
       source,
