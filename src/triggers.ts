@@ -1,6 +1,11 @@
 import { GlobalContext } from "./context";
 import { Application } from "pixi.js";
-import { deselectElement, saveToFile, loadFromFile, urManager } from "./types/viewportManager";
+import {
+  deselectElement,
+  saveToFile,
+  loadFromFile,
+  urManager,
+} from "./types/viewportManager";
 import { captureAndDownloadViewport } from "./utils";
 import { ConfigModal } from "./config";
 import { Packet } from "./types/packet";
@@ -54,19 +59,19 @@ export const triggerRedo = (ctx: GlobalContext) => {
 
 // Function to toggle pause
 export const triggerPause = (pauseIcon?: HTMLImageElement) => {
-    const pauseButton = document.getElementById("pause-button");
-    if (!pauseButton) return;
-  
-    let paused = pauseButton.classList.contains("paused");
-    paused = !paused;
-    pauseButton.classList.toggle("paused");
-    pauseButton.title = paused ? "Resume" : "Pause";
-  
-    pauseIcon.src = paused ? PlaySvg : PauseSvg;
-  
-    if (paused) {
-      Packet.pauseAnimation();
-    } else {
-      Packet.unpauseAnimation();
-    }
-  };
+  const pauseButton = document.getElementById("pause-button");
+  if (!pauseButton) return;
+
+  let paused = pauseButton.classList.contains("paused");
+  paused = !paused;
+  pauseButton.classList.toggle("paused");
+  pauseButton.title = paused ? "Resume" : "Pause";
+
+  pauseIcon.src = paused ? PlaySvg : PauseSvg;
+
+  if (paused) {
+    Packet.pauseAnimation();
+  } else {
+    Packet.unpauseAnimation();
+  }
+};

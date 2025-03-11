@@ -21,7 +21,16 @@ import PauseSvg from "./assets/pause-icon.svg";
 import UndoSvg from "./assets/left-curve-arrow.svg";
 import RedoSvg from "./assets/right-curve-arrow.svg";
 import { layerToName } from "./types/devices/layer";
-import { triggerHelp, triggerLoad, triggerNew, triggerPause, triggerPrint, triggerRedo, triggerSave, triggerUndo } from "./triggers";
+import {
+  triggerHelp,
+  triggerLoad,
+  triggerNew,
+  triggerPause,
+  triggerPrint,
+  triggerRedo,
+  triggerSave,
+  triggerUndo,
+} from "./triggers";
 
 const assets = [
   RouterSvg,
@@ -114,11 +123,15 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   document.getElementById("new-button")!.onclick = () => triggerNew(ctx);
   document.getElementById("save-button")!.onclick = () => triggerSave(ctx);
   document.getElementById("load-button")!.onclick = () => triggerLoad(ctx);
-  document.getElementById("print-button")!.onclick = () => triggerPrint(app, ctx);
-  document.getElementById("help-button")!.onclick = () => triggerHelp(configModal);
+  document.getElementById("print-button")!.onclick = () =>
+    triggerPrint(app, ctx);
+  document.getElementById("help-button")!.onclick = () =>
+    triggerHelp(configModal);
 
   // Undo button logic
-  const undoButton = document.getElementById("undo-button") as HTMLButtonElement;
+  const undoButton = document.getElementById(
+    "undo-button",
+  ) as HTMLButtonElement;
   const undoIcon = document.createElement("img");
   undoIcon.src = UndoSvg;
   undoIcon.alt = "Undo Icon";
@@ -126,7 +139,9 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   undoButton.onclick = () => triggerUndo(ctx);
 
   // Redo button logic
-  const redoButton = document.getElementById("redo-button") as HTMLButtonElement;
+  const redoButton = document.getElementById(
+    "redo-button",
+  ) as HTMLButtonElement;
   const redoIcon = document.createElement("img");
   redoIcon.src = RedoSvg;
   redoIcon.alt = "Redo Icon";
@@ -149,7 +164,12 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   pauseButton.appendChild(pauseIcon);
   pauseButton.onclick = () => triggerPause(pauseIcon);
 
-  const shortcutsManager = new ShortcutsManager(ctx, app, configModal, pauseIcon);
+  const shortcutsManager = new ShortcutsManager(
+    ctx,
+    app,
+    configModal,
+    pauseIcon,
+  );
 
   function updateSpeedWheel(value: number) {
     const speedWheel = document.getElementById(

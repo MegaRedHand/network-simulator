@@ -1,7 +1,16 @@
 import { GlobalContext } from "./context";
 import { Application } from "pixi.js";
 import { ConfigModal } from "./config";
-import { triggerNew, triggerSave, triggerLoad, triggerPrint, triggerHelp, triggerUndo, triggerRedo, triggerPause } from "./triggers";
+import {
+  triggerNew,
+  triggerSave,
+  triggerLoad,
+  triggerPrint,
+  triggerHelp,
+  triggerUndo,
+  triggerRedo,
+  triggerPause,
+} from "./triggers";
 
 export class ShortcutsManager {
   private ctx: GlobalContext;
@@ -9,7 +18,12 @@ export class ShortcutsManager {
   private configModal: ConfigModal;
   private pauseIcon: HTMLImageElement;
 
-  constructor(ctx: GlobalContext, app: Application, configModal: ConfigModal, pauseIcon: HTMLImageElement) {
+  constructor(
+    ctx: GlobalContext,
+    app: Application,
+    configModal: ConfigModal,
+    pauseIcon: HTMLImageElement,
+  ) {
     this.ctx = ctx;
     this.app = app;
     this.configModal = configModal;
@@ -48,6 +62,9 @@ export class ShortcutsManager {
           triggerRedo(this.ctx);
           break;
       }
+    } else if (event.key == "Escape") {
+      event.preventDefault();
+      this.configModal.close();
     } else {
       switch (event.key.toLowerCase()) {
         case "n":
