@@ -9,7 +9,7 @@ import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 import { Graph } from "./graph";
 
-type EdgePair = [DeviceId, DeviceId];
+export type EdgePair = [DeviceId, DeviceId];
 
 export class ViewGraph {
   private ctx: GlobalContext;
@@ -36,7 +36,13 @@ export class ViewGraph {
         const deviceInfo = { id: deviceId, node: graphNode, connections };
         this.createDevice(deviceInfo);
 
-        this.computeLayerConnections(deviceId, allConnections);
+        this.datagraph.layerDFS(
+          this.layer,
+          deviceId,
+          deviceId,
+          new Set([deviceId]),
+          allConnections,
+        );
       }
     }
     this.addConnections(allConnections);
@@ -47,7 +53,13 @@ export class ViewGraph {
     const device = this.createDevice(deviceData);
     if (deviceData.connections.length !== 0) {
       const connections = new Map<string, EdgePair>();
-      this.computeLayerConnections(deviceData.id, connections);
+      this.datagraph.layerDFS(
+        this.layer,
+        deviceData.id,
+        deviceData.id,
+        new Set([deviceData.id]),
+        connections,
+      );
 
       this.addConnections(connections);
     }
@@ -322,46 +334,6 @@ export class ViewGraph {
     }
     console.log(`Path between devices ${startId} and ${endId} not found`);
     return null;
-  }
-
-  private computeLayerConnections(
-    source: DeviceId,
-    connections: Map<string, EdgePair>,
-  ) {
-    this.layer_dfs(
-      this.datagraph,
-      source,
-      source,
-      new Set([source]),
-      connections,
-    );
-  }
-
-  private layer_dfs(
-    graph: DataGraph,
-    s: DeviceId, // source node
-    v: DeviceId,
-    visited: Set<DeviceId>,
-    connections: Map<string, EdgePair>,
-  ) {
-    graph.getConnections(v).forEach((w) => {
-      if (visited.has(w)) {
-        return;
-      }
-      const adjacent = this.datagraph.getDevice(w);
-      // mark node as visited
-      visited.add(w);
-
-      if (layerIncluded(layerFromType(adjacent.type), this.layer)) {
-        // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
-        const edgePair: EdgePair = [w, s];
-        edgePair.sort();
-        connections.set(edgePair.toString(), edgePair);
-      } else {
-        // continue with recursive search
-        this.layer_dfs(graph, s, w, visited, connections);
-      }
-    });
   }
 
   clear() {

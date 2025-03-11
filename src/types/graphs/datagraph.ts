@@ -2,6 +2,7 @@ import { RunningProgram } from "../../programs";
 import { DeviceType, Layer, layerFromType } from "../devices/device";
 import { layerIncluded } from "../devices/layer";
 import { Graph, VertexId } from "./graph";
+import { EdgePair } from "./viewgraph";
 
 export type DeviceId = VertexId;
 
@@ -542,5 +543,32 @@ export class DataGraph {
 
     // Remove any deleted entries
     return device.routingTable.filter((entry) => !entry.deleted);
+  }
+
+  layerDFS(
+    layer: Layer,
+    s: DeviceId, // source node
+    v: DeviceId,
+    visited: Set<DeviceId>,
+    connections: Map<string, EdgePair>,
+  ) {
+    this.getConnections(v).forEach((w) => {
+      if (visited.has(w)) {
+        return;
+      }
+      const adjacent = this.getDevice(w);
+      // mark node as visited
+      visited.add(w);
+
+      if (layerIncluded(layerFromType(adjacent.type), layer)) {
+        // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
+        const edgePair: EdgePair = [w, s];
+        edgePair.sort();
+        connections.set(edgePair.toString(), edgePair);
+      } else {
+        // continue with recursive search
+        this.layerDFS(layer, s, w, visited, connections);
+      }
+    });
   }
 }
