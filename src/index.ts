@@ -4,18 +4,11 @@ import {
   saveToLocalStorage,
   urManager,
 } from "./types/viewportManager";
-import { Packet } from "./types/packet";
 import { LeftBar } from "./graphics/left_bar";
 import { RightBar } from "./graphics/right_bar";
 import { Viewport } from "./graphics/viewport";
 import { GlobalContext } from "./context";
-import {
-  triggerNew,
-  triggerSave,
-  triggerLoad,
-  triggerPrint,
-  triggerHelp,
-} from "./utils";
+import { ShortcutsManager } from "./shortcuts";
 import { ConfigModal } from "./config";
 
 // Assets
@@ -28,6 +21,7 @@ import PauseSvg from "./assets/pause-icon.svg";
 import UndoSvg from "./assets/left-curve-arrow.svg";
 import RedoSvg from "./assets/right-curve-arrow.svg";
 import { layerToName } from "./types/devices/layer";
+import { triggerHelp, triggerLoad, triggerNew, triggerPause, triggerPrint, triggerRedo, triggerSave, triggerUndo } from "./triggers";
 
 const assets = [
   RouterSvg,
@@ -115,152 +109,47 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   resize();
   window.addEventListener("resize", resize);
 
-  const newButton = document.getElementById("new-button");
-  const loadButton = document.getElementById("load-button");
-  const saveButton = document.getElementById("save-button");
-  const printButton = document.getElementById("print-button");
-  const helpButton = document.getElementById("help-button");
-
   const configModal = new ConfigModal(ctx);
-  newButton.onclick = () => triggerNew(ctx);
-  saveButton.onclick = () => triggerSave(ctx);
-  loadButton.onclick = () => triggerLoad(ctx);
-  printButton.onclick = () => triggerPrint(app, ctx);
-  helpButton.onclick = () => triggerHelp(configModal);
-  // Undo button’s logic
-  const undoButton = document.getElementById(
-    "undo-button",
-  ) as HTMLButtonElement;
 
+  document.getElementById("new-button")!.onclick = () => triggerNew(ctx);
+  document.getElementById("save-button")!.onclick = () => triggerSave(ctx);
+  document.getElementById("load-button")!.onclick = () => triggerLoad(ctx);
+  document.getElementById("print-button")!.onclick = () => triggerPrint(app, ctx);
+  document.getElementById("help-button")!.onclick = () => triggerHelp(configModal);
+
+  // Undo button logic
+  const undoButton = document.getElementById("undo-button") as HTMLButtonElement;
   const undoIcon = document.createElement("img");
   undoIcon.src = UndoSvg;
   undoIcon.alt = "Undo Icon";
   undoButton.appendChild(undoIcon);
+  undoButton.onclick = () => triggerUndo(ctx);
 
-  urManager.suscribe(() => {
-    undoButton.disabled = !urManager.canUndo();
-    undoIcon.style.opacity = urManager.canUndo() ? "1" : "0.5"; // Full opacity for active, reduced for inactive
-  });
-
-  const triggerUndo = () => {
-    if (urManager.canUndo()) {
-      urManager.undo(ctx.getViewGraph());
-    }
-  };
-
-  undoButton.onclick = triggerUndo;
-
-  // Redo button’s logic
-  const redoButton = document.getElementById(
-    "redo-button",
-  ) as HTMLButtonElement;
+  // Redo button logic
+  const redoButton = document.getElementById("redo-button") as HTMLButtonElement;
   const redoIcon = document.createElement("img");
   redoIcon.src = RedoSvg;
   redoIcon.alt = "Redo Icon";
   redoButton.appendChild(redoIcon);
+  redoButton.onclick = () => triggerRedo(ctx);
 
+  // Subscribe to undo/redo state changes
   urManager.suscribe(() => {
+    undoButton.disabled = !urManager.canUndo();
+    undoIcon.style.opacity = urManager.canUndo() ? "1" : "0.5";
     redoButton.disabled = !urManager.canRedo();
-    redoIcon.style.opacity = urManager.canRedo() ? "1" : "0.5"; // Full opacity for active, reduced for inactive
+    redoIcon.style.opacity = urManager.canRedo() ? "1" : "0.5";
   });
 
-  const triggerRedo = () => {
-    if (urManager.canRedo()) {
-      urManager.redo(ctx.getViewGraph());
-    }
-  };
-
-  redoButton.onclick = triggerRedo;
-
-  // Add keyboard shortcuts
-  document.addEventListener("keydown", (event) => {
-    // Check if the user is typing in an input or textarea
-    const activeElement = document.activeElement as HTMLElement;
-    if (
-      activeElement &&
-      (activeElement instanceof HTMLInputElement ||
-        activeElement instanceof HTMLTextAreaElement ||
-        activeElement.isContentEditable)
-    ) {
-      return; // Prevent shortcuts from executing while typing
-    }
-
-    // Handle Ctrl key combinations
-    if (event.ctrlKey) {
-      switch (event.key) {
-        case "Z": // Ctrl+Shift+Z for Redo
-          event.preventDefault(); // Prevent default browser action (e.g., undo in text inputs)
-          triggerRedo();
-          break;
-        case "z": // Ctrl+Z for Undo
-          event.preventDefault(); // Prevent default browser action
-          triggerUndo();
-          break;
-        case "y": // Ctrl+Y for Redo
-          event.preventDefault(); // Prevent default browser action
-          triggerRedo();
-          break;
-      }
-    } else {
-      // Handle single key shortcuts
-      switch (event.key.toLowerCase()) {
-        case "n": // Create a new network
-          event.preventDefault();
-          triggerNew(ctx);
-          break;
-        case "s": // Save the network
-          event.preventDefault();
-          triggerSave(ctx);
-          break;
-        case "l": // Load a network
-          event.preventDefault();
-          triggerLoad(ctx);
-          break;
-        case "p": // Print the network
-          event.preventDefault();
-          triggerPrint(app, ctx);
-          break;
-        case "h": // Open the Help modal
-          event.preventDefault();
-          triggerHelp(configModal);
-          break;
-      }
-    }
-  });
-
-  // Pause button’s logic
-  const pauseButton = document.getElementById("pause-button");
-  let paused = false;
-
+  // Pause button logic
+  const pauseButton = document.getElementById("pause-button")!;
   const pauseIcon = document.createElement("img");
   pauseIcon.src = PauseSvg;
   pauseIcon.alt = "Pause Icon";
-
   pauseButton.appendChild(pauseIcon);
+  pauseButton.onclick = () => triggerPause(pauseIcon);
 
-  const triggerPause = () => {
-    paused = !paused;
-
-    pauseButton.classList.toggle("paused");
-    pauseButton.title = paused ? "Resume" : "Pause";
-
-    pauseIcon.src = paused ? PlaySvg : PauseSvg;
-
-    if (paused) {
-      Packet.pauseAnimation();
-    } else {
-      Packet.unpauseAnimation();
-    }
-  };
-
-  pauseButton.onclick = triggerPause;
-
-  document.body.onkeyup = function (e) {
-    if (e.key === " " || e.code === "Space") {
-      triggerPause();
-      e.preventDefault();
-    }
-  };
+  const shortcutsManager = new ShortcutsManager(ctx, app, configModal, pauseIcon);
 
   function updateSpeedWheel(value: number) {
     const speedWheel = document.getElementById(
@@ -280,9 +169,9 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     if (selectedLayer) {
       ctx.changeViewGraph(selectedLayer);
       saveToLocalStorage(ctx);
-      // LeftBar is reset
+      // Reset LeftBar
       leftBar.setButtonsByLayer(selectedLayer);
-      deselectElement(); // not needed
+      deselectElement(); // Not needed
     }
   };
 
