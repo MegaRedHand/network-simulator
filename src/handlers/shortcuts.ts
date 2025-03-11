@@ -1,33 +1,23 @@
-import { GlobalContext } from "./context";
+import { GlobalContext } from "../context";
 import { Application } from "pixi.js";
-import { ConfigModal } from "./config";
+import { ConfigModal } from "../config";
 import {
   triggerNew,
   triggerSave,
   triggerLoad,
   triggerPrint,
   triggerHelp,
-  triggerUndo,
-  triggerRedo,
-  triggerPause,
 } from "./triggers";
 
 export class ShortcutsManager {
   private ctx: GlobalContext;
   private app: Application;
   private configModal: ConfigModal;
-  private pauseIcon: HTMLImageElement;
 
-  constructor(
-    ctx: GlobalContext,
-    app: Application,
-    configModal: ConfigModal,
-    pauseIcon: HTMLImageElement,
-  ) {
+  constructor(ctx: GlobalContext, app: Application, configModal: ConfigModal) {
     this.ctx = ctx;
     this.app = app;
     this.configModal = configModal;
-    this.pauseIcon = pauseIcon;
     this.init();
   }
 
@@ -47,22 +37,7 @@ export class ShortcutsManager {
       return;
     }
 
-    if (event.ctrlKey) {
-      switch (event.key) {
-        case "Z": // Ctrl+Shift+Z for Redo
-          event.preventDefault();
-          triggerRedo(this.ctx);
-          break;
-        case "z": // Ctrl+Z for Undo
-          event.preventDefault();
-          triggerUndo(this.ctx);
-          break;
-        case "y": // Ctrl+Y for Redo
-          event.preventDefault();
-          triggerRedo(this.ctx);
-          break;
-      }
-    } else if (event.key == "Escape") {
+    if (event.key == "Escape") {
       event.preventDefault();
       this.configModal.close();
     } else {
@@ -86,10 +61,6 @@ export class ShortcutsManager {
         case "h":
           event.preventDefault();
           triggerHelp(this.configModal);
-          break;
-        case " ":
-          event.preventDefault();
-          triggerPause(this.pauseIcon);
           break;
       }
     }
