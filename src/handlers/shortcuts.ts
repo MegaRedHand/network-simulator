@@ -1,23 +1,14 @@
 import { GlobalContext } from "../context";
 import { Application } from "pixi.js";
-import { ConfigModal } from "../config";
-import {
-  triggerNew,
-  triggerSave,
-  triggerLoad,
-  triggerPrint,
-  triggerHelp,
-} from "./triggers";
+import { triggerNew, triggerSave, triggerLoad, triggerPrint } from "./triggers";
 
 export class ShortcutsManager {
   private ctx: GlobalContext;
   private app: Application;
-  private configModal: ConfigModal;
 
-  constructor(ctx: GlobalContext, app: Application, configModal: ConfigModal) {
+  constructor(ctx: GlobalContext, app: Application) {
     this.ctx = ctx;
     this.app = app;
-    this.configModal = configModal;
     this.init();
   }
 
@@ -37,32 +28,23 @@ export class ShortcutsManager {
       return;
     }
 
-    if (event.key == "Escape") {
-      event.preventDefault();
-      this.configModal.close();
-    } else {
-      switch (event.key.toLowerCase()) {
-        case "n":
-          event.preventDefault();
-          triggerNew(this.ctx);
-          break;
-        case "s":
-          event.preventDefault();
-          triggerSave(this.ctx);
-          break;
-        case "l":
-          event.preventDefault();
-          triggerLoad(this.ctx);
-          break;
-        case "p":
-          event.preventDefault();
-          triggerPrint(this.app, this.ctx);
-          break;
-        case "h":
-          event.preventDefault();
-          triggerHelp(this.configModal);
-          break;
-      }
+    switch (event.key.toLowerCase()) {
+      case "n":
+        event.preventDefault();
+        triggerNew(this.ctx);
+        break;
+      case "s":
+        event.preventDefault();
+        triggerSave(this.ctx);
+        break;
+      case "l":
+        event.preventDefault();
+        triggerLoad(this.ctx);
+        break;
+      case "p":
+        event.preventDefault();
+        triggerPrint(this.app, this.ctx);
+        break;
     }
   }
 }

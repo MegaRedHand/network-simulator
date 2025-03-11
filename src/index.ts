@@ -77,7 +77,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   new SpeedControlHandler(ctx);
 
   const configModal = new ConfigModal(ctx);
-  new ShortcutsManager(ctx, app, configModal);
+  new ShortcutsManager(ctx, app);
 
   // Setup button event handlers
   const buttonActions: { id: string; action: () => void }[] = [
