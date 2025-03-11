@@ -1,24 +1,29 @@
-import { EthernetFrame, MacAddress } from "../../packets/ethernet";
-import { EchoReply, EchoRequest } from "../../packets/icmp";
+import { Texture } from "pixi.js";
 import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
-import { DataGraph, DeviceId } from "../graphs/datagraph";
-import { Packet } from "../packet";
-import { Device } from "./device";
+import { DeviceId } from "../graphs/datagraph";
+import { DeviceNode } from "./deviceNode";
+import { ViewGraph } from "../graphs/viewgraph";
+import { Position } from "../common";
+import { EthernetFrame, MacAddress } from "../../packets/ethernet";
+import { Packet, sendRawPacket } from "../packet";
+import { EchoReply, EchoRequest } from "../../packets/icmp";
+import { GlobalContext } from "../../context";
 
-export abstract class NetworkDevice extends Device {
+export abstract class NetworkNode extends DeviceNode {
   ip: IpAddress;
   ipMask: IpAddress;
 
   constructor(
-    x: number,
-    y: number,
+    id: DeviceId,
+    texture: Texture,
+    viewgraph: ViewGraph,
+    ctx: GlobalContext,
+    position: Position,
     mac: MacAddress,
-    datagraph: DataGraph,
     ip: IpAddress,
     ipMask: IpAddress,
-    id?: DeviceId,
   ) {
-    super(x, y, mac, datagraph, id);
+    super(id, texture, viewgraph, ctx, position, mac);
     this.ip = ip;
     this.ipMask = ipMask;
   }
@@ -27,23 +32,21 @@ export abstract class NetworkDevice extends Device {
 
   // TODO: Most probably it will be different for each type of device
   handlePacket(datagram: IPv4Packet) {
-    const dstDevice: Device = this.datagraph.getDeviceByIP(
-      datagram.sourceAddress,
-    );
-    if (!(dstDevice instanceof NetworkDevice)) {
+    const dstDevice = this.viewgraph.getDeviceByIP(datagram.sourceAddress);
+    if (!(dstDevice instanceof NetworkNode)) {
       return;
     }
     switch (datagram.payload.protocol()) {
       case ICMP_PROTOCOL_NUMBER: {
         const request: EchoRequest = datagram.payload as EchoRequest;
         if (dstDevice && request.type) {
-          const path = this.datagraph.getPathBetween(this.id, dstDevice.id);
+          const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
           let dstMac = dstDevice.mac;
           if (!path) return;
           console.log(path);
           for (const id of path.slice(1)) {
-            const device = this.datagraph.getDevice(id);
-            if (device instanceof NetworkDevice) {
+            const device = this.viewgraph.getDevice(id);
+            if (device instanceof NetworkNode) {
               dstMac = device.mac;
               break;
             }
@@ -51,7 +54,7 @@ export abstract class NetworkDevice extends Device {
           const echoReply = new EchoReply(0);
           const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
           const ethernet = new EthernetFrame(this.mac, dstMac, ipPacket);
-          // sendRawPacket(this.datagraph, this.id, dstDevice.id, ethernet);
+          sendRawPacket(this.viewgraph, this.id, dstDevice.id, ethernet);
         }
         break;
       }

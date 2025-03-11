@@ -6,10 +6,10 @@ import {
   saveToLocalStorage,
   urManager,
 } from "./types/viewportManager";
-import { Layer } from "./types/devices/device";
+import { Layer } from "./types/layer";
 import { IpAddress, IpAddressGenerator } from "./packets/ip";
-import { layerFromName } from "./types/devices/layer";
-import { SpeedMultiplier } from "./types/devices/speedMultiplier";
+import { layerFromName } from "./types/layer";
+import { SpeedMultiplier } from "./types/speedMultiplier";
 import { MacAddress, MacAddressGenerator } from "./packets/ethernet";
 import { Colors } from "./utils";
 

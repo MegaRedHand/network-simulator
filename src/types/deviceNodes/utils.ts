@@ -4,10 +4,10 @@ import { IpAddress } from "../../packets/ip";
 import { GraphNode, isLinkNode, isNetworkNode } from "../graphs/datagraph";
 import { DeviceId } from "../graphs/datagraph";
 import { ViewGraph } from "../graphs/viewgraph";
-import { Device, DeviceType } from "./device";
-import { Host } from "./host";
-import { Router } from "./router";
-import { Switch } from "./switch";
+import { DeviceNode, DeviceType } from "./deviceNode";
+import { HostNode } from "./hostNode";
+import { RouterNode } from "./routerNode";
+import { SwitchNode } from "./switchNode";
 
 export interface CreateDevice {
   id: DeviceId;
@@ -19,7 +19,7 @@ export function createDevice(
   deviceInfo: CreateDevice,
   viewgraph: ViewGraph,
   ctx: GlobalContext,
-): Device {
+): DeviceNode {
   const position: { x: number; y: number } = deviceInfo.node;
   let mac: MacAddress;
 
@@ -38,10 +38,26 @@ export function createDevice(
 
   switch (deviceInfo.node.type) {
     case DeviceType.Router:
-      return new Router(deviceInfo.id, viewgraph, ctx, position, mac, ip, mask);
+      return new RouterNode(
+        deviceInfo.id,
+        viewgraph,
+        ctx,
+        position,
+        mac,
+        ip,
+        mask,
+      );
     case DeviceType.Host:
-      return new Host(deviceInfo.id, viewgraph, ctx, position, mac, ip, mask);
+      return new HostNode(
+        deviceInfo.id,
+        viewgraph,
+        ctx,
+        position,
+        mac,
+        ip,
+        mask,
+      );
     case DeviceType.Switch:
-      return new Switch(deviceInfo.id, viewgraph, ctx, position, mac);
+      return new SwitchNode(deviceInfo.id, viewgraph, ctx, position, mac);
   }
 }

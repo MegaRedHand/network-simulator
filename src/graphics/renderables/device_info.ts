@@ -1,6 +1,6 @@
 import { ProgramRunner } from "../../programs";
-import { Device } from "../../types/devices";
-import { DeviceType } from "../../types/devices/device";
+import { DeviceNode } from "../../types/deviceNodes";
+import { DeviceType } from "../../types/deviceNodes/deviceNode";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { RemoveDeviceMove } from "../../types/undo-redo";
 import { urManager } from "../../types/viewportManager";
@@ -12,10 +12,10 @@ import { StyledInfo } from "./styled_info";
 export { ProgramInfo } from "./program_info";
 
 export class DeviceInfo extends StyledInfo {
-  readonly device: Device;
+  readonly device: DeviceNode;
   inputFields: Node[] = [];
 
-  constructor(device: Device) {
+  constructor(device: DeviceNode) {
     super(getTypeName(device) + " Information");
     this.device = device;
     this.addCommonInfoFields();
@@ -89,7 +89,7 @@ export class DeviceInfo extends StyledInfo {
   }
 }
 
-function getTypeName(device: Device): string {
+function getTypeName(device: DeviceNode): string {
   switch (device.getType()) {
     case DeviceType.Router:
       return "Router";

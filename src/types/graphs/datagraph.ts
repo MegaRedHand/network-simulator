@@ -1,6 +1,8 @@
+import { IpAddress } from "../../packets/ip";
 import { RunningProgram } from "../../programs";
-import { DeviceType, Layer, layerFromType } from "../devices/device";
-import { layerIncluded } from "../devices/layer";
+import { DeviceType, layerFromType } from "../deviceNodes/deviceNode";
+import { layerIncluded, Layer } from "../layer";
+import { Device } from "../devices/device";
 import { Graph, VertexId } from "./graph";
 
 export type DeviceId = VertexId;
@@ -120,6 +122,12 @@ export interface NewDevice {
 }
 
 export class DataGraph {
+  getPathBetween(id: number, id1: number): DeviceId[] {
+    throw new Error("Method not implemented.");
+  }
+  getDeviceByIP(sourceAddress: IpAddress): Device {
+    throw new Error("Method not implemented.");
+  }
   // NOTE: we don't store data in edges yet
   private deviceGraph = new Graph<GraphNode, unknown>();
   private idCounter: DeviceId = 1;

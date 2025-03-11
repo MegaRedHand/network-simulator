@@ -4,4 +4,4 @@ export { Device } from "./device";
 export { NetworkDevice } from "./networkDevice";
 export { Router } from "./router";
 export { Host } from "./host";
-export { createDevice } from "./utils";
+export { Switch } from "./switch";

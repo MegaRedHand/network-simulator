@@ -1,4 +1,4 @@
-import { Layer, layerIncluded } from "../../devices/layer";
+import { Layer, layerIncluded } from "../../layer";
 import { ViewGraph } from "../../graphs/viewgraph";
 
 export interface Move {

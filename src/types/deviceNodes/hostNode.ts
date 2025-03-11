@@ -1,31 +1,48 @@
+import { DeviceType } from "./deviceNode";
+import { NetworkNode } from "./networkNode";
 import { ViewGraph } from "../graphs/viewgraph";
+import PcImage from "../../assets/pc.svg";
+import { Position } from "../common";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
-import { DataGraph, DeviceId } from "../graphs/datagraph";
+import { DeviceInfo, RightBar } from "../../graphics/right_bar";
+import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "../layer";
 import { isHost } from "../graphs/datagraph";
-import { newProgram, Pid, Program, RunningProgram } from "../../programs";
+import {
+  getProgramList,
+  newProgram,
+  Pid,
+  Program,
+  RunningProgram,
+} from "../../programs";
 import { Packet } from "../packet";
+import { Texture } from "pixi.js";
 import { MacAddress } from "../../packets/ethernet";
-import { NetworkDevice } from "./networkDevice";
+import { GlobalContext } from "../../context";
 
-export class Host extends NetworkDevice {
-  viewgraph: ViewGraph;
+export class HostNode extends NetworkNode {
+  static DEVICE_TEXTURE: Texture;
+
+  static getTexture() {
+    if (!HostNode.DEVICE_TEXTURE) {
+      HostNode.DEVICE_TEXTURE = Texture.from(PcImage);
+    }
+    return HostNode.DEVICE_TEXTURE;
+  }
 
   private runningPrograms = new Map<Pid, Program>();
   private lastProgramId = 0;
 
   constructor(
-    x: number,
-    y: number,
+    id: DeviceId,
+    viewgraph: ViewGraph,
+    ctx: GlobalContext,
+    position: Position,
     mac: MacAddress,
-    datagraph: DataGraph,
     ip: IpAddress,
     mask: IpAddress,
-    viewgraph: ViewGraph,
-    id?: DeviceId,
   ) {
-    super(x, y, mac, datagraph, ip, mask, id);
-    this.viewgraph = viewgraph;
+    super(id, HostNode.getTexture(), viewgraph, ctx, position, mac, ip, mask);
     this.loadRunningPrograms();
   }
 
@@ -40,8 +57,21 @@ export class Host extends NetworkDevice {
     return null;
   }
 
+  showInfo(): void {
+    const programList = getProgramList(this.viewgraph, this.id);
+
+    const info = new DeviceInfo(this);
+    info.addField("IP Address", this.ip.octets.join("."));
+    info.addProgramRunner(this, programList);
+    RightBar.getInstance().renderInfo(info);
+  }
+
   getLayer(): Layer {
     return Layer.App;
+  }
+
+  getType(): DeviceType {
+    return DeviceType.Host;
   }
 
   addRunningProgram(name: string, inputs: string[]) {

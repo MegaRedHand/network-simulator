@@ -1,16 +1,62 @@
+import { DeviceType, Layer } from "./deviceNode";
+import { NetworkNode } from "./networkNode";
+import { ViewGraph } from "../graphs/viewgraph";
+import RouterImage from "../../assets/router.svg";
+import { Position } from "../common";
+import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId, isRouter } from "../graphs/datagraph";
+import { Texture } from "pixi.js";
+import { MacAddress } from "../../packets/ethernet";
 import { Packet } from "../packet";
-import { NetworkDevice } from "./networkDevice";
+import { GlobalContext } from "../../context";
 
-export class Router extends NetworkDevice {
+export class RouterNode extends NetworkNode {
+  static DEVICE_TEXTURE: Texture;
+
   private packetQueueSize = 0;
   private maxQueueSize = 5;
   private timePerPacket = 1000;
-  viewgraph: any;
+
+  static getTexture() {
+    if (!RouterNode.DEVICE_TEXTURE) {
+      RouterNode.DEVICE_TEXTURE = Texture.from(RouterImage);
+    }
+    return RouterNode.DEVICE_TEXTURE;
+  }
+
+  constructor(
+    id: DeviceId,
+    viewgraph: ViewGraph,
+    ctx: GlobalContext,
+    position: Position,
+    mac: MacAddress,
+    ip: IpAddress,
+    mask: IpAddress,
+  ) {
+    super(id, RouterNode.getTexture(), viewgraph, ctx, position, mac, ip, mask);
+  }
+
+  showInfo(): void {
+    const info = new DeviceInfo(this);
+    info.addField("IP Address", this.ip.octets.join("."));
+    info.addEmptySpace();
+
+    info.addRoutingTable(this.viewgraph, this.id);
+
+    RightBar.getInstance().renderInfo(info);
+  }
+
+  getLayer(): Layer {
+    return Layer.Network;
+  }
+
+  getType(): DeviceType {
+    return DeviceType.Router;
+  }
 
   async routePacket(datagram: IPv4Packet): Promise<DeviceId | null> {
-    const device = this.datagraph.getDevice(this.id);
+    const device = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!device || !isRouter(device)) {
       return null;
     }
@@ -57,7 +103,7 @@ export class Router extends NetworkDevice {
     if (!path) return null;
     for (const id of path.slice(1)) {
       const device = this.viewgraph.getDevice(id);
-      if (device instanceof NetworkDevice) {
+      if (device instanceof NetworkNode) {
         dstMac = device.mac;
         break;
       }

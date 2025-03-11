@@ -1,4 +1,4 @@
-import { Layer } from "../../devices/layer";
+import { Layer } from "../../layer";
 import { EdgeEdges } from "../../edge";
 import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";

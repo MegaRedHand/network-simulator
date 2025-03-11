@@ -1,5 +1,5 @@
 import { CRC32 } from "@tsxper/crc32";
-import { Layer } from "../types/devices/layer";
+import { Layer } from "../types/layer";
 
 // From https://en.wikipedia.org/wiki/EtherType
 export const IP_PROTOCOL_TYPE = 0x0800;

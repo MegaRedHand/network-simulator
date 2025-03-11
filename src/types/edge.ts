@@ -1,6 +1,6 @@
 import { Graphics, Point } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
-import { Device } from "./devices/index"; // Import the Device class
+import { DeviceNode } from "./deviceNodes/index"; // Import the Device class
 import { deselectElement, selectElement, urManager } from "./viewportManager";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils";
@@ -20,10 +20,15 @@ export class Edge extends Graphics {
   viewgraph: ViewGraph;
   rightbar: RightBar;
 
+  static generateConnectionKey(connectedNodes: EdgeEdges): string {
+    const { n1, n2 } = connectedNodes;
+    return [n1, n2].sort().join(",");
+  }
+
   constructor(
     connectedNodes: EdgeEdges,
-    device1: Device,
-    device2: Device,
+    device1: DeviceNode,
+    device2: DeviceNode,
     viewgraph: ViewGraph,
   ) {
     super();
@@ -154,7 +159,7 @@ export class Edge extends Graphics {
     super.destroy();
   }
 
-  public updatePosition(device1: Device, device2: Device) {
+  public updatePosition(device1: DeviceNode, device2: DeviceNode) {
     const dx = device2.x - device1.x;
     const dy = device2.y - device1.y;
     const angle = Math.atan2(dy, dx);

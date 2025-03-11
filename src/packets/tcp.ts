@@ -4,7 +4,7 @@ import {
   IpPayload,
   TCP_PROTOCOL_NUMBER,
 } from "./ip";
-import { Layer } from "../types/devices/layer";
+import { Layer } from "../types/layer";
 
 export class Flags {
   // Urgent Pointer field significant

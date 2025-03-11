@@ -10,7 +10,7 @@ import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
-import { Layer } from "../types/devices/layer";
+import { Layer } from "./layer";
 //import { EchoMessage } from "../packets/icmp";
 import { DeviceId, isRouter, isSwitch } from "./graphs/datagraph";
 import { EthernetFrame } from "../packets/ethernet";
