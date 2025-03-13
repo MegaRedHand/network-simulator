@@ -6,23 +6,23 @@ import { RoutingTableManager } from "./utils.ts/routingTableManager";
 
 export type DeviceId = VertexId;
 
-interface CommonGraphNode {
+export interface CommonGraphNode {
   x: number;
   y: number;
   type: DeviceType;
 }
 
-interface LinkGraphNode extends CommonGraphNode {
+export interface LinkGraphNode extends CommonGraphNode {
   mac: string;
   arpTable: Map<string, string>;
 }
 
-interface NetworkGraphNode extends LinkGraphNode {
+export interface NetworkGraphNode extends LinkGraphNode {
   ip: string;
   mask: string;
 }
 
-interface RouterGraphNode extends NetworkGraphNode {
+export interface RouterGraphNode extends NetworkGraphNode {
   type: DeviceType.Router;
   routingTable: RoutingTableEntry[];
 }
@@ -346,3 +346,4 @@ export class DataGraph {
     return this.routingTableManager.getRoutingTable(id);
   }
 }
+export { DeviceType };
