@@ -142,7 +142,7 @@ export class RoutingTableManager {
       return [];
     }
 
-    // 1. Build the routing tree using BFS (Breadth-First Search)
+    // 1️. Build the routing tree using BFS (Breadth-First Search)
     // This maps each device to its parent in the shortest path
     const parents = this.buildRoutingTree(id);
 
@@ -150,7 +150,11 @@ export class RoutingTableManager {
     // Converts the parent-child relationships into routing table entries
     let newTable = this.buildRoutingTableFromTree(id, parents);
 
-    // 3️. Preserve manually edited routes if necessary
+    // 3️. Optimize the routing table by aggregating prefixes
+    // Reduces the number of routes by merging adjacent subnets
+    newTable = this.aggregateRoutes(newTable);
+
+    // 4️. Preserve manually edited routes if necessary
     // Ensures that user modifications are not lost
     if (preserveEdits) {
       newTable = this.preserveManualChanges(id, newTable);
@@ -279,5 +283,119 @@ export class RoutingTableManager {
       return [];
     }
     return device.routingTable.filter((entry) => !entry.deleted);
+  }
+
+  private aggregateRoutes(
+    routingTable: RoutingTableEntry[],
+  ): RoutingTableEntry[] {
+    console.log("🚀 Starting route aggregation...");
+
+    const aggregatedTable: RoutingTableEntry[] = [];
+    const groupedByIface = new Map<number, RoutingTableEntry[]>();
+
+    // 1. Group routes by interface
+    routingTable.forEach((entry) => {
+      if (!groupedByIface.has(entry.iface)) {
+        groupedByIface.set(entry.iface, []);
+      }
+      const group = groupedByIface.get(entry.iface);
+      if (group) {
+        group.push(entry);
+      }
+    });
+
+    // 2️. Attempt to aggregate routes per interface
+    groupedByIface.forEach((entries, iface) => {
+      const sortedEntries = entries.sort((a, b) => this.compareIPs(a.ip, b.ip));
+
+      let blockStart = sortedEntries[0];
+      let blockSize = 1;
+
+      for (let i = 1; i < sortedEntries.length; i++) {
+        const currentIP = sortedEntries[i].ip;
+
+        const newBlockSize = blockSize * 2;
+        const newMask = this.calculateSubnetMask(newBlockSize);
+        const newNetworkAddress = this.getNetworkAddress(
+          blockStart.ip,
+          newMask,
+        );
+        const currentNetworkAddress = this.getNetworkAddress(
+          currentIP,
+          newMask,
+        );
+
+        // Check if the current IP belongs to the same aggregated network
+        if (newNetworkAddress === currentNetworkAddress) {
+          blockSize = newBlockSize;
+        } else {
+          // Store the aggregated block before starting a new one
+          const mask = this.calculateSubnetMask(blockSize);
+          const aggregatedIP = this.getNetworkAddress(blockStart.ip, mask);
+
+          aggregatedTable.push({ ip: aggregatedIP, mask: mask, iface: iface });
+
+          // Reset the block
+          blockStart = sortedEntries[i];
+          blockSize = 1;
+        }
+      }
+
+      // Add the last detected aggregation
+      const finalMask = this.calculateSubnetMask(blockSize);
+      const finalAggregatedIP = this.getNetworkAddress(
+        blockStart.ip,
+        finalMask,
+      );
+
+      aggregatedTable.push({
+        ip: finalAggregatedIP,
+        mask: finalMask,
+        iface: iface,
+      });
+    });
+
+    return aggregatedTable;
+  }
+
+  private compareIPs(ip1: string, ip2: string): number {
+    // Compare two IP addresses by their numerical value
+    const parts1 = ip1.split(".").map(Number);
+    const parts2 = ip2.split(".").map(Number);
+
+    for (let i = 0; i < 4; i++) {
+      if (parts1[i] !== parts2[i]) {
+        return parts1[i] - parts2[i];
+      }
+    }
+    return 0;
+  }
+
+  private calculateSubnetMask(size: number): string {
+    // Compute the subnet mask based on the block size
+    if (size <= 0) return "255.255.255.255"; // Prevents negative size errors
+
+    const bits = 32 - Math.floor(Math.log2(size)); // Ensures correct block sizes
+    return this.prefixToSubnet(bits);
+  }
+
+  private prefixToSubnet(prefix: number): string {
+    // Convert a CIDR prefix to a subnet mask
+    const mask = (0xffffffff << (32 - prefix)) >>> 0;
+    return [
+      (mask >>> 24) & 255,
+      (mask >>> 16) & 255,
+      (mask >>> 8) & 255,
+      mask & 255,
+    ].join(".");
+  }
+
+  private getNetworkAddress(ip: string, mask: string): string {
+    // Compute the network address given an IP and a subnet mask
+    const ipParts = ip.split(".").map(Number);
+    const maskParts = mask.split(".").map(Number);
+
+    const networkParts = ipParts.map((part, i) => part & maskParts[i]);
+    return networkParts.join(".");
   }
 }
