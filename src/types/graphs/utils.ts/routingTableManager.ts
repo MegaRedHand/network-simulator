@@ -43,15 +43,7 @@ export class RoutingTableManager {
     return newTable;
   }
 
-  private generateRoutingTable(
-    id: DeviceId,
-    preserveEdits = false,
-  ): RoutingTableEntry[] {
-    const router = this.dataGraph.getDevice(id);
-    if (!isRouter(router)) {
-      return [];
-    }
-
+  private buildRoutingTree(id: DeviceId): Map<DeviceId, DeviceId> {
     const parents = new Map<DeviceId, DeviceId>();
     parents.set(id, id);
     const queue = [id];
@@ -70,6 +62,13 @@ export class RoutingTableManager {
       });
     }
 
+    return parents;
+  }
+
+  private buildRoutingTableFromTree(
+    id: DeviceId,
+    parents: Map<DeviceId, DeviceId>,
+  ): RoutingTableEntry[] {
     const newTable: RoutingTableEntry[] = [];
 
     parents.forEach((currentId, childId) => {
@@ -93,36 +92,68 @@ export class RoutingTableManager {
       }
     });
 
-    if (preserveEdits) {
-      const existingTable = this.routerTables.get(id) || [];
-      existingTable.forEach((manualEntry) => {
-        if (manualEntry.manuallyEdited) {
-          const existingEntry = newTable.find(
-            (entry) => entry.ip === manualEntry.ip,
-          );
-          if (existingEntry) {
-            existingEntry.mask = manualEntry.mask;
-            existingEntry.iface = manualEntry.iface;
-            existingEntry.manuallyEdited = true;
-          } else {
-            newTable.push({ ...manualEntry });
-          }
-        }
-      });
+    return newTable;
+  }
 
-      existingTable.forEach((deletedEntry) => {
-        if (deletedEntry.deleted) {
-          const index = newTable.findIndex(
-            (entry) => entry.ip === deletedEntry.ip,
-          );
-          if (index !== -1) {
-            newTable[index] = deletedEntry;
-            console.log(`Preserving deleted entry:`, deletedEntry);
-          } else {
-            newTable.push(deletedEntry);
-          }
+  private preserveManualChanges(
+    id: DeviceId,
+    newTable: RoutingTableEntry[],
+  ): RoutingTableEntry[] {
+    const existingTable = this.routerTables.get(id) || [];
+
+    existingTable.forEach((manualEntry) => {
+      if (manualEntry.manuallyEdited) {
+        const existingEntry = newTable.find(
+          (entry) => entry.ip === manualEntry.ip,
+        );
+        if (existingEntry) {
+          existingEntry.mask = manualEntry.mask;
+          existingEntry.iface = manualEntry.iface;
+          existingEntry.manuallyEdited = true;
+        } else {
+          newTable.push({ ...manualEntry });
         }
-      });
+      }
+    });
+
+    existingTable.forEach((deletedEntry) => {
+      if (deletedEntry.deleted) {
+        const index = newTable.findIndex(
+          (entry) => entry.ip === deletedEntry.ip,
+        );
+        if (index !== -1) {
+          newTable[index] = deletedEntry;
+          console.log(`Preserving deleted entry:`, deletedEntry);
+        } else {
+          newTable.push(deletedEntry);
+        }
+      }
+    });
+
+    return newTable;
+  }
+
+  private generateRoutingTable(
+    id: DeviceId,
+    preserveEdits = false,
+  ): RoutingTableEntry[] {
+    const router = this.dataGraph.getDevice(id);
+    if (!isRouter(router)) {
+      return [];
+    }
+
+    // 1. Build the routing tree using BFS (Breadth-First Search)
+    // This maps each device to its parent in the shortest path
+    const parents = this.buildRoutingTree(id);
+
+    // 2️. Generate the routing table from the tree
+    // Converts the parent-child relationships into routing table entries
+    let newTable = this.buildRoutingTableFromTree(id, parents);
+
+    // 3️. Preserve manually edited routes if necessary
+    // Ensures that user modifications are not lost
+    if (preserveEdits) {
+      newTable = this.preserveManualChanges(id, newTable);
     }
 
     console.log(`Generated routing table for router ID ${id}:`, newTable);
