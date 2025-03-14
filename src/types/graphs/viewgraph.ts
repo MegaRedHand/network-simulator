@@ -1,9 +1,9 @@
 import { Device, NetworkDevice } from "./../devices";
 import { Edge, EdgeEdges } from "./../edge";
-import { DataGraph, DeviceId } from "./datagraph";
+import { DataGraph, DeviceId, GraphNode } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
-import { CreateDevice, createDevice } from "../devices/utils";
+import { createDevice } from "../devices/utils";
 import { layerFromType } from "../devices/device";
 import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
@@ -32,10 +32,7 @@ export class ViewGraph {
 
     for (const [deviceId, graphNode] of this.datagraph.getDevices()) {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
-        const connections = this.datagraph.getConnections(deviceId);
-        const deviceInfo = { id: deviceId, node: graphNode, connections };
-        this.createDevice(deviceInfo);
-
+        this.addDevice(deviceId, graphNode);
         this.computeLayerConnections(deviceId, allConnections);
       }
     }
@@ -43,31 +40,29 @@ export class ViewGraph {
     console.log("Finished constructing ViewGraph");
   }
 
-  addDevice(deviceData: CreateDevice) {
-    const device = this.createDevice(deviceData);
-    if (deviceData.connections.length !== 0) {
-      const connections = new Map<string, EdgePair>();
-      this.computeLayerConnections(deviceData.id, connections);
+  loadDevice(deviceId: DeviceId) {
+    const node = this.datagraph.getDevice(deviceId);
+    const device = this.addDevice(deviceId, node);
 
-      this.addConnections(connections);
-    }
+    // load connections
+    const connections = new Map<string, EdgePair>();
+    this.computeLayerConnections(deviceId, connections);
+    this.addConnections(connections);
     return device;
   }
 
   // Add a device to the graph
-  private createDevice(deviceData: CreateDevice): Device {
-    if (this.graph.hasVertex(deviceData.id)) {
-      console.warn(
-        `Device with ID ${deviceData.id} already exists in the graph.`,
-      );
-      return this.graph.getVertex(deviceData.id);
+  private addDevice(id: DeviceId, node: GraphNode): Device {
+    if (this.graph.hasVertex(id)) {
+      console.warn(`Device with ID ${id} already exists in the graph.`);
+      return this.graph.getVertex(id);
     }
-    const device = createDevice(deviceData, this, this.ctx);
+    const device = createDevice(id, node, this, this.ctx);
 
     this.graph.setVertex(device.id, device);
     this.viewport.addChild(device);
     console.log(`Device added with ID ${device.id}`);
-    return this.graph.getVertex(deviceData.id);
+    return this.graph.getVertex(id);
   }
 
   private addConnections(connections: Map<string, EdgePair>) {
