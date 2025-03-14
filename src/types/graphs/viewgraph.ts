@@ -32,8 +32,7 @@ export class ViewGraph {
 
     for (const [deviceId, graphNode] of this.datagraph.getDevices()) {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
-        this.createDevice(deviceId, graphNode);
-
+        this.addDevice(deviceId, graphNode);
         this.computeLayerConnections(deviceId, allConnections);
       }
     }
@@ -43,7 +42,7 @@ export class ViewGraph {
 
   loadDevice(deviceId: DeviceId) {
     const node = this.datagraph.getDevice(deviceId);
-    const device = this.createDevice(deviceId, node);
+    const device = this.addDevice(deviceId, node);
 
     // load connections
     const connections = new Map<string, EdgePair>();
@@ -53,7 +52,7 @@ export class ViewGraph {
   }
 
   // Add a device to the graph
-  private createDevice(id: DeviceId, node: GraphNode): Device {
+  private addDevice(id: DeviceId, node: GraphNode): Device {
     if (this.graph.hasVertex(id)) {
       console.warn(`Device with ID ${id} already exists in the graph.`);
       return this.graph.getVertex(id);
