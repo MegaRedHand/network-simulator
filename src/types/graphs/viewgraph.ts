@@ -3,7 +3,7 @@ import { Edge, EdgeEdges } from "./../edge";
 import { DataGraph, DeviceId, GraphNode } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
-import { CreateDevice, createDevice } from "../devices/utils";
+import { createDevice } from "../devices/utils";
 import { layerFromType } from "../devices/device";
 import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
@@ -32,7 +32,6 @@ export class ViewGraph {
 
     for (const [deviceId, graphNode] of this.datagraph.getDevices()) {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
-        const connections = this.datagraph.getConnections(deviceId);
         this.createDevice(deviceId, graphNode);
 
         this.computeLayerConnections(deviceId, allConnections);
@@ -42,14 +41,14 @@ export class ViewGraph {
     console.log("Finished constructing ViewGraph");
   }
 
-  addDevice(deviceData: CreateDevice) {
-    const device = this.createDevice(deviceData.id, deviceData.node);
-    if (deviceData.connections.length !== 0) {
-      const connections = new Map<string, EdgePair>();
-      this.computeLayerConnections(deviceData.id, connections);
+  loadDevice(deviceId: DeviceId) {
+    const node = this.datagraph.getDevice(deviceId);
+    const device = this.createDevice(deviceId, node);
 
-      this.addConnections(connections);
-    }
+    // load connections
+    const connections = new Map<string, EdgePair>();
+    this.computeLayerConnections(deviceId, connections);
+    this.addConnections(connections);
     return device;
   }
 

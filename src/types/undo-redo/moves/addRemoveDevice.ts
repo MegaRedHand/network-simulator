@@ -27,8 +27,7 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
 
     this.adjustLayer(viewgraph);
 
-    const deviceData = structuredClone(this.data);
-    viewgraph.addDevice(deviceData);
+    viewgraph.loadDevice(this.data.id);
   }
 
   removeDevice(viewgraph: ViewGraph) {

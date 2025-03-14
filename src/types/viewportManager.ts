@@ -144,7 +144,7 @@ export function addDevice(ctx: GlobalContext, type: DeviceType) {
   const deviceData: CreateDevice = { id, node, connections };
 
   // Add the Device to the graph
-  const newDevice = viewgraph.addDevice(deviceData);
+  const newDevice = viewgraph.loadDevice(deviceData.id);
 
   const move = new AddDeviceMove(viewgraph.getLayer(), deviceData);
   urManager.push(move);
