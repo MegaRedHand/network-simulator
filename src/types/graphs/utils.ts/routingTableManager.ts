@@ -285,80 +285,130 @@ export class RoutingTableManager {
     return device.routingTable.filter((entry) => !entry.deleted);
   }
 
-  private aggregateRoutes(
-    routingTable: RoutingTableEntry[],
-  ): RoutingTableEntry[] {
-    console.log("🚀 Starting route aggregation...");
+  // Aggregates routing table entries
+  aggregateRoutes(routingTable: RoutingTableEntry[]): RoutingTableEntry[] {
+    console.log("🚀 Starting hierarchical route aggregation...");
 
-    const aggregatedTable: RoutingTableEntry[] = [];
     const groupedByIface = new Map<number, RoutingTableEntry[]>();
 
-    // 1. Group routes by interface
+    // 1️ Group routes by interface (aggregation only happens within the same interface)
     routingTable.forEach((entry) => {
       if (!groupedByIface.has(entry.iface)) {
         groupedByIface.set(entry.iface, []);
       }
-      const group = groupedByIface.get(entry.iface);
-      if (group) {
-        group.push(entry);
-      }
+      groupedByIface.get(entry.iface)?.push(entry);
     });
 
-    // 2️. Attempt to aggregate routes per interface
+    const aggregatedTable: RoutingTableEntry[] = [];
+
+    // 2️ Process each interface group
     groupedByIface.forEach((entries, iface) => {
+      // 2A. Sort routes by IP for structured processing
       const sortedEntries = entries.sort((a, b) => this.compareIPs(a.ip, b.ip));
 
-      let blockStart = sortedEntries[0];
-      let blockSize = 1;
+      // 2B. Group by prefix length (e.g., /24, /23, /22, etc.)
+      const groupedByPrefix = new Map<number, RoutingTableEntry[]>();
 
-      for (let i = 1; i < sortedEntries.length; i++) {
-        const currentIP = sortedEntries[i].ip;
-
-        const newBlockSize = blockSize * 2;
-        const newMask = this.calculateSubnetMask(newBlockSize);
-        const newNetworkAddress = this.getNetworkAddress(
-          blockStart.ip,
-          newMask,
-        );
-        const currentNetworkAddress = this.getNetworkAddress(
-          currentIP,
-          newMask,
-        );
-
-        // Check if the current IP belongs to the same aggregated network
-        if (newNetworkAddress === currentNetworkAddress) {
-          blockSize = newBlockSize;
-        } else {
-          // Store the aggregated block before starting a new one
-          const mask = this.calculateSubnetMask(blockSize);
-          const aggregatedIP = this.getNetworkAddress(blockStart.ip, mask);
-
-          aggregatedTable.push({ ip: aggregatedIP, mask: mask, iface: iface });
-
-          // Reset the block
-          blockStart = sortedEntries[i];
-          blockSize = 1;
+      sortedEntries.forEach((entry) => {
+        const prefix = this.subnetToPrefix(entry.mask);
+        if (!groupedByPrefix.has(prefix)) {
+          groupedByPrefix.set(prefix, []);
         }
-      }
+        groupedByPrefix.get(prefix)?.push(entry);
+      });
 
-      // Add the last detected aggregation
-      const finalMask = this.calculateSubnetMask(blockSize);
-      const finalAggregatedIP = this.getNetworkAddress(
-        blockStart.ip,
-        finalMask,
+      // 2C. sort from largest to smallest prefix (e.g., /24 → /23 → /22)
+      const sortedPrefixes = Array.from(groupedByPrefix.keys()).sort(
+        (a, b) => b - a,
       );
 
-      aggregatedTable.push({
-        ip: finalAggregatedIP,
-        mask: finalMask,
-        iface: iface,
-      });
+      // Recursive function to process prefixes
+      const processPrefixes = (prefixes: number[], level: number) => {
+        if (level >= prefixes.length) return;
+
+        const prefix = prefixes[level];
+        let groupEntries = groupedByPrefix.get(prefix) || [];
+        let merged = true;
+
+        while (merged) {
+          merged = false;
+          const newEntries: RoutingTableEntry[] = [];
+          let j = 0;
+
+          while (j < groupEntries.length) {
+            if (j < groupEntries.length - 1) {
+              const ip1 = groupEntries[j].ip;
+              const ip2 = groupEntries[j + 1].ip;
+              const mask = groupEntries[j].mask;
+
+              // Check if we can aggregate the two entries
+              if (
+                this.differByOneBit(ip1, ip2, mask) &&
+                mask === groupEntries[j + 1].mask
+              ) {
+                // Compute the new aggregated mask (one bit wider)
+                const newMask = this.getAggregatedMask(mask);
+                const newNetworkAddress = this.getNetworkAddress(ip1, newMask);
+
+                const newEntry = {
+                  ip: newNetworkAddress,
+                  mask: newMask,
+                  iface: iface,
+                };
+                merged = true;
+
+                // Check if the next prefix group exists
+                const nextPrefix = this.subnetToPrefix(newMask);
+                if (!groupedByPrefix.has(nextPrefix)) {
+                  groupedByPrefix.set(nextPrefix, []); // Create the group if it doesn't exist
+                  prefixes.push(nextPrefix); // Add the new prefix to the sorted list
+                  prefixes.sort((a, b) => b - a); // Sort from largest to smallest
+                }
+                groupedByPrefix.get(nextPrefix)?.push(newEntry); // Add the entry to the new group
+
+                j += 2; // Skip the next entry since it was merged
+                continue;
+              }
+            }
+
+            // If merging is not possible, keep the original entry
+            newEntries.push(groupEntries[j]);
+            j++;
+          }
+
+          // Replace group entries with the new merged ones
+          groupEntries = newEntries;
+        }
+
+        // Add remaining entries to the final table
+        if (groupEntries.length % 2 !== 0) {
+          const lastEntry = groupEntries.pop();
+          if (lastEntry) {
+            aggregatedTable.push(lastEntry);
+          }
+        }
+        aggregatedTable.push(...groupEntries);
+
+        // Process the next level of prefix
+        processPrefixes(prefixes, level + 1);
+      };
+
+      // Start processing prefixes from the first level
+      processPrefixes(sortedPrefixes, 0);
     });
 
-    return aggregatedTable;
+    // Sort first by mask and then by IP
+    return aggregatedTable.sort((a, b) => {
+      const prefixA = this.subnetToPrefix(a.mask);
+      const prefixB = this.subnetToPrefix(b.mask);
+      if (prefixA !== prefixB) {
+        return prefixA - prefixB; // Sort by prefix in descending order
+      }
+      return this.compareIPs(a.ip, b.ip); // Sort by IP in ascending order
+    });
   }
 
-  private compareIPs(ip1: string, ip2: string): number {
+  compareIPs(ip1: string, ip2: string): number {
     // Compare two IP addresses by their numerical value
     const parts1 = ip1.split(".").map(Number);
     const parts2 = ip2.split(".").map(Number);
@@ -371,16 +421,52 @@ export class RoutingTableManager {
     return 0;
   }
 
-  private calculateSubnetMask(size: number): string {
-    // Compute the subnet mask based on the block size
-    if (size <= 0) return "255.255.255.255"; // Prevents negative size errors
+  differByOneBit(ip1: string, ip2: string, mask: string): boolean {
+    // Convert the IP addresses and subnet mask to numerical values
+    const num1 = this.ipToNumber(ip1);
+    const num2 = this.ipToNumber(ip2);
+    const maskNum = this.ipToNumber(mask);
 
-    const bits = 32 - Math.floor(Math.log2(size)); // Ensures correct block sizes
-    return this.prefixToSubnet(bits);
+    // Calculate the length of the mask by counting the number of leading 1 bits
+    const maskLength = 32 - Math.log2(~maskNum + 1);
+    const shiftAmount = 32 - maskLength;
+
+    // Extract the relevant parts of the IP addresses after applying the mask
+    const relevantPart1 = (num1 & maskNum) >>> shiftAmount;
+    const relevantPart2 = (num2 & maskNum) >>> shiftAmount;
+
+    // Calculate the difference between the relevant parts
+    const diff = relevantPart1 ^ relevantPart2;
+
+    // Check if the difference is exactly one bit (i.e., the last bit)
+    const lastBitMask = 1; // Mask to check the last bit (000...0001)
+    const result = diff === lastBitMask;
+
+    return result;
   }
 
-  private prefixToSubnet(prefix: number): string {
-    // Convert a CIDR prefix to a subnet mask
+  getAggregatedMask(mask: string): string {
+    const prefix = this.subnetToPrefix(mask);
+    const newPrefix = prefix - 1;
+
+    if (newPrefix < 0) {
+      console.warn(`⚠ Invalid aggregation: trying to use /${newPrefix}`);
+      return mask;
+    }
+
+    return this.prefixToSubnet(newPrefix);
+  }
+
+  subnetToPrefix(subnet: string): number {
+    const binary = subnet
+      .split(".")
+      .map((octet) => parseInt(octet, 10).toString(2).padStart(8, "0"))
+      .join("");
+
+    return binary.split("1").length - 1;
+  }
+
+  prefixToSubnet(prefix: number): string {
     const mask = (0xffffffff << (32 - prefix)) >>> 0;
     return [
       (mask >>> 24) & 255,
@@ -390,12 +476,21 @@ export class RoutingTableManager {
     ].join(".");
   }
 
-  private getNetworkAddress(ip: string, mask: string): string {
+  getNetworkAddress(ip: string, mask: string): string {
     // Compute the network address given an IP and a subnet mask
     const ipParts = ip.split(".").map(Number);
     const maskParts = mask.split(".").map(Number);
 
     const networkParts = ipParts.map((part, i) => part & maskParts[i]);
     return networkParts.join(".");
+  }
+
+  ipToNumber(ip: string): number {
+    return (
+      ip
+        .split(".")
+        .map(Number)
+        .reduce((acc, val) => (acc << 8) + val) >>> 0
+    );
   }
 }
