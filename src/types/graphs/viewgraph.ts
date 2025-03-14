@@ -36,7 +36,8 @@ export class ViewGraph {
         const deviceInfo = { id: deviceId, node: graphNode, connections };
         this.createDevice(deviceInfo);
 
-        this.datagraph.layerDFS(
+        layerDFS(
+          this.datagraph,
           this.layer,
           deviceId,
           deviceId,
@@ -53,7 +54,8 @@ export class ViewGraph {
     const device = this.createDevice(deviceData);
     if (deviceData.connections.length !== 0) {
       const connections = new Map<string, EdgePair>();
-      this.datagraph.layerDFS(
+      layerDFS(
+        this.datagraph,
         this.layer,
         deviceData.id,
         deviceData.id,
@@ -346,4 +348,32 @@ export class ViewGraph {
     }
     this.graph.clear();
   }
+}
+
+function layerDFS(
+  datagraph: DataGraph,
+  layer: Layer,
+  s: DeviceId, // source node
+  v: DeviceId,
+  visited: Set<DeviceId>,
+  connections: Map<string, EdgePair>,
+) {
+  datagraph.getConnections(v).forEach((w) => {
+    if (visited.has(w)) {
+      return;
+    }
+    const adjacent = datagraph.getDevice(w);
+    // mark node as visited
+    visited.add(w);
+
+    if (layerIncluded(layerFromType(adjacent.type), layer)) {
+      // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
+      const edgePair: EdgePair = [w, s];
+      edgePair.sort();
+      connections.set(edgePair.toString(), edgePair);
+    } else {
+      // continue with recursive search
+      layerDFS(datagraph, layer, s, w, visited, connections);
+    }
+  });
 }
