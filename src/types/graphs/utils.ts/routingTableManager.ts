@@ -287,19 +287,10 @@ export class RoutingTableManager {
 
   // Aggregates routing table entries
   aggregateRoutes(routingTable: RoutingTableEntry[]): RoutingTableEntry[] {
-    console.log("🚀 Starting hierarchical route aggregation...");
-
-    const groupedByIface = new Map<number, RoutingTableEntry[]>();
+    const aggregatedTable: RoutingTableEntry[] = [];
 
     // 1️ Group routes by interface (aggregation only happens within the same interface)
-    routingTable.forEach((entry) => {
-      if (!groupedByIface.has(entry.iface)) {
-        groupedByIface.set(entry.iface, []);
-      }
-      groupedByIface.get(entry.iface)?.push(entry);
-    });
-
-    const aggregatedTable: RoutingTableEntry[] = [];
+    const groupedByIface = this.groupByIface(routingTable);
 
     // 2️ Process each interface group
     groupedByIface.forEach((entries, iface) => {
@@ -307,97 +298,63 @@ export class RoutingTableManager {
       const sortedEntries = entries.sort((a, b) => this.compareIPs(a.ip, b.ip));
 
       // 2B. Group by prefix length (e.g., /24, /23, /22, etc.)
-      const groupedByPrefix = new Map<number, RoutingTableEntry[]>();
-
-      sortedEntries.forEach((entry) => {
-        const prefix = this.subnetToPrefix(entry.mask);
-        if (!groupedByPrefix.has(prefix)) {
-          groupedByPrefix.set(prefix, []);
-        }
-        groupedByPrefix.get(prefix)?.push(entry);
-      });
+      const groupedByPrefix = this.groupByPrefix(sortedEntries);
 
       // 2C. sort from largest to smallest prefix (e.g., /24 → /23 → /22)
       const sortedPrefixes = Array.from(groupedByPrefix.keys()).sort(
         (a, b) => b - a,
       );
 
-      // Recursive function to process prefixes
-      const processPrefixes = (prefixes: number[], level: number) => {
-        if (level >= prefixes.length) return;
-
-        const prefix = prefixes[level];
-        let groupEntries = groupedByPrefix.get(prefix) || [];
-        let merged = true;
-
-        while (merged) {
-          merged = false;
-          const newEntries: RoutingTableEntry[] = [];
-          let j = 0;
-
-          while (j < groupEntries.length) {
-            if (j < groupEntries.length - 1) {
-              const ip1 = groupEntries[j].ip;
-              const ip2 = groupEntries[j + 1].ip;
-              const mask = groupEntries[j].mask;
-
-              // Check if we can aggregate the two entries
-              if (
-                this.differByOneBit(ip1, ip2, mask) &&
-                mask === groupEntries[j + 1].mask
-              ) {
-                // Compute the new aggregated mask (one bit wider)
-                const newMask = this.getAggregatedMask(mask);
-                const newNetworkAddress = this.getNetworkAddress(ip1, newMask);
-
-                const newEntry = {
-                  ip: newNetworkAddress,
-                  mask: newMask,
-                  iface: iface,
-                };
-                merged = true;
-
-                // Check if the next prefix group exists
-                const nextPrefix = this.subnetToPrefix(newMask);
-                if (!groupedByPrefix.has(nextPrefix)) {
-                  groupedByPrefix.set(nextPrefix, []); // Create the group if it doesn't exist
-                  prefixes.push(nextPrefix); // Add the new prefix to the sorted list
-                  prefixes.sort((a, b) => b - a); // Sort from largest to smallest
-                }
-                groupedByPrefix.get(nextPrefix)?.push(newEntry); // Add the entry to the new group
-
-                j += 2; // Skip the next entry since it was merged
-                continue;
-              }
-            }
-
-            // If merging is not possible, keep the original entry
-            newEntries.push(groupEntries[j]);
-            j++;
-          }
-
-          // Replace group entries with the new merged ones
-          groupEntries = newEntries;
-        }
-
-        // Add remaining entries to the final table
-        if (groupEntries.length % 2 !== 0) {
-          const lastEntry = groupEntries.pop();
-          if (lastEntry) {
-            aggregatedTable.push(lastEntry);
-          }
-        }
-        aggregatedTable.push(...groupEntries);
-
-        // Process the next level of prefix
-        processPrefixes(prefixes, level + 1);
-      };
-
       // Start processing prefixes from the first level
-      processPrefixes(sortedPrefixes, 0);
+      this.processPrefixes(
+        sortedPrefixes,
+        groupedByPrefix,
+        aggregatedTable,
+        iface,
+      );
     });
 
     // Sort first by mask and then by IP
+    return this.sortAggregatedTable(aggregatedTable);
+  }
+
+  // Group routes by interface
+  private groupByIface(
+    routingTable: RoutingTableEntry[],
+  ): Map<number, RoutingTableEntry[]> {
+    const groupedByIface = new Map<number, RoutingTableEntry[]>();
+
+    routingTable.forEach((entry) => {
+      if (!groupedByIface.has(entry.iface)) {
+        groupedByIface.set(entry.iface, []);
+      }
+      groupedByIface.get(entry.iface)?.push(entry);
+    });
+
+    return groupedByIface;
+  }
+
+  // Group routes by prefix length (e.g., /24, /23, /22, etc.)
+  private groupByPrefix(
+    entries: RoutingTableEntry[],
+  ): Map<number, RoutingTableEntry[]> {
+    const groupedByPrefix = new Map<number, RoutingTableEntry[]>();
+
+    entries.forEach((entry) => {
+      const prefix = this.subnetToPrefix(entry.mask);
+      if (!groupedByPrefix.has(prefix)) {
+        groupedByPrefix.set(prefix, []);
+      }
+      groupedByPrefix.get(prefix)?.push(entry);
+    });
+
+    return groupedByPrefix;
+  }
+
+  // Sort the aggregated table first by mask and then by IP
+  private sortAggregatedTable(
+    aggregatedTable: RoutingTableEntry[],
+  ): RoutingTableEntry[] {
     return aggregatedTable.sort((a, b) => {
       const prefixA = this.subnetToPrefix(a.mask);
       const prefixB = this.subnetToPrefix(b.mask);
@@ -406,6 +363,110 @@ export class RoutingTableManager {
       }
       return this.compareIPs(a.ip, b.ip); // Sort by IP in ascending order
     });
+  }
+
+  // Process prefixes recursively
+  private processPrefixes(
+    prefixes: number[],
+    groupedByPrefix: Map<number, RoutingTableEntry[]>,
+    aggregatedTable: RoutingTableEntry[],
+    iface: number,
+  ): void {
+    // Define a recursive function to process each level of prefixes
+    const process = (level: number) => {
+      // Base case: if level exceeds the number of prefixes, return
+      if (level >= prefixes.length) return;
+
+      const prefix = prefixes[level]; // Get the current prefix
+      let groupEntries = groupedByPrefix.get(prefix) || []; // Get the entries for the current prefix group
+      let merged = true; // Flag to check if any entries were merged
+
+      // Loop to merge entries as long as there are entries to merge
+      while (merged) {
+        merged = false; // Reset the merge flag
+        const newEntries: RoutingTableEntry[] = []; // Container for new entries after merging
+        let j = 0;
+
+        // Iterate over the group entries
+        while (j < groupEntries.length) {
+          // Ensure there is a next entry to compare
+          if (j < groupEntries.length - 1) {
+            const ip1 = groupEntries[j].ip;
+            const ip2 = groupEntries[j + 1].ip;
+            const mask = groupEntries[j].mask;
+
+            // Check if the two entries can be aggregated
+            if (
+              this.differByOneBit(ip1, ip2, mask) &&
+              mask === groupEntries[j + 1].mask
+            ) {
+              // Create a new aggregated entry
+              const newEntry = this.createAggregatedEntry(
+                ip1,
+                ip2,
+                mask,
+                iface,
+              );
+              merged = true; // Set the merge flag to true
+
+              // Get the prefix of the new aggregated entry
+              const nextPrefix = this.subnetToPrefix(newEntry.mask);
+              // Update the grouped entries by prefix with the new aggregated entry
+              this.updateGroupedByPrefix(
+                nextPrefix,
+                newEntry,
+                groupedByPrefix,
+                prefixes,
+              );
+
+              j += 2; // Skip the next entry since it was merged
+              continue;
+            }
+          }
+          // If merging is not possible, keep the original entry
+          newEntries.push(groupEntries[j]);
+          j++;
+        }
+        // Replace group entries with the new merged ones
+        groupEntries = newEntries;
+      }
+
+      // Add remaining entries to the aggregated table
+      aggregatedTable.push(...groupEntries);
+
+      // Recursively process the next level of prefixes
+      process(level + 1);
+    };
+
+    // Start processing from level 0
+    process(0);
+  }
+
+  // Create a new aggregated entry
+  private createAggregatedEntry(
+    ip1: string,
+    ip2: string,
+    mask: string,
+    iface: number,
+  ): RoutingTableEntry {
+    const newMask = this.getAggregatedMask(mask);
+    const newNetworkAddress = this.getNetworkAddress(ip1, newMask);
+    return { ip: newNetworkAddress, mask: newMask, iface: iface };
+  }
+
+  // Update groupedByPrefix with a new entry
+  private updateGroupedByPrefix(
+    nextPrefix: number,
+    newEntry: RoutingTableEntry,
+    groupedByPrefix: Map<number, RoutingTableEntry[]>,
+    prefixes: number[],
+  ): void {
+    if (!groupedByPrefix.has(nextPrefix)) {
+      groupedByPrefix.set(nextPrefix, []);
+      prefixes.push(nextPrefix);
+      prefixes.sort((a, b) => b - a);
+    }
+    groupedByPrefix.get(nextPrefix)?.push(newEntry);
   }
 
   compareIPs(ip1: string, ip2: string): number {
