@@ -13,15 +13,21 @@ export class UndoRedoManager {
 
   push(viewgraph: ViewGraph, move: Move) {
     this.redoBuf = [move];
-    // TODO: verify the move is valid
     this.redo(viewgraph);
   }
 
+  /**
+   * Undoes the last move in the undo buffer.
+   */
   undo(viewgraph: ViewGraph) {
     if (this.undoBuf.length != 0) {
       const move = this.undoBuf.pop();
-      move.undo(viewgraph);
-      this.redoBuf.push(move);
+      // Discard the move if it was unsuccessful
+      if (move.undo(viewgraph)) {
+        this.redoBuf.push(move);
+      } else {
+        console.error("Undo failed.");
+      }
     }
     this.notifyListeners();
     console.log(this.redoBuf);
@@ -29,11 +35,18 @@ export class UndoRedoManager {
     deselectElement();
   }
 
+  /**
+   * Redoes the last move in the redo buffer.
+   */
   redo(viewgraph: ViewGraph) {
     if (this.redoBuf.length != 0) {
       const move = this.redoBuf.pop();
-      move.redo(viewgraph);
-      this.undoBuf.push(move);
+      // Discard the move if it was unsuccessful
+      if (move.redo(viewgraph)) {
+        this.undoBuf.push(move);
+      } else {
+        console.error("Move failed.");
+      }
     }
     this.notifyListeners();
     console.log(this.redoBuf);

@@ -6,19 +6,19 @@ export interface Move {
    * Undoes the move.
    * @returns true if the move was successfully undone, false otherwise.
    */
-  undo(viewgraph: ViewGraph): void;
+  undo(viewgraph: ViewGraph): boolean;
 
   /**
    * Performs the move.
    * @returns true if the move was successfully done, false otherwise.
    */
-  redo(viewgraph: ViewGraph): void;
+  redo(viewgraph: ViewGraph): boolean;
 }
 
 export abstract class BaseMove implements Move {
   layerInMove: Layer;
-  abstract undo(viewgraph: ViewGraph): void;
-  abstract redo(viewgraph: ViewGraph): void;
+  abstract undo(viewgraph: ViewGraph): boolean;
+  abstract redo(viewgraph: ViewGraph): boolean;
 
   constructor(layer: Layer) {
     this.layerInMove = layer;

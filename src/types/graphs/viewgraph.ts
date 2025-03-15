@@ -226,12 +226,12 @@ export class ViewGraph {
   }
 
   // Method to remove a specific edge by its ID
-  removeEdge(n1Id: DeviceId, n2Id: DeviceId) {
+  removeEdge(n1Id: DeviceId, n2Id: DeviceId): boolean {
     const edge = this.graph.getEdge(n1Id, n2Id);
 
     if (!edge) {
       console.warn(`Edge with ID ${n1Id},${n2Id} does not exist in the graph.`);
-      return;
+      return false;
     }
 
     // Remove connection in DataGraph
@@ -244,7 +244,7 @@ export class ViewGraph {
 
     if (!(device1 && device2)) {
       console.warn("At least one device in connection does not exist");
-      return;
+      return false;
     }
 
     // Remove the edge from the viewport
@@ -256,6 +256,7 @@ export class ViewGraph {
     console.log(
       `Edge with ID ${n1Id},${n2Id} successfully removed from ViewGraph.`,
     );
+    return true;
   }
 
   getViewport() {

@@ -28,35 +28,37 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
     this.adjustLayer(viewgraph);
 
     viewgraph.loadDevice(this.data.id);
+    return true;
   }
 
   removeDevice(viewgraph: ViewGraph) {
     this.adjustLayer(viewgraph);
     const device = viewgraph.getDevice(this.data.id);
     if (device == undefined) {
-      throw new Error(`Device with ID ${this.data.id} not found.`);
+      return false;
     }
     device.delete();
+    return true;
   }
 }
 
 // "Move" is here because it conflicts with AddDevice from viewportManager
 export class AddDeviceMove extends AddRemoveDeviceMove {
-  undo(viewgraph: ViewGraph): void {
-    this.removeDevice(viewgraph);
+  undo(viewgraph: ViewGraph): boolean {
+    return this.removeDevice(viewgraph);
   }
 
-  redo(viewgraph: ViewGraph): void {
-    this.addDevice(viewgraph);
+  redo(viewgraph: ViewGraph): boolean {
+    return this.addDevice(viewgraph);
   }
 }
 
 export class RemoveDeviceMove extends AddRemoveDeviceMove {
-  undo(viewgraph: ViewGraph): void {
-    this.addDevice(viewgraph);
+  undo(viewgraph: ViewGraph): boolean {
+    return this.addDevice(viewgraph);
   }
 
-  redo(viewgraph: ViewGraph): void {
-    this.removeDevice(viewgraph);
+  redo(viewgraph: ViewGraph): boolean {
+    return this.removeDevice(viewgraph);
   }
 }
