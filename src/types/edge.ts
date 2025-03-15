@@ -115,26 +115,23 @@ export class Edge extends Graphics {
     this.rightbar.addButton(
       "Delete Edge",
       () => {
+        const viewgraph = this.viewgraph;
         // Obtener las tablas de enrutamiento antes de eliminar la conexión
-        const routingTable1 = this.viewgraph.getRoutingTable(
-          this.connectedNodes.n1,
-        );
-        const routingTable2 = this.viewgraph.getRoutingTable(
-          this.connectedNodes.n2,
-        );
+        const routingTable1 = viewgraph.getRoutingTable(this.connectedNodes.n1);
+        const routingTable2 = viewgraph.getRoutingTable(this.connectedNodes.n2);
 
         // Crear el movimiento de eliminación de la arista con la información adicional
+        const routingTables = new Map([
+          [this.connectedNodes.n1, routingTable1],
+          [this.connectedNodes.n2, routingTable2],
+        ]);
         const move = new RemoveEdgeMove(
-          this.viewgraph.getLayer(),
+          viewgraph.getLayer(),
           this.connectedNodes,
-          new Map([
-            [this.connectedNodes.n1, routingTable1],
-            [this.connectedNodes.n2, routingTable2],
-          ]),
+          routingTables,
         );
 
-        this.delete();
-        urManager.push(move);
+        urManager.push(viewgraph, move);
       },
       "right-bar-delete-button",
     );

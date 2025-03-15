@@ -162,18 +162,12 @@ export abstract class Device extends Container {
   // TODO: why is this even here??
   connectTo(adjacentId: DeviceId): boolean {
     // Connects both devices with an edge.
-    const edgeId = this.viewgraph.addEdge(this.id, adjacentId);
-    if (edgeId) {
-      // Register move
-      const move = new AddEdgeMove(this.viewgraph.getLayer(), {
-        n1: this.id,
-        n2: adjacentId,
-      });
-      urManager.push(move);
-
-      return true;
-    }
-    return false;
+    const move = new AddEdgeMove(this.viewgraph.getLayer(), {
+      n1: this.id,
+      n2: adjacentId,
+    });
+    urManager.push(this.viewgraph, move);
+    return true;
   }
 
   onClick(e: FederatedPointerEvent) {
@@ -278,13 +272,14 @@ function onPointerMove(event: FederatedPointerEvent): void {
 }
 
 function onPointerUp(): void {
-  if (Device.dragTarget && Device.startPosition) {
+  const target = Device.dragTarget;
+  if (target && Device.startPosition) {
     const endPosition: Position = {
-      x: Device.dragTarget.x,
-      y: Device.dragTarget.y,
+      x: target.x,
+      y: target.y,
     };
     console.log("Finalizing move for device:", {
-      id: Device.dragTarget.id,
+      id: target.id,
       startPosition: Device.startPosition,
       endPosition,
     });
@@ -294,24 +289,24 @@ function onPointerUp(): void {
       Device.startPosition.y === endPosition.y
     ) {
       console.log(
-        `No movement detected for device ID ${Device.dragTarget.id}. Move not registered.`,
+        `No movement detected for device ID ${target.id}. Move not registered.`,
       );
     } else {
       const move = new DragDeviceMove(
-        Device.dragTarget.viewgraph.getLayer(),
-        Device.dragTarget.id,
+        target.viewgraph.getLayer(),
+        target.id,
         Device.startPosition,
         endPosition,
       );
-      urManager.push(move);
+      urManager.push(target.viewgraph, move);
     }
 
-    // Resetear variables estáticas
+    // Reset static variables
     Device.startPosition = null;
 
     // Remove global pointermove and pointerup events
-    Device.dragTarget.parent.off("pointermove", onPointerMove);
-    Device.dragTarget.parent.off("pointerup", onPointerUp);
+    target.parent.off("pointermove", onPointerMove);
+    target.parent.off("pointerup", onPointerUp);
     Device.dragTarget = null;
   }
 }

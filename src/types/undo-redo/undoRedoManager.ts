@@ -11,12 +11,10 @@ export class UndoRedoManager {
     this.listeners.forEach((listener) => listener());
   }
 
-  push(move: Move) {
-    if (this.redoBuf.length != 0) {
-      this.redoBuf = [];
-    }
-    this.undoBuf.push(move);
-    this.notifyListeners();
+  push(viewgraph: ViewGraph, move: Move) {
+    this.redoBuf = [move];
+    // TODO: verify the move is valid
+    this.redo(viewgraph);
   }
 
   undo(viewgraph: ViewGraph) {

@@ -70,33 +70,28 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "Delete" || event.key === "Backspace") {
     if (selectedElement) {
-      let data;
-      const currLayer = selectedElement.viewgraph.getLayer();
+      const viewgraph = selectedElement.viewgraph;
+      const currLayer = viewgraph.getLayer();
       if (isDevice(selectedElement)) {
-        data = selectedElement.getCreateDevice();
+        const data = selectedElement.getCreateDevice();
         const move = new RemoveDeviceMove(currLayer, data);
-        selectedElement.delete();
-        urManager.push(move);
+        urManager.push(viewgraph, move);
       } else if (isEdge(selectedElement)) {
+        const connectedNodes = selectedElement.connectedNodes;
         // Obtener las tablas de enrutamiento antes de eliminar la conexión
-        const routingTable1 = selectedElement.viewgraph.getRoutingTable(
-          selectedElement.connectedNodes.n1,
-        );
-        const routingTable2 = selectedElement.viewgraph.getRoutingTable(
-          selectedElement.connectedNodes.n2,
-        );
+        const routingTable1 = viewgraph.getRoutingTable(connectedNodes.n1);
+        const routingTable2 = viewgraph.getRoutingTable(connectedNodes.n2);
 
         // Crear movimiento con las tablas de enrutamiento
         const move = new RemoveEdgeMove(
           currLayer,
-          selectedElement.connectedNodes,
+          connectedNodes,
           new Map([
-            [selectedElement.connectedNodes.n1, routingTable1],
-            [selectedElement.connectedNodes.n2, routingTable2],
+            [connectedNodes.n1, routingTable1],
+            [connectedNodes.n2, routingTable2],
           ]),
         );
-        selectedElement.delete();
-        urManager.push(move);
+        urManager.push(viewgraph, move);
       } else {
         // it’s a packet
         selectedElement.delete();
@@ -137,16 +132,16 @@ export function addDevice(ctx: GlobalContext, type: DeviceType) {
 
   const deviceInfo = setUpDeviceInfo(ctx, type);
 
+  // TODO: avoid creating the device first
   const id = datagraph.addNewDevice(deviceInfo);
-  const node = datagraph.getDevice(id);
-  const connections = datagraph.getConnections(id);
 
   // Add the Device to the graph
   const newDevice = viewgraph.loadDevice(id);
+  const deviceData = newDevice.getCreateDevice();
+  newDevice.delete();
 
-  const deviceData: CreateDevice = { id, node, connections };
   const move = new AddDeviceMove(viewgraph.getLayer(), deviceData);
-  urManager.push(move);
+  urManager.push(viewgraph, move);
 
   console.log(
     `${DeviceType[newDevice.getType()]} added with ID ${newDevice.id} at the center of the screen.`,
