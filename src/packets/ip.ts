@@ -299,3 +299,11 @@ export function computeIpChecksum(octets: Uint8Array): number {
   const carry = sum >> 16;
   return 0xffff ^ (checksum + carry);
 }
+
+export function compareIps(ip1: IpAddress, ip2: IpAddress): number {
+  for (let i = 0; i < 4; i++) {
+    if (ip1.octets[i] < ip2.octets[i]) return -1;
+    if (ip1.octets[i] > ip2.octets[i]) return 1;
+  }
+  return 0; // equal
+}
