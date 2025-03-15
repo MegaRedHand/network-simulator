@@ -29,7 +29,7 @@ export class UndoRedoHandler {
 
     if (this.undoButton && this.redoButton) {
       this.setupButtons();
-      urManager.suscribe(() => this.updateButtons());
+      urManager.subscribe(() => this.updateButtons());
     }
     this.setupShortcuts();
   }

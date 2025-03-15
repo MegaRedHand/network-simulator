@@ -51,7 +51,7 @@ export class UndoRedoManager {
     return this.redoBuf.length != 0;
   }
 
-  suscribe(listener: () => void) {
+  subscribe(listener: () => void) {
     this.listeners.push(listener);
   }
 
