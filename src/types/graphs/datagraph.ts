@@ -278,6 +278,11 @@ export class DataGraph {
   }
 
   // Get all connections of a device
+  getConnection(n1Id: DeviceId, n2Id: DeviceId): GraphEdge | undefined {
+    return this.deviceGraph.getEdge(n1Id, n2Id);
+  }
+
+  // Get all connections of a device
   getConnections(id: DeviceId): DeviceId[] | undefined {
     return this.deviceGraph.getNeighbors(id);
   }
