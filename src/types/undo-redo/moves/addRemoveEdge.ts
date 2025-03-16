@@ -31,9 +31,10 @@ export abstract class AddRemoveEdgeMove extends BaseMove {
   removeEdge(viewgraph: ViewGraph) {
     this.adjustLayer(viewgraph);
     const { n1, n2 } = this.connectedNodes;
-    // Deselect to avoid showing the information of the deleted edge
     const ok = viewgraph.removeEdge(n1, n2);
+    // Avoid deselecting in case of failure, since it's probably a virtual edge
     if (ok) {
+      // Deselect to avoid showing the information of the deleted edge
       deselectElement();
     }
     return ok;

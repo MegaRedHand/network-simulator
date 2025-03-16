@@ -11,8 +11,13 @@ export class UndoRedoManager {
   }
 
   push(viewgraph: ViewGraph, move: Move) {
-    this.redoBuf = [move];
-    this.redo(viewgraph);
+    if (move.redo(viewgraph)) {
+      this.undoBuf.push(move);
+      this.redoBuf = [];
+      this.notifyListeners();
+    } else {
+      console.warn("Move push failed.");
+    }
   }
 
   /**
