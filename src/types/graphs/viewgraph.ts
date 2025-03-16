@@ -9,7 +9,7 @@ import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 import { Graph } from "./graph";
 
-type EdgePair = [DeviceId, DeviceId];
+export type EdgePair = [DeviceId, DeviceId];
 
 export class ViewGraph {
   private ctx: GlobalContext;
@@ -33,7 +33,14 @@ export class ViewGraph {
     for (const [deviceId, graphNode] of this.datagraph.getDevices()) {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
         this.addDevice(deviceId, graphNode);
-        this.computeLayerConnections(deviceId, allConnections);
+        layerDFS(
+          this.datagraph,
+          this.layer,
+          deviceId,
+          deviceId,
+          new Set([deviceId]),
+          allConnections,
+        );
       }
     }
     this.addConnections(allConnections);
@@ -46,7 +53,14 @@ export class ViewGraph {
 
     // load connections
     const connections = new Map<string, EdgePair>();
-    this.computeLayerConnections(deviceId, connections);
+    layerDFS(
+      this.datagraph,
+      this.layer,
+      deviceId,
+      deviceId,
+      new Set([deviceId]),
+      connections,
+    );
     this.addConnections(connections);
     return device;
   }
@@ -327,46 +341,6 @@ export class ViewGraph {
     return null;
   }
 
-  private computeLayerConnections(
-    source: DeviceId,
-    connections: Map<string, EdgePair>,
-  ) {
-    this.layer_dfs(
-      this.datagraph,
-      source,
-      source,
-      new Set([source]),
-      connections,
-    );
-  }
-
-  private layer_dfs(
-    graph: DataGraph,
-    s: DeviceId, // source node
-    v: DeviceId,
-    visited: Set<DeviceId>,
-    connections: Map<string, EdgePair>,
-  ) {
-    graph.getConnections(v).forEach((w) => {
-      if (visited.has(w)) {
-        return;
-      }
-      const adjacent = this.datagraph.getDevice(w);
-      // mark node as visited
-      visited.add(w);
-
-      if (layerIncluded(layerFromType(adjacent.type), this.layer)) {
-        // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
-        const edgePair: EdgePair = [w, s];
-        edgePair.sort();
-        connections.set(edgePair.toString(), edgePair);
-      } else {
-        // continue with recursive search
-        this.layer_dfs(graph, s, w, visited, connections);
-      }
-    });
-  }
-
   clear() {
     this.viewport.clear();
     for (const [, device] of this.graph.getAllVertices()) {
@@ -377,4 +351,32 @@ export class ViewGraph {
     }
     this.graph.clear();
   }
+}
+
+function layerDFS(
+  datagraph: DataGraph,
+  layer: Layer,
+  s: DeviceId, // source node
+  v: DeviceId,
+  visited: Set<DeviceId>,
+  connections: Map<string, EdgePair>,
+) {
+  datagraph.getConnections(v).forEach((w) => {
+    if (visited.has(w)) {
+      return;
+    }
+    const adjacent = datagraph.getDevice(w);
+    // mark node as visited
+    visited.add(w);
+
+    if (layerIncluded(layerFromType(adjacent.type), layer)) {
+      // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
+      const edgePair: EdgePair = [w, s];
+      edgePair.sort();
+      connections.set(edgePair.toString(), edgePair);
+    } else {
+      // continue with recursive search
+      layerDFS(datagraph, layer, s, w, visited, connections);
+    }
+  });
 }
