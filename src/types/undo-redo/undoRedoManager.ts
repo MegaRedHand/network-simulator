@@ -10,6 +10,9 @@ export class UndoRedoManager {
     this.listeners.forEach((listener) => listener());
   }
 
+  /**
+   * Performs a move and pushes it to the undo buffer.
+   */
   push(viewgraph: ViewGraph, move: Move) {
     if (move.redo(viewgraph)) {
       this.undoBuf.push(move);
