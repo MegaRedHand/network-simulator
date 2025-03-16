@@ -1,6 +1,6 @@
 import { Device, NetworkDevice } from "./../devices";
 import { Edge, EdgeEdges } from "./../edge";
-import { DataGraph, DeviceId, GraphNode } from "./datagraph";
+import { DataGraph, DeviceId, GraphNode, RemovedNodeData } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
 import { createDevice } from "../devices/utils";
@@ -52,6 +52,7 @@ export class ViewGraph {
   }
 
   // Add a device to the graph
+  // TODO: make this add device to datagraph
   private addDevice(id: DeviceId, node: GraphNode): Device {
     if (this.graph.hasVertex(id)) {
       console.warn(`Device with ID ${id} already exists in the graph.`);
@@ -201,7 +202,7 @@ export class ViewGraph {
   }
 
   // Method to remove a device and its connections (edges)
-  removeDevice(id: DeviceId) {
+  removeDevice(id: DeviceId): RemovedNodeData | undefined {
     const device = this.graph.getVertex(id);
 
     if (!device) {
@@ -220,9 +221,10 @@ export class ViewGraph {
     this.viewport.removeChild(device);
 
     // Finally, remove the device from the datagraph
-    this.datagraph.removeDevice(id);
+    const removedData = this.datagraph.removeDevice(id);
 
     console.log(`Device with ID ${id} removed from view.`);
+    return removedData;
   }
 
   // Method to remove a specific edge by its ID

@@ -1,5 +1,5 @@
 import { GlobalContext } from "./../context";
-import { DataGraph, GraphData, GraphNode } from "./graphs/datagraph";
+import { DataGraph, GraphData, GraphNode, NewDevice } from "./graphs/datagraph";
 import { Device } from "./devices/index";
 import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
@@ -107,7 +107,7 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType): GraphNode {
+function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType): NewDevice {
   const viewport = ctx.getViewport();
   // Get the center coordinates of the world after zoom
   const { x, y } = viewport.toWorld(
@@ -117,11 +117,11 @@ function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType): GraphNode {
   const mac = ctx.getNextMac();
   if (type == DeviceType.Switch) {
     // TODO: avoid using negative ID as placeholder
-    return { id: -1, x, y, type, mac, arpTable: new Map<string, string>() };
+    return { x, y, type, mac };
   }
   const { ip, mask } = ctx.getNextIp();
   // TODO: avoid using negative ID as placeholder
-  return { id: -1, x, y, type, mac, ip, mask };
+  return { x, y, type, mac, ip, mask };
 }
 
 // Function to add a device at the center of the viewport
@@ -131,7 +131,7 @@ export function addDevice(ctx: GlobalContext, type: DeviceType) {
 
   const deviceInfo = setUpDeviceInfo(ctx, type);
 
-  const move = new AddDeviceMove(viewgraph.getLayer(), { node: deviceInfo });
+  const move = new AddDeviceMove(viewgraph.getLayer(), deviceInfo);
   urManager.push(viewgraph, move);
 }
 

@@ -1,7 +1,7 @@
 import { RunningProgram } from "../../programs";
 import { DeviceType, Layer, layerFromType } from "../devices/device";
 import { layerIncluded } from "../devices/layer";
-import { Graph, VertexId } from "./graph";
+import { Graph, RemovedVertexData, VertexId } from "./graph";
 
 export type DeviceId = VertexId;
 
@@ -118,6 +118,8 @@ export interface GraphData {
   nodes: GraphDataNode[];
   edges: GraphEdge[];
 }
+
+export type RemovedNodeData = RemovedVertexData<GraphNode, GraphEdge>;
 
 export interface NewDevice {
   x: number;
@@ -280,15 +282,16 @@ export class DataGraph {
   }
 
   // Method to remove a device and all its connections
-  removeDevice(id: DeviceId): void {
+  removeDevice(id: DeviceId): RemovedNodeData | undefined {
     if (!this.deviceGraph.hasVertex(id)) {
       console.warn(`Device with ID ${id} does not exist in the graph.`);
       return;
     }
-    this.deviceGraph.removeVertex(id);
+    const removedData = this.deviceGraph.removeVertex(id);
     console.log(`Device with ID ${id} and its connections were removed.`);
     this.notifyChanges();
     this.regenerateAllRoutingTables();
+    return removedData;
   }
 
   // Method to remove a connection (edge) between two devices by their IDs

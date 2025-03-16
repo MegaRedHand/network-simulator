@@ -19,7 +19,7 @@ import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
-import { DeviceId, GraphNode } from "../graphs/datagraph";
+import { DeviceId, GraphNode, RemovedNodeData } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer } from "./layer";
 import { Packet } from "../packet";
@@ -136,17 +136,11 @@ export abstract class Device extends Container {
     this.addChild(idText); // Add the ID text as a child of the device
   }
 
-  /// Returns the data needed to create the device
-  getCreateDevice(): CreateDevice {
-    const node = this.viewgraph.getDataGraph().getDevice(this.id);
-    const connections = this.viewgraph.getDataGraph().getConnections(this.id);
-    return { id: this.id, node, connections };
-  }
-
-  delete(): void {
-    this.viewgraph.removeDevice(this.id);
+  delete(): RemovedNodeData {
+    const deviceData = this.viewgraph.removeDevice(this.id);
     console.log(`Device ${this.id} deleted`);
     this.destroy();
+    return deviceData;
   }
 
   onPointerDown(event: FederatedPointerEvent): void {

@@ -1,28 +1,28 @@
 import { Layer } from "../../devices/device";
-import { DeviceId, GraphNode } from "../../graphs/datagraph";
+import {
+  DeviceId,
+  GraphNode,
+  NewDevice,
+  RemovedNodeData,
+} from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { selectElement } from "../../viewportManager";
 import { BaseMove } from "./move";
 
-export interface DeviceData {
-  id?: DeviceId;
-  node: GraphNode;
-  connections?: DeviceId[];
-}
-
 // Superclass for AddDeviceMove and RemoveDeviceMove
 export abstract class AddRemoveDeviceMove extends BaseMove {
   // TODO: reduce duplicate data
-  id: DeviceId;
-  data: DeviceData;
+  id?: DeviceId;
+  nodeData?: NewDevice;
+  removedData?: RemovedNodeData;
 
   // TODO: simplify
-  constructor(layer: Layer, options: { data?: DeviceData; id?: DeviceId }) {
+  constructor(layer: Layer, options: { data?: NewDevice; id?: DeviceId }) {
     super(layer);
     if (options.id == undefined) {
       // NOTE: we have to deep-copy the data to stop the data from
       // being modified by the original
-      this.data = structuredClone(options.data);
+      this.nodeData = structuredClone(options.data);
     } else {
       this.id = options.id;
     }
@@ -31,24 +31,23 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
   addDevice(viewgraph: ViewGraph) {
     const datagraph = viewgraph.getDataGraph();
 
-    // If ID was unspecified, it means it's a new device
-    if (this.data.id == undefined) {
-      const id = datagraph.addNewDevice(this.data.node);
-      this.id = id;
-      this.data.id = id;
-      this.data.connections = [];
-    } else {
+    // It was removed before
+    if (this.removedData) {
       // Add the device to the datagraph and the viewgraph
-      const deviceInfo = structuredClone(this.data.node);
+      const deviceInfo = structuredClone(this.removedData.vertex);
       // Clone array to avoid modifying the original
-      const connections = Array.from(this.data.connections);
+      const connections = Array.from(this.removedData.edges.keys());
 
-      datagraph.addDevice(this.data.id, deviceInfo, connections);
+      datagraph.addDevice(deviceInfo.id, deviceInfo, connections);
       datagraph.regenerateAllRoutingTables();
+    } else {
+      // Add the new device
+      const id = datagraph.addNewDevice(this.nodeData);
+      this.id = id;
     }
     this.adjustLayer(viewgraph);
-    viewgraph.loadDevice(this.data.id);
-    selectElement(viewgraph.getDevice(this.data.id));
+    viewgraph.loadDevice(this.id);
+    selectElement(viewgraph.getDevice(this.id));
     return true;
   }
 
@@ -58,16 +57,15 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
     if (device == undefined) {
       return false;
     }
-    this.data = device.getCreateDevice();
     // This also deselects the element
-    device.delete();
+    this.removedData = device.delete();
     return true;
   }
 }
 
 // "Move" is here because it conflicts with AddDevice from viewportManager
 export class AddDeviceMove extends AddRemoveDeviceMove {
-  constructor(layer: Layer, data: DeviceData) {
+  constructor(layer: Layer, data: NewDevice) {
     super(layer, { data });
   }
 
