@@ -9,12 +9,6 @@ import { Host } from "./host";
 import { Router } from "./router";
 import { Switch } from "./switch";
 
-export interface CreateDevice {
-  id: DeviceId;
-  node: GraphNode;
-  connections: DeviceId[];
-}
-
 export function createDevice(
   id: DeviceId,
   node: GraphNode,

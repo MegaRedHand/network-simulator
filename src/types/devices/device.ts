@@ -19,15 +19,20 @@ import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
-import { DeviceId } from "../graphs/datagraph";
+import { DeviceId, GraphNode } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer } from "./layer";
 import { Packet } from "../packet";
-import { CreateDevice } from "./utils";
 import { MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 
 export { Layer } from "./layer";
+
+interface CreateDevice {
+  id: DeviceId;
+  node: GraphNode;
+  connections: DeviceId[];
+}
 
 export enum DeviceType {
   Router = 0,
