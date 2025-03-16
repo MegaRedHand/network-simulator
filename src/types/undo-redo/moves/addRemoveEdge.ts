@@ -2,6 +2,7 @@ import { Layer } from "../../devices/layer";
 import { EdgeEdges } from "../../edge";
 import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
+import { deselectElement } from "../../viewportManager";
 import { BaseMove } from "./move";
 
 export abstract class AddRemoveEdgeMove extends BaseMove {
@@ -30,6 +31,8 @@ export abstract class AddRemoveEdgeMove extends BaseMove {
   removeEdge(viewgraph: ViewGraph) {
     this.adjustLayer(viewgraph);
     const { n1, n2 } = this.connectedNodes;
+    // Deselect to avoid showing the information of the deleted edge
+    deselectElement();
     return viewgraph.removeEdge(n1, n2);
   }
 }

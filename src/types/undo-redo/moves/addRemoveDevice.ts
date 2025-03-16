@@ -50,6 +50,7 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
     if (device == undefined) {
       return false;
     }
+    // This also deselects the element
     device.delete();
     return true;
   }
