@@ -5,7 +5,6 @@ import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
 import { Packet } from "./packet";
 import { DeviceType, Layer } from "./devices/device";
-import { CreateDevice } from "./devices/utils";
 import {
   UndoRedoManager,
   AddDeviceMove,
