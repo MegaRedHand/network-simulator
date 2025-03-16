@@ -52,7 +52,6 @@ export class ViewGraph {
   }
 
   // Add a device to the graph
-  // TODO: make this add device to datagraph
   private addDevice(id: DeviceId, node: GraphNode): Device {
     if (this.graph.hasVertex(id)) {
       console.warn(`Device with ID ${id} already exists in the graph.`);

@@ -33,12 +33,7 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
 
     // It was removed before
     if (this.removedData) {
-      // Add the device to the datagraph and the viewgraph
-      const deviceInfo = structuredClone(this.removedData.vertex);
-      // Clone array to avoid modifying the original
-      const connections = Array.from(this.removedData.edges.keys());
-
-      datagraph.addDevice(deviceInfo.id, deviceInfo, connections);
+      datagraph.readdDevice(this.removedData);
       datagraph.regenerateAllRoutingTables();
     } else {
       // Add the new device

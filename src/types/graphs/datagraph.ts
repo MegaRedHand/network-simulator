@@ -141,7 +141,7 @@ export class DataGraph {
 
     data.nodes.forEach((nodeData: GraphDataNode) => {
       console.log(nodeData);
-      dataGraph.addDevice(nodeData.id, nodeData, []);
+      dataGraph.addExistingDevice(nodeData);
     });
 
     data.edges.forEach((edgeData: GraphEdge) => {
@@ -187,25 +187,26 @@ export class DataGraph {
     return id;
   }
 
+  readdDevice(removedData: RemovedNodeData) {
+    const { id, vertex, edges } = removedData;
+    this.deviceGraph.setVertex(id, vertex);
+    edges.forEach((edge) => {
+      this.deviceGraph.setEdge(edge.from.id, edge.to.id, edge);
+    });
+    this.notifyChanges();
+  }
+
   // Add a device to the graph
-  addDevice(
-    idDevice: DeviceId,
-    deviceInfo: GraphNode,
-    connections: DeviceId[],
-  ) {
-    if (this.deviceGraph.hasVertex(idDevice)) {
-      console.warn(`Device with ID ${idDevice} already exists in the graph.`);
+  addExistingDevice(node: GraphNode) {
+    if (this.deviceGraph.hasVertex(node.id)) {
+      console.warn(`Device with ID ${node.id} already exists in the graph.`);
       return;
     }
-    this.deviceGraph.setVertex(idDevice, deviceInfo);
-    connections.forEach((connectedId) => {
-      const edge = { from: { id: idDevice }, to: { id: connectedId } };
-      this.deviceGraph.setEdge(idDevice, connectedId, edge);
-    });
-    if (this.idCounter <= idDevice) {
-      this.idCounter = idDevice + 1;
+    this.deviceGraph.setVertex(node.id, node);
+    if (this.idCounter <= node.id) {
+      this.idCounter = node.id + 1;
     }
-    console.log(`Device added with ID ${idDevice}`);
+    console.log(`Device added with ID ${node.id}`);
     this.notifyChanges();
   }
 
