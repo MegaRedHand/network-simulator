@@ -1,5 +1,5 @@
 import { GlobalContext } from "./../context";
-import { DataGraph, GraphData, GraphNode, NewDevice } from "./graphs/datagraph";
+import { DataGraph, GraphData, NewDevice } from "./graphs/datagraph";
 import { Device } from "./devices/index";
 import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";

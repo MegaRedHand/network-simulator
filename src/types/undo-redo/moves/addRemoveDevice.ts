@@ -1,10 +1,5 @@
 import { Layer } from "../../devices/device";
-import {
-  DeviceId,
-  GraphNode,
-  NewDevice,
-  RemovedNodeData,
-} from "../../graphs/datagraph";
+import { DeviceId, NewDevice, RemovedNodeData } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { selectElement } from "../../viewportManager";
 import { BaseMove } from "./move";
