@@ -252,7 +252,6 @@ export abstract class Device extends Container {
   abstract getLayer(): Layer;
 
   destroy() {
-    // Clear connections
     deselectElement();
     super.destroy();
   }
