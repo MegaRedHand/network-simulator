@@ -1,13 +1,20 @@
 import { Layer } from "../../devices/device";
-import { CreateDevice } from "../../devices/utils";
+import { DeviceId, GraphNode } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
+import { selectElement } from "../../viewportManager";
 import { BaseMove } from "./move";
+
+export interface DeviceData {
+  id?: DeviceId;
+  node: GraphNode;
+  connections?: DeviceId[];
+}
 
 // Superclass for AddDeviceMove and RemoveDeviceMove
 export abstract class AddRemoveDeviceMove extends BaseMove {
-  data: CreateDevice;
+  data: DeviceData;
 
-  constructor(layer: Layer, data: CreateDevice) {
+  constructor(layer: Layer, data: DeviceData) {
     // NOTE: we have to deep-copy the data to stop the data from
     // being modified by the original
     super(layer);
@@ -17,17 +24,23 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
   addDevice(viewgraph: ViewGraph) {
     const datagraph = viewgraph.getDataGraph();
 
-    // Add the device to the datagraph and the viewgraph
-    const deviceInfo = structuredClone(this.data.node);
-    // Clone array to avoid modifying the original
-    const connections = Array.from(this.data.connections);
+    // If ID was unspecified, it means it's a new device
+    if (this.data.id == undefined) {
+      const id = datagraph.addNewDevice(this.data.node);
+      this.data.id = id;
+      this.data.connections = [];
+    } else {
+      // Add the device to the datagraph and the viewgraph
+      const deviceInfo = structuredClone(this.data.node);
+      // Clone array to avoid modifying the original
+      const connections = Array.from(this.data.connections);
 
-    datagraph.addDevice(this.data.id, deviceInfo, connections);
-    datagraph.regenerateAllRoutingTables();
-
+      datagraph.addDevice(this.data.id, deviceInfo, connections);
+      datagraph.regenerateAllRoutingTables();
+    }
     this.adjustLayer(viewgraph);
-
     viewgraph.loadDevice(this.data.id);
+    selectElement(viewgraph.getDevice(this.data.id));
     return true;
   }
 

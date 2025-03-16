@@ -1,5 +1,5 @@
 import { GlobalContext } from "./../context";
-import { DataGraph, GraphData } from "./graphs/datagraph";
+import { DataGraph, GraphData, GraphNode } from "./graphs/datagraph";
 import { Device } from "./devices/index";
 import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
@@ -109,7 +109,7 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType) {
+function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType): GraphNode {
   const viewport = ctx.getViewport();
   // Get the center coordinates of the world after zoom
   const { x, y } = viewport.toWorld(
@@ -118,37 +118,23 @@ function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType) {
   );
   const mac = ctx.getNextMac();
   if (type == DeviceType.Switch) {
-    return { x, y, type, mac };
+    // TODO: avoid using negative ID as placeholder
+    return { id: -1, x, y, type, mac, arpTable: new Map<string, string>() };
   }
   const { ip, mask } = ctx.getNextIp();
-  return { x, y, type, mac, ip, mask };
+  // TODO: avoid using negative ID as placeholder
+  return { id: -1, x, y, type, mac, ip, mask };
 }
 
 // Function to add a device at the center of the viewport
 export function addDevice(ctx: GlobalContext, type: DeviceType) {
   console.log(`Entered addDevice with ${type}`);
   const viewgraph = ctx.getViewGraph();
-  const datagraph = ctx.getDataGraph();
 
   const deviceInfo = setUpDeviceInfo(ctx, type);
 
-  // TODO: avoid creating the device first
-  const id = datagraph.addNewDevice(deviceInfo);
-
-  // Add the Device to the graph
-  const newDevice = viewgraph.loadDevice(id);
-  const deviceData = newDevice.getCreateDevice();
-  newDevice.delete();
-
-  const move = new AddDeviceMove(viewgraph.getLayer(), deviceData);
+  const move = new AddDeviceMove(viewgraph.getLayer(), { node: deviceInfo });
   urManager.push(viewgraph, move);
-
-  console.log(
-    `${DeviceType[newDevice.getType()]} added with ID ${newDevice.id} at the center of the screen.`,
-  );
-
-  // Select the new device
-  selectElement(newDevice);
 }
 
 // Function to save the current graph in JSON format
