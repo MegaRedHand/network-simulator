@@ -24,14 +24,15 @@ export class UndoRedoManager {
    * Undoes the last move in the undo buffer.
    */
   undo(viewgraph: ViewGraph) {
-    if (this.undoBuf.length != 0) {
-      const move = this.undoBuf.pop();
-      // Discard the move if it was unsuccessful
-      if (move.undo(viewgraph)) {
-        this.redoBuf.push(move);
-      } else {
-        console.error("Undo failed.");
-      }
+    if (!this.canUndo()) {
+      return;
+    }
+    const move = this.undoBuf.pop();
+    // Discard the move if it was unsuccessful
+    if (move.undo(viewgraph)) {
+      this.redoBuf.push(move);
+    } else {
+      console.error("Undo failed.");
     }
     this.notifyListeners();
   }
@@ -40,24 +41,25 @@ export class UndoRedoManager {
    * Redoes the last move in the redo buffer.
    */
   redo(viewgraph: ViewGraph) {
-    if (this.redoBuf.length != 0) {
-      const move = this.redoBuf.pop();
-      // Discard the move if it was unsuccessful
-      if (move.redo(viewgraph)) {
-        this.undoBuf.push(move);
-      } else {
-        console.error("Move failed.");
-      }
+    if (!this.canRedo()) {
+      return;
+    }
+    const move = this.redoBuf.pop();
+    // Discard the move if it was unsuccessful
+    if (move.redo(viewgraph)) {
+      this.undoBuf.push(move);
+    } else {
+      console.error("Move failed.");
     }
     this.notifyListeners();
   }
 
   canUndo(): boolean {
-    return this.undoBuf.length != 0;
+    return this.undoBuf.length !== 0;
   }
 
   canRedo(): boolean {
-    return this.redoBuf.length != 0;
+    return this.redoBuf.length !== 0;
   }
 
   subscribe(listener: () => void) {
