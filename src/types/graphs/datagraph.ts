@@ -105,8 +105,7 @@ interface SwitchDataNode extends LinkDataNode {
 
 interface EdgeTip {
   id: DeviceId;
-  // TODO: uncomment this
-  // iface: number;
+  iface: number;
 }
 
 interface GraphEdge {
@@ -233,7 +232,10 @@ export class DataGraph {
       );
       return;
     }
-    const edge = { from: { id: n1Id }, to: { id: n2Id } };
+    const edge = {
+      from: { id: n1Id, iface: n2Id },
+      to: { id: n2Id, iface: n1Id },
+    };
     this.deviceGraph.setEdge(n1Id, n2Id, edge);
 
     console.log(
