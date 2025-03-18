@@ -4,51 +4,71 @@ import { ViewGraph } from "../../graphs/viewgraph";
 import { selectElement } from "../../viewportManager";
 import { BaseMove } from "./move";
 
+type DeviceState =
+  // Device is new
+  | { data: NewDevice }
+  // Device is in graph
+  | { id: DeviceId }
+  // Device was removed
+  | { removedData: RemovedNodeData };
+
+function isNew(state: DeviceState): state is { data: NewDevice } {
+  return "data" in state;
+}
+
+function isInGraph(state: DeviceState): state is { id: DeviceId } {
+  return "id" in state;
+}
+
+function wasRemoved(
+  state: DeviceState,
+): state is { removedData: RemovedNodeData } {
+  return "removedData" in state;
+}
+
 // Superclass for AddDeviceMove and RemoveDeviceMove
 export abstract class AddRemoveDeviceMove extends BaseMove {
-  // TODO: reduce duplicate data
-  id?: DeviceId;
-  nodeData?: NewDevice;
-  removedData?: RemovedNodeData;
+  private state: DeviceState;
 
-  // TODO: simplify
-  constructor(layer: Layer, options: { data?: NewDevice; id?: DeviceId }) {
+  constructor(layer: Layer, state: DeviceState) {
     super(layer);
-    if (options.id == undefined) {
-      // NOTE: we have to deep-copy the data to stop the data from
-      // being modified by the original
-      this.nodeData = structuredClone(options.data);
-    } else {
-      this.id = options.id;
-    }
+    this.state = state;
   }
 
   addDevice(viewgraph: ViewGraph) {
     const datagraph = viewgraph.getDataGraph();
 
-    // It was removed before
-    if (this.removedData) {
-      datagraph.readdDevice(this.removedData);
-      datagraph.regenerateAllRoutingTables();
-    } else {
+    let id;
+    // Device is new
+    if (isNew(this.state)) {
       // Add the new device
-      const id = datagraph.addNewDevice(this.nodeData);
-      this.id = id;
+      id = datagraph.addNewDevice(this.state.data);
+    } else if (wasRemoved(this.state)) {
+      // Re-add the removed device
+      id = datagraph.readdDevice(this.state.removedData);
+      datagraph.regenerateAllRoutingTables();
+      // Discard removed data
     }
+    this.state = { id };
     this.adjustLayer(viewgraph);
-    viewgraph.loadDevice(this.id);
-    selectElement(viewgraph.getDevice(this.id));
+    viewgraph.loadDevice(id);
+    selectElement(viewgraph.getDevice(id));
     return true;
   }
 
   removeDevice(viewgraph: ViewGraph) {
+    if (!isInGraph(this.state)) {
+      console.error("Tried to remove device without id");
+      return false;
+    }
     this.adjustLayer(viewgraph);
-    const device = viewgraph.getDevice(this.id);
+    const device = viewgraph.getDevice(this.state.id);
     if (device == undefined) {
       return false;
     }
     // This also deselects the element
-    this.removedData = device.delete();
+    const removedData = device.delete();
+    this.state = { removedData };
     return true;
   }
 }

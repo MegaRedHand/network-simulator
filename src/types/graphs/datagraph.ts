@@ -187,13 +187,14 @@ export class DataGraph {
     return id;
   }
 
-  readdDevice(removedData: RemovedNodeData) {
+  readdDevice(removedData: RemovedNodeData): DeviceId {
     const { id, vertex, edges } = removedData;
     this.deviceGraph.setVertex(id, vertex);
     edges.forEach((edge) => {
       this.deviceGraph.setEdge(edge.from.id, edge.to.id, edge);
     });
     this.notifyChanges();
+    return id;
   }
 
   // Add a device to the graph
