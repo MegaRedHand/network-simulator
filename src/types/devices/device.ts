@@ -152,17 +152,6 @@ export abstract class Device extends Container {
     this.parent.on("pointerup", onPointerUp);
   }
 
-  // TODO: why is this even here??
-  connectTo(adjacentId: DeviceId): boolean {
-    // Connects both devices with an edge.
-    const move = new AddEdgeMove(this.viewgraph.getLayer(), {
-      n1: this.id,
-      n2: adjacentId,
-    });
-    urManager.push(this.viewgraph, move);
-    return true;
-  }
-
   onClick(e: FederatedPointerEvent) {
     e.stopPropagation();
 
@@ -170,12 +159,15 @@ export abstract class Device extends Container {
       selectElement(this);
       return;
     }
-    // If the stored device is this, reset it
+    // If the stored device is this, ignore
     if (Device.connectionTarget === this) {
       return;
     }
-    // The "LineStart" device ends up as the end of the drawing but it's the same
-    if (this.connectTo(Device.connectionTarget.id)) {
+    // Connect both devices
+    const n1 = Device.connectionTarget.id;
+    const n2 = this.id;
+    const move = new AddEdgeMove(this.viewgraph.getLayer(), { n1, n2 });
+    if (urManager.push(this.viewgraph, move)) {
       refreshElement();
       Device.connectionTarget = null;
     }

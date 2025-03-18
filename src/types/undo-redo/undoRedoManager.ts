@@ -13,14 +13,16 @@ export class UndoRedoManager {
   /**
    * Performs a move and pushes it to the undo buffer.
    */
-  push(viewgraph: ViewGraph, move: Move) {
-    if (move.redo(viewgraph)) {
+  push(viewgraph: ViewGraph, move: Move): boolean {
+    const ok = move.redo(viewgraph);
+    if (ok) {
       this.undoBuf.push(move);
       this.redoBuf = [];
       this.notifyListeners();
     } else {
       console.warn("Move push failed.");
     }
+    return ok;
   }
 
   /**
