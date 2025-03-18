@@ -116,11 +116,9 @@ function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType): NewDevice {
   );
   const mac = ctx.getNextMac();
   if (type == DeviceType.Switch) {
-    // TODO: avoid using negative ID as placeholder
     return { x, y, type, mac };
   }
   const { ip, mask } = ctx.getNextIp();
-  // TODO: avoid using negative ID as placeholder
   return { x, y, type, mac, ip, mask };
 }
 
