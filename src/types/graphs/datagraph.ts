@@ -290,6 +290,26 @@ export class DataGraph {
     return this.deviceGraph.getNeighbors(id);
   }
 
+  // Get all connections of a device in a given interface
+  getConnectionsInInterface(
+    id: DeviceId,
+    iface: number,
+  ): DeviceId[] | undefined {
+    if (!this.deviceGraph.hasVertex(id)) {
+      return;
+    }
+    const connections = [];
+    for (const [neighborId, { from, to }] of this.deviceGraph.getEdges(id)) {
+      if (
+        (from.id === id && from.iface === iface) ||
+        (to.id === id && to.iface === iface)
+      ) {
+        connections.push(neighborId);
+      }
+    }
+    return connections;
+  }
+
   // Method to remove a device and all its connections
   removeDevice(id: DeviceId): RemovedNodeData | undefined {
     if (!this.deviceGraph.hasVertex(id)) {

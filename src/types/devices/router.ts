@@ -79,8 +79,14 @@ export class Router extends NetworkDevice {
       console.log("Considering entry:", entry);
       return datagram.destinationAddress.isInSubnet(ip, mask);
     });
-    console.log("Result:", result);
-    return result === undefined ? null : result.iface;
+    const devices = this.viewgraph
+      .getDataGraph()
+      .getConnectionsInInterface(this.id, result.iface);
+    if (!devices || devices.length === 0) {
+      return null;
+    }
+    // TODO: return more than one device
+    return devices[0];
   }
 
   async receiveDatagram(packet: Packet): Promise<DeviceId | null> {
