@@ -71,12 +71,12 @@ export class Router extends NetworkDevice {
 
     const result = device.routingTable.find((entry) => {
       if (entry.deleted) {
-        console.log("Skipping deleted entry:", entry);
+        console.debug("Skipping deleted entry:", entry);
         return false;
       }
       const ip = IpAddress.parse(entry.ip);
       const mask = IpAddress.parse(entry.mask);
-      console.log("Considering entry:", entry);
+      console.debug("Considering entry:", entry);
       return datagram.destinationAddress.isInSubnet(ip, mask);
     });
     const devices = this.viewgraph
