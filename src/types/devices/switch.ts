@@ -4,9 +4,8 @@ import SwitchImage from "../../assets/switch.svg";
 import { Position } from "../common";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { DeviceId } from "../graphs/datagraph";
-import { Packet } from "../packet";
 import { Texture } from "pixi.js";
-import { MacAddress } from "../../packets/ethernet";
+import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { IPv4Packet } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 
@@ -44,8 +43,8 @@ export class Switch extends Device {
     return DeviceType.Switch;
   }
 
-  receivePacket(packet: Packet): Promise<DeviceId | null> {
-    const datagram = packet.rawPacket.payload;
+  receiveFrame(frame: EthernetFrame): Promise<DeviceId | null> {
+    const datagram = frame.payload;
     if (datagram instanceof IPv4Packet) {
       const dstDevice = this.viewgraph.getDeviceByIP(
         datagram.destinationAddress,

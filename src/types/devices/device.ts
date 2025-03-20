@@ -22,8 +22,7 @@ import { IpAddress } from "../../packets/ip";
 import { DeviceId, RemovedNodeData } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer } from "./layer";
-import { Packet } from "../packet";
-import { MacAddress } from "../../packets/ethernet";
+import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 
 export { Layer } from "./layer";
@@ -73,8 +72,7 @@ export abstract class Device extends Container {
    * Returns the id for the next device to send the packet to, or
    * null if there’s no next device to send the packet.
    * */
-  // TODO: Might be general for all device in the future.
-  abstract receivePacket(packet: Packet): Promise<DeviceId | null>;
+  abstract receiveFrame(frame: EthernetFrame): Promise<DeviceId | null>;
 
   constructor(
     id: DeviceId,

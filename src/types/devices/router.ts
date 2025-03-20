@@ -8,7 +8,6 @@ import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId, isRouter } from "../graphs/datagraph";
 import { Texture } from "pixi.js";
 import { MacAddress } from "../../packets/ethernet";
-import { Packet } from "../packet";
 import { GlobalContext } from "../../context";
 
 export class Router extends NetworkDevice {
@@ -89,32 +88,30 @@ export class Router extends NetworkDevice {
     return devices[0];
   }
 
-  async receiveDatagram(packet: Packet): Promise<DeviceId | null> {
-    const datagram = packet.rawPacket.payload;
-    if (!(datagram instanceof IPv4Packet)) {
-      return null;
-    }
+  async receiveDatagram(datagram: IPv4Packet): Promise<DeviceId | null> {
     if (this.ip.equals(datagram.destinationAddress)) {
       this.handlePacket(datagram);
       return null;
     }
+    // TODO: we should wrap the packet in a new frame in the caller side
+
     // a router changed forward datagram to destination, have to change current destination mac
-    const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
-    if (!dstDevice) {
-      console.error("Destination device not found");
-      return null;
-    }
-    const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
-    let dstMac = dstDevice.mac;
-    if (!path) return null;
-    for (const id of path.slice(1)) {
-      const device = this.viewgraph.getDevice(id);
-      if (device instanceof NetworkDevice) {
-        dstMac = device.mac;
-        break;
-      }
-    }
-    packet.rawPacket.destination = dstMac;
+    // const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
+    // if (!dstDevice) {
+    //   console.error("Destination device not found");
+    //   return null;
+    // }
+    // const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
+    // let dstMac = dstDevice.mac;
+    // if (!path) return null;
+    // for (const id of path.slice(1)) {
+    //   const device = this.viewgraph.getDevice(id);
+    //   if (device instanceof NetworkDevice) {
+    //     dstMac = device.mac;
+    //     break;
+    //   }
+    // }
+    // datagram.destination = dstMac;
     return this.routePacket(datagram);
   }
 }

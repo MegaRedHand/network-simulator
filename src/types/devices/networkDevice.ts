@@ -5,7 +5,7 @@ import { Device } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import { Position } from "../common";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
-import { Packet, sendRawPacket } from "../packet";
+import { sendRawPacket } from "../packet";
 import { EchoReply, EchoRequest } from "../../packets/icmp";
 import { GlobalContext } from "../../context";
 
@@ -28,7 +28,7 @@ export abstract class NetworkDevice extends Device {
     this.ipMask = ipMask;
   }
 
-  abstract receiveDatagram(packet: Packet): Promise<DeviceId | null>;
+  abstract receiveDatagram(packet: IPv4Packet): Promise<DeviceId | null>;
 
   // TODO: Most probably it will be different for each type of device
   handlePacket(datagram: IPv4Packet) {
@@ -63,10 +63,13 @@ export abstract class NetworkDevice extends Device {
     }
   }
 
-  async receivePacket(packet: Packet): Promise<DeviceId | null> {
-    const frame = packet.rawPacket;
+  async receiveFrame(frame: EthernetFrame): Promise<DeviceId | null> {
     if (this.mac.equals(frame.destination)) {
-      return this.receiveDatagram(packet);
+      if (frame.payload instanceof IPv4Packet) {
+        return this.receiveDatagram(frame.payload as IPv4Packet);
+      } else {
+        console.error("Packet's type not IPv4");
+      }
     }
     return null;
   }
