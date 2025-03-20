@@ -54,7 +54,7 @@ export abstract class NetworkDevice extends Device {
           const echoReply = new EchoReply(0);
           const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
           const ethernet = new EthernetFrame(this.mac, dstMac, ipPacket);
-          sendRawPacket(this.viewgraph, this.id, dstDevice.id, ethernet);
+          sendRawPacket(this.viewgraph, this.id, ethernet);
         }
         break;
       }

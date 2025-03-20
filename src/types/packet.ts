@@ -25,16 +25,14 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
 
 export class Packet extends Graphics {
-  speed = 100;
-  progress = 0;
   viewgraph: ViewGraph;
-  currentEdge: Edge;
-  currentStart: number;
-  color: number;
-  type: string;
-  rawPacket: EthernetFrame;
-  srcId: DeviceId;
-  dstId: DeviceId;
+
+  private speed = 100;
+  private progress = 0;
+  private currentEdge: Edge;
+  private currentStart: number;
+  private type: string;
+  private rawPacket: EthernetFrame;
 
   static animationPaused = false;
 
@@ -46,13 +44,7 @@ export class Packet extends Graphics {
     Packet.animationPaused = false;
   }
 
-  constructor(
-    viewgraph: ViewGraph,
-    type: string,
-    srcId: DeviceId,
-    dstId: DeviceId,
-    rawPacket: EthernetFrame,
-  ) {
+  constructor(viewgraph: ViewGraph, type: string, rawPacket: EthernetFrame) {
     super();
 
     this.viewgraph = viewgraph;
@@ -61,8 +53,6 @@ export class Packet extends Graphics {
     this.context = contextPerPacketType[this.type];
     this.zIndex = ZIndexLevels.Packet;
 
-    this.srcId = srcId;
-    this.dstId = dstId;
     this.rawPacket = rawPacket;
 
     this.interactive = true;
@@ -147,50 +137,18 @@ export class Packet extends Graphics {
     Ticker.shared.add(this.animationTick, this);
   }
 
-  async animationTick(ticker: Ticker) {
+  animationTick(ticker: Ticker) {
     if (this.progress >= 1) {
-      const deleteSelf = () => {
-        this.destroy();
-        ticker.remove(this.animationTick, this);
-        if (isSelected(this)) {
-          deselectElement();
-        }
-        console.log("Se corto animationTick");
-      };
+      // Deliver packet
+      this.deliverPacket();
 
-      this.progress = 0;
-      this.removeFromParent();
-      const newStart = this.currentEdge.otherEnd(this.currentStart);
-      const newStartDevice = this.viewgraph.getDevice(newStart);
-
-      // Viewgraph may return undefined when trying to get the device
-      // as the device may have been removed by the user.
-      if (!newStartDevice) {
-        deleteSelf();
-        return;
-      }
-
-      console.log(newStartDevice);
-
-      this.currentStart = newStart;
-      // TODO: remove this dirty hack
-      // Remove and re-add from ticker to avoid multiple frames processing being triggered at once.
+      // Clean up
+      this.destroy();
       ticker.remove(this.animationTick, this);
-      const newEndId = await newStartDevice.receiveFrame(this.rawPacket);
-      ticker.add(this.animationTick, this);
-
-      if (newEndId === null) {
-        deleteSelf();
-        return;
+      if (isSelected(this)) {
+        deselectElement();
       }
-
-      this.currentEdge = this.viewgraph.getEdge(this.currentStart, newEndId);
-
-      if (this.currentEdge === undefined) {
-        deleteSelf();
-        return;
-      }
-      this.currentEdge.addChild(this);
+      this.removeFromParent();
     }
 
     // Calculate the edge length
@@ -211,6 +169,18 @@ export class Packet extends Graphics {
     }
 
     this.updatePosition();
+  }
+
+  deliverPacket() {
+    const newStart = this.currentEdge.otherEnd(this.currentStart);
+    const newStartDevice = this.viewgraph.getDevice(newStart);
+
+    // Viewgraph may return undefined when trying to get the device
+    // as the device may have been removed by the user.
+    if (!newStartDevice) {
+      return;
+    }
+    newStartDevice.receiveFrame(this.rawPacket);
   }
 
   updatePosition() {
@@ -253,7 +223,6 @@ export class Packet extends Graphics {
 export function sendRawPacket(
   viewgraph: ViewGraph,
   srcId: DeviceId,
-  dstId: DeviceId,
   rawPacket: EthernetFrame,
 ) {
   const srcMac = rawPacket.source;
@@ -294,6 +263,6 @@ export function sendRawPacket(
     console.warn("Packet is not IPv4");
     type = "ICMP-8";
   }
-  const packet = new Packet(viewgraph, type, srcId, dstId, rawPacket);
+  const packet = new Packet(viewgraph, type, rawPacket);
   packet.traverseEdge(firstEdge, srcId);
 }
