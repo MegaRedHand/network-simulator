@@ -46,6 +46,9 @@ export class Switch extends Device {
   receiveFrame(frame: EthernetFrame): Promise<DeviceId | null> {
     const datagram = frame.payload;
     if (datagram instanceof IPv4Packet) {
+      // TODO: this should add the sender to the switching table,
+      //       try to match the packet against it to find a receiver,
+      //       and broadcast it if no receiver is found
       const dstDevice = this.viewgraph.getDeviceByIP(
         datagram.destinationAddress,
       );

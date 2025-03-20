@@ -66,7 +66,21 @@ export abstract class NetworkDevice extends Device {
   async receiveFrame(frame: EthernetFrame): Promise<DeviceId | null> {
     if (this.mac.equals(frame.destination)) {
       if (frame.payload instanceof IPv4Packet) {
-        return this.receiveDatagram(frame.payload as IPv4Packet);
+        const datagram = frame.payload;
+        const nextHopId = await this.receiveDatagram(datagram);
+        // Wrap the datagram in a new frame
+        const nextHop = this.viewgraph.getDevice(nextHopId);
+        if (!nextHop) {
+          console.error("Next hop not found");
+          return null;
+        }
+        // TODO: send new frame
+        // const newFrame = new EthernetFrame(this.mac, dstMac, datagram);
+        // Use this device's MAC address as the source
+        frame.source = this.mac;
+        // Use the next hop's MAC address as the destination
+        frame.destination = nextHop.mac;
+        return nextHopId;
       } else {
         console.error("Packet's type not IPv4");
       }

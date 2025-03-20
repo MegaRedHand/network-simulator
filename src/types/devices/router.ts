@@ -93,25 +93,6 @@ export class Router extends NetworkDevice {
       this.handlePacket(datagram);
       return null;
     }
-    // TODO: we should wrap the packet in a new frame in the caller side
-
-    // a router changed forward datagram to destination, have to change current destination mac
-    // const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
-    // if (!dstDevice) {
-    //   console.error("Destination device not found");
-    //   return null;
-    // }
-    // const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
-    // let dstMac = dstDevice.mac;
-    // if (!path) return null;
-    // for (const id of path.slice(1)) {
-    //   const device = this.viewgraph.getDevice(id);
-    //   if (device instanceof NetworkDevice) {
-    //     dstMac = device.mac;
-    //     break;
-    //   }
-    // }
-    // datagram.destination = dstMac;
     return this.routePacket(datagram);
   }
 }
