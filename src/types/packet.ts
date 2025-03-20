@@ -149,6 +149,7 @@ export class Packet extends Graphics {
         deselectElement();
       }
       this.removeFromParent();
+      return;
     }
 
     // Calculate the edge length
