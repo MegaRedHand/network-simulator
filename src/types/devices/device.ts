@@ -72,7 +72,7 @@ export abstract class Device extends Container {
    * Returns the id for the next device to send the packet to, or
    * null if there’s no next device to send the packet.
    * */
-  abstract receiveFrame(frame: EthernetFrame): Promise<DeviceId | null>;
+  abstract receiveFrame(frame: EthernetFrame): void;
 
   constructor(
     id: DeviceId,
