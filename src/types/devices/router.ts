@@ -6,16 +6,22 @@ import { Position } from "../common";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId, isRouter } from "../graphs/datagraph";
-import { Texture } from "pixi.js";
-import { MacAddress } from "../../packets/ethernet";
+import { Texture, Ticker } from "pixi.js";
+import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
+import { sendRawPacket } from "../packet";
 
 export class Router extends NetworkDevice {
   static DEVICE_TEXTURE: Texture;
 
-  private packetQueueSize = 0;
+  private processingPackets = false;
+  private processingProgress = 0;
+  // Time in ms to process a single packet
+  private timePerPacket = 250;
+
+  private packetQueue: IPv4Packet[] = [];
+  // TODO: we should count this in bytes
   private maxQueueSize = 5;
-  private timePerPacket = 1000;
 
   static getTexture() {
     if (!Router.DEVICE_TEXTURE) {
@@ -54,19 +60,64 @@ export class Router extends NetworkDevice {
     return DeviceType.Router;
   }
 
-  async routePacket(datagram: IPv4Packet): Promise<DeviceId | null> {
+  receiveDatagram(datagram: IPv4Packet) {
+    if (this.ip.equals(datagram.destinationAddress)) {
+      this.handlePacket(datagram);
+      return;
+    }
+    this.addPacketToQueue(datagram);
+  }
+
+  addPacketToQueue(datagram: IPv4Packet) {
+    if (this.packetQueue.length >= this.maxQueueSize) {
+      console.debug("Packet queue full, dropping packet");
+      return;
+    }
+    this.packetQueue.push(datagram);
+    // Start packet processor if not already running
+    if (!this.processingPackets) {
+      Ticker.shared.add(this.processPacket, this);
+      this.processingPackets = true;
+    }
+  }
+
+  async processPacket(ticker: Ticker) {
+    this.processingProgress += ticker.deltaMS;
+    if (this.processingProgress < this.timePerPacket) {
+      return;
+    }
+    this.processingProgress -= this.timePerPacket;
+    const datagram = this.packetQueue.pop();
+    const devices = this.routePacket(datagram);
+
+    if (!devices || devices.length === 0) {
+      return;
+    }
+    // TODO: send to all devices in the interface
+    const nextHopId = devices[0];
+    // Wrap the datagram in a new frame
+    const nextHop = this.viewgraph.getDevice(nextHopId);
+    if (!nextHop) {
+      console.error("Next hop not found");
+      return;
+    }
+    const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
+    sendRawPacket(this.viewgraph, this.id, newFrame);
+
+    // Stop processing packets if queue is empty
+    if (this.packetQueue.length === 0) {
+      Ticker.shared.remove(this.processPacket, this);
+      this.processingPackets = false;
+      this.processingProgress = 0;
+      return;
+    }
+  }
+
+  routePacket(datagram: IPv4Packet): DeviceId[] | null {
     const device = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!device || !isRouter(device)) {
-      return null;
+      return;
     }
-    if (this.packetQueueSize >= this.maxQueueSize) {
-      console.debug("Packet queue full, dropping packet");
-      return null;
-    }
-    this.packetQueueSize += 1;
-    console.debug("Processing packet, queue size:", this.packetQueueSize);
-    await new Promise((resolve) => setTimeout(resolve, this.timePerPacket));
-    this.packetQueueSize -= 1;
 
     const result = device.routingTable.find((entry) => {
       if (entry.deleted) {
@@ -78,21 +129,11 @@ export class Router extends NetworkDevice {
       console.debug("Considering entry:", entry);
       return datagram.destinationAddress.isInSubnet(ip, mask);
     });
+
     const devices = this.viewgraph
       .getDataGraph()
       .getConnectionsInInterface(this.id, result.iface);
-    if (!devices || devices.length === 0) {
-      return null;
-    }
-    // TODO: return more than one device
-    return devices[0];
-  }
 
-  async receiveDatagram(datagram: IPv4Packet): Promise<DeviceId | null> {
-    if (this.ip.equals(datagram.destinationAddress)) {
-      this.handlePacket(datagram);
-      return null;
-    }
-    return this.routePacket(datagram);
+    return devices;
   }
 }

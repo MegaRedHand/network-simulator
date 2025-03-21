@@ -28,7 +28,7 @@ export abstract class NetworkDevice extends Device {
     this.ipMask = ipMask;
   }
 
-  abstract receiveDatagram(packet: IPv4Packet): Promise<DeviceId | null>;
+  abstract receiveDatagram(packet: IPv4Packet): void;
 
   // TODO: Most probably it will be different for each type of device
   handlePacket(datagram: IPv4Packet) {
@@ -64,24 +64,14 @@ export abstract class NetworkDevice extends Device {
   }
 
   receiveFrame(frame: EthernetFrame): void {
-    (async (): Promise<undefined> => {
-      if (!this.mac.equals(frame.destination)) {
-        return;
-      }
-      if (!(frame.payload instanceof IPv4Packet)) {
-        console.error("Packet's type not IPv4");
-        return;
-      }
-      const datagram = frame.payload;
-      const nextHopId = await this.receiveDatagram(datagram);
-      // Wrap the datagram in a new frame
-      const nextHop = this.viewgraph.getDevice(nextHopId);
-      if (!nextHop) {
-        console.error("Next hop not found");
-        return null;
-      }
-      const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
-      sendRawPacket(this.viewgraph, this.id, newFrame);
-    })();
+    if (!this.mac.equals(frame.destination)) {
+      return;
+    }
+    if (!(frame.payload instanceof IPv4Packet)) {
+      console.error("Packet's type not IPv4");
+      return;
+    }
+    const datagram = frame.payload;
+    this.receiveDatagram(datagram);
   }
 }
