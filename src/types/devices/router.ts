@@ -149,3 +149,31 @@ export class Router extends NetworkDevice {
     return devices;
   }
 }
+
+class PacketQueue {
+  private queue: IPv4Packet[] = [];
+  private queueSizeBytes = 0;
+  private maxQueueSizeBytes = 512;
+
+  enqueue(packet: IPv4Packet) {
+    if (this.queueSizeBytes >= this.maxQueueSizeBytes) {
+      return false;
+    }
+    this.queue.push(packet);
+    this.queueSizeBytes += packet.totalLength;
+    return true;
+  }
+
+  unqueue(): IPv4Packet | undefined {
+    if (this.queue.length === 0) {
+      return;
+    }
+    const packet = this.queue.shift();
+    this.queueSizeBytes -= packet.totalLength;
+    return packet;
+  }
+
+  isEmpty(): boolean {
+    return this.queue.length === 0;
+  }
+}
