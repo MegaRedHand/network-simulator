@@ -7,6 +7,9 @@ export const TCP_PROTOCOL_NUMBER = 6;
 export const UDP_PROTOCOL_NUMBER = 17;
 
 export class EmptyPayload implements IpPayload {
+  byteLength() {
+    return 0;
+  }
   toBytes() {
     return new Uint8Array(0);
   }
@@ -118,6 +121,8 @@ export class IpAddressGenerator {
 }
 
 export interface IpPayload {
+  // Length of the payload in bytes
+  byteLength(): number;
   // The bytes equivalent of the payload
   toBytes(): Uint8Array;
   // The number of the protocol
@@ -162,7 +167,8 @@ export class IPv4Packet implements FramePayload {
   // Length of the datagram, in bytes
   // 16 bits
   get totalLength() {
-    return this.payload.toBytes().length + this.internetHeaderLength * 4;
+    const headerSize = this.internetHeaderLength * 4;
+    return headerSize + this.payload.byteLength();
   }
 
   // Identifying value assigned by the sender

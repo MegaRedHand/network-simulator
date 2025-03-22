@@ -13,9 +13,7 @@ export const ICMP_REPLY_TYPE_NUMBER = 0;
 //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //  |     Type      |     Code      |          Checksum             |
 //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//  |                             unused                            |
-//  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//  |      Internet Header + 64 bits of Original Data Datagram      |
+//  |                         variant data                          |
 //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 abstract class IcmpPacket implements IpPayload {
   // 8 bits
@@ -31,6 +29,11 @@ abstract class IcmpPacket implements IpPayload {
 
   protocol(): number {
     return ICMP_PROTOCOL_NUMBER;
+  }
+
+  byteLength(): number {
+    const headerLength = 8;
+    return headerLength + this._dataToBytes().length;
   }
 
   toBytes(): Uint8Array {
@@ -60,6 +63,15 @@ abstract class IcmpPacket implements IpPayload {
   abstract getDetails(layer: Layer): Record<string, string | number | object>;
 }
 
+//   0                   1                   2                   3
+//   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+//  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//  |     Type      |     Code      |          Checksum             |
+//  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//  |           Identifier          |        Sequence Number        |
+//  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//  |     Data ...
+//  +-+-+-+-+-
 class EchoMessage extends IcmpPacket {
   code = 0;
 
