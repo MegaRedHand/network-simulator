@@ -78,14 +78,10 @@ export class Router extends NetworkDevice {
   }
 
   processPacket(ticker: Ticker) {
-    this.bytesProcessed += ticker.deltaMS;
-    const packetLength = this.packetQueue.getHead()?.totalLength;
-    const progressNeeded = this.timePerByte * packetLength;
-    if (this.bytesProcessed < progressNeeded) {
+    const datagram = this.getPacketsToProcess(ticker.deltaMS);
+    if (!datagram) {
       return;
     }
-    this.bytesProcessed -= progressNeeded;
-    const datagram = this.packetQueue.dequeue();
     const devices = this.routePacket(datagram);
 
     if (!devices || devices.length === 0) {
@@ -108,6 +104,17 @@ export class Router extends NetworkDevice {
       this.bytesProcessed = 0;
       return;
     }
+  }
+
+  getPacketsToProcess(timeMs: number): IPv4Packet | null {
+    this.bytesProcessed += timeMs;
+    const packetLength = this.packetQueue.getHead()?.totalLength;
+    const progressNeeded = this.timePerByte * packetLength;
+    if (this.bytesProcessed < progressNeeded) {
+      return null;
+    }
+    this.bytesProcessed -= progressNeeded;
+    return this.packetQueue.dequeue();
   }
 
   routePacket(datagram: IPv4Packet): DeviceId[] {
