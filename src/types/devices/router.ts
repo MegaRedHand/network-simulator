@@ -81,7 +81,7 @@ export class Router extends NetworkDevice {
     }
   }
 
-  async processPacket(ticker: Ticker) {
+  processPacket(ticker: Ticker) {
     this.processingProgress += ticker.deltaMS;
     if (this.processingProgress < this.timePerPacket) {
       return;
