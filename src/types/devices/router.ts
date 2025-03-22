@@ -18,7 +18,7 @@ export class Router extends NetworkDevice {
   // Time in ms to process a single byte
   private timePerByte = 5;
   // Number of bytes processed
-  private bytesProcessed = 0;
+  private processingProgress = 0;
 
   static getTexture() {
     if (!Router.DEVICE_TEXTURE) {
@@ -101,19 +101,19 @@ export class Router extends NetworkDevice {
     // Stop processing packets if queue is empty
     if (this.packetQueue.isEmpty()) {
       Ticker.shared.remove(this.processPacket, this);
-      this.bytesProcessed = 0;
+      this.processingProgress = 0;
       return;
     }
   }
 
   getPacketsToProcess(timeMs: number): IPv4Packet | null {
-    this.bytesProcessed += timeMs;
+    this.processingProgress += timeMs;
     const packetLength = this.packetQueue.getHead()?.totalLength;
     const progressNeeded = this.timePerByte * packetLength;
-    if (this.bytesProcessed < progressNeeded) {
+    if (this.processingProgress < progressNeeded) {
       return null;
     }
-    this.bytesProcessed -= progressNeeded;
+    this.processingProgress -= progressNeeded;
     return this.packetQueue.dequeue();
   }
 
