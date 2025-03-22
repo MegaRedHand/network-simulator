@@ -93,16 +93,16 @@ export class Router extends NetworkDevice {
     if (!devices || devices.length === 0) {
       return;
     }
-    // TODO: send to all devices in the interface
-    const nextHopId = devices[0];
-    // Wrap the datagram in a new frame
-    const nextHop = this.viewgraph.getDevice(nextHopId);
-    if (!nextHop) {
-      console.error("Next hop not found");
-      return;
+    for (const nextHopId of devices) {
+      // Wrap the datagram in a new frame
+      const nextHop = this.viewgraph.getDevice(nextHopId);
+      if (!nextHop) {
+        console.error("Next hop not found");
+        continue;
+      }
+      const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
+      sendRawPacket(this.viewgraph, this.id, newFrame);
     }
-    const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
-    sendRawPacket(this.viewgraph, this.id, newFrame);
 
     // Stop processing packets if queue is empty
     if (this.packetQueue.length === 0) {
