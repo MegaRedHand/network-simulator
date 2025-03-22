@@ -1,9 +1,9 @@
 import { Device, NetworkDevice } from "./../devices";
 import { Edge, EdgeEdges } from "./../edge";
-import { DataGraph, DeviceId } from "./datagraph";
+import { DataGraph, DeviceId, GraphNode, RemovedNodeData } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../devices/layer";
-import { CreateDevice, createDevice } from "../devices/utils";
+import { createDevice } from "../devices/utils";
 import { layerFromType } from "../devices/device";
 import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
@@ -32,10 +32,7 @@ export class ViewGraph {
 
     for (const [deviceId, graphNode] of this.datagraph.getDevices()) {
       if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
-        const connections = this.datagraph.getConnections(deviceId);
-        const deviceInfo = { id: deviceId, node: graphNode, connections };
-        this.createDevice(deviceInfo);
-
+        this.addDevice(deviceId, graphNode);
         layerDFS(
           this.datagraph,
           this.layer,
@@ -50,38 +47,36 @@ export class ViewGraph {
     console.log("Finished constructing ViewGraph");
   }
 
-  addDevice(deviceData: CreateDevice) {
-    const device = this.createDevice(deviceData);
-    if (deviceData.connections.length !== 0) {
-      const connections = new Map<string, EdgePair>();
-      layerDFS(
-        this.datagraph,
-        this.layer,
-        deviceData.id,
-        deviceData.id,
-        new Set([deviceData.id]),
-        connections,
-      );
+  loadDevice(deviceId: DeviceId) {
+    const node = this.datagraph.getDevice(deviceId);
+    const device = this.addDevice(deviceId, node);
 
-      this.addConnections(connections);
-    }
+    // load connections
+    const connections = new Map<string, EdgePair>();
+    layerDFS(
+      this.datagraph,
+      this.layer,
+      deviceId,
+      deviceId,
+      new Set([deviceId]),
+      connections,
+    );
+    this.addConnections(connections);
     return device;
   }
 
   // Add a device to the graph
-  private createDevice(deviceData: CreateDevice): Device {
-    if (this.graph.hasVertex(deviceData.id)) {
-      console.warn(
-        `Device with ID ${deviceData.id} already exists in the graph.`,
-      );
-      return this.graph.getVertex(deviceData.id);
+  private addDevice(id: DeviceId, node: GraphNode): Device {
+    if (this.graph.hasVertex(id)) {
+      console.warn(`Device with ID ${id} already exists in the graph.`);
+      return this.graph.getVertex(id);
     }
-    const device = createDevice(deviceData, this, this.ctx);
+    const device = createDevice(id, node, this, this.ctx);
 
     this.graph.setVertex(device.id, device);
     this.viewport.addChild(device);
     console.log(`Device added with ID ${device.id}`);
-    return this.graph.getVertex(deviceData.id);
+    return this.graph.getVertex(id);
   }
 
   private addConnections(connections: Map<string, EdgePair>) {
@@ -220,7 +215,7 @@ export class ViewGraph {
   }
 
   // Method to remove a device and its connections (edges)
-  removeDevice(id: DeviceId) {
+  removeDevice(id: DeviceId): RemovedNodeData | undefined {
     const device = this.graph.getVertex(id);
 
     if (!device) {
@@ -239,18 +234,25 @@ export class ViewGraph {
     this.viewport.removeChild(device);
 
     // Finally, remove the device from the datagraph
-    this.datagraph.removeDevice(id);
+    const removedData = this.datagraph.removeDevice(id);
 
     console.log(`Device with ID ${id} removed from view.`);
+    return removedData;
   }
 
   // Method to remove a specific edge by its ID
-  removeEdge(n1Id: DeviceId, n2Id: DeviceId) {
-    const edge = this.graph.getEdge(n1Id, n2Id);
+  removeEdge(n1Id: DeviceId, n2Id: DeviceId): boolean {
+    const datagraphEdge = this.datagraph.getConnection(n1Id, n2Id);
 
+    if (!datagraphEdge) {
+      console.warn(`Edge ${n1Id},${n2Id} is not in the datagraph`);
+      return false;
+    }
+
+    const edge = this.graph.getEdge(n1Id, n2Id);
     if (!edge) {
-      console.warn(`Edge with ID ${n1Id},${n2Id} does not exist in the graph.`);
-      return;
+      console.warn(`Edge ${n1Id},${n2Id} is not in the viewgraph.`);
+      return false;
     }
 
     // Remove connection in DataGraph
@@ -263,7 +265,7 @@ export class ViewGraph {
 
     if (!(device1 && device2)) {
       console.warn("At least one device in connection does not exist");
-      return;
+      return false;
     }
 
     // Remove the edge from the viewport
@@ -275,6 +277,7 @@ export class ViewGraph {
     console.log(
       `Edge with ID ${n1Id},${n2Id} successfully removed from ViewGraph.`,
     );
+    return true;
   }
 
   getViewport() {

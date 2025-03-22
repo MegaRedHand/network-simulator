@@ -1,5 +1,11 @@
 export type VertexId = number;
 
+export interface RemovedVertexData<Vertex, Edge> {
+  id: VertexId;
+  vertex: Vertex;
+  edges: Map<VertexId, Edge>;
+}
+
 export class Graph<Vertex, Edge> {
   /**
    * Holds all of the Vertex data.
@@ -64,7 +70,7 @@ export class Graph<Vertex, Edge> {
     }
   }
 
-  setEdge(id: VertexId, otherId: VertexId, edge: Edge = null): void {
+  setEdge(id: VertexId, otherId: VertexId, edge: Edge): void {
     if (!this.hasVertex(id) || !this.hasVertex(otherId)) {
       return;
     }
@@ -72,7 +78,8 @@ export class Graph<Vertex, Edge> {
     this.edges.get(otherId).set(id, edge);
   }
 
-  removeVertex(id: VertexId): void {
+  removeVertex(id: VertexId): RemovedVertexData<Vertex, Edge> | undefined {
+    const vertex = this.getVertex(id);
     if (!this.vertices.delete(id)) {
       return;
     }
@@ -82,14 +89,17 @@ export class Graph<Vertex, Edge> {
     edges.forEach((_, otherId) => {
       this.edges.get(otherId).delete(id);
     });
+    return { id, vertex, edges };
   }
 
-  removeEdge(id: VertexId, otherId: VertexId): void {
-    if (!this.hasVertex(id) || !this.hasVertex(otherId)) {
+  removeEdge(id: VertexId, otherId: VertexId): Edge | undefined {
+    const edge = this.getEdge(id, otherId);
+    if (!edge) {
       return;
     }
     this.edges.get(id).delete(otherId);
     this.edges.get(otherId).delete(id);
+    return edge;
   }
 
   clear() {

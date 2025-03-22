@@ -1,63 +1,103 @@
 import { Layer } from "../../devices/device";
-import { CreateDevice } from "../../devices/utils";
+import { DeviceId, NewDevice, RemovedNodeData } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
+import { selectElement } from "../../viewportManager";
 import { BaseMove } from "./move";
+
+type DeviceState =
+  // Device is new
+  | { data: NewDevice }
+  // Device is in graph
+  | { id: DeviceId }
+  // Device was removed
+  | { removedData: RemovedNodeData };
+
+function isNew(state: DeviceState): state is { data: NewDevice } {
+  return "data" in state;
+}
+
+function isInGraph(state: DeviceState): state is { id: DeviceId } {
+  return "id" in state;
+}
+
+function wasRemoved(
+  state: DeviceState,
+): state is { removedData: RemovedNodeData } {
+  return "removedData" in state;
+}
 
 // Superclass for AddDeviceMove and RemoveDeviceMove
 export abstract class AddRemoveDeviceMove extends BaseMove {
-  data: CreateDevice;
+  private state: DeviceState;
 
-  constructor(layer: Layer, data: CreateDevice) {
-    // NOTE: we have to deep-copy the data to stop the data from
-    // being modified by the original
+  constructor(layer: Layer, state: DeviceState) {
     super(layer);
-    this.data = structuredClone(data);
+    this.state = state;
   }
 
   addDevice(viewgraph: ViewGraph) {
     const datagraph = viewgraph.getDataGraph();
 
-    // Add the device to the datagraph and the viewgraph
-    const deviceInfo = structuredClone(this.data.node);
-    // Clone array to avoid modifying the original
-    const connections = Array.from(this.data.connections);
-
-    datagraph.addDevice(this.data.id, deviceInfo, connections);
-    datagraph.regenerateAllRoutingTables();
-
+    let id;
+    // Device is new
+    if (isNew(this.state)) {
+      // Add the new device
+      id = datagraph.addNewDevice(this.state.data);
+    } else if (wasRemoved(this.state)) {
+      // Re-add the removed device
+      id = datagraph.readdDevice(this.state.removedData);
+      datagraph.regenerateAllRoutingTables();
+      // Discard removed data
+    }
+    this.state = { id };
     this.adjustLayer(viewgraph);
-
-    const deviceData = structuredClone(this.data);
-    viewgraph.addDevice(deviceData);
+    viewgraph.loadDevice(id);
+    selectElement(viewgraph.getDevice(id));
+    return true;
   }
 
   removeDevice(viewgraph: ViewGraph) {
-    this.adjustLayer(viewgraph);
-    const device = viewgraph.getDevice(this.data.id);
-    if (device == undefined) {
-      throw new Error(`Device with ID ${this.data.id} not found.`);
+    if (!isInGraph(this.state)) {
+      console.error("Tried to remove device without id");
+      return false;
     }
-    device.delete();
+    this.adjustLayer(viewgraph);
+    const device = viewgraph.getDevice(this.state.id);
+    if (device == undefined) {
+      return false;
+    }
+    // This also deselects the element
+    const removedData = device.delete();
+    this.state = { removedData };
+    return true;
   }
 }
 
 // "Move" is here because it conflicts with AddDevice from viewportManager
 export class AddDeviceMove extends AddRemoveDeviceMove {
-  undo(viewgraph: ViewGraph): void {
-    this.removeDevice(viewgraph);
+  constructor(layer: Layer, data: NewDevice) {
+    super(layer, { data });
   }
 
-  redo(viewgraph: ViewGraph): void {
-    this.addDevice(viewgraph);
+  undo(viewgraph: ViewGraph): boolean {
+    return this.removeDevice(viewgraph);
+  }
+
+  redo(viewgraph: ViewGraph): boolean {
+    return this.addDevice(viewgraph);
   }
 }
 
 export class RemoveDeviceMove extends AddRemoveDeviceMove {
-  undo(viewgraph: ViewGraph): void {
-    this.addDevice(viewgraph);
+  constructor(layer: Layer, id: DeviceId) {
+    super(layer, { id });
   }
 
-  redo(viewgraph: ViewGraph): void {
-    this.removeDevice(viewgraph);
+  undo(viewgraph: ViewGraph): boolean {
+    return this.addDevice(viewgraph);
+  }
+
+  redo(viewgraph: ViewGraph): boolean {
+    return this.removeDevice(viewgraph);
   }
 }

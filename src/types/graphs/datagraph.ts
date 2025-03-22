@@ -1,17 +1,11 @@
 import { RunningProgram } from "../../programs";
 import { DeviceType, Layer, layerFromType } from "../devices/device";
 import { layerIncluded } from "../devices/layer";
-import { Graph, VertexId } from "./graph";
+import { Graph, RemovedVertexData, VertexId } from "./graph";
 
 export type DeviceId = VertexId;
 
-interface CommonGraphNode {
-  x: number;
-  y: number;
-  type: DeviceType;
-}
-
-interface LinkGraphNode extends CommonGraphNode {
+interface LinkGraphNode extends CommonDataNode {
   mac: string;
   arpTable: Map<string, string>;
 }
@@ -65,10 +59,12 @@ export function isLinkNode(node: GraphNode): node is LinkGraphNode {
 }
 
 export type GraphNode =
-  | CommonGraphNode
+  | CommonDataNode
   | RouterGraphNode
   | HostGraphNode
   | SwitchGraphNode;
+
+// STORAGE DATA TYPES
 
 export type GraphDataNode =
   | CommonDataNode
@@ -81,7 +77,6 @@ interface CommonDataNode {
   x: number;
   y: number;
   type: DeviceType;
-  connections: DeviceId[];
 }
 
 interface LinkDataNode extends CommonDataNode {
@@ -108,7 +103,23 @@ interface SwitchDataNode extends LinkDataNode {
   type: DeviceType.Switch;
 }
 
-export type GraphData = GraphDataNode[];
+interface EdgeTip {
+  id: DeviceId;
+  // TODO: uncomment this
+  // iface: number;
+}
+
+interface GraphEdge {
+  from: EdgeTip;
+  to: EdgeTip;
+}
+
+export interface GraphData {
+  nodes: GraphDataNode[];
+  edges: GraphEdge[];
+}
+
+export type RemovedNodeData = RemovedVertexData<GraphNode, GraphEdge>;
 
 export interface NewDevice {
   x: number;
@@ -121,45 +132,37 @@ export interface NewDevice {
 
 export class DataGraph {
   // NOTE: we don't store data in edges yet
-  private deviceGraph = new Graph<GraphNode, unknown>();
+  private deviceGraph = new Graph<GraphNode, GraphEdge>();
   private idCounter: DeviceId = 1;
   private onChanges: (() => void)[] = [];
 
   static fromData(data: GraphData): DataGraph {
     const dataGraph = new DataGraph();
-    data.forEach((nodeData: GraphDataNode) => {
+
+    data.nodes.forEach((nodeData: GraphDataNode) => {
       console.log(nodeData);
+      dataGraph.addExistingDevice(nodeData);
+    });
 
-      let graphNode: GraphNode = nodeData;
-
-      if (nodeData.type === DeviceType.Router) {
-        // If the node is a router, include the routing table
-        const routerNode = nodeData as RouterDataNode;
-        graphNode = {
-          ...routerNode,
-          routingTable: routerNode.routingTable || [], // Ensure routingTable exists
-        };
-      }
-
-      dataGraph.addDevice(nodeData.id, graphNode, nodeData.connections);
+    data.edges.forEach((edgeData: GraphEdge) => {
+      dataGraph.deviceGraph.setEdge(edgeData.from.id, edgeData.to.id, edgeData);
     });
 
     return dataGraph;
   }
 
   toData(): GraphData {
-    const graphData: GraphData = [];
+    const nodes: GraphDataNode[] = [];
+    const edges: GraphEdge[] = [];
 
     // Serialize nodes
-    for (const [id, info] of this.deviceGraph.getAllVertices()) {
-      const graphNode: GraphDataNode = {
-        ...info,
-        id,
-        connections: Array.from(this.deviceGraph.getNeighbors(id)),
-      };
-      graphData.push(graphNode);
+    for (const [, node] of this.deviceGraph.getAllVertices()) {
+      nodes.push(node);
     }
-    return graphData;
+    for (const [, , edge] of this.deviceGraph.getAllEdges()) {
+      edges.push(edge);
+    }
+    return { nodes, edges };
   }
 
   // Add a new device to the graph
@@ -167,34 +170,44 @@ export class DataGraph {
     const id = this.idCounter++;
     const graphnode: GraphNode = {
       ...deviceInfo,
-      routingTable: [],
-      runningPrograms: [],
-      arpTable: new Map(),
+      id,
     };
+    if (isRouter(graphnode)) {
+      graphnode.routingTable = [];
+    }
+    if (isSwitch(graphnode)) {
+      graphnode.arpTable = new Map();
+    }
+    if (isHost(graphnode)) {
+      graphnode.runningPrograms = [];
+    }
     this.deviceGraph.setVertex(id, graphnode);
     console.log(`Device added with ID ${id}`);
     this.notifyChanges();
     return id;
   }
 
+  readdDevice(removedData: RemovedNodeData): DeviceId {
+    const { id, vertex, edges } = removedData;
+    this.deviceGraph.setVertex(id, vertex);
+    edges.forEach((edge) => {
+      this.deviceGraph.setEdge(edge.from.id, edge.to.id, edge);
+    });
+    this.notifyChanges();
+    return id;
+  }
+
   // Add a device to the graph
-  addDevice(
-    idDevice: DeviceId,
-    deviceInfo: GraphNode,
-    connections: DeviceId[],
-  ) {
-    if (this.deviceGraph.hasVertex(idDevice)) {
-      console.warn(`Device with ID ${idDevice} already exists in the graph.`);
+  addExistingDevice(node: GraphNode) {
+    if (this.deviceGraph.hasVertex(node.id)) {
+      console.warn(`Device with ID ${node.id} already exists in the graph.`);
       return;
     }
-    this.deviceGraph.setVertex(idDevice, deviceInfo);
-    connections.forEach((connectedId) => {
-      this.deviceGraph.setEdge(idDevice, connectedId);
-    });
-    if (this.idCounter <= idDevice) {
-      this.idCounter = idDevice + 1;
+    this.deviceGraph.setVertex(node.id, node);
+    if (this.idCounter <= node.id) {
+      this.idCounter = node.id + 1;
     }
-    console.log(`Device added with ID ${idDevice}`);
+    console.log(`Device added with ID ${node.id}`);
     this.notifyChanges();
   }
 
@@ -220,7 +233,8 @@ export class DataGraph {
       );
       return;
     }
-    this.deviceGraph.setEdge(n1Id, n2Id);
+    const edge = { from: { id: n1Id }, to: { id: n2Id } };
+    this.deviceGraph.setEdge(n1Id, n2Id, edge);
 
     console.log(
       `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,
@@ -265,20 +279,26 @@ export class DataGraph {
   }
 
   // Get all connections of a device
+  getConnection(n1Id: DeviceId, n2Id: DeviceId): GraphEdge | undefined {
+    return this.deviceGraph.getEdge(n1Id, n2Id);
+  }
+
+  // Get all connections of a device
   getConnections(id: DeviceId): DeviceId[] | undefined {
     return this.deviceGraph.getNeighbors(id);
   }
 
   // Method to remove a device and all its connections
-  removeDevice(id: DeviceId): void {
+  removeDevice(id: DeviceId): RemovedNodeData | undefined {
     if (!this.deviceGraph.hasVertex(id)) {
       console.warn(`Device with ID ${id} does not exist in the graph.`);
       return;
     }
-    this.deviceGraph.removeVertex(id);
+    const removedData = this.deviceGraph.removeVertex(id);
     console.log(`Device with ID ${id} and its connections were removed.`);
     this.notifyChanges();
     this.regenerateAllRoutingTables();
+    return removedData;
   }
 
   // Method to remove a connection (edge) between two devices by their IDs

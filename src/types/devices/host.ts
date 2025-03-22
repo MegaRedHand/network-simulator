@@ -140,6 +140,7 @@ export class Host extends NetworkDevice {
   }
 
   destroy() {
+    super.destroy();
     this.runningPrograms.forEach((program) => program.stop());
     this.runningPrograms.clear();
   }

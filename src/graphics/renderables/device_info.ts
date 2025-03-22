@@ -43,11 +43,9 @@ export class DeviceInfo extends StyledInfo {
       createRightBarButton(
         "Delete device",
         () => {
-          const deviceData = this.device.getCreateDevice();
           const currLayer = this.device.viewgraph.getLayer();
-          const move = new RemoveDeviceMove(currLayer, deviceData);
-          this.device.delete();
-          urManager.push(move);
+          const move = new RemoveDeviceMove(currLayer, this.device.id);
+          urManager.push(this.device.viewgraph, move);
         },
         "right-bar-delete-button",
       ),

@@ -2,20 +2,29 @@ import { Layer, layerIncluded } from "../../devices/layer";
 import { ViewGraph } from "../../graphs/viewgraph";
 
 export interface Move {
-  undo(viewgraph: ViewGraph): void;
-  redo(viewgraph: ViewGraph): void;
+  /**
+   * Undoes the move.
+   * @returns true if the move was successfully undone, false otherwise.
+   */
+  undo(viewgraph: ViewGraph): boolean;
+
+  /**
+   * Performs the move.
+   * @returns true if the move was successfully done, false otherwise.
+   */
+  redo(viewgraph: ViewGraph): boolean;
 }
 
 export abstract class BaseMove implements Move {
   layerInMove: Layer;
-  abstract undo(viewgraph: ViewGraph): void;
-  abstract redo(viewgraph: ViewGraph): void;
+  abstract undo(viewgraph: ViewGraph): boolean;
+  abstract redo(viewgraph: ViewGraph): boolean;
 
   constructor(layer: Layer) {
     this.layerInMove = layer;
   }
 
-  adjustLayer(viewgraph: ViewGraph) {
+  protected adjustLayer(viewgraph: ViewGraph) {
     if (!layerIncluded(this.layerInMove, viewgraph.getLayer())) {
       viewgraph.changeCurrLayer(this.layerInMove);
     }
