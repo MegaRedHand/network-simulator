@@ -113,7 +113,7 @@ export class Router extends NetworkDevice {
     }
   }
 
-  routePacket(datagram: IPv4Packet): DeviceId[] | null {
+  routePacket(datagram: IPv4Packet): DeviceId[] {
     const device = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!device || !isRouter(device)) {
       return;
@@ -129,6 +129,11 @@ export class Router extends NetworkDevice {
       console.debug("Considering entry:", entry);
       return datagram.destinationAddress.isInSubnet(ip, mask);
     });
+
+    if (!result) {
+      console.warn("No route found for", datagram.destinationAddress);
+      return [];
+    }
 
     const devices = this.viewgraph
       .getDataGraph()
