@@ -14,9 +14,9 @@ import { sendRawPacket } from "../packet";
 export class Router extends NetworkDevice {
   static DEVICE_TEXTURE: Texture;
 
-  private packetQueue = new PacketQueue(512);
+  private packetQueue = new PacketQueue(1024);
   // Time in ms to process a single byte
-  private timePerByte = 5;
+  private timePerByte = 8;
   // Number of bytes processed
   private processingProgress = 0;
 
