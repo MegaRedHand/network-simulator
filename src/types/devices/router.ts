@@ -14,13 +14,11 @@ import { sendRawPacket } from "../packet";
 export class Router extends NetworkDevice {
   static DEVICE_TEXTURE: Texture;
 
-  private processingProgress = 0;
+  private packetQueue = new PacketQueue(512);
   // Time in ms to process a single byte
   private timePerByte = 5;
-
-  private packetQueue: IPv4Packet[] = [];
-  private packetQueueSizeBytes = 0;
-  private maxQueueSizeBytes = 512;
+  // Number of bytes processed
+  private bytesProcessed = 0;
 
   static getTexture() {
     if (!Router.DEVICE_TEXTURE) {
@@ -68,29 +66,26 @@ export class Router extends NetworkDevice {
   }
 
   addPacketToQueue(datagram: IPv4Packet) {
-    if (this.packetQueueSizeBytes >= this.maxQueueSizeBytes) {
+    const wasEmpty = this.packetQueue.isEmpty();
+    if (!this.packetQueue.enqueue(datagram)) {
       console.debug("Packet queue full, dropping packet");
       return;
     }
-    this.packetQueue.push(datagram);
-    const oldQueueSize = this.packetQueueSizeBytes;
-    this.packetQueueSizeBytes += datagram.totalLength;
     // Start packet processor if not already running
-    if (oldQueueSize === 0) {
+    if (wasEmpty) {
       Ticker.shared.add(this.processPacket, this);
     }
   }
 
   processPacket(ticker: Ticker) {
-    this.processingProgress += ticker.deltaMS;
-    const packetLength = this.packetQueue[0].totalLength;
+    this.bytesProcessed += ticker.deltaMS;
+    const packetLength = this.packetQueue.getHead()?.totalLength;
     const progressNeeded = this.timePerByte * packetLength;
-    if (this.processingProgress < progressNeeded) {
+    if (this.bytesProcessed < progressNeeded) {
       return;
     }
-    this.processingProgress -= progressNeeded;
-    const datagram = this.packetQueue.shift();
-    this.packetQueueSizeBytes -= packetLength;
+    this.bytesProcessed -= progressNeeded;
+    const datagram = this.packetQueue.dequeue();
     const devices = this.routePacket(datagram);
 
     if (!devices || devices.length === 0) {
@@ -108,9 +103,9 @@ export class Router extends NetworkDevice {
     }
 
     // Stop processing packets if queue is empty
-    if (this.packetQueueSizeBytes === 0) {
+    if (this.packetQueue.isEmpty()) {
       Ticker.shared.remove(this.processPacket, this);
-      this.processingProgress = 0;
+      this.bytesProcessed = 0;
       return;
     }
   }
@@ -153,7 +148,11 @@ export class Router extends NetworkDevice {
 class PacketQueue {
   private queue: IPv4Packet[] = [];
   private queueSizeBytes = 0;
-  private maxQueueSizeBytes = 512;
+  private maxQueueSizeBytes: number;
+
+  constructor(maxQueueSizeBytes: number) {
+    this.maxQueueSizeBytes = maxQueueSizeBytes;
+  }
 
   enqueue(packet: IPv4Packet) {
     if (this.queueSizeBytes >= this.maxQueueSizeBytes) {
@@ -164,13 +163,17 @@ class PacketQueue {
     return true;
   }
 
-  unqueue(): IPv4Packet | undefined {
+  dequeue(): IPv4Packet | undefined {
     if (this.queue.length === 0) {
       return;
     }
     const packet = this.queue.shift();
     this.queueSizeBytes -= packet.totalLength;
     return packet;
+  }
+
+  getHead(): IPv4Packet | undefined {
+    return this.queue[0];
   }
 
   isEmpty(): boolean {
