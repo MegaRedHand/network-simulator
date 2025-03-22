@@ -105,8 +105,7 @@ interface SwitchDataNode extends LinkDataNode {
 
 interface EdgeTip {
   id: DeviceId;
-  // TODO: uncomment this
-  // iface: number;
+  iface: number;
 }
 
 interface GraphEdge {
@@ -233,7 +232,10 @@ export class DataGraph {
       );
       return;
     }
-    const edge = { from: { id: n1Id }, to: { id: n2Id } };
+    const edge = {
+      from: { id: n1Id, iface: n2Id },
+      to: { id: n2Id, iface: n1Id },
+    };
     this.deviceGraph.setEdge(n1Id, n2Id, edge);
 
     console.log(
@@ -286,6 +288,26 @@ export class DataGraph {
   // Get all connections of a device
   getConnections(id: DeviceId): DeviceId[] | undefined {
     return this.deviceGraph.getNeighbors(id);
+  }
+
+  // Get all connections of a device in a given interface
+  getConnectionsInInterface(
+    id: DeviceId,
+    iface: number,
+  ): DeviceId[] | undefined {
+    if (!this.deviceGraph.hasVertex(id)) {
+      return;
+    }
+    const connections = [];
+    for (const [neighborId, { from, to }] of this.deviceGraph.getEdges(id)) {
+      if (
+        (from.id === id && from.iface === iface) ||
+        (to.id === id && to.iface === iface)
+      ) {
+        connections.push(neighborId);
+      }
+    }
+    return connections;
   }
 
   // Method to remove a device and all its connections

@@ -73,7 +73,7 @@ export class SingleEcho extends ProgramBase {
       }
     }
     const ethernetFrame = new EthernetFrame(srcDevice.mac, dstMac, ipPacket);
-    sendRawPacket(this.viewgraph, this.srcId, this.dstId, ethernetFrame);
+    sendRawPacket(this.viewgraph, this.srcId, ethernetFrame);
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
