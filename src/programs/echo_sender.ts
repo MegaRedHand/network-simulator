@@ -9,15 +9,6 @@ import { IPv4Packet } from "../packets/ip";
 import { NetworkDevice } from "../types/devices";
 import { EthernetFrame } from "../packets/ethernet";
 
-function adjacentDevices(viewgraph: ViewGraph, srcId: DeviceId) {
-  const adjacentDevices = viewgraph
-    .getDeviceIds()
-    .filter((id) => id !== srcId)
-    .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
-
-  return adjacentDevices;
-}
-
 export class SingleEcho extends ProgramBase {
   static readonly PROGRAM_NAME = "Send ICMP echo";
 
@@ -78,7 +69,7 @@ export class SingleEcho extends ProgramBase {
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);
-    programInfo.withDropdown("Destination", adjacentDevices(viewgraph, srcId));
+    programInfo.withDestinationDropdown(viewgraph, srcId);
     return programInfo;
   }
 }
@@ -137,7 +128,7 @@ export class EchoServer extends ProgramBase {
     ];
 
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);
-    programInfo.withDropdown("Destination", adjacentDevices(viewgraph, srcId));
+    programInfo.withDestinationDropdown(viewgraph, srcId);
     programInfo.withDropdown("Time between pings", delayOptions);
     return programInfo;
   }
