@@ -14,14 +14,13 @@ import { sendRawPacket } from "../packet";
 export class Router extends NetworkDevice {
   static DEVICE_TEXTURE: Texture;
 
-  private processingPackets = false;
   private processingProgress = 0;
-  // Time in ms to process a single packet
-  private timePerPacket = 250;
+  // Time in ms to process a single byte
+  private timePerByte = 5;
 
   private packetQueue: IPv4Packet[] = [];
-  // TODO: we should count this in bytes
-  private maxQueueSize = 5;
+  private packetQueueSizeBytes = 0;
+  private maxQueueSizeBytes = 512;
 
   static getTexture() {
     if (!Router.DEVICE_TEXTURE) {
@@ -69,25 +68,29 @@ export class Router extends NetworkDevice {
   }
 
   addPacketToQueue(datagram: IPv4Packet) {
-    if (this.packetQueue.length >= this.maxQueueSize) {
+    if (this.packetQueueSizeBytes >= this.maxQueueSizeBytes) {
       console.debug("Packet queue full, dropping packet");
       return;
     }
     this.packetQueue.push(datagram);
+    const oldQueueSize = this.packetQueueSizeBytes;
+    this.packetQueueSizeBytes += datagram.totalLength;
     // Start packet processor if not already running
-    if (!this.processingPackets) {
+    if (oldQueueSize === 0) {
       Ticker.shared.add(this.processPacket, this);
-      this.processingPackets = true;
     }
   }
 
   processPacket(ticker: Ticker) {
     this.processingProgress += ticker.deltaMS;
-    if (this.processingProgress < this.timePerPacket) {
+    const packetLength = this.packetQueue[0].totalLength;
+    const progressNeeded = this.timePerByte * packetLength;
+    if (this.processingProgress < progressNeeded) {
       return;
     }
-    this.processingProgress -= this.timePerPacket;
-    const datagram = this.packetQueue.pop();
+    this.processingProgress -= progressNeeded;
+    const datagram = this.packetQueue.shift();
+    this.packetQueueSizeBytes -= packetLength;
     const devices = this.routePacket(datagram);
 
     if (!devices || devices.length === 0) {
@@ -105,9 +108,8 @@ export class Router extends NetworkDevice {
     }
 
     // Stop processing packets if queue is empty
-    if (this.packetQueue.length === 0) {
+    if (this.packetQueueSizeBytes === 0) {
       Ticker.shared.remove(this.processPacket, this);
-      this.processingPackets = false;
       this.processingProgress = 0;
       return;
     }
