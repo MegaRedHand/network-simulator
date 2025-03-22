@@ -14,14 +14,11 @@ import { sendRawPacket } from "../packet";
 export class Router extends NetworkDevice {
   static DEVICE_TEXTURE: Texture;
 
-  private processingPackets = false;
+  private packetQueue = new PacketQueue(1024);
+  // Time in ms to process a single byte
+  private timePerByte = 8;
+  // Number of bytes processed
   private processingProgress = 0;
-  // Time in ms to process a single packet
-  private timePerPacket = 250;
-
-  private packetQueue: IPv4Packet[] = [];
-  // TODO: we should count this in bytes
-  private maxQueueSize = 5;
 
   static getTexture() {
     if (!Router.DEVICE_TEXTURE) {
@@ -69,25 +66,21 @@ export class Router extends NetworkDevice {
   }
 
   addPacketToQueue(datagram: IPv4Packet) {
-    if (this.packetQueue.length >= this.maxQueueSize) {
+    const wasEmpty = this.packetQueue.isEmpty();
+    if (!this.packetQueue.enqueue(datagram)) {
       console.debug("Packet queue full, dropping packet");
       return;
     }
-    this.packetQueue.push(datagram);
-    // Start packet processor if not already running
-    if (!this.processingPackets) {
-      Ticker.shared.add(this.processPacket, this);
-      this.processingPackets = true;
+    if (wasEmpty) {
+      this.startPacketProcessor();
     }
   }
 
   processPacket(ticker: Ticker) {
-    this.processingProgress += ticker.deltaMS;
-    if (this.processingProgress < this.timePerPacket) {
+    const datagram = this.getPacketsToProcess(ticker.deltaMS);
+    if (!datagram) {
       return;
     }
-    this.processingProgress -= this.timePerPacket;
-    const datagram = this.packetQueue.pop();
     const devices = this.routePacket(datagram);
 
     if (!devices || devices.length === 0) {
@@ -104,13 +97,30 @@ export class Router extends NetworkDevice {
       sendRawPacket(this.viewgraph, this.id, newFrame);
     }
 
-    // Stop processing packets if queue is empty
-    if (this.packetQueue.length === 0) {
-      Ticker.shared.remove(this.processPacket, this);
-      this.processingPackets = false;
-      this.processingProgress = 0;
-      return;
+    if (this.packetQueue.isEmpty()) {
+      this.stopPacketProcessor();
     }
+  }
+
+  startPacketProcessor() {
+    this.processingProgress = 0;
+    Ticker.shared.add(this.processPacket, this);
+  }
+
+  stopPacketProcessor() {
+    this.processingProgress = 0;
+    Ticker.shared.remove(this.processPacket, this);
+  }
+
+  getPacketsToProcess(timeMs: number): IPv4Packet | null {
+    this.processingProgress += timeMs;
+    const packetLength = this.packetQueue.getHead()?.totalLength;
+    const progressNeeded = this.timePerByte * packetLength;
+    if (this.processingProgress < progressNeeded) {
+      return null;
+    }
+    this.processingProgress -= progressNeeded;
+    return this.packetQueue.dequeue();
   }
 
   routePacket(datagram: IPv4Packet): DeviceId[] {
@@ -145,5 +155,41 @@ export class Router extends NetworkDevice {
     }
 
     return devices;
+  }
+}
+
+class PacketQueue {
+  private queue: IPv4Packet[] = [];
+  private queueSizeBytes = 0;
+  private maxQueueSizeBytes: number;
+
+  constructor(maxQueueSizeBytes: number) {
+    this.maxQueueSizeBytes = maxQueueSizeBytes;
+  }
+
+  enqueue(packet: IPv4Packet) {
+    if (this.queueSizeBytes >= this.maxQueueSizeBytes) {
+      return false;
+    }
+    this.queue.push(packet);
+    this.queueSizeBytes += packet.totalLength;
+    return true;
+  }
+
+  dequeue(): IPv4Packet | undefined {
+    if (this.queue.length === 0) {
+      return;
+    }
+    const packet = this.queue.shift();
+    this.queueSizeBytes -= packet.totalLength;
+    return packet;
+  }
+
+  getHead(): IPv4Packet | undefined {
+    return this.queue[0];
+  }
+
+  isEmpty(): boolean {
+    return this.queue.length === 0;
   }
 }
