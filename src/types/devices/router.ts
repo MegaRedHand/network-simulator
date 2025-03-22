@@ -71,9 +71,8 @@ export class Router extends NetworkDevice {
       console.debug("Packet queue full, dropping packet");
       return;
     }
-    // Start packet processor if not already running
     if (wasEmpty) {
-      Ticker.shared.add(this.processPacket, this);
+      this.startPacketProcessor();
     }
   }
 
@@ -98,12 +97,19 @@ export class Router extends NetworkDevice {
       sendRawPacket(this.viewgraph, this.id, newFrame);
     }
 
-    // Stop processing packets if queue is empty
     if (this.packetQueue.isEmpty()) {
-      Ticker.shared.remove(this.processPacket, this);
-      this.processingProgress = 0;
-      return;
+      this.stopPacketProcessor();
     }
+  }
+
+  startPacketProcessor() {
+    this.processingProgress = 0;
+    Ticker.shared.add(this.processPacket, this);
+  }
+
+  stopPacketProcessor() {
+    this.processingProgress = 0;
+    Ticker.shared.remove(this.processPacket, this);
   }
 
   getPacketsToProcess(timeMs: number): IPv4Packet | null {
