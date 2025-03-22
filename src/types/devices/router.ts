@@ -139,6 +139,11 @@ export class Router extends NetworkDevice {
       .getDataGraph()
       .getConnectionsInInterface(this.id, result.iface);
 
+    if (!devices) {
+      console.error("Current device doesn't exist!", this.id);
+      return [];
+    }
+
     return devices;
   }
 }
