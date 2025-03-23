@@ -104,9 +104,6 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     newWidth = Math.max(300, newWidth);
     newHeight = Math.max(200, newHeight);
 
-    // Log the new dimensions for debugging
-    console.log("📏 Resizing canvas to:", newWidth, "x", newHeight);
-
     // Resize the app renderer and viewport accordingly
     app.renderer.resize(newWidth, newHeight);
     viewport.resize(newWidth, newHeight);
@@ -249,7 +246,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     if (paused) {
       Packet.pauseAnimation();
     } else {
-      Packet.unpauseAnimation();
+      Packet.resumeAnimation();
     }
   };
 

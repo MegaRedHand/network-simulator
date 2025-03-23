@@ -1,5 +1,5 @@
 import { GlobalContext } from "./../context";
-import { DataGraph, GraphData } from "./graphs/datagraph";
+import { DataGraph, GraphData, DataNode } from "./graphs/datagraph";
 import { DeviceNode } from "./deviceNodes/index";
 import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
@@ -71,7 +71,10 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Delete" || event.key === "Backspace") {
     if (selectedElement) {
       let data;
-      const currLayer = selectedElement.viewgraph.getLayer();
+      const currLayer =
+        selectedElement instanceof Packet
+          ? selectedElement.belongingLayer
+          : selectedElement.viewgraph.getLayer();
       if (isDevice(selectedElement)) {
         data = selectedElement.getCreateDevice();
         const move = new RemoveDeviceMove(currLayer, data);
@@ -114,7 +117,7 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType) {
+function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType): DataNode {
   const viewport = ctx.getViewport();
   // Get the center coordinates of the world after zoom
   const { x, y } = viewport.toWorld(
@@ -137,16 +140,13 @@ export function addDevice(ctx: GlobalContext, type: DeviceType) {
 
   const deviceInfo = setUpDeviceInfo(ctx, type);
 
-  const id = datagraph.addNewDevice(deviceInfo);
-  const node = datagraph.getDevice(id);
-  const connections = datagraph.getConnections(id);
-
-  const deviceData: CreateDevice = { id, node, connections };
+  const id = datagraph.addDevice(deviceInfo);
+  const node = datagraph.getDevice(id).getDataNode();
 
   // Add the Device to the graph
-  const newDevice = viewgraph.addDevice(deviceData);
+  const newDevice = viewgraph.addDevice(node);
 
-  const move = new AddDeviceMove(viewgraph.getLayer(), deviceData);
+  const move = new AddDeviceMove(viewgraph.getLayer(), node);
   urManager.push(move);
 
   console.log(
@@ -220,9 +220,11 @@ export function loadFromLocalStorage(ctx: GlobalContext) {
   const jsonData = localStorage.getItem(LOCAL_STORAGE_KEY) || "{}";
   try {
     const data: LocalStorageData = JSON.parse(jsonData);
+    console.debug("Data from local storage:", data);
     const graphData: GraphData = JSON.parse(data.graph);
     const speedMultiplier = new SpeedMultiplier(data.speedMultiplier || 1);
     console.log("Speed multiplier: ", speedMultiplier);
+    console.debug("Graph data from local storage:", graphData);
     ctx.load(DataGraph.fromData(graphData), data.layer, speedMultiplier);
   } catch (error) {
     const extraData = { jsonData, error };

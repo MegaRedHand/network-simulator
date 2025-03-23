@@ -10,6 +10,7 @@ import { Texture } from "pixi.js";
 import { MacAddress } from "../../packets/ethernet";
 import { Packet } from "../packet";
 import { GlobalContext } from "../../context";
+import { Router } from "../devices";
 
 export class RouterNode extends NetworkNode {
   static DEVICE_TEXTURE: Texture;
@@ -57,7 +58,7 @@ export class RouterNode extends NetworkNode {
 
   async routePacket(datagram: IPv4Packet): Promise<DeviceId | null> {
     const device = this.viewgraph.getDataGraph().getDevice(this.id);
-    if (!device || !isRouter(device)) {
+    if (!device || !(device instanceof Router)) {
       return null;
     }
     if (this.packetQueueSize >= this.maxQueueSize) {

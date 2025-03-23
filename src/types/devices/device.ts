@@ -1,37 +1,42 @@
-import { EthernetFrame, MacAddress } from "../../packets/ethernet";
-import { EchoReply, EchoRequest } from "../../packets/icmp";
-import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
+import { MacAddress } from "../../packets/ethernet";
 import { Packet, sendRawPacket } from "../packet";
-import { DataGraph, DeviceId } from "../graphs/datagraph";
+import { DataGraph, DeviceId, DataNode } from "../graphs/datagraph";
+import { DeviceType } from "../deviceNodes/deviceNode";
+import { Position } from "../common";
 
 export abstract class Device {
-  static idCounter: number = 0;
+  static idCounter: number = 1;
 
   id: number;
   x: number;
   y: number;
   mac: MacAddress;
   datagraph: DataGraph;
-  connections: Set<DeviceId> = new Set<DeviceId>();
 
-  constructor(
-    x: number,
-    y: number,
-    mac: MacAddress,
-    datagraph: DataGraph,
-    id?: number,
-  ) {
-    this.x = x;
-    this.y = y;
-    this.mac = mac;
+  constructor(graphData: DataNode, datagraph: DataGraph) {
+    this.x = graphData.x;
+    this.y = graphData.y;
+    this.mac = MacAddress.parse(graphData.mac);
+    this.id = graphData.id ?? Device.idCounter++;
     this.datagraph = datagraph;
-    this.id = id ?? Device.idCounter++;
   }
 
-  addConnection(adjId: DeviceId) {
-    this.connections.add(adjId);
+  getDataNode(): DataNode {
+    return {
+      id: this.id,
+      type: this.getType(),
+      x: this.x,
+      y: this.y,
+      mac: this.mac.toString(),
+      connections: this.datagraph.getConnections(this.id),
+    };
   }
 
+  abstract getType(): DeviceType;
+
+  getPosition(): Position {
+    return { x: this.x, y: this.y };
+  }
   /**
    * Each type of device has different ways of handling a received packet.
    * Returns the id for the next device to send the packet to, or

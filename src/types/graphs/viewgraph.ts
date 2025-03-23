@@ -1,20 +1,22 @@
 import { DeviceNode, NetworkNode } from "../deviceNodes";
 import { Edge, EdgeEdges } from "./../edge";
-import { DataGraph, DeviceId } from "./datagraph";
+import { DataGraph, DeviceId, DataNode } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../layer";
-import { CreateDevice, createDevice } from "../deviceNodes/utils";
+import { CreateDevice, createDeviceNode } from "../deviceNodes/utils";
 import { layerFromType } from "../deviceNodes/deviceNode";
 import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 import { Graph } from "./graph";
+import { PacketManager } from "../packetManager";
 
 type EdgePair = [DeviceId, DeviceId];
 
 export class ViewGraph {
-  private ctx: GlobalContext;
-  private graph = new Graph<DeviceNode, Edge>();
+  ctx: GlobalContext;
+  graph = new Graph<DeviceNode, Edge>();
   private datagraph: DataGraph;
+  private packetManager: PacketManager;
   private layer: Layer;
   viewport: Viewport;
 
@@ -23,6 +25,7 @@ export class ViewGraph {
     this.datagraph = datagraph;
     this.viewport = ctx.getViewport();
     this.layer = layer;
+    this.packetManager = new PacketManager(this);
     this.constructView();
   }
 
@@ -30,11 +33,9 @@ export class ViewGraph {
     console.log("Constructing ViewGraph from DataGraph");
     const allConnections = new Map<string, EdgePair>();
 
-    for (const [deviceId, graphNode] of this.datagraph.getDevices()) {
-      if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
-        const connections = this.datagraph.getConnections(deviceId);
-        const deviceInfo = { id: deviceId, node: graphNode, connections };
-        this.createDevice(deviceInfo);
+    for (const [deviceId, device] of this.datagraph.getDevices()) {
+      if (layerIncluded(layerFromType(device.getType()), this.layer)) {
+        this.createDeviceNode(device.getDataNode());
 
         this.computeLayerConnections(deviceId, allConnections);
       }
@@ -44,8 +45,8 @@ export class ViewGraph {
     console.log("Finished constructing ViewGraph");
   }
 
-  addDevice(deviceData: CreateDevice) {
-    const device = this.createDevice(deviceData);
+  addDevice(deviceData: DataNode): DeviceNode {
+    const device = this.createDeviceNode(deviceData);
     if (deviceData.connections.length !== 0) {
       const connections = new Map<string, EdgePair>();
       this.computeLayerConnections(deviceData.id, connections);
@@ -56,14 +57,14 @@ export class ViewGraph {
   }
 
   // Add a device to the graph
-  private createDevice(deviceData: CreateDevice): DeviceNode {
+  private createDeviceNode(deviceData: DataNode): DeviceNode {
     if (this.graph.hasVertex(deviceData.id)) {
       console.warn(
         `Device with ID ${deviceData.id} already exists in the graph.`,
       );
       return this.graph.getVertex(deviceData.id);
     }
-    const device = createDevice(deviceData, this, this.ctx);
+    const device = createDeviceNode(deviceData, this, this.ctx);
 
     this.graph.setVertex(device.id, device);
     this.viewport.addChild(device);
@@ -163,9 +164,14 @@ export class ViewGraph {
   }
 
   changeCurrLayer(newLayer: Layer) {
+    const formerLayer = this.layer;
     this.layer = newLayer;
     this.clear();
     this.constructView();
+
+    // le avisa al packet manager que cambia de capa
+    this.packetManager.layerChanged(formerLayer, newLayer);
+
     const layerSelect = document.getElementById(
       "layer-select",
     ) as HTMLSelectElement;
@@ -186,6 +192,10 @@ export class ViewGraph {
     return Array.from(edges).map(([, edge]) => edge);
   }
 
+  getAllConnections(): Edge[] {
+    return Array.from(this.graph.getAllEdges()).map(([, , edge]) => edge);
+  }
+
   // Get a specific device by its ID
   getDevice(id: DeviceId): DeviceNode | undefined {
     return this.graph.getVertex(id);
@@ -204,6 +214,10 @@ export class ViewGraph {
   // Get the number of devices in the graph
   getDeviceCount(): number {
     return this.graph.getVertexCount();
+  }
+
+  getPacketManager(): PacketManager {
+    return this.packetManager;
   }
 
   // Method to remove a device and its connections (edges)
@@ -282,7 +296,7 @@ export class ViewGraph {
 
   getDeviceByIP(ipAddress: IpAddress) {
     return this.getDevices().find((device) => {
-      return device instanceof NetworkNode && device.ip == ipAddress;
+      return device instanceof NetworkNode && device.ip.equals(ipAddress);
     });
   }
 
@@ -353,7 +367,7 @@ export class ViewGraph {
       // mark node as visited
       visited.add(w);
 
-      if (layerIncluded(layerFromType(adjacent.type), this.layer)) {
+      if (layerIncluded(layerFromType(adjacent.getType()), this.layer)) {
         // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
         const edgePair: EdgePair = [w, s];
         edgePair.sort();

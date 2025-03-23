@@ -19,6 +19,7 @@ import { Packet } from "../packet";
 import { Texture } from "pixi.js";
 import { MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
+import { Host } from "../devices";
 
 export class HostNode extends NetworkNode {
   static DEVICE_TEXTURE: Texture;
@@ -52,6 +53,7 @@ export class HostNode extends NetworkNode {
       return null;
     }
     if (this.ip.equals(datagram.destinationAddress)) {
+      console.debug("Entro a handlear el paquete!");
       this.handlePacket(datagram);
     }
     return null;
@@ -78,7 +80,7 @@ export class HostNode extends NetworkNode {
     const pid = this.getNextPid();
     const runningProgram = { pid, name, inputs };
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
-      if (!isHost(device)) {
+      if (!(device instanceof Host)) {
         console.error("Node is not a Host");
         return;
       }
@@ -90,7 +92,7 @@ export class HostNode extends NetworkNode {
 
   removeRunningProgram(pid: Pid) {
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
-      if (!isHost(device)) {
+      if (!(device instanceof Host)) {
         console.error("Node is not a Host");
         return;
       }
@@ -110,7 +112,7 @@ export class HostNode extends NetworkNode {
 
   getRunningPrograms() {
     const thisDevice = this.viewgraph.getDataGraph().getDevice(this.id);
-    if (!isHost(thisDevice)) {
+    if (!(thisDevice instanceof Host)) {
       console.error("Node is not a Host");
       return;
     }

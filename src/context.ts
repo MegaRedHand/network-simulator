@@ -1,5 +1,5 @@
 import { Viewport } from "./graphics/viewport";
-import { DataGraph, isLinkNode, isNetworkNode } from "./types/graphs/datagraph";
+import { DataGraph, isNetworkNode } from "./types/graphs/datagraph";
 import { ViewGraph } from "./types/graphs/viewgraph";
 import {
   loadFromLocalStorage,
@@ -12,6 +12,7 @@ import { layerFromName } from "./types/layer";
 import { SpeedMultiplier } from "./types/speedMultiplier";
 import { MacAddress, MacAddressGenerator } from "./packets/ethernet";
 import { Colors } from "./utils";
+import { NetworkDevice } from "./types/devices";
 
 export class GlobalContext {
   private viewport: Viewport = null;
@@ -46,9 +47,10 @@ export class GlobalContext {
     this.datagraph = datagraph;
     this.viewport.clear();
     if (this.viewgraph) {
-      this.viewgraph.clear();
+      this.viewgraph.changeCurrLayer(layer);
+    } else {
+      this.viewgraph = new ViewGraph(datagraph, this, layer);
     }
-    this.viewgraph = new ViewGraph(this.datagraph, this, layer);
     this.setIpGenerator();
     this.setMacGenerator();
   }
@@ -137,8 +139,8 @@ export class GlobalContext {
   private setIpGenerator() {
     let maxIp = IpAddress.parse("10.0.0.0");
     for (const [, device] of this.datagraph.getDevices()) {
-      if (isNetworkNode(device)) {
-        const ip = IpAddress.parse(device.ip);
+      if (device instanceof NetworkDevice) {
+        const ip = IpAddress.parse(device.ip.toString());
         if (maxIp.octets < ip.octets) {
           maxIp = ip;
         }
@@ -153,11 +155,9 @@ export class GlobalContext {
   private setMacGenerator() {
     let maxMac = MacAddress.parse("00:00:10:00:00:00");
     for (const [, device] of this.datagraph.getDevices()) {
-      if (isLinkNode(device)) {
-        const mac = MacAddress.parse(device.mac);
-        if (maxMac.octets < mac.octets) {
-          maxMac = mac;
-        }
+      const mac = MacAddress.parse(device.mac.toString());
+      if (maxMac.octets < mac.octets) {
+        maxMac = mac;
       }
     }
     // TODO: we should use MacAddress instead of string here and in Datagraph

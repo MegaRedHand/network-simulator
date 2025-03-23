@@ -8,6 +8,7 @@ import { EchoRequest } from "../packets/icmp";
 import { IPv4Packet } from "../packets/ip";
 import { NetworkNode } from "../types/deviceNodes";
 import { EthernetFrame } from "../packets/ethernet";
+import { Layer } from "../types/layer";
 
 function adjacentDevices(viewgraph: ViewGraph, srcId: DeviceId) {
   const adjacentDevices = viewgraph
@@ -71,7 +72,13 @@ export class SingleEcho extends ProgramBase {
       }
     }
     const ethernetFrame = new EthernetFrame(srcDevice.mac, dstMac, ipPacket);
-    sendRawPacket(this.viewgraph, this.srcId, this.dstId, ethernetFrame);
+    sendRawPacket(
+      this.viewgraph,
+      Layer.Network,
+      this.srcId,
+      this.dstId,
+      ethernetFrame,
+    );
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {

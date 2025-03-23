@@ -2,12 +2,13 @@ import { Layer } from "../../layer";
 import { CreateDevice } from "../../deviceNodes/utils";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { BaseMove } from "./move";
+import { DataNode } from "../../graphs/datagraph";
 
 // Superclass for AddDeviceMove and RemoveDeviceMove
 export abstract class AddRemoveDeviceMove extends BaseMove {
-  data: CreateDevice;
+  data: DataNode;
 
-  constructor(layer: Layer, data: CreateDevice) {
+  constructor(layer: Layer, data: DataNode) {
     // NOTE: we have to deep-copy the data to stop the data from
     // being modified by the original
     super(layer);
@@ -18,11 +19,9 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
     const datagraph = viewgraph.getDataGraph();
 
     // Add the device to the datagraph and the viewgraph
-    const deviceInfo = structuredClone(this.data.node);
-    // Clone array to avoid modifying the original
-    const connections = Array.from(this.data.connections);
+    const deviceInfo = structuredClone(this.data);
 
-    datagraph.addDevice(this.data.id, deviceInfo, connections);
+    datagraph.addDevice(deviceInfo);
     datagraph.regenerateAllRoutingTables();
 
     this.adjustLayer(viewgraph);

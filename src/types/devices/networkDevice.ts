@@ -1,26 +1,32 @@
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { EchoReply, EchoRequest } from "../../packets/icmp";
 import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
-import { DataGraph, DeviceId } from "../graphs/datagraph";
-import { Packet } from "../packet";
+import {
+  DataGraph,
+  DeviceId,
+  DataNode,
+  NetworkDataNode,
+} from "../graphs/datagraph";
+import { Packet, sendRawPacket } from "../packet";
 import { Device } from "./device";
 
 export abstract class NetworkDevice extends Device {
   ip: IpAddress;
   ipMask: IpAddress;
 
-  constructor(
-    x: number,
-    y: number,
-    mac: MacAddress,
-    datagraph: DataGraph,
-    ip: IpAddress,
-    ipMask: IpAddress,
-    id?: DeviceId,
-  ) {
-    super(x, y, mac, datagraph, id);
-    this.ip = ip;
-    this.ipMask = ipMask;
+  constructor(graphData: NetworkDataNode, datagraph: DataGraph) {
+    super(graphData, datagraph);
+    this.ip = IpAddress.parse(graphData.ip);
+    this.ipMask = IpAddress.parse(graphData.mask);
+  }
+
+  getDataNode(): DataNode {
+    return {
+      ...super.getDataNode(),
+      mac: this.mac.toString(),
+      ip: this.ip.toString(),
+      mask: this.ipMask.toString(),
+    };
   }
 
   abstract receiveDatagram(packet: Packet): Promise<DeviceId | null>;
@@ -62,6 +68,9 @@ export abstract class NetworkDevice extends Device {
 
   async receivePacket(packet: Packet): Promise<DeviceId | null> {
     const frame = packet.rawPacket;
+    console.debug(
+      `Dispositivo ${this.mac.toString()} recibe frame con destino ${frame.destination.toString()}`,
+    );
     if (this.mac.equals(frame.destination)) {
       return this.receiveDatagram(packet);
     }

@@ -4,7 +4,7 @@ import { DeviceNode } from "./deviceNodes/index"; // Import the Device class
 import { deselectElement, selectElement, urManager } from "./viewportManager";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils";
-import { Packet } from "./packet";
+import { Packet, ViewPacket } from "./packet";
 import { RemoveEdgeMove } from "./undo-redo";
 import { DeviceId } from "./graphs/datagraph";
 
@@ -74,7 +74,7 @@ export class Edge extends Graphics {
 
     this.children.forEach((child) => {
       if (child instanceof Packet) {
-        child.updatePosition();
+        child.updatePosition(this);
       }
     });
   }
@@ -179,5 +179,14 @@ export class Edge extends Graphics {
     );
 
     this.drawEdge(newStartPos, newEndPos, Colors.Lightblue);
+  }
+
+  registerPacket(packet: ViewPacket) {
+    this.addChild(packet);
+    packet.updatePosition(this);
+  }
+
+  deregisterPacket(packet: Packet) {
+    this.removeChild(packet);
   }
 }

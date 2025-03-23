@@ -19,7 +19,7 @@ import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
-import { DeviceId } from "../graphs/datagraph";
+import { DeviceId, DataNode } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer } from "../layer";
 import { Packet } from "../packet";
@@ -30,8 +30,8 @@ import { GlobalContext } from "../../context";
 export { Layer } from "../layer";
 
 export enum DeviceType {
-  Router = 0,
-  Host = 1,
+  Host = 0,
+  Router = 1,
   Switch = 2,
 }
 
@@ -132,10 +132,12 @@ export abstract class DeviceNode extends Container {
   }
 
   /// Returns the data needed to create the device
-  getCreateDevice(): CreateDevice {
-    const node = this.viewgraph.getDataGraph().getDevice(this.id);
-    const connections = this.viewgraph.getDataGraph().getConnections(this.id);
-    return { id: this.id, node, connections };
+  getCreateDevice(): DataNode {
+    const node: DataNode = this.viewgraph
+      .getDataGraph()
+      .getDevice(this.id)
+      .getDataNode();
+    return node;
   }
 
   delete(): void {

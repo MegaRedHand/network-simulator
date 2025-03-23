@@ -1,7 +1,7 @@
 import { Texture } from "pixi.js";
 import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
-import { DeviceNode } from "./deviceNode";
+import { DeviceNode, Layer } from "./deviceNode";
 import { ViewGraph } from "../graphs/viewgraph";
 import { Position } from "../common";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
@@ -39,7 +39,9 @@ export abstract class NetworkNode extends DeviceNode {
     switch (datagram.payload.protocol()) {
       case ICMP_PROTOCOL_NUMBER: {
         const request: EchoRequest = datagram.payload as EchoRequest;
+        console.debug(`${dstDevice} y ${request.type}`);
         if (dstDevice && request.type) {
+          console.debug("Voy a mandar un EchoReply!");
           const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
           let dstMac = dstDevice.mac;
           if (!path) return;
@@ -54,7 +56,13 @@ export abstract class NetworkNode extends DeviceNode {
           const echoReply = new EchoReply(0);
           const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
           const ethernet = new EthernetFrame(this.mac, dstMac, ipPacket);
-          sendRawPacket(this.viewgraph, this.id, dstDevice.id, ethernet);
+          sendRawPacket(
+            this.viewgraph,
+            Layer.Network,
+            this.id,
+            dstDevice.id,
+            ethernet,
+          );
         }
         break;
       }
@@ -65,7 +73,9 @@ export abstract class NetworkNode extends DeviceNode {
 
   async receivePacket(packet: Packet): Promise<DeviceId | null> {
     const frame = packet.rawPacket;
+    console.debug(`${this.mac.toString()} == ${frame.destination.toString()}`);
     if (this.mac.equals(frame.destination)) {
+      console.debug("Entro a recibir el datagrama!");
       return this.receiveDatagram(packet);
     }
     return null;

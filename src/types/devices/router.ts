@@ -1,5 +1,12 @@
+import { View } from "pixi.js";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
-import { DeviceId, isRouter } from "../graphs/datagraph";
+import { DeviceType } from "../deviceNodes/deviceNode";
+import {
+  DataGraph,
+  DeviceId,
+  RouterDataNode,
+  RoutingTableEntry,
+} from "../graphs/datagraph";
 import { Packet } from "../packet";
 import { NetworkDevice } from "./networkDevice";
 
@@ -7,11 +14,16 @@ export class Router extends NetworkDevice {
   private packetQueueSize = 0;
   private maxQueueSize = 5;
   private timePerPacket = 1000;
-  viewgraph: any;
+  routingTable: RoutingTableEntry[];
+
+  constructor(graphData: RouterDataNode, datagraph: DataGraph) {
+    super(graphData, datagraph);
+    this.routingTable = graphData.routingTable ?? [];
+  }
 
   async routePacket(datagram: IPv4Packet): Promise<DeviceId | null> {
     const device = this.datagraph.getDevice(this.id);
-    if (!device || !isRouter(device)) {
+    if (!device || !(device instanceof Router)) {
       return null;
     }
     if (this.packetQueueSize >= this.maxQueueSize) {
@@ -25,7 +37,7 @@ export class Router extends NetworkDevice {
 
     const result = device.routingTable.find((entry) => {
       if (entry.deleted) {
-        console.log("Skipping deleted entry:", entry);
+        console.debug("Skipping deleted entry:", entry);
         return false;
       }
       const ip = IpAddress.parse(entry.ip);
@@ -33,7 +45,7 @@ export class Router extends NetworkDevice {
       console.log("Considering entry:", entry);
       return datagram.destinationAddress.isInSubnet(ip, mask);
     });
-    console.log("Result:", result);
+    console.debug("Result:", result);
     return result === undefined ? null : result.iface;
   }
 
@@ -42,21 +54,26 @@ export class Router extends NetworkDevice {
     if (!(datagram instanceof IPv4Packet)) {
       return null;
     }
+    console.debug(
+      `Dispositivo ${this.ip.toString()} recibe datagram con destino ${datagram.destinationAddress.toString()}`,
+    );
     if (this.ip.equals(datagram.destinationAddress)) {
       this.handlePacket(datagram);
       return null;
     }
     // a router changed forward datagram to destination, have to change current destination mac
-    const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
+    const dstDevice = this.datagraph.getDeviceByIP(datagram.destinationAddress);
     if (!dstDevice) {
       console.error("Destination device not found");
       return null;
     }
-    const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
+    // copy datagraph
+    const path = this.datagraph.getPathBetween(this.id, dstDevice.id);
     let dstMac = dstDevice.mac;
     if (!path) return null;
     for (const id of path.slice(1)) {
-      const device = this.viewgraph.getDevice(id);
+      // copy datagraph
+      const device = this.datagraph.getDevice(id);
       if (device instanceof NetworkDevice) {
         dstMac = device.mac;
         break;
@@ -64,5 +81,9 @@ export class Router extends NetworkDevice {
     }
     packet.rawPacket.destination = dstMac;
     return this.routePacket(datagram);
+  }
+
+  getType(): DeviceType {
+    return DeviceType.Router;
   }
 }

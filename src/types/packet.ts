@@ -12,9 +12,11 @@ import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
 import { Layer } from "./layer";
 //import { EchoMessage } from "../packets/icmp";
-import { DeviceId, isRouter, isSwitch } from "./graphs/datagraph";
+import { DataGraph, DeviceId } from "./graphs/datagraph";
 import { EthernetFrame } from "../packets/ethernet";
 import { IPv4Packet } from "../packets/ip";
+import { GlobalContext } from "../context";
+import { Router, Switch } from "./devices";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
@@ -24,17 +26,24 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
 
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
 
-export class Packet extends Graphics {
+export interface PacketLocation {
+  prevDevice: DeviceId;
+  nextDevice: DeviceId;
+  currProgress: number;
+}
+
+export abstract class Packet extends Graphics {
+  packetId: string;
   speed = 100;
   progress = 0;
-  viewgraph: ViewGraph;
-  currentEdge: Edge;
   currentStart: number;
   color: number;
   type: string;
   rawPacket: EthernetFrame;
   srcId: DeviceId;
   dstId: DeviceId;
+  belongingLayer: Layer;
+  ctx: GlobalContext;
 
   static animationPaused = false;
 
@@ -42,34 +51,38 @@ export class Packet extends Graphics {
     Packet.animationPaused = true;
   }
 
-  static unpauseAnimation() {
+  static resumeAnimation() {
     Packet.animationPaused = false;
   }
 
   constructor(
-    viewgraph: ViewGraph,
+    belongingLayer: Layer,
     type: string,
     srcId: DeviceId,
     dstId: DeviceId,
     rawPacket: EthernetFrame,
+    ctx: GlobalContext,
   ) {
     super();
-
-    this.viewgraph = viewgraph;
+    this.packetId = crypto.randomUUID();
+    this.belongingLayer = belongingLayer;
     this.type = type;
-
     this.context = contextPerPacketType[this.type];
     this.zIndex = ZIndexLevels.Packet;
-
     this.srcId = srcId;
     this.dstId = dstId;
     this.rawPacket = rawPacket;
-
+    this.ctx = ctx;
     this.interactive = true;
     this.cursor = "pointer";
     this.on("click", this.onClick, this);
-    // NOTE: this is "click" for mobile devices
     this.on("tap", this.onClick, this);
+    // register in Packet Manger
+    ctx.getViewGraph().getPacketManager().registerPacket(this);
+  }
+
+  setProgress(progress: number) {
+    this.progress = progress;
   }
 
   onClick(e: FederatedPointerEvent) {
@@ -118,12 +131,14 @@ export class Packet extends Graphics {
 
     // Add a toggle info section for packet details
     const packetDetails = this.getPacketDetails(
-      this.viewgraph.getLayer(),
+      this.belongingLayer,
       this.rawPacket,
     );
 
     rightbar.addToggleButton("Packet Details", packetDetails);
   }
+
+  abstract getPacketLocation(): PacketLocation;
 
   highlight() {
     this.context = highlightedPacketContext;
@@ -137,87 +152,35 @@ export class Packet extends Graphics {
     this.context = contextPerPacketType[this.type];
   }
 
-  traverseEdge(edge: Edge, start: DeviceId): void {
-    this.progress = 0;
-    this.currentEdge = edge;
-    this.currentStart = start;
-    // Add packet as a child of the current edge
-    this.currentEdge.addChild(this);
-    this.updatePosition();
-    Ticker.shared.add(this.animationTick, this);
+  setCurrStart(id: DeviceId) {
+    this.currentStart = id;
   }
 
-  async animationTick(ticker: Ticker) {
-    if (this.progress >= 1) {
-      const deleteSelf = () => {
-        this.destroy();
-        ticker.remove(this.animationTick, this);
-        if (isSelected(this)) {
-          deselectElement();
-        }
-        console.log("Se corto animationTick");
-      };
+  // reloadLocation(newPrevDevice: number, newNextDevice: number) {
+  //   this.currentStart = newPrevDevice;
+  //   const currEdge = this.graph.getEdge(newPrevDevice, newNextDevice);
+  //   if (!currEdge) {
+  //     // hacer algo
+  //     console.debug("CurrEdge no existe!");
+  //     this.delete();
+  //     return;
+  //   }
+  //   const nextDevice = this.graph.getVertex(newNextDevice);
+  //   if (
+  //     nextDevice.getType() == DeviceType.Router ||
+  //     nextDevice.getType() == DeviceType.Host
+  //   ) {
+  //     console.debug("Entro aca wacho");
+  //     this.rawPacket.destination = nextDevice.mac;
+  //   }
+  //   this.currentEdge = currEdge;
+  //   currEdge.registerPacket(this);
+  //   Ticker.shared.add(this.animationTick, this);
+  // }
 
-      this.progress = 0;
-      this.removeFromParent();
-      const newStart = this.currentEdge.otherEnd(this.currentStart);
-      const newStartDevice = this.viewgraph.getDevice(newStart);
-
-      // Viewgraph may return undefined when trying to get the device
-      // as the device may have been removed by the user.
-      if (!newStartDevice) {
-        deleteSelf();
-        return;
-      }
-
-      console.log(newStartDevice);
-
-      this.currentStart = newStart;
-      // TODO: remove this dirty hack
-      // Remove and re-add from ticker to avoid multiple frames processing being triggered at once.
-      ticker.remove(this.animationTick, this);
-      const newEndId = await newStartDevice.receivePacket(this);
-      ticker.add(this.animationTick, this);
-
-      if (newEndId === null) {
-        deleteSelf();
-        return;
-      }
-
-      this.currentEdge = this.viewgraph.getEdge(this.currentStart, newEndId);
-
-      if (this.currentEdge === undefined) {
-        deleteSelf();
-        return;
-      }
-      this.currentEdge.addChild(this);
-    }
-
-    // Calculate the edge length
-    const start = this.currentEdge.startPos;
-    const end = this.currentEdge.endPos;
-    const edgeLength = Math.sqrt(
-      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
-    );
-
-    // Normalize the speed based on edge length
-    // The longer the edge, the slower the progress increment
-    const normalizedSpeed = this.speed / edgeLength;
-
-    // Update progress with normalized speed
-    if (!Packet.animationPaused) {
-      this.progress +=
-        (ticker.deltaMS * normalizedSpeed * this.viewgraph.getSpeed()) / 1000;
-    }
-
-    this.updatePosition();
-  }
-
-  updatePosition() {
-    const startPos = this.currentEdge.nodePosition(this.currentStart);
-    const endPos = this.currentEdge.nodePosition(
-      this.currentEdge.otherEnd(this.currentStart),
-    );
+  updatePosition(edge: Edge) {
+    const startPos = edge.nodePosition(this.currentStart);
+    const endPos = edge.nodePosition(edge.otherEnd(this.currentStart));
     this.setPositionAlongEdge(startPos, endPos, this.progress);
   }
 
@@ -231,27 +194,211 @@ export class Packet extends Graphics {
   }
 
   delete() {
-    // Remove packet from Ticker to stop animation
-    Ticker.shared.remove(this.animationTick, this);
-
-    // Remove all event listeners
     this.removeAllListeners();
-
-    // Remove packet from parent edge
     this.removeFromParent();
 
-    // Deselect the packet if it's selected
     if (isSelected(this)) {
       deselectElement();
     }
 
-    // Destroy the packet
+    this.ctx.getViewGraph().getPacketManager().deregisterPacket(this.packetId);
     this.destroy();
+  }
+}
+
+export class ViewPacket extends Packet {
+  viewgraph: ViewGraph;
+  currentEdge: Edge;
+
+  constructor(
+    viewgraph: ViewGraph,
+    belongingLayer: Layer,
+    type: string,
+    srcId: DeviceId,
+    dstId: DeviceId,
+    rawPacket: EthernetFrame,
+    ctx: GlobalContext,
+  ) {
+    super(belongingLayer, type, srcId, dstId, rawPacket, ctx);
+    this.viewgraph = viewgraph;
+  }
+
+  setCurrEdge(edge: Edge) {
+    this.currentEdge = edge;
+  }
+
+  getPacketLocation(): PacketLocation {
+    const nextDevice = this.currentEdge.otherEnd(this.currentStart);
+    return {
+      prevDevice: this.currentStart,
+      nextDevice,
+      currProgress: this.progress,
+    };
+  }
+
+  traverseEdge(edge: Edge, start: DeviceId): void {
+    this.currentEdge = edge;
+    this.currentStart = start;
+
+    // lo agrega como hijo (despues sacarlo)
+    this.currentEdge.registerPacket(this);
+    Ticker.shared.add(this.animationTick, this);
+  }
+
+  async forwardPacket(currDeviceID: number) {
+    const currDevice = this.viewgraph.getDevice(currDeviceID);
+    console.debug(`[VIEW PACKET] ${currDeviceID} recibe el paquete`);
+    const nextDeviceID = await currDevice.receivePacket(this);
+
+    // Packet has reached its destination
+    if (!nextDeviceID) {
+      console.debug("[VIEW PACKET] Paquete llego a destino!");
+      return;
+    }
+
+    const edgeToForward = this.viewgraph.getEdge(currDeviceID, nextDeviceID);
+
+    // Packet has reached a dead end
+    if (!edgeToForward) {
+      console.debug("no hay arista!");
+      return;
+    }
+
+    // Reset progress and start traversing the next edge
+    this.progress = 0;
+
+    // Update current edge and start
+    this.currentStart = currDeviceID;
+    this.currentEdge = edgeToForward;
+
+    edgeToForward.registerPacket(this);
+    Ticker.shared.add(this.animationTick, this);
+  }
+
+  async animationTick(ticker: Ticker) {
+    const start = this.currentEdge.startPos;
+    const end = this.currentEdge.endPos;
+
+    const edgeLength = Math.sqrt(
+      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
+    );
+
+    const normalizedSpeed = this.speed / edgeLength;
+
+    if (!Packet.animationPaused) {
+      const progressIncrement =
+        (ticker.deltaMS * normalizedSpeed * this.ctx.getCurrentSpeed().value) /
+        1000;
+      this.progress += progressIncrement;
+      this.updatePosition(this.currentEdge);
+    }
+
+    if (this.progress >= 1) {
+      this.currentEdge.deregisterPacket(this);
+      ticker.remove(this.animationTick, this);
+      this.forwardPacket(this.currentEdge.otherEnd(this.currentStart));
+    }
+  }
+
+  delete() {
+    // Remove packet from Ticker to stop animation
+    Ticker.shared.remove(this.animationTick, this);
+
+    super.delete();
+  }
+}
+
+export class DataPacket extends Packet {
+  datagraph: DataGraph;
+  currNextDevice: DeviceId;
+
+  constructor(
+    datagraph: DataGraph,
+    belongingLayer: Layer,
+    type: string,
+    srcId: DeviceId,
+    dstId: DeviceId,
+    rawPacket: EthernetFrame,
+    ctx: GlobalContext,
+  ) {
+    super(belongingLayer, type, srcId, dstId, rawPacket, ctx);
+    this.datagraph = datagraph;
+  }
+
+  getPacketLocation(): PacketLocation {
+    return {
+      prevDevice: this.currentStart,
+      nextDevice: this.currNextDevice,
+      currProgress: this.progress,
+    };
+  }
+
+  traverseEdge(start: DeviceId, end: DeviceId): void {
+    this.currentStart = start;
+    this.currNextDevice = end;
+
+    Ticker.shared.add(this.animationTick, this);
+  }
+
+  async forwardPacket(currDeviceID: number) {
+    const currDevice = this.datagraph.getDevice(currDeviceID);
+    console.debug(`[DATA PACKET] ${currDeviceID} recibe el paquete`);
+    const nextDeviceID = await currDevice.receivePacket(this);
+
+    // Packet has reached its destination
+    if (!nextDeviceID) {
+      console.debug("[DATA PACKET] Paquete llego a destino!");
+      this.delete();
+      return;
+    }
+
+    // Reset progress and start traversing the next edge
+    this.progress = 0;
+
+    // Update current start and end
+    this.currentStart = currDeviceID;
+    this.currNextDevice = nextDeviceID;
+
+    Ticker.shared.add(this.animationTick, this);
+  }
+
+  async animationTick(ticker: Ticker) {
+    const currentStartDevice = this.datagraph.getDevice(this.currentStart);
+    const currNextDevice = this.datagraph.getDevice(this.currNextDevice);
+    const start = currentStartDevice.getPosition();
+    const end = currNextDevice.getPosition();
+
+    const edgeLength = Math.sqrt(
+      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
+    );
+
+    const normalizedSpeed = this.speed / edgeLength;
+
+    if (!Packet.animationPaused) {
+      const progressIncrement =
+        (ticker.deltaMS * normalizedSpeed * this.ctx.getCurrentSpeed().value) /
+        1000;
+      this.progress += progressIncrement;
+      this.setPositionAlongEdge(start, end, this.progress);
+    }
+
+    if (this.progress >= 1) {
+      ticker.remove(this.animationTick, this);
+      this.forwardPacket(this.currNextDevice);
+    }
+  }
+
+  delete() {
+    // Remove packet from Ticker to stop animation
+    Ticker.shared.remove(this.animationTick, this);
+
+    super.delete();
   }
 }
 
 export function sendRawPacket(
   viewgraph: ViewGraph,
+  belongingLayer: Layer,
   srcId: DeviceId,
   dstId: DeviceId,
   rawPacket: EthernetFrame,
@@ -270,6 +417,7 @@ export function sendRawPacket(
   let firstEdge = originConnections.find((edge) => {
     const otherId = edge.otherEnd(srcId);
     const otherDevice = viewgraph.getDevice(otherId);
+    console.debug(otherDevice.mac);
     return otherDevice.mac.equals(dstMac);
   });
   if (firstEdge === undefined) {
@@ -277,7 +425,7 @@ export function sendRawPacket(
     firstEdge = originConnections.find((edge) => {
       const otherId = edge.otherEnd(srcId);
       const otherDevice = datagraph.getDevice(otherId);
-      return isRouter(otherDevice) || isSwitch(otherDevice);
+      return otherDevice instanceof Router || otherDevice instanceof Switch;
     });
   }
   if (firstEdge === undefined) {
@@ -294,6 +442,14 @@ export function sendRawPacket(
     console.warn("Packet is not IPv4");
     type = "ICMP-8";
   }
-  const packet = new Packet(viewgraph, type, srcId, dstId, rawPacket);
+  const packet = new ViewPacket(
+    viewgraph,
+    belongingLayer,
+    type,
+    srcId,
+    dstId,
+    rawPacket,
+    viewgraph.ctx,
+  );
   packet.traverseEdge(firstEdge, srcId);
 }
