@@ -12,7 +12,7 @@ import { layerFromName } from "./types/layer";
 import { SpeedMultiplier } from "./types/speedMultiplier";
 import { MacAddress, MacAddressGenerator } from "./packets/ethernet";
 import { Colors } from "./utils";
-import { NetworkDevice } from "./types/devices";
+import { DataNetworkDevice } from "./types/data-devices";
 
 export class GlobalContext {
   private viewport: Viewport = null;
@@ -139,7 +139,7 @@ export class GlobalContext {
   private setIpGenerator() {
     let maxIp = IpAddress.parse("10.0.0.0");
     for (const [, device] of this.datagraph.getDevices()) {
-      if (device instanceof NetworkDevice) {
+      if (device instanceof DataNetworkDevice) {
         const ip = IpAddress.parse(device.ip.toString());
         if (maxIp.octets < ip.octets) {
           maxIp = ip;

@@ -1,10 +1,10 @@
-import { DeviceNode, NetworkNode } from "../deviceNodes";
+import { ViewDevice, ViewNetworkDevice } from "../view-devices";
 import { Edge, EdgeEdges } from "./../edge";
 import { DataGraph, DeviceId, DataNode } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../layer";
-import { CreateDevice, createDeviceNode } from "../deviceNodes/utils";
-import { layerFromType } from "../deviceNodes/deviceNode";
+import { CreateDevice, createDeviceNode } from "../view-devices/utils";
+import { layerFromType } from "../view-devices/vDevice";
 import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 import { Graph } from "./graph";
@@ -14,7 +14,7 @@ type EdgePair = [DeviceId, DeviceId];
 
 export class ViewGraph {
   ctx: GlobalContext;
-  graph = new Graph<DeviceNode, Edge>();
+  graph = new Graph<ViewDevice, Edge>();
   private datagraph: DataGraph;
   private packetManager: PacketManager;
   private layer: Layer;
@@ -45,7 +45,7 @@ export class ViewGraph {
     console.log("Finished constructing ViewGraph");
   }
 
-  addDevice(deviceData: DataNode): DeviceNode {
+  addDevice(deviceData: DataNode): ViewDevice {
     const device = this.createDeviceNode(deviceData);
     if (deviceData.connections.length !== 0) {
       const connections = new Map<string, EdgePair>();
@@ -57,7 +57,7 @@ export class ViewGraph {
   }
 
   // Add a device to the graph
-  private createDeviceNode(deviceData: DataNode): DeviceNode {
+  private createDeviceNode(deviceData: DataNode): ViewDevice {
     if (this.graph.hasVertex(deviceData.id)) {
       console.warn(
         `Device with ID ${deviceData.id} already exists in the graph.`,
@@ -84,7 +84,7 @@ export class ViewGraph {
     });
   }
 
-  drawEdge(device1: DeviceNode, device2: DeviceNode): Edge {
+  drawEdge(device1: ViewDevice, device2: ViewDevice): Edge {
     const connectedNodes: EdgeEdges = { n1: device1.id, n2: device2.id };
     if (this.graph.hasEdge(device1.id, device2.id)) {
       console.warn(`Edge with ID ${device1.id},${device2.id} already exists.`);
@@ -136,7 +136,7 @@ export class ViewGraph {
   }
 
   deviceMoved(deviceId: DeviceId) {
-    const device: DeviceNode = this.graph.getVertex(deviceId);
+    const device: ViewDevice = this.graph.getVertex(deviceId);
     this.graph.getNeighbors(deviceId).forEach((adjacentId) => {
       const edge = this.graph.getEdge(deviceId, adjacentId);
       // Get start and end devices directly
@@ -197,12 +197,12 @@ export class ViewGraph {
   }
 
   // Get a specific device by its ID
-  getDevice(id: DeviceId): DeviceNode | undefined {
+  getDevice(id: DeviceId): ViewDevice | undefined {
     return this.graph.getVertex(id);
   }
 
   // Get all devices in the graph
-  getDevices(): DeviceNode[] {
+  getDevices(): ViewDevice[] {
     return Array.from(this.graph.getAllVertices()).map(([, device]) => device);
   }
 
@@ -296,7 +296,7 @@ export class ViewGraph {
 
   getDeviceByIP(ipAddress: IpAddress) {
     return this.getDevices().find((device) => {
-      return device instanceof NetworkNode && device.ip.equals(ipAddress);
+      return device instanceof ViewNetworkDevice && device.ip.equals(ipAddress);
     });
   }
 
@@ -311,7 +311,7 @@ export class ViewGraph {
       console.warn(`At least one device does not exist`);
       return [];
     }
-    const queue: [DeviceNode, DeviceId[]][] = [[startDevice, [startId]]];
+    const queue: [ViewDevice, DeviceId[]][] = [[startDevice, [startId]]];
     const visited: Set<DeviceId> = new Set<DeviceId>();
 
     while (queue.length > 0) {

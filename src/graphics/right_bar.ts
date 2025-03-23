@@ -1,4 +1,4 @@
-import { Router } from "../types/devices";
+import { DataRouter } from "../types/data-devices";
 import {
   DeviceId,
   isRouter,
@@ -165,7 +165,7 @@ function updateRoutingTableUI(
   viewgraph: ViewGraph,
 ): void {
   const router = viewgraph.getDataGraph().getDevice(deviceId);
-  if (!router || !(router instanceof Router)) {
+  if (!router || !(router instanceof DataRouter)) {
     console.warn(`Device with ID ${deviceId} is not a valid router.`);
     return;
   }

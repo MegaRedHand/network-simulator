@@ -1,10 +1,15 @@
 import { IpAddress } from "../../packets/ip";
 import { RunningProgram } from "../../programs";
-import { DeviceType, layerFromType } from "../deviceNodes/deviceNode";
+import { DeviceType, layerFromType } from "../view-devices/vDevice";
 import { layerIncluded, Layer } from "../layer";
-import { Device } from "../devices/device";
+import { DataDevice } from "../data-devices/";
 import { Graph, VertexId } from "./graph";
-import { Host, NetworkDevice, Router, Switch } from "../devices";
+import {
+  DataHost,
+  DataNetworkDevice,
+  DataRouter,
+  DataSwitch,
+} from "../data-devices";
 
 export type DeviceId = VertexId;
 
@@ -73,7 +78,7 @@ export type GraphData = DataNode[];
 
 export class DataGraph {
   // NOTE: we don't store data in edges yet
-  deviceGraph = new Graph<Device, unknown>();
+  deviceGraph = new Graph<DataDevice, unknown>();
   private onChanges: (() => void)[] = [];
 
   static fromData(data: GraphData): DataGraph {
@@ -102,7 +107,7 @@ export class DataGraph {
         arpTable: new Map<string, string>(), // TODO: change this to the actual ARP table
       };
 
-      if (device instanceof NetworkDevice) {
+      if (device instanceof DataNetworkDevice) {
         dataNode = {
           ...dataNode,
           ip: device.ip.toString(),
@@ -110,13 +115,13 @@ export class DataGraph {
         };
       }
 
-      if (device instanceof Router) {
-        // ip and mask already set with NetworkDevice
+      if (device instanceof DataRouter) {
+        // ip and mask already set with DataNetworkDevice
         dataNode = {
           ...dataNode,
           routingTable: device.routingTable,
         };
-      } else if (device instanceof Host) {
+      } else if (device instanceof DataHost) {
         dataNode = {
           ...dataNode,
           runningPrograms: device.runningPrograms,
@@ -129,12 +134,12 @@ export class DataGraph {
 
   // Add a device to the graph
   addDevice(dataNode: DataNode) {
-    const device: Device = isSwitch(dataNode)
-      ? new Switch(dataNode, this)
+    const device: DataDevice = isSwitch(dataNode)
+      ? new DataSwitch(dataNode, this)
       : isRouter(dataNode)
-        ? new Router(dataNode, this)
+        ? new DataRouter(dataNode, this)
         : isHost(dataNode)
-          ? new Host(dataNode, this)
+          ? new DataHost(dataNode, this)
           : undefined;
     const deviceId = device.id;
     if (this.deviceGraph.hasVertex(deviceId)) {
@@ -194,22 +199,25 @@ export class DataGraph {
 
   // Get a device by its ID.
   // WARNING: don't modify the device directly, use `modifyDevice` instead
-  getDevice(id: DeviceId): Device | undefined {
+  getDevice(id: DeviceId): DataDevice | undefined {
     return this.deviceGraph.getVertex(id);
   }
 
   // Same logic than the one in ViewGraph.
   // Get a device by its IP address
-  getDeviceByIP(sourceAddress: IpAddress): Device {
+  getDeviceByIP(sourceAddress: IpAddress): DataDevice {
     for (const [_, device] of this.getDevices()) {
-      if (device instanceof NetworkDevice && device.ip.equals(sourceAddress)) {
+      if (
+        device instanceof DataNetworkDevice &&
+        device.ip.equals(sourceAddress)
+      ) {
         return device;
       }
     }
   }
 
   // Modify a device in the graph, notifying subscribers of any changes
-  modifyDevice(id: DeviceId, fn: (d: Device | undefined) => void) {
+  modifyDevice(id: DeviceId, fn: (d: DataDevice | undefined) => void) {
     const device = this.deviceGraph.getVertex(id);
     fn(device);
     if (device) {
@@ -218,7 +226,7 @@ export class DataGraph {
   }
 
   // Get all devices in the graph
-  getDevices(): IterableIterator<[DeviceId, Device]> {
+  getDevices(): IterableIterator<[DeviceId, DataDevice]> {
     return this.deviceGraph.getAllVertices();
   }
 
@@ -260,7 +268,7 @@ export class DataGraph {
       return [];
     }
     const startDevice = this.deviceGraph.getVertex(startId);
-    const queue: [Device, DeviceId[]][] = [[startDevice, [startId]]];
+    const queue: [DataDevice, DeviceId[]][] = [[startDevice, [startId]]];
     const visited: Set<DeviceId> = new Set<DeviceId>();
 
     while (queue.length > 0) {
@@ -320,7 +328,7 @@ export class DataGraph {
 
   regenerateRoutingTable(id: DeviceId) {
     const router = this.deviceGraph.getVertex(id);
-    if (!(router instanceof Router)) return;
+    if (!(router instanceof DataRouter)) return;
 
     router.routingTable = this.generateRoutingTable(id, true);
   }
@@ -330,7 +338,7 @@ export class DataGraph {
     preserveEdits = false,
   ): RoutingTableEntry[] {
     const router = this.deviceGraph.getVertex(id);
-    if (!(router instanceof Router)) {
+    if (!(router instanceof DataRouter)) {
       return [];
     }
 
@@ -341,7 +349,7 @@ export class DataGraph {
     while (queue.length > 0) {
       const currentId = queue.shift();
       const current = this.deviceGraph.getVertex(currentId);
-      if (current instanceof Host) continue;
+      if (current instanceof DataHost) continue;
 
       const neighbors = this.deviceGraph.getNeighbors(currentId);
       neighbors.forEach((connectedId) => {
@@ -366,7 +374,7 @@ export class DataGraph {
 
       const dst = this.deviceGraph.getVertex(dstId);
 
-      if (dst instanceof NetworkDevice) {
+      if (dst instanceof DataNetworkDevice) {
         newTable.push({
           ip: dst.ip.toString(),
           mask: dst.ipMask.toString(),
@@ -417,7 +425,7 @@ export class DataGraph {
     newValue: string,
   ) {
     const router = this.getDevice(routerId);
-    if (!router || !(router instanceof Router)) {
+    if (!router || !(router instanceof DataRouter)) {
       console.warn(`Device with ID ${routerId} is not a router.`);
       return;
     }
@@ -478,7 +486,7 @@ export class DataGraph {
   ): void {
     const router = this.getDevice(routerId);
 
-    if (!router || !(router instanceof Router)) {
+    if (!router || !(router instanceof DataRouter)) {
       console.warn(`Device with ID ${routerId} is not a router.`);
       return;
     }
@@ -501,7 +509,7 @@ export class DataGraph {
 
   removeRoutingTableRow(deviceId: DeviceId, visibleRowIndex: number): void {
     const router = this.getDevice(deviceId);
-    if (!router || !(router instanceof Router)) {
+    if (!router || !(router instanceof DataRouter)) {
       console.warn(`Device with ID ${deviceId} is not a router.`);
       return;
     }
@@ -543,7 +551,7 @@ export class DataGraph {
 
   getRoutingTable(id: DeviceId) {
     const device = this.getDevice(id);
-    if (!device || !(device instanceof Router)) {
+    if (!device || !(device instanceof DataRouter)) {
       return [];
     }
 

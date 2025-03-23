@@ -1,6 +1,6 @@
 import { View } from "pixi.js";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
-import { DeviceType } from "../deviceNodes/deviceNode";
+import { DeviceType } from "../view-devices/vDevice";
 import {
   DataGraph,
   DeviceId,
@@ -8,9 +8,9 @@ import {
   RoutingTableEntry,
 } from "../graphs/datagraph";
 import { Packet } from "../packet";
-import { NetworkDevice } from "./networkDevice";
+import { DataNetworkDevice } from "./dNetworkDevice";
 
-export class Router extends NetworkDevice {
+export class DataRouter extends DataNetworkDevice {
   private packetQueueSize = 0;
   private maxQueueSize = 5;
   private timePerPacket = 1000;
@@ -23,7 +23,7 @@ export class Router extends NetworkDevice {
 
   async routePacket(datagram: IPv4Packet): Promise<DeviceId | null> {
     const device = this.datagraph.getDevice(this.id);
-    if (!device || !(device instanceof Router)) {
+    if (!device || !(device instanceof DataRouter)) {
       return null;
     }
     if (this.packetQueueSize >= this.maxQueueSize) {
@@ -74,7 +74,7 @@ export class Router extends NetworkDevice {
     for (const id of path.slice(1)) {
       // copy datagraph
       const device = this.datagraph.getDevice(id);
-      if (device instanceof NetworkDevice) {
+      if (device instanceof DataNetworkDevice) {
         dstMac = device.mac;
         break;
       }

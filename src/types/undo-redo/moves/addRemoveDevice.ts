@@ -1,5 +1,5 @@
 import { Layer } from "../../layer";
-import { CreateDevice } from "../../deviceNodes/utils";
+import { CreateDevice } from "../../view-devices/utils";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { BaseMove } from "./move";
 import { DataNode } from "../../graphs/datagraph";

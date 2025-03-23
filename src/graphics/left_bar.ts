@@ -3,7 +3,7 @@ import ComputerSvg from "../assets/pc.svg";
 import SwitchSvg from "../assets/switch.svg";
 import { addDevice } from "../types/viewportManager";
 import { GlobalContext } from "../context";
-import { DeviceType } from "../types/deviceNodes/deviceNode";
+import { DeviceType } from "../types/view-devices/vDevice";
 import { Layer, layerFromName } from "../types/layer";
 
 export class LeftBar {

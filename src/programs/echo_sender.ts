@@ -6,7 +6,7 @@ import { ViewGraph } from "../types/graphs/viewgraph";
 import { ProgramInfo } from "../graphics/renderables/device_info";
 import { EchoRequest } from "../packets/icmp";
 import { IPv4Packet } from "../packets/ip";
-import { NetworkNode } from "../types/deviceNodes";
+import { ViewNetworkDevice } from "../types/view-devices";
 import { EthernetFrame } from "../packets/ethernet";
 import { Layer } from "../types/layer";
 
@@ -51,7 +51,10 @@ export class SingleEcho extends ProgramBase {
       return;
     }
     if (
-      !(srcDevice instanceof NetworkNode && dstDevice instanceof NetworkNode)
+      !(
+        srcDevice instanceof ViewNetworkDevice &&
+        dstDevice instanceof ViewNetworkDevice
+      )
     ) {
       console.log(
         "At least one device between source and destination is not a network device",
@@ -66,7 +69,7 @@ export class SingleEcho extends ProgramBase {
     for (const id of path.slice(1)) {
       const device = this.viewgraph.getDevice(id);
       // if there’s a router in the middle, first send frame to router mac
-      if (device instanceof NetworkNode) {
+      if (device instanceof ViewNetworkDevice) {
         dstMac = device.mac;
         break;
       }

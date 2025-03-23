@@ -2,17 +2,17 @@ import { GlobalContext } from "../../context";
 import { MacAddress } from "../../packets/ethernet";
 import { IpAddress } from "../../packets/ip";
 import { Position } from "../common";
-import { Device, NetworkDevice } from "../devices";
+import { DataDevice } from "../data-devices";
 import { DeviceId, DataNode, isNetworkNode } from "../graphs/datagraph";
 import { ViewGraph } from "../graphs/viewgraph";
-import { DeviceNode, DeviceType } from "./deviceNode";
-import { HostNode } from "./hostNode";
-import { RouterNode } from "./routerNode";
-import { SwitchNode } from "./switchNode";
+import { ViewDevice, DeviceType } from "./vDevice";
+import { ViewHost } from "./vHost";
+import { ViewRouter } from "./vRouter";
+import { ViewSwitch } from "./vSwitch";
 
 export interface CreateDevice {
   id: DeviceId;
-  node: Device;
+  node: DataDevice;
   connections: DeviceId[];
 }
 
@@ -20,19 +20,7 @@ export function createDeviceNode(
   deviceInfo: DataNode,
   viewgraph: ViewGraph,
   ctx: GlobalContext,
-): DeviceNode {
-  // const position: { x: number; y: number } = deviceInfo.node;
-  // let mac: MacAddress;
-
-  // mac = structuredClone(deviceInfo.mac);
-
-  // let ip: IpAddress;
-  // let mask: IpAddress;
-
-  // if (deviceInfo.node instanceof NetworkDevice) {
-  //   ip = structuredClone(deviceInfo.node.ip);
-  //   mask = structuredClone(deviceInfo.node.ipMask);
-  // }
+): ViewDevice {
   const position: Position = deviceInfo;
 
   const mac: MacAddress = MacAddress.parse(deviceInfo.mac);
@@ -46,7 +34,7 @@ export function createDeviceNode(
   }
   switch (deviceInfo.type) {
     case DeviceType.Router:
-      return new RouterNode(
+      return new ViewRouter(
         deviceInfo.id,
         viewgraph,
         ctx,
@@ -56,7 +44,7 @@ export function createDeviceNode(
         mask,
       );
     case DeviceType.Host:
-      return new HostNode(
+      return new ViewHost(
         deviceInfo.id,
         viewgraph,
         ctx,
@@ -66,6 +54,6 @@ export function createDeviceNode(
         mask,
       );
     case DeviceType.Switch:
-      return new SwitchNode(deviceInfo.id, viewgraph, ctx, position, mac);
+      return new ViewSwitch(deviceInfo.id, viewgraph, ctx, position, mac);
   }
 }

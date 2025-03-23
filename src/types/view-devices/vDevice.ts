@@ -23,7 +23,6 @@ import { DeviceId, DataNode } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer } from "../layer";
 import { Packet } from "../packet";
-import { CreateDevice } from "./utils";
 import { MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 
@@ -46,7 +45,7 @@ export function layerFromType(type: DeviceType) {
   }
 }
 
-export abstract class DeviceNode extends Container {
+export abstract class ViewDevice extends Container {
   private sprite: Sprite;
 
   readonly id: DeviceId;
@@ -58,8 +57,8 @@ export abstract class DeviceNode extends Container {
 
   highlightMarker: Graphics | null = null; // Marker to indicate selection
 
-  static dragTarget: DeviceNode | null = null;
-  static connectionTarget: DeviceNode | null = null;
+  static dragTarget: ViewDevice | null = null;
+  static connectionTarget: ViewDevice | null = null;
   static startPosition: Position | null = null;
 
   get width(): number {
@@ -147,13 +146,13 @@ export abstract class DeviceNode extends Container {
   }
 
   onPointerDown(event: FederatedPointerEvent): void {
-    if (!DeviceNode.connectionTarget) {
+    if (!ViewDevice.connectionTarget) {
       selectElement(this);
     }
-    DeviceNode.dragTarget = this;
+    ViewDevice.dragTarget = this;
 
     // Guardar posición inicial
-    DeviceNode.startPosition = { x: this.x, y: this.y };
+    ViewDevice.startPosition = { x: this.x, y: this.y };
     event.stopPropagation();
 
     // Listen to global pointermove and pointerup events
@@ -181,27 +180,27 @@ export abstract class DeviceNode extends Container {
   onClick(e: FederatedPointerEvent) {
     e.stopPropagation();
 
-    if (!DeviceNode.connectionTarget) {
+    if (!ViewDevice.connectionTarget) {
       selectElement(this);
       return;
     }
     // If the stored device is this, reset it
-    if (DeviceNode.connectionTarget === this) {
+    if (ViewDevice.connectionTarget === this) {
       return;
     }
     // The "LineStart" device ends up as the end of the drawing but it's the same
-    if (this.connectTo(DeviceNode.connectionTarget.id)) {
+    if (this.connectTo(ViewDevice.connectionTarget.id)) {
       refreshElement();
-      DeviceNode.connectionTarget = null;
+      ViewDevice.connectionTarget = null;
     }
   }
 
   selectToConnect() {
-    if (DeviceNode.connectionTarget) {
-      DeviceNode.connectionTarget = null;
+    if (ViewDevice.connectionTarget) {
+      ViewDevice.connectionTarget = null;
       return;
     }
-    DeviceNode.connectionTarget = this;
+    ViewDevice.connectionTarget = this;
   }
 
   highlight() {
@@ -250,7 +249,7 @@ export abstract class DeviceNode extends Container {
 
   deselect() {
     this.removeHighlight(); // Calls removeHighlight on deselect
-    DeviceNode.connectionTarget = null;
+    ViewDevice.connectionTarget = null;
   }
 
   // Return the device’s type.
@@ -267,53 +266,53 @@ export abstract class DeviceNode extends Container {
 }
 
 function onPointerMove(event: FederatedPointerEvent): void {
-  if (DeviceNode.dragTarget) {
-    DeviceNode.dragTarget.parent.toLocal(
+  if (ViewDevice.dragTarget) {
+    ViewDevice.dragTarget.parent.toLocal(
       event.global,
       null,
-      DeviceNode.dragTarget.position,
+      ViewDevice.dragTarget.position,
     );
 
     // Notify view graph about its movement
-    DeviceNode.dragTarget.viewgraph.deviceMoved(DeviceNode.dragTarget.id);
+    ViewDevice.dragTarget.viewgraph.deviceMoved(ViewDevice.dragTarget.id);
   }
 }
 
 function onPointerUp(): void {
-  if (DeviceNode.dragTarget && DeviceNode.startPosition) {
+  if (ViewDevice.dragTarget && ViewDevice.startPosition) {
     const endPosition: Position = {
-      x: DeviceNode.dragTarget.x,
-      y: DeviceNode.dragTarget.y,
+      x: ViewDevice.dragTarget.x,
+      y: ViewDevice.dragTarget.y,
     };
     console.log("Finalizing move for device:", {
-      id: DeviceNode.dragTarget.id,
-      startPosition: DeviceNode.startPosition,
+      id: ViewDevice.dragTarget.id,
+      startPosition: ViewDevice.startPosition,
       endPosition,
     });
 
     if (
-      DeviceNode.startPosition.x === endPosition.x &&
-      DeviceNode.startPosition.y === endPosition.y
+      ViewDevice.startPosition.x === endPosition.x &&
+      ViewDevice.startPosition.y === endPosition.y
     ) {
       console.log(
-        `No movement detected for device ID ${DeviceNode.dragTarget.id}. Move not registered.`,
+        `No movement detected for device ID ${ViewDevice.dragTarget.id}. Move not registered.`,
       );
     } else {
       const move = new DragDeviceMove(
-        DeviceNode.dragTarget.viewgraph.getLayer(),
-        DeviceNode.dragTarget.id,
-        DeviceNode.startPosition,
+        ViewDevice.dragTarget.viewgraph.getLayer(),
+        ViewDevice.dragTarget.id,
+        ViewDevice.startPosition,
         endPosition,
       );
       urManager.push(move);
     }
 
     // Resetear variables estáticas
-    DeviceNode.startPosition = null;
+    ViewDevice.startPosition = null;
 
     // Remove global pointermove and pointerup events
-    DeviceNode.dragTarget.parent.off("pointermove", onPointerMove);
-    DeviceNode.dragTarget.parent.off("pointerup", onPointerUp);
-    DeviceNode.dragTarget = null;
+    ViewDevice.dragTarget.parent.off("pointermove", onPointerMove);
+    ViewDevice.dragTarget.parent.off("pointerup", onPointerUp);
+    ViewDevice.dragTarget = null;
   }
 }

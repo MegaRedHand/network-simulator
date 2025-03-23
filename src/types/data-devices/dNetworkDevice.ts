@@ -8,9 +8,9 @@ import {
   NetworkDataNode,
 } from "../graphs/datagraph";
 import { Packet, sendRawPacket } from "../packet";
-import { Device } from "./device";
+import { DataDevice } from "./dDevice";
 
-export abstract class NetworkDevice extends Device {
+export abstract class DataNetworkDevice extends DataDevice {
   ip: IpAddress;
   ipMask: IpAddress;
 
@@ -33,10 +33,10 @@ export abstract class NetworkDevice extends Device {
 
   // TODO: Most probably it will be different for each type of device
   handlePacket(datagram: IPv4Packet) {
-    const dstDevice: Device = this.datagraph.getDeviceByIP(
+    const dstDevice: DataDevice = this.datagraph.getDeviceByIP(
       datagram.sourceAddress,
     );
-    if (!(dstDevice instanceof NetworkDevice)) {
+    if (!(dstDevice instanceof DataNetworkDevice)) {
       return;
     }
     switch (datagram.payload.protocol()) {
@@ -49,7 +49,7 @@ export abstract class NetworkDevice extends Device {
           console.log(path);
           for (const id of path.slice(1)) {
             const device = this.datagraph.getDevice(id);
-            if (device instanceof NetworkDevice) {
+            if (device instanceof DataNetworkDevice) {
               dstMac = device.mac;
               break;
             }

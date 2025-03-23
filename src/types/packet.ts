@@ -16,7 +16,7 @@ import { DataGraph, DeviceId } from "./graphs/datagraph";
 import { EthernetFrame } from "../packets/ethernet";
 import { IPv4Packet } from "../packets/ip";
 import { GlobalContext } from "../context";
-import { Router, Switch } from "./devices";
+import { DataRouter, DataSwitch } from "./data-devices";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
@@ -167,7 +167,7 @@ export abstract class Packet extends Graphics {
   //   }
   //   const nextDevice = this.graph.getVertex(newNextDevice);
   //   if (
-  //     nextDevice.getType() == DeviceType.Router ||
+  //     nextDevice.getType() == DeviceType.DataRouter ||
   //     nextDevice.getType() == DeviceType.Host
   //   ) {
   //     console.debug("Entro aca wacho");
@@ -425,7 +425,9 @@ export function sendRawPacket(
     firstEdge = originConnections.find((edge) => {
       const otherId = edge.otherEnd(srcId);
       const otherDevice = datagraph.getDevice(otherId);
-      return otherDevice instanceof Router || otherDevice instanceof Switch;
+      return (
+        otherDevice instanceof DataRouter || otherDevice instanceof DataSwitch
+      );
     });
   }
   if (firstEdge === undefined) {

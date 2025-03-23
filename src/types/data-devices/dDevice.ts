@@ -1,11 +1,11 @@
 import { MacAddress } from "../../packets/ethernet";
 import { Packet, sendRawPacket } from "../packet";
 import { DataGraph, DeviceId, DataNode } from "../graphs/datagraph";
-import { DeviceType } from "../deviceNodes/deviceNode";
+import { DeviceType } from "../view-devices/vDevice";
 import { Position } from "../common";
 
-export abstract class Device {
-  static idCounter: number = 1;
+export abstract class DataDevice {
+  private static idCounter: number = 1;
 
   id: number;
   x: number;
@@ -13,11 +13,22 @@ export abstract class Device {
   mac: MacAddress;
   datagraph: DataGraph;
 
+  private static setIdCounter(id: number): void {
+    if (id >= DataDevice.idCounter) {
+      DataDevice.idCounter = id + 1;
+    }
+  }
+
   constructor(graphData: DataNode, datagraph: DataGraph) {
     this.x = graphData.x;
     this.y = graphData.y;
     this.mac = MacAddress.parse(graphData.mac);
-    this.id = graphData.id ?? Device.idCounter++;
+    if (graphData.id) {
+      this.id = graphData.id;
+      DataDevice.setIdCounter(graphData.id);
+    } else {
+      this.id = DataDevice.idCounter++;
+    }
     this.datagraph = datagraph;
   }
 

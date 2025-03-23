@@ -2,11 +2,11 @@ import { IPv4Packet } from "../../packets/ip";
 import { DataGraph, DeviceId, HostDataNode } from "../graphs/datagraph";
 import { Layer } from "../layer";
 import { Packet } from "../packet";
-import { NetworkDevice } from "./networkDevice";
-import { DeviceType } from "../deviceNodes/deviceNode";
+import { DataNetworkDevice } from "./dNetworkDevice";
+import { DeviceType } from "../view-devices/vDevice";
 import { RunningProgram } from "../../programs";
 
-export class Host extends NetworkDevice {
+export class DataHost extends DataNetworkDevice {
   runningPrograms: RunningProgram[] = [];
 
   constructor(graphData: HostDataNode, datagraph: DataGraph) {

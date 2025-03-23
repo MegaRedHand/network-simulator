@@ -1,4 +1,4 @@
-import { DeviceNode, DeviceType, Layer } from "./deviceNode";
+import { ViewDevice, DeviceType, Layer } from "./vDevice";
 import { ViewGraph } from "../graphs/viewgraph";
 import SwitchImage from "../../assets/switch.svg";
 import { Position } from "../common";
@@ -10,14 +10,14 @@ import { MacAddress } from "../../packets/ethernet";
 import { IPv4Packet } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 
-export class SwitchNode extends DeviceNode {
+export class ViewSwitch extends ViewDevice {
   static DEVICE_TEXTURE: Texture;
 
   static getTexture() {
-    if (!SwitchNode.DEVICE_TEXTURE) {
-      SwitchNode.DEVICE_TEXTURE = Texture.from(SwitchImage);
+    if (!ViewSwitch.DEVICE_TEXTURE) {
+      ViewSwitch.DEVICE_TEXTURE = Texture.from(SwitchImage);
     }
-    return SwitchNode.DEVICE_TEXTURE;
+    return ViewSwitch.DEVICE_TEXTURE;
   }
 
   constructor(
@@ -27,7 +27,7 @@ export class SwitchNode extends DeviceNode {
     position: Position,
     mac: MacAddress,
   ) {
-    super(id, SwitchNode.getTexture(), viewgraph, ctx, position, mac);
+    super(id, ViewSwitch.getTexture(), viewgraph, ctx, position, mac);
   }
 
   showInfo(): void {

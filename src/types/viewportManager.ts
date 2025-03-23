@@ -1,11 +1,11 @@
 import { GlobalContext } from "./../context";
 import { DataGraph, GraphData, DataNode } from "./graphs/datagraph";
-import { DeviceNode } from "./deviceNodes/index";
+import { ViewDevice } from "./view-devices/index";
 import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
 import { Packet } from "./packet";
-import { DeviceType, Layer } from "./deviceNodes/deviceNode";
-import { CreateDevice } from "./deviceNodes/utils";
+import { DeviceType, Layer } from "./view-devices/vDevice";
+import { CreateDevice } from "./view-devices/utils";
 import {
   UndoRedoManager,
   AddDeviceMove,
@@ -14,7 +14,7 @@ import {
 } from "./undo-redo";
 import { SpeedMultiplier } from "./speedMultiplier";
 
-type Selectable = DeviceNode | Edge | Packet;
+type Selectable = ViewDevice | Edge | Packet;
 
 let selectedElement: Selectable | null = null; // Global variable to store the selected element
 
@@ -52,8 +52,8 @@ export function isSelected(element: Selectable) {
   return element === selectedElement;
 }
 
-function isDevice(selectable: Selectable): selectable is DeviceNode {
-  return selectable instanceof DeviceNode;
+function isDevice(selectable: Selectable): selectable is ViewDevice {
+  return selectable instanceof ViewDevice;
 }
 
 function isEdge(selectable: Selectable): selectable is Edge {
@@ -106,7 +106,7 @@ document.addEventListener("keydown", (event) => {
       }
     }
   } else if (event.key === "c" || event.key === "C") {
-    if (selectedElement instanceof DeviceNode) {
+    if (selectedElement instanceof ViewDevice) {
       selectedElement.selectToConnect();
       const connectButton = document.querySelector(".right-bar-connect-button");
 

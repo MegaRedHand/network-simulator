@@ -1,10 +1,10 @@
 import { IPv4Packet } from "../../packets/ip";
-import { DeviceType } from "../deviceNodes/deviceNode";
+import { DeviceType } from "../view-devices/vDevice";
 import { DeviceId } from "../graphs/datagraph";
 import { Packet } from "../packet";
-import { Device } from "./device";
+import { DataDevice } from "./dDevice";
 
-export class Switch extends Device {
+export class DataSwitch extends DataDevice {
   receivePacket(packet: Packet): Promise<DeviceId | null> {
     const datagram = packet.rawPacket.payload;
     if (datagram instanceof IPv4Packet) {

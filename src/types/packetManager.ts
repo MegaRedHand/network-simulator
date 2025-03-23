@@ -2,7 +2,7 @@ import { DataPacket, Packet, ViewPacket } from "./packet";
 import { ViewGraph } from "./graphs/viewgraph";
 import { Layer, layerIncluded } from "./layer";
 import { DataGraph, DeviceId } from "./graphs/datagraph";
-import { NetworkNode } from "./deviceNodes";
+import { ViewNetworkDevice } from "./view-devices";
 
 export class PacketManager {
   private viewgraph: ViewGraph;
@@ -58,7 +58,7 @@ export class PacketManager {
         }
         // TODO: change this to a more general approach
         const dstDevice = this.viewgraph.getDevice(newNextDevice);
-        if (dstDevice instanceof NetworkNode) {
+        if (dstDevice instanceof ViewNetworkDevice) {
           console.debug("Setting destination MAC address");
           packet.rawPacket.destination = dstDevice.mac;
         }
