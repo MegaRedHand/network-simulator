@@ -8,7 +8,7 @@ export class SpeedMultiplier {
 
   // Get the current speed value
   get value(): number {
-    return this._value;
+    return this.isPaused ? 0 : this._value;
   }
 
   setSpeed(value: number) {

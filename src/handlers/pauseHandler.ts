@@ -61,10 +61,8 @@ export class PauseHandler {
     // Handle animation pause/unpause
     if (this.isPaused) {
       this.ctx.pause();
-      Packet.pauseAnimation();
     } else {
       this.ctx.unpause();
-      Packet.unpauseAnimation();
     }
   }
 }

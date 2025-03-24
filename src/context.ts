@@ -58,7 +58,8 @@ export class GlobalContext {
   }
 
   private setSpeedMultiplier(speedMultiplier: SpeedMultiplier) {
-    this.changeSpeedMultiplier(speedMultiplier.value);
+    this.speedMultiplier = speedMultiplier;
+    // TODO: make this change go through SpeedControlHandler
     // Update the wheel display after setting the speed
     const speedWheel = document.getElementById(
       "speed-wheel",
