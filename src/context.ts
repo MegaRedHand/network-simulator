@@ -97,7 +97,7 @@ export class GlobalContext {
   }
 
   getCurrentSpeed() {
-    return this.speedMultiplier;
+    return this.speedMultiplier.value;
   }
 
   getDataGraph() {

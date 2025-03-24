@@ -13,7 +13,7 @@ export class SpeedControlHandler {
     this.valueDisplay = document.querySelector(".value-display");
 
     if (this.speedWheel && this.valueDisplay) {
-      this.updateSpeedWheel(this.ctx.getCurrentSpeed().value);
+      this.updateSpeedWheel(this.ctx.getCurrentSpeed());
       this.speedWheel.addEventListener("input", (event) =>
         this.handleSpeedChange(event),
       );
