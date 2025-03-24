@@ -48,11 +48,19 @@ export class HttpClient extends ProgramBase {
       );
       return;
     }
+
+    // Encode dummy HTTP request
+    const httpRequest = "GET / HTTP/1.1\r\nHost: " + dstDevice.ip + "\r\n\r\n";
+    const content = new TextEncoder().encode(httpRequest);
+
     // Random number between 1024 and 65535
     const srcPort = Math.floor(Math.random() * (65535 - 1024) + 1024);
     const flags = new Flags();
-    const content = new Uint8Array(0);
+
+    // Wrap in TCP segment
     const payload = new TcpSegment(srcPort, 80, 0, 0, flags, content);
+
+    // Wrap in IP packet
     const ipPacket = new IPv4Packet(srcDevice.ip, dstDevice.ip, payload);
     const path = this.viewgraph.getPathBetween(this.srcId, this.dstId);
     let dstMac = dstDevice.mac;
