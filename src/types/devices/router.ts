@@ -77,7 +77,8 @@ export class Router extends NetworkDevice {
   }
 
   processPacket(ticker: Ticker) {
-    const datagram = this.getPacketsToProcess(ticker.deltaMS);
+    const elapsedTime = ticker.deltaMS * this.viewgraph.getSpeed();
+    const datagram = this.getPacketsToProcess(elapsedTime);
     if (!datagram) {
       return;
     }
