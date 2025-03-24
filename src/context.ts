@@ -58,17 +58,15 @@ export class GlobalContext {
   }
 
   private setSpeedMultiplier(speedMultiplier: SpeedMultiplier) {
-    if (speedMultiplier && speedMultiplier.value > 0) {
-      this.changeSpeedMultiplier(speedMultiplier.value);
-      // Update the wheel display after setting the speed
-      const speedWheel = document.getElementById(
-        "speed-wheel",
-      ) as HTMLInputElement;
-      const valueDisplay = document.querySelector(".value-display");
-      if (speedWheel && valueDisplay) {
-        speedWheel.value = speedMultiplier.value.toString();
-        valueDisplay.textContent = `${speedMultiplier.value}x`;
-      }
+    this.changeSpeedMultiplier(speedMultiplier.value);
+    // Update the wheel display after setting the speed
+    const speedWheel = document.getElementById(
+      "speed-wheel",
+    ) as HTMLInputElement;
+    const valueDisplay = document.querySelector(".value-display");
+    if (speedWheel && valueDisplay) {
+      speedWheel.value = speedMultiplier.value.toString();
+      valueDisplay.textContent = `${speedMultiplier.value}x`;
     }
   }
 
