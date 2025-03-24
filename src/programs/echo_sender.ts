@@ -41,9 +41,8 @@ export class SingleEcho extends ProgramBase {
       return;
     }
     if (
-      !(
-        srcDevice instanceof NetworkDevice && dstDevice instanceof NetworkDevice
-      )
+      !(srcDevice instanceof NetworkDevice) ||
+      !(dstDevice instanceof NetworkDevice)
     ) {
       console.log(
         "At least one device between source and destination is not a network device",
