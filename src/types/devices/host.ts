@@ -45,11 +45,11 @@ export class Host extends NetworkDevice {
     this.loadRunningPrograms();
   }
 
-  receiveDatagram(packet: IPv4Packet): Promise<DeviceId | null> {
+  receiveDatagram(packet: IPv4Packet): void {
     if (this.ip.equals(packet.destinationAddress)) {
       this.handlePacket(packet);
     }
-    return null;
+    return;
   }
 
   showInfo(): void {
