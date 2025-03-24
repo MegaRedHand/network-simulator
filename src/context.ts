@@ -109,11 +109,17 @@ export class GlobalContext {
     this.setNetwork(this.datagraph, layer);
   }
 
+  pause() {
+    this.speedMultiplier.pause();
+  }
+
+  unpause() {
+    this.speedMultiplier.unpause();
+  }
+
   changeSpeedMultiplier(speedMultiplier: number) {
-    if (this.viewgraph) {
-      this.speedMultiplier = new SpeedMultiplier(speedMultiplier);
-      saveToLocalStorage(this);
-    }
+    this.speedMultiplier.setSpeed(speedMultiplier);
+    saveToLocalStorage(this);
   }
 
   private setupAutoSave() {

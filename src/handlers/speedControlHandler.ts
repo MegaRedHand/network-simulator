@@ -1,7 +1,7 @@
 import { GlobalContext } from "../context";
 
 export class SpeedControlHandler {
-  private ctx: GlobalContext; // Adjust the type based on GlobalContext
+  private ctx: GlobalContext;
   private speedWheel: HTMLInputElement | null;
   private valueDisplay: HTMLElement | null;
 

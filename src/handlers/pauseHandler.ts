@@ -1,13 +1,16 @@
 import PlaySvg from "../assets/play-icon.svg";
 import PauseSvg from "../assets/pause-icon.svg";
 import { Packet } from "../types/packet";
+import { GlobalContext } from "../context";
 
 export class PauseHandler {
+  private ctx: GlobalContext;
   private pauseButton: HTMLButtonElement | null;
   private pauseIcon: HTMLImageElement;
   private isPaused: boolean;
 
-  constructor() {
+  constructor(ctx: GlobalContext) {
+    this.ctx = ctx;
     this.pauseButton = document.getElementById(
       "pause-button",
     ) as HTMLButtonElement;
@@ -57,8 +60,10 @@ export class PauseHandler {
 
     // Handle animation pause/unpause
     if (this.isPaused) {
+      this.ctx.pause();
       Packet.pauseAnimation();
     } else {
+      this.ctx.unpause();
       Packet.unpauseAnimation();
     }
   }
