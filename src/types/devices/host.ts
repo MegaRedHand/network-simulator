@@ -16,8 +16,9 @@ import {
   RunningProgram,
 } from "../../programs";
 import { Texture } from "pixi.js";
-import { MacAddress } from "../../packets/ethernet";
+import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
+import { dropPacket } from "../packet";
 
 export class Host extends NetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -46,10 +47,12 @@ export class Host extends NetworkDevice {
   }
 
   receiveDatagram(packet: IPv4Packet): void {
-    if (this.ip.equals(packet.destinationAddress)) {
-      this.handlePacket(packet);
+    if (!this.ip.equals(packet.destinationAddress)) {
+      const frame = new EthernetFrame(this.mac, this.mac, packet);
+      dropPacket(this.viewgraph, this.id, frame);
+      return;
     }
-    return;
+    this.handlePacket(packet);
   }
 
   showInfo(): void {
