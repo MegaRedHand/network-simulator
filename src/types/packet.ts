@@ -215,7 +215,13 @@ export class Packet extends Graphics {
     let newAlpha = 1 - this.progress;
     if (newAlpha <= 0) {
       newAlpha = 0;
-      Ticker.shared.remove(this.dropAnimationTick, this);
+      // Clean up
+      this.destroy();
+      ticker.remove(this.dropAnimationTick, this);
+      if (isSelected(this)) {
+        deselectElement();
+      }
+      this.removeFromParent();
     }
     this.alpha = newAlpha;
   }
@@ -223,6 +229,7 @@ export class Packet extends Graphics {
   delete() {
     // Remove packet from Ticker to stop animation
     Ticker.shared.remove(this.animationTick, this);
+    Ticker.shared.remove(this.dropAnimationTick, this);
 
     // Remove all event listeners
     this.removeAllListeners();
