@@ -21,7 +21,7 @@ export class GlobalContext {
   private viewport: Viewport = null;
   private datagraph: DataGraph;
   private viewgraph: ViewGraph;
-  private speedMultiplier: SpeedMultiplier;
+  private speedMultiplier = new SpeedMultiplier(1);
   private saveIntervalId: NodeJS.Timeout | null = null;
   private ipGenerator: IpAddressGenerator;
   private macGenerator: MacAddressGenerator;
