@@ -1,6 +1,5 @@
 import PlaySvg from "../assets/play-icon.svg";
 import PauseSvg from "../assets/pause-icon.svg";
-import { Packet } from "../types/packet";
 import { GlobalContext } from "../context";
 
 export class PauseHandler {
