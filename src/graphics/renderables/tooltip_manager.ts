@@ -12,6 +12,14 @@ export const tooltipsDictionary: Record<string, string> = {
     "A host is an end device in a network, such as a computer, server, or smartphone. Hosts are assigned IP addresses and can send and receive data over the network. They are typically the source or destination of network traffic.",
   "Switch Information":
     "A switch is a networking device that connects devices within a local area network (LAN). It operates at the data link layer and uses MAC addresses to forward data to the correct device. Switches improve network efficiency by reducing collisions.",
+  IP: "The IP (Internet Protocol) address is a unique identifier assigned to a device on a network.",
+  Mask: "The subnet mask defines the range of IP addresses within a network.",
+  Interface:
+    "The network interface (e.g., eth0) represents the physical or virtual connection point.",
+  PID: "The Process ID (PID) is a unique identifier assigned to a running program or process.",
+  Name: "The name of the program or process currently running.",
+  Inputs:
+    "The input parameters or arguments provided to the program when it was started.",
 };
 
 // Función para mostrar el tooltip
