@@ -1,24 +1,17 @@
 import { Renderable } from "../right_bar";
-import {
-  tooltipsDictionary,
-  showTooltip,
-  hideTooltip,
-} from "./tooltip_manager";
+import { attachTooltip } from "./tooltip_manager";
 
 export interface Field {
   label: string;
   value: string;
-  tooltip?: string;
 }
 
 export class StyledInfo implements Renderable {
   title: string;
-  titleTooltip?: string;
   info: Field[] = [];
 
   constructor(title: string) {
     this.title = title;
-    this.titleTooltip = tooltipsDictionary[title] || "";
   }
 
   // Clears previous calls to addX methods
@@ -28,16 +21,14 @@ export class StyledInfo implements Renderable {
   }
 
   // Adds a new field to show on the info list
-  addField(label: string, value: string, tooltip?: string) {
-    const resolvedTooltip = tooltip || tooltipsDictionary[label] || "";
-    this.info.push({ label, value, tooltip: resolvedTooltip });
+  addField(label: string, value: string) {
+    this.info.push({ label, value });
   }
 
   // Adds a new field to show on the info list, which has a list of values
-  addListField(label: string, values: number[], tooltip?: string) {
+  addListField(label: string, values: number[]) {
     const value = values.length !== 0 ? "[" + values.join(", ") + "]" : "None";
-    const resolvedTooltip = tooltip || tooltipsDictionary[label] || "";
-    this.info.push({ label, value, tooltip: resolvedTooltip });
+    this.info.push({ label, value });
   }
 
   toHTML() {
@@ -45,13 +36,7 @@ export class StyledInfo implements Renderable {
     const header = document.createElement("h3");
     header.textContent = this.title;
 
-    if (this.titleTooltip) {
-      header.addEventListener("mouseenter", () =>
-        showTooltip(this.titleTooltip),
-      );
-      header.addEventListener("mouseleave", () => hideTooltip());
-      header.classList.add("has-tooltip");
-    }
+    attachTooltip(header, this.title);
 
     childNodes.push(header);
 
@@ -59,11 +44,7 @@ export class StyledInfo implements Renderable {
       const p = document.createElement("p");
       p.innerHTML = `<strong>${item.label}:</strong> ${item.value}`;
 
-      if (item.tooltip) {
-        p.addEventListener("mouseenter", () => showTooltip(item.tooltip));
-        p.addEventListener("mouseleave", () => hideTooltip());
-        p.classList.add("has-tooltip");
-      }
+      attachTooltip(p, item.label);
 
       childNodes.push(p);
     });

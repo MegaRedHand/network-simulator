@@ -22,8 +22,21 @@ export const tooltipsDictionary: Record<string, string> = {
     "The input parameters or arguments provided to the program when it was started.",
 };
 
-// Función para mostrar el tooltip
-export function showTooltip(text: string) {
+/**
+ * Attach a tooltip to an HTML element.
+ * @param element The HTML element to attach the tooltip to.
+ * @param key The key to look up the tooltip text in the dictionary.
+ */
+export function attachTooltip(element: HTMLElement, key: string) {
+  if (key in tooltipsDictionary) {
+    element.classList.add("has-tooltip");
+    element.addEventListener("mouseenter", () => showTooltip(key));
+    element.addEventListener("mouseleave", () => hideTooltip());
+  }
+}
+
+export function showTooltip(key: string) {
+  const text = tooltipsDictionary[key];
   const tooltip = document.getElementById("global-tooltip");
   if (tooltip) {
     tooltip.textContent = text;
@@ -31,7 +44,6 @@ export function showTooltip(text: string) {
   }
 }
 
-// Función para ocultar el tooltip
 export function hideTooltip() {
   const tooltip = document.getElementById("global-tooltip");
   if (tooltip) {

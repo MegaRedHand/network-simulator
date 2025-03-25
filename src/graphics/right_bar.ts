@@ -4,11 +4,7 @@ import {
   RoutingTableEntry,
 } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
-import {
-  hideTooltip,
-  showTooltip,
-  tooltipsDictionary,
-} from "./renderables/tooltip_manager";
+import { attachTooltip } from "./renderables/tooltip_manager";
 
 export { StyledInfo } from "./renderables/styled_info";
 export { DeviceInfo } from "./renderables/device_info";
@@ -212,12 +208,7 @@ export function createTable(
     const th = document.createElement("th");
     th.textContent = header;
 
-    const tooltip = tooltipsDictionary[header];
-    if (tooltip) {
-      th.classList.add("has-tooltip");
-      th.addEventListener("mouseenter", () => showTooltip(tooltip));
-      th.addEventListener("mouseleave", () => hideTooltip());
-    }
+    attachTooltip(th, header);
 
     headerRow.appendChild(th);
   });

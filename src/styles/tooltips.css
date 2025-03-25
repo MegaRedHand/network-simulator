@@ -25,3 +25,12 @@
   margin-right: 8px;
   font-size: 1.2em;
 }
+
+.has-tooltip {
+  cursor: pointer;
+  transition: color 0.2s ease-in-out;
+}
+
+.has-tooltip:hover {
+  color: #0078d7;
+}
