@@ -1,0 +1,32 @@
+/* Tooltip global */
+.global-tooltip {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #2b2b2b; /* Fondo oscuro, consistente con los modales */
+  color: #ffffff; /* Texto blanco */
+  padding: 20px; /* Espaciado interno */
+  border-radius: 12px; /* Bordes redondeados */
+  font-size: 1em;
+  text-align: center; /* Centrar el texto */
+  z-index: 1000;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3); /* Sombra consistente con los modales */
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Borde sutil */
+  max-width: 450px; /* Ancho máximo */
+  white-space: normal; /* Permitir que el texto se ajuste */
+  line-height: 1.6; /* Espaciado entre líneas */
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; /* Fuente consistente */
+}
+
+/* Elementos que tienen un tooltip */
+.has-tooltip {
+  cursor: pointer; /* Cambia el cursor a una "manito" */
+  transition: color 0.2s ease-in-out; /* Transición suave para el color */
+}
+
+/* Opcional: Cambiar el color del texto al pasar el mouse */
+.has-tooltip:hover {
+  color: #0078d7; /* Azul consistente con config.css */
+}
