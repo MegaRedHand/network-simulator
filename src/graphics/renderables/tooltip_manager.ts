@@ -20,6 +20,12 @@ export const tooltipsDictionary: Record<string, string> = {
   Name: "The name of the program or process currently running.",
   Inputs:
     "The input parameters or arguments provided to the program when it was started.",
+  layerselect:
+    "Select a network layer to view and interact with its elements. Options include:\n" +
+    "- App Layer: Provides network services directly to user applications.\n" +
+    "- Transport Layer: Ensures reliable data transfer between devices.\n" +
+    "- Network Layer: Handles routing of data between devices across networks.\n" +
+    "- Link Layer: Manages physical transmission of data between devices.",
 };
 
 /**
@@ -29,6 +35,7 @@ export const tooltipsDictionary: Record<string, string> = {
  */
 export function attachTooltip(element: HTMLElement, key: string) {
   if (key in tooltipsDictionary) {
+    console.log(`Attaching tooltip to ${key} en attacherTooltip`);
     element.classList.add("has-tooltip");
     element.addEventListener("mouseenter", () => showTooltip(key));
     element.addEventListener("mouseleave", () => hideTooltip());

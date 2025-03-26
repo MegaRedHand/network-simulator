@@ -4,26 +4,21 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #2b2b2b;
-  color: #ffffff;
-  padding: 20px;
-  border-radius: 12px;
-  font-size: 1em;
-  text-align: center;
+  background: #2b2b2b; /* Fondo oscuro */
+  color: #ffffff; /* Texto blanco */
+  padding: 20px 25px; /* Espaciado interno */
+  border-radius: 12px; /* Bordes redondeados */
+  font-size: 1rem; /* Tamaño de fuente */
+  text-align: left; /* Alinear texto a la izquierda */
   z-index: 1000;
-  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  max-width: 450px;
-  white-space: normal;
-  line-height: 1.6;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.global-tooltip::before {
-  content: "💡";
-  display: inline-block;
-  margin-right: 8px;
-  font-size: 1.2em;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3); /* Sombra */
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Borde sutil */
+  max-width: 600px; /* Ancho máximo */
+  white-space: pre-wrap; /* Permitir saltos de línea */
+  line-height: 1.8; /* Espaciado entre líneas */
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; /* Fuente */
+  overflow-y: auto; /* Habilitar scroll si el contenido es muy largo */
+  max-height: 300px; /* Altura máxima para evitar tooltips demasiado grandes */
 }
 
 .has-tooltip {

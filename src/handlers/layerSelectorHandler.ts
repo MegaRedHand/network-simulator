@@ -1,5 +1,6 @@
 import { GlobalContext } from "../context";
 import { LeftBar } from "../graphics/left_bar";
+import { attachTooltip } from "../graphics/renderables/tooltip_manager";
 import { layerToName } from "../types/devices/layer";
 import { deselectElement, saveToLocalStorage } from "../types/viewportManager";
 
@@ -21,6 +22,7 @@ export class LayerHandler {
       this.layerSelect.addEventListener("layerChanged", () =>
         this.updateLayer(),
       );
+      attachTooltip(this.layerSelect, "layerselect");
     }
 
     this.updateLayer();
