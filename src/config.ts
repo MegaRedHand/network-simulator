@@ -1,4 +1,5 @@
 import { GlobalContext } from "./context";
+import { deselectElement } from "./types/viewportManager";
 import { Colors } from "./utils";
 
 export class ConfigModal {
@@ -23,6 +24,7 @@ export class ConfigModal {
 
     this.createModal();
     this.setupEventListeners();
+    this.setUpShortCuts();
   }
 
   private createModal() {
@@ -151,6 +153,28 @@ export class ConfigModal {
         this.tempColor = this.hexToNumber(this.colorPicker.value);
       }
     };
+  }
+
+  private setUpShortCuts() {
+    document.addEventListener("keydown", (event) => {
+      const activeElement = document.activeElement as HTMLElement;
+      if (
+        activeElement &&
+        (activeElement instanceof HTMLInputElement ||
+          activeElement instanceof HTMLTextAreaElement ||
+          activeElement.isContentEditable)
+      ) {
+        return;
+      }
+      if (event.key.toLowerCase() === "h") {
+        event.preventDefault();
+        deselectElement();
+        this.open();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        this.close();
+      }
+    });
   }
 
   public open() {

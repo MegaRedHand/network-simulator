@@ -162,10 +162,6 @@ export class TcpSegment implements IpPayload {
     this.data = data;
   }
 
-  getPacketType(): string {
-    return "TCP";
-  }
-
   computeChecksum(): number {
     const segmentBytes = this.toBytes({ withChecksum: false });
 
@@ -180,12 +176,15 @@ export class TcpSegment implements IpPayload {
     return computeIpChecksum(totalBytes);
   }
 
-  // Dummy Method for the moment
-  getDetails(layer: Layer) {
-    return { Layer: layer };
+  // ### IpPayload ###
+
+  byteLength(): number {
+    const headerSize = 5 /* number of rows */ * 4; /* bytes per row */
+    // TODO: include options
+    // const optionsSize = 0;
+    return headerSize + this.data.length;
   }
 
-  // ### IpPayload ###
   toBytes({
     withChecksum = true,
   }: { withChecksum?: boolean } = {}): Uint8Array {
@@ -207,6 +206,16 @@ export class TcpSegment implements IpPayload {
   protocol(): number {
     return TCP_PROTOCOL_NUMBER;
   }
+
+  getPacketType(): string {
+    return "TCP";
+  }
+
+  // Dummy Method for the moment
+  getDetails(layer: Layer) {
+    return { Layer: layer };
+  }
+
   // ### IpPayload ###
 }
 

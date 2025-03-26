@@ -1,11 +1,12 @@
+// MARCADO V1
 import { GlobalContext } from "./../context";
 import { DataGraph, GraphData, DataNode } from "./graphs/datagraph";
-import { ViewDevice } from "./view-devices/index";
+import { ViewDevice } from "./view-devices/";
 import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
 import { Packet } from "./packet";
-import { DeviceType, Layer } from "./view-devices/vDevice";
-import { CreateDevice } from "./view-devices/utils";
+import { DeviceType } from "./view-devices/vDevice";
+import { Layer } from "./layer";
 import {
   UndoRedoManager,
   AddDeviceMove,
@@ -70,36 +71,29 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "Delete" || event.key === "Backspace") {
     if (selectedElement) {
-      let data;
-      const currLayer =
-        selectedElement instanceof Packet
-          ? selectedElement.belongingLayer
-          : selectedElement.viewgraph.getLayer();
+      const viewgraph = !(selectedElement instanceof Packet)
+        ? selectedElement.viewgraph
+        : undefined;
+      const currLayer = viewgraph?.getLayer();
       if (isDevice(selectedElement)) {
-        data = selectedElement.getCreateDevice();
-        const move = new RemoveDeviceMove(currLayer, data);
-        selectedElement.delete();
-        urManager.push(move);
+        const move = new RemoveDeviceMove(currLayer, selectedElement.id);
+        urManager.push(viewgraph, move);
       } else if (isEdge(selectedElement)) {
+        const connectedNodes = selectedElement.connectedNodes;
         // Obtener las tablas de enrutamiento antes de eliminar la conexión
-        const routingTable1 = selectedElement.viewgraph.getRoutingTable(
-          selectedElement.connectedNodes.n1,
-        );
-        const routingTable2 = selectedElement.viewgraph.getRoutingTable(
-          selectedElement.connectedNodes.n2,
-        );
+        const routingTable1 = viewgraph.getRoutingTable(connectedNodes.n1);
+        const routingTable2 = viewgraph.getRoutingTable(connectedNodes.n2);
 
         // Crear movimiento con las tablas de enrutamiento
         const move = new RemoveEdgeMove(
           currLayer,
-          selectedElement.connectedNodes,
+          connectedNodes,
           new Map([
-            [selectedElement.connectedNodes.n1, routingTable1],
-            [selectedElement.connectedNodes.n2, routingTable2],
+            [connectedNodes.n1, routingTable1],
+            [connectedNodes.n2, routingTable2],
           ]),
         );
-        selectedElement.delete();
-        urManager.push(move);
+        urManager.push(viewgraph, move);
       } else {
         // it’s a packet
         selectedElement.delete();
@@ -136,25 +130,11 @@ function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType): DataNode {
 export function addDevice(ctx: GlobalContext, type: DeviceType) {
   console.log(`Entered addDevice with ${type}`);
   const viewgraph = ctx.getViewGraph();
-  const datagraph = ctx.getDataGraph();
 
   const deviceInfo = setUpDeviceInfo(ctx, type);
 
-  const id = datagraph.addDevice(deviceInfo);
-  const node = datagraph.getDevice(id).getDataNode();
-
-  // Add the Device to the graph
-  const newDevice = viewgraph.addDevice(node);
-
-  const move = new AddDeviceMove(viewgraph.getLayer(), node);
-  urManager.push(move);
-
-  console.log(
-    `${DeviceType[newDevice.getType()]} added with ID ${newDevice.id} at the center of the screen.`,
-  );
-
-  // Select the new device
-  selectElement(newDevice);
+  const move = new AddDeviceMove(viewgraph.getLayer(), deviceInfo);
+  urManager.push(viewgraph, move);
 }
 
 // Function to save the current graph in JSON format
@@ -188,7 +168,7 @@ export function loadFromFile(ctx: GlobalContext) {
     reader.onload = (readerEvent) => {
       const jsonData = readerEvent.target.result as string;
       const graphData: GraphData = JSON.parse(jsonData);
-      ctx.load(DataGraph.fromData(graphData));
+      ctx.load(DataGraph.fromData(graphData, ctx));
 
       console.log("Graph loaded successfully.");
     };
@@ -225,11 +205,11 @@ export function loadFromLocalStorage(ctx: GlobalContext) {
     const speedMultiplier = new SpeedMultiplier(data.speedMultiplier || 1);
     console.log("Speed multiplier: ", speedMultiplier);
     console.debug("Graph data from local storage:", graphData);
-    ctx.load(DataGraph.fromData(graphData), data.layer, speedMultiplier);
+    ctx.load(DataGraph.fromData(graphData, ctx), data.layer, speedMultiplier);
   } catch (error) {
     const extraData = { jsonData, error };
     console.error("Failed to load graph from local storage.", extraData);
-    ctx.load(new DataGraph(), Layer.App, new SpeedMultiplier(1));
+    ctx.load(new DataGraph(ctx), Layer.App, new SpeedMultiplier(1));
     return;
   }
   console.log("Graph loaded from local storage.");

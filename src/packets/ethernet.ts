@@ -166,3 +166,11 @@ export interface FramePayload {
   // Get details of the payload
   getDetails(layer: Layer): Record<string, string | number | object>;
 }
+
+export function compareMacs(mac1: MacAddress, mac2: MacAddress): number {
+  for (let i = 0; i < 6; i++) {
+    if (mac1.octets[i] < mac2.octets[i]) return -1;
+    if (mac1.octets[i] > mac2.octets[i]) return 1;
+  }
+  return 0; // equal
+}

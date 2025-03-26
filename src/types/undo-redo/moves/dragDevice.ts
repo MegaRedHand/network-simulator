@@ -26,19 +26,20 @@ export class DragDeviceMove extends BaseMove {
 
     const device = viewgraph.getDevice(this.did);
     if (!device) {
-      throw new Error(`Device with ID ${this.did} not found in viewgraph.`);
+      return false;
     }
 
     device.x = position.x;
     device.y = position.y;
     viewgraph.deviceMoved(this.did);
+    return true;
   }
 
-  undo(viewgraph: ViewGraph): void {
-    this.moveDevice(viewgraph, this.startPosition);
+  undo(viewgraph: ViewGraph): boolean {
+    return this.moveDevice(viewgraph, this.startPosition);
   }
 
-  redo(viewgraph: ViewGraph): void {
-    this.moveDevice(viewgraph, this.endPosition);
+  redo(viewgraph: ViewGraph): boolean {
+    return this.moveDevice(viewgraph, this.endPosition);
   }
 }

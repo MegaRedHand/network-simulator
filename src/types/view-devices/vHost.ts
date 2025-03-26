@@ -15,7 +15,6 @@ import {
   Program,
   RunningProgram,
 } from "../../programs";
-import { Packet } from "../packet";
 import { Texture } from "pixi.js";
 import { MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
@@ -47,14 +46,9 @@ export class ViewHost extends ViewNetworkDevice {
     this.loadRunningPrograms();
   }
 
-  receiveDatagram(packet: Packet): Promise<DeviceId | null> {
-    const datagram = packet.rawPacket.payload;
-    if (!(datagram instanceof IPv4Packet)) {
-      return null;
-    }
-    if (this.ip.equals(datagram.destinationAddress)) {
-      console.debug("Entro a handlear el paquete!");
-      this.handlePacket(datagram);
+  receiveDatagram(packet: IPv4Packet): Promise<DeviceId | null> {
+    if (this.ip.equals(packet.destinationAddress)) {
+      this.handlePacket(packet);
     }
     return null;
   }
@@ -142,6 +136,7 @@ export class ViewHost extends ViewNetworkDevice {
   }
 
   destroy() {
+    super.destroy();
     this.runningPrograms.forEach((program) => program.stop());
     this.runningPrograms.clear();
   }

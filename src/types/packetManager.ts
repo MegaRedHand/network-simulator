@@ -2,7 +2,7 @@ import { DataPacket, Packet, ViewPacket } from "./packet";
 import { ViewGraph } from "./graphs/viewgraph";
 import { Layer, layerIncluded } from "./layer";
 import { DataGraph, DeviceId } from "./graphs/datagraph";
-import { ViewNetworkDevice } from "./view-devices";
+import { ViewNetworkDevice } from "./view-devices/vNetworkDevice";
 
 export class PacketManager {
   private viewgraph: ViewGraph;
@@ -40,71 +40,72 @@ export class PacketManager {
     const currKeys = Array.from(this.packetsInTransit.keys());
     for (const key of currKeys) {
       const packet = this.packetsInTransit.get(key);
+      const rawPacket = packet.getRawPacket();
+      const dstDevice = this.viewgraph.getDeviceByMac(rawPacket.destination);
       if (layerIncluded(packet.belongingLayer, newLayer)) {
         // Es un ViewPacket
-        let newPrevDevice: DeviceId;
-        let newNextDevice: DeviceId;
+        let newPrevDeviceId: DeviceId;
+        let newNextDeviceId: DeviceId;
         if (layerIncluded(newLayer, formerLayer)) {
-          [newPrevDevice, newNextDevice] = this.newRouteForUpperLayer(
+          [newPrevDeviceId, newNextDeviceId] = this.newRouteForUpperLayer(
             packet,
             this.viewgraph,
+            dstDevice.id,
           );
         } else {
-          [newPrevDevice, newNextDevice] = this.newRouteForLowerLayer(packet);
+          [newPrevDeviceId, newNextDeviceId] =
+            this.newRouteForLowerLayer(packet);
         }
-        if (!(newPrevDevice && newNextDevice)) {
+        if (!(newPrevDeviceId && newNextDeviceId)) {
           console.warn("No se pudo encontrar un camino para el paquete");
           continue;
         }
         // TODO: change this to a more general approach
-        const dstDevice = this.viewgraph.getDevice(newNextDevice);
+        const newNextDevice = this.viewgraph.getDevice(newNextDeviceId);
         if (dstDevice instanceof ViewNetworkDevice) {
           console.debug("Setting destination MAC address");
-          packet.rawPacket.destination = dstDevice.mac;
+          rawPacket.destination = dstDevice.mac;
         }
 
         const viewPacket: ViewPacket = new ViewPacket(
           this.viewgraph,
           packet.belongingLayer,
-          packet.type,
-          packet.srcId,
-          packet.dstId,
-          packet.rawPacket,
-          packet.ctx,
+          packet.getType(),
+          rawPacket,
+          this.viewgraph.ctx,
         );
-        viewPacket.setCurrStart(newPrevDevice);
-        viewPacket.setProgress(packet.progress);
+        viewPacket.setCurrStart(newPrevDeviceId);
+        viewPacket.setProgress(packet.getProgress());
         const newCurrEdge = this.viewgraph.getEdge(
-          newPrevDevice,
-          newNextDevice,
+          newPrevDeviceId,
+          newNextDeviceId,
         );
-        viewPacket.traverseEdge(newCurrEdge, newPrevDevice);
+        viewPacket.traverseEdge(newCurrEdge, newPrevDeviceId);
 
         console.debug(
-          `New View Packet! Traveling from ${newPrevDevice} to ${newNextDevice}`,
+          `New View Packet! Traveling from ${newPrevDeviceId} to ${newNextDeviceId}`,
         );
       } else {
-        const [_, newNextDevice] = this.newRouteForUpperLayer(
+        const [_, newNextDeviceId] = this.newRouteForUpperLayer(
           packet,
           this.viewgraph.getDataGraph(),
+          dstDevice.id,
         );
         // Es un DataPacket
         const dataPacket: DataPacket = new DataPacket(
           this.viewgraph.getDataGraph(),
           packet.belongingLayer,
-          packet.type,
-          packet.srcId,
-          packet.dstId,
-          packet.rawPacket,
+          packet.getType(),
+          rawPacket,
           packet.ctx,
         );
 
         const { prevDevice } = packet.getPacketLocation();
-        dataPacket.setProgress(packet.progress);
-        dataPacket.traverseEdge(prevDevice, newNextDevice);
+        dataPacket.setProgress(packet.getProgress());
+        dataPacket.traverseEdge(prevDevice, newNextDeviceId);
 
         console.debug(
-          `New Data Packet! Traveling from ${prevDevice} to ${newNextDevice}`,
+          `New Data Packet! Traveling from ${prevDevice} to ${newNextDeviceId}`,
         );
       }
       packet.delete();
@@ -141,10 +142,15 @@ export class PacketManager {
   private newRouteForUpperLayer(
     packet: Packet,
     graph: DataGraph | ViewGraph,
+    dstDevice: DeviceId,
   ): [DeviceId, DeviceId] {
     console.debug("Entro al upper");
-    const { prevDevice } = packet.getPacketLocation();
-    const pathBetweenPackets = graph.getPathBetween(prevDevice, packet.dstId);
+    const { prevDevice, nextDevice } = packet.getPacketLocation();
+    const pathBetweenPackets = graph.getPathBetween(
+      prevDevice,
+      graph.hasDevice(nextDevice) ? nextDevice : dstDevice,
+    );
+
     if (!pathBetweenPackets) {
       console.warn("No se encontro un camino entre los dispositivos");
       return;

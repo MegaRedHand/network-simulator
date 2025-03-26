@@ -34,16 +34,14 @@ export interface PacketLocation {
 
 export abstract class Packet extends Graphics {
   packetId: string;
-  speed = 100;
-  progress = 0;
-  currentStart: number;
-  color: number;
-  type: string;
-  rawPacket: EthernetFrame;
-  srcId: DeviceId;
-  dstId: DeviceId;
-  belongingLayer: Layer;
+  protected speed = 100;
+  protected progress = 0;
+  protected currStart: DeviceId;
+  protected currEnd: DeviceId;
+  protected type: string;
+  protected rawPacket: EthernetFrame;
   ctx: GlobalContext;
+  belongingLayer: Layer;
 
   static animationPaused = false;
 
@@ -58,8 +56,6 @@ export abstract class Packet extends Graphics {
   constructor(
     belongingLayer: Layer,
     type: string,
-    srcId: DeviceId,
-    dstId: DeviceId,
     rawPacket: EthernetFrame,
     ctx: GlobalContext,
   ) {
@@ -69,8 +65,7 @@ export abstract class Packet extends Graphics {
     this.type = type;
     this.context = contextPerPacketType[this.type];
     this.zIndex = ZIndexLevels.Packet;
-    this.srcId = srcId;
-    this.dstId = dstId;
+
     this.rawPacket = rawPacket;
     this.ctx = ctx;
     this.interactive = true;
@@ -152,35 +147,31 @@ export abstract class Packet extends Graphics {
     this.context = contextPerPacketType[this.type];
   }
 
-  setCurrStart(id: DeviceId) {
-    this.currentStart = id;
+  getCurrStart(): DeviceId {
+    return this.currStart;
   }
 
-  // reloadLocation(newPrevDevice: number, newNextDevice: number) {
-  //   this.currentStart = newPrevDevice;
-  //   const currEdge = this.graph.getEdge(newPrevDevice, newNextDevice);
-  //   if (!currEdge) {
-  //     // hacer algo
-  //     console.debug("CurrEdge no existe!");
-  //     this.delete();
-  //     return;
-  //   }
-  //   const nextDevice = this.graph.getVertex(newNextDevice);
-  //   if (
-  //     nextDevice.getType() == DeviceType.DataRouter ||
-  //     nextDevice.getType() == DeviceType.Host
-  //   ) {
-  //     console.debug("Entro aca wacho");
-  //     this.rawPacket.destination = nextDevice.mac;
-  //   }
-  //   this.currentEdge = currEdge;
-  //   currEdge.registerPacket(this);
-  //   Ticker.shared.add(this.animationTick, this);
-  // }
+  getProgress(): number {
+    return this.progress;
+  }
+
+  getRawPacket(): EthernetFrame {
+    return this.rawPacket;
+  }
+
+  getType(): string {
+    return this.type;
+  }
+
+  setCurrStart(id: DeviceId) {
+    this.currStart = id;
+  }
+
+  abstract deliverPacket(): void;
 
   updatePosition(edge: Edge) {
-    const startPos = edge.nodePosition(this.currentStart);
-    const endPos = edge.nodePosition(edge.otherEnd(this.currentStart));
+    const startPos = edge.nodePosition(this.currStart);
+    const endPos = edge.nodePosition(edge.otherEnd(this.currStart));
     this.setPositionAlongEdge(startPos, endPos, this.progress);
   }
 
@@ -214,12 +205,10 @@ export class ViewPacket extends Packet {
     viewgraph: ViewGraph,
     belongingLayer: Layer,
     type: string,
-    srcId: DeviceId,
-    dstId: DeviceId,
     rawPacket: EthernetFrame,
     ctx: GlobalContext,
   ) {
-    super(belongingLayer, type, srcId, dstId, rawPacket, ctx);
+    super(belongingLayer, type, rawPacket, ctx);
     this.viewgraph = viewgraph;
   }
 
@@ -228,50 +217,33 @@ export class ViewPacket extends Packet {
   }
 
   getPacketLocation(): PacketLocation {
-    const nextDevice = this.currentEdge.otherEnd(this.currentStart);
+    const nextDevice = this.currentEdge.otherEnd(this.currStart);
     return {
-      prevDevice: this.currentStart,
+      prevDevice: this.currStart,
       nextDevice,
       currProgress: this.progress,
     };
   }
 
-  traverseEdge(edge: Edge, start: DeviceId): void {
-    this.currentEdge = edge;
-    this.currentStart = start;
+  deliverPacket() {
+    const newStart = this.currentEdge.otherEnd(this.currStart);
+    const newStartDevice = this.viewgraph.getDevice(newStart);
 
-    // lo agrega como hijo (despues sacarlo)
-    this.currentEdge.registerPacket(this);
-    Ticker.shared.add(this.animationTick, this);
+    // Viewgraph may return undefined when trying to get the device
+    // as the device may have been removed by the user.
+    if (!newStartDevice) {
+      return;
+    }
+    newStartDevice.receiveFrame(this.rawPacket);
   }
 
-  async forwardPacket(currDeviceID: number) {
-    const currDevice = this.viewgraph.getDevice(currDeviceID);
-    console.debug(`[VIEW PACKET] ${currDeviceID} recibe el paquete`);
-    const nextDeviceID = await currDevice.receivePacket(this);
+  traverseEdge(edge: Edge, start: DeviceId): void {
+    this.currentEdge = edge;
+    this.currStart = start;
 
-    // Packet has reached its destination
-    if (!nextDeviceID) {
-      console.debug("[VIEW PACKET] Paquete llego a destino!");
-      return;
-    }
-
-    const edgeToForward = this.viewgraph.getEdge(currDeviceID, nextDeviceID);
-
-    // Packet has reached a dead end
-    if (!edgeToForward) {
-      console.debug("no hay arista!");
-      return;
-    }
-
-    // Reset progress and start traversing the next edge
-    this.progress = 0;
-
-    // Update current edge and start
-    this.currentStart = currDeviceID;
-    this.currentEdge = edgeToForward;
-
-    edgeToForward.registerPacket(this);
+    // lo agrega como hijo (despues sacarlo)
+    this.currentEdge.addChild(this);
+    this.updatePosition(this.currentEdge);
     Ticker.shared.add(this.animationTick, this);
   }
 
@@ -294,9 +266,10 @@ export class ViewPacket extends Packet {
     }
 
     if (this.progress >= 1) {
-      this.currentEdge.deregisterPacket(this);
-      ticker.remove(this.animationTick, this);
-      this.forwardPacket(this.currentEdge.otherEnd(this.currentStart));
+      // Deliver packet
+      this.deliverPacket();
+      // Clean up
+      this.delete();
     }
   }
 
@@ -316,56 +289,53 @@ export class DataPacket extends Packet {
     datagraph: DataGraph,
     belongingLayer: Layer,
     type: string,
-    srcId: DeviceId,
-    dstId: DeviceId,
     rawPacket: EthernetFrame,
     ctx: GlobalContext,
   ) {
-    super(belongingLayer, type, srcId, dstId, rawPacket, ctx);
+    super(belongingLayer, type, rawPacket, ctx);
     this.datagraph = datagraph;
   }
 
   getPacketLocation(): PacketLocation {
     return {
-      prevDevice: this.currentStart,
+      prevDevice: this.currStart,
       nextDevice: this.currNextDevice,
       currProgress: this.progress,
     };
   }
 
+  deliverPacket() {
+    const newStartDevice = this.datagraph.getDevice(this.currNextDevice);
+
+    // Viewgraph may return undefined when trying to get the device
+    // as the device may have been removed by the user.
+    if (!newStartDevice) {
+      return;
+    }
+    newStartDevice.receiveFrame(this.rawPacket);
+  }
+
   traverseEdge(start: DeviceId, end: DeviceId): void {
-    this.currentStart = start;
+    this.currStart = start;
     this.currNextDevice = end;
 
     Ticker.shared.add(this.animationTick, this);
   }
 
-  async forwardPacket(currDeviceID: number) {
-    const currDevice = this.datagraph.getDevice(currDeviceID);
-    console.debug(`[DATA PACKET] ${currDeviceID} recibe el paquete`);
-    const nextDeviceID = await currDevice.receivePacket(this);
-
-    // Packet has reached its destination
-    if (!nextDeviceID) {
-      console.debug("[DATA PACKET] Paquete llego a destino!");
+  async animationTick(ticker: Ticker) {
+    const currStartDevice = this.datagraph.getDevice(this.currStart);
+    const currNextDevice = this.datagraph.getDevice(this.currNextDevice);
+    if (!currStartDevice) {
+      console.warn("Current start device not found.");
       this.delete();
       return;
     }
-
-    // Reset progress and start traversing the next edge
-    this.progress = 0;
-
-    // Update current start and end
-    this.currentStart = currDeviceID;
-    this.currNextDevice = nextDeviceID;
-
-    Ticker.shared.add(this.animationTick, this);
-  }
-
-  async animationTick(ticker: Ticker) {
-    const currentStartDevice = this.datagraph.getDevice(this.currentStart);
-    const currNextDevice = this.datagraph.getDevice(this.currNextDevice);
-    const start = currentStartDevice.getPosition();
+    if (!currNextDevice) {
+      console.warn("Current next device not found.");
+      this.delete();
+      return;
+    }
+    const start = currStartDevice.getPosition();
     const end = currNextDevice.getPosition();
 
     const edgeLength = Math.sqrt(
@@ -383,8 +353,10 @@ export class DataPacket extends Packet {
     }
 
     if (this.progress >= 1) {
-      ticker.remove(this.animationTick, this);
-      this.forwardPacket(this.currNextDevice);
+      // Deliver packet
+      this.deliverPacket();
+      // Clean up
+      this.delete();
     }
   }
 
@@ -397,10 +369,23 @@ export class DataPacket extends Packet {
 }
 
 export function sendRawPacket(
+  graph: ViewGraph | DataGraph,
+  belongingLayer: Layer,
+  srcId: DeviceId,
+  rawPacket: EthernetFrame,
+  isV: boolean = true,
+) {
+  if (isV) {
+    sendViewPacket(graph as ViewGraph, belongingLayer, srcId, rawPacket);
+  } else {
+    sendDataPacket(graph as DataGraph, belongingLayer, srcId, rawPacket);
+  }
+}
+
+function sendViewPacket(
   viewgraph: ViewGraph,
   belongingLayer: Layer,
   srcId: DeviceId,
-  dstId: DeviceId,
   rawPacket: EthernetFrame,
 ) {
   const srcMac = rawPacket.source;
@@ -408,7 +393,6 @@ export function sendRawPacket(
   console.log(
     `Sending frame from ${srcMac.toString()} to ${dstMac.toString()}`,
   );
-
   const originConnections = viewgraph.getConnections(srcId);
   if (originConnections.length === 0) {
     console.warn("El dispositivo de origen no tiene conexiones.");
@@ -448,10 +432,61 @@ export function sendRawPacket(
     viewgraph,
     belongingLayer,
     type,
-    srcId,
-    dstId,
     rawPacket,
     viewgraph.ctx,
   );
   packet.traverseEdge(firstEdge, srcId);
+}
+
+function sendDataPacket(
+  datagraph: DataGraph,
+  belongingLayer: Layer,
+  srcId: DeviceId,
+  rawPacket: EthernetFrame,
+) {
+  const srcMac = rawPacket.source;
+  const dstMac = rawPacket.destination;
+  console.log(
+    `Sending frame from ${srcMac.toString()} to ${dstMac.toString()}`,
+  );
+  const originConnections = datagraph.getConnections(srcId);
+  if (originConnections.length === 0) {
+    console.warn("El dispositivo de origen no tiene conexiones.");
+    return;
+  }
+  let firstHop = originConnections.find((otherId) => {
+    const otherDevice = datagraph.getDevice(otherId);
+    console.debug(otherDevice.mac);
+    return otherDevice.mac.equals(dstMac);
+  });
+  if (firstHop === undefined) {
+    firstHop = originConnections.find((otherId) => {
+      const otherDevice = datagraph.getDevice(otherId);
+      return (
+        otherDevice instanceof DataRouter || otherDevice instanceof DataSwitch
+      );
+    });
+  }
+  if (firstHop === undefined) {
+    console.warn(
+      "El dispositivo de origen no está conectado al destino, a un router o a un switch.",
+    );
+    return;
+  }
+  let type;
+  if (rawPacket.payload instanceof IPv4Packet) {
+    const payload = rawPacket.payload as IPv4Packet;
+    type = payload.payload.getPacketType();
+  } else {
+    console.warn("Packet is not IPv4");
+    type = "ICMP-8";
+  }
+  const packet = new DataPacket(
+    datagraph,
+    belongingLayer,
+    type,
+    rawPacket,
+    datagraph.ctx,
+  );
+  packet.traverseEdge(srcId, firstHop);
 }

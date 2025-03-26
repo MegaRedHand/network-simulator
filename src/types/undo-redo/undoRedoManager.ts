@@ -1,5 +1,4 @@
 import { ViewGraph } from "../graphs/viewgraph";
-import { deselectElement } from "../viewportManager";
 import { Move } from "./moves/move";
 
 export class UndoRedoManager {
@@ -11,47 +10,64 @@ export class UndoRedoManager {
     this.listeners.forEach((listener) => listener());
   }
 
-  push(move: Move) {
-    if (this.redoBuf.length != 0) {
-      this.redoBuf = [];
-    }
-    this.undoBuf.push(move);
-    this.notifyListeners();
-  }
-
-  undo(viewgraph: ViewGraph) {
-    if (this.undoBuf.length != 0) {
-      const move = this.undoBuf.pop();
-      move.undo(viewgraph);
-      this.redoBuf.push(move);
-    }
-    this.notifyListeners();
-    console.log(this.redoBuf);
-    console.log(this.undoBuf);
-    deselectElement();
-  }
-
-  redo(viewgraph: ViewGraph) {
-    if (this.redoBuf.length != 0) {
-      const move = this.redoBuf.pop();
-      move.redo(viewgraph);
+  /**
+   * Performs a move and pushes it to the undo buffer.
+   */
+  push(viewgraph: ViewGraph, move: Move): boolean {
+    const ok = move.redo(viewgraph);
+    if (ok) {
       this.undoBuf.push(move);
+      this.redoBuf = [];
+      this.notifyListeners();
+    } else {
+      console.warn("Move push failed.");
+    }
+    return ok;
+  }
+
+  /**
+   * Undoes the last move in the undo buffer.
+   */
+  undo(viewgraph: ViewGraph) {
+    if (!this.canUndo()) {
+      return;
+    }
+    const move = this.undoBuf.pop();
+    // Discard the move if it was unsuccessful
+    if (move.undo(viewgraph)) {
+      this.redoBuf.push(move);
+    } else {
+      console.error("Undo failed.");
     }
     this.notifyListeners();
-    console.log(this.redoBuf);
-    console.log(this.undoBuf);
-    deselectElement();
+  }
+
+  /**
+   * Redoes the last move in the redo buffer.
+   */
+  redo(viewgraph: ViewGraph) {
+    if (!this.canRedo()) {
+      return;
+    }
+    const move = this.redoBuf.pop();
+    // Discard the move if it was unsuccessful
+    if (move.redo(viewgraph)) {
+      this.undoBuf.push(move);
+    } else {
+      console.error("Move failed.");
+    }
+    this.notifyListeners();
   }
 
   canUndo(): boolean {
-    return this.undoBuf.length != 0;
+    return this.undoBuf.length !== 0;
   }
 
   canRedo(): boolean {
-    return this.redoBuf.length != 0;
+    return this.redoBuf.length !== 0;
   }
 
-  suscribe(listener: () => void) {
+  subscribe(listener: () => void) {
     this.listeners.push(listener);
   }
 

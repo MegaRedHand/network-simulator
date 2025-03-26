@@ -1,16 +1,19 @@
-import { ViewDevice, ViewNetworkDevice } from "../view-devices";
+// MARCADO V1
+import { ViewDevice } from "../view-devices";
 import { Edge, EdgeEdges } from "./../edge";
-import { DataGraph, DeviceId, DataNode } from "./datagraph";
+import { DataGraph, DeviceId, DataNode, RemovedNodeData } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer, layerIncluded } from "../layer";
-import { CreateDevice, createDeviceNode } from "../view-devices/utils";
+import { createViewDevice } from "../view-devices/utils";
 import { layerFromType } from "../view-devices/vDevice";
 import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 import { Graph } from "./graph";
 import { PacketManager } from "../packetManager";
+import { ViewNetworkDevice } from "../view-devices/vNetworkDevice";
+import { MacAddress } from "../../packets/ethernet";
 
-type EdgePair = [DeviceId, DeviceId];
+export type EdgePair = [DeviceId, DeviceId];
 
 export class ViewGraph {
   ctx: GlobalContext;
@@ -35,9 +38,15 @@ export class ViewGraph {
 
     for (const [deviceId, device] of this.datagraph.getDevices()) {
       if (layerIncluded(layerFromType(device.getType()), this.layer)) {
-        this.createDeviceNode(device.getDataNode());
-
-        this.computeLayerConnections(deviceId, allConnections);
+        this.addDevice(deviceId, device.getDataNode());
+        layerDFS(
+          this.datagraph,
+          this.layer,
+          deviceId,
+          deviceId,
+          new Set([deviceId]),
+          allConnections,
+        );
       }
     }
     console.debug(allConnections);
@@ -45,31 +54,50 @@ export class ViewGraph {
     console.log("Finished constructing ViewGraph");
   }
 
-  addDevice(deviceData: DataNode): ViewDevice {
-    const device = this.createDeviceNode(deviceData);
-    if (deviceData.connections.length !== 0) {
-      const connections = new Map<string, EdgePair>();
-      this.computeLayerConnections(deviceData.id, connections);
+  loadDevice(deviceId: DeviceId): ViewDevice {
+    const node = this.datagraph.getDevice(deviceId);
+    const device = this.addDevice(deviceId, node.getDataNode());
 
-      this.addConnections(connections);
-    }
+    // load connections
+    const connections = new Map<string, EdgePair>();
+    layerDFS(
+      this.datagraph,
+      this.layer,
+      deviceId,
+      deviceId,
+      new Set([deviceId]),
+      connections,
+    );
+    this.addConnections(connections);
     return device;
   }
 
+  // addDeviceCurrent(deviceData: DataNode): ViewDevice {
+  //   const device = this.createDeviceNode(deviceData);
+  //   if (deviceData.connections.length !== 0) {
+  //     const connections = new Map<string, EdgePair>();
+  //     this.computeLayerConnections(deviceData.id, connections);
+
+  //     this.addConnections(connections);
+  //   }
+  //   return device;
+  // }
+
   // Add a device to the graph
-  private createDeviceNode(deviceData: DataNode): ViewDevice {
-    if (this.graph.hasVertex(deviceData.id)) {
-      console.warn(
-        `Device with ID ${deviceData.id} already exists in the graph.`,
-      );
-      return this.graph.getVertex(deviceData.id);
+  private addDevice(id: DeviceId, node: DataNode): ViewDevice {
+    if (!node.id) {
+      console.warn("Device does not hace ID");
     }
-    const device = createDeviceNode(deviceData, this, this.ctx);
+    if (this.graph.hasVertex(id)) {
+      console.warn(`Device with ID ${id} already exists in the graph.`);
+      return this.graph.getVertex(id);
+    }
+    const device = createViewDevice(node, this, this.ctx);
 
     this.graph.setVertex(device.id, device);
     this.viewport.addChild(device);
     console.log(`Device added with ID ${device.id}`);
-    return this.graph.getVertex(deviceData.id);
+    return this.graph.getVertex(id);
   }
 
   private addConnections(connections: Map<string, EdgePair>) {
@@ -221,7 +249,7 @@ export class ViewGraph {
   }
 
   // Method to remove a device and its connections (edges)
-  removeDevice(id: DeviceId) {
+  removeDevice(id: DeviceId): RemovedNodeData | undefined {
     const device = this.graph.getVertex(id);
 
     if (!device) {
@@ -240,18 +268,25 @@ export class ViewGraph {
     this.viewport.removeChild(device);
 
     // Finally, remove the device from the datagraph
-    this.datagraph.removeDevice(id);
+    const removedData = this.datagraph.removeDevice(id);
 
     console.log(`Device with ID ${id} removed from view.`);
+    return removedData;
   }
 
   // Method to remove a specific edge by its ID
-  removeEdge(n1Id: DeviceId, n2Id: DeviceId) {
-    const edge = this.graph.getEdge(n1Id, n2Id);
+  removeEdge(n1Id: DeviceId, n2Id: DeviceId): boolean {
+    const datagraphEdge = this.datagraph.getConnection(n1Id, n2Id);
 
+    if (!datagraphEdge) {
+      console.warn(`Edge ${n1Id},${n2Id} is not in the datagraph`);
+      return false;
+    }
+
+    const edge = this.graph.getEdge(n1Id, n2Id);
     if (!edge) {
-      console.warn(`Edge with ID ${n1Id},${n2Id} does not exist in the graph.`);
-      return;
+      console.warn(`Edge ${n1Id},${n2Id} is not in the viewgraph.`);
+      return false;
     }
 
     // Remove connection in DataGraph
@@ -264,7 +299,7 @@ export class ViewGraph {
 
     if (!(device1 && device2)) {
       console.warn("At least one device in connection does not exist");
-      return;
+      return false;
     }
 
     // Remove the edge from the viewport
@@ -276,6 +311,7 @@ export class ViewGraph {
     console.log(
       `Edge with ID ${n1Id},${n2Id} successfully removed from ViewGraph.`,
     );
+    return true;
   }
 
   getViewport() {
@@ -298,6 +334,16 @@ export class ViewGraph {
     return this.getDevices().find((device) => {
       return device instanceof ViewNetworkDevice && device.ip.equals(ipAddress);
     });
+  }
+
+  getDeviceByMac(destination: MacAddress): ViewDevice {
+    return this.getDevices().find((device) => {
+      return device.mac.equals(destination);
+    });
+  }
+
+  hasDevice(id: DeviceId) {
+    return this.graph.hasVertex(id);
   }
 
   /// Returns shortest path between two devices using BFS
@@ -339,46 +385,6 @@ export class ViewGraph {
     return null;
   }
 
-  private computeLayerConnections(
-    source: DeviceId,
-    connections: Map<string, EdgePair>,
-  ) {
-    this.layer_dfs(
-      this.datagraph,
-      source,
-      source,
-      new Set([source]),
-      connections,
-    );
-  }
-
-  private layer_dfs(
-    graph: DataGraph,
-    s: DeviceId, // source node
-    v: DeviceId,
-    visited: Set<DeviceId>,
-    connections: Map<string, EdgePair>,
-  ) {
-    graph.getConnections(v).forEach((w) => {
-      if (visited.has(w)) {
-        return;
-      }
-      const adjacent = this.datagraph.getDevice(w);
-      // mark node as visited
-      visited.add(w);
-
-      if (layerIncluded(layerFromType(adjacent.getType()), this.layer)) {
-        // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
-        const edgePair: EdgePair = [w, s];
-        edgePair.sort();
-        connections.set(edgePair.toString(), edgePair);
-      } else {
-        // continue with recursive search
-        this.layer_dfs(graph, s, w, visited, connections);
-      }
-    });
-  }
-
   clear() {
     this.viewport.clear();
     for (const [, device] of this.graph.getAllVertices()) {
@@ -389,4 +395,32 @@ export class ViewGraph {
     }
     this.graph.clear();
   }
+}
+
+function layerDFS(
+  datagraph: DataGraph,
+  layer: Layer,
+  s: DeviceId, // source node
+  v: DeviceId,
+  visited: Set<DeviceId>,
+  connections: Map<string, EdgePair>,
+) {
+  datagraph.getConnections(v).forEach((w) => {
+    if (visited.has(w)) {
+      return;
+    }
+    const adjacent = datagraph.getDevice(w);
+    // mark node as visited
+    visited.add(w);
+
+    if (layerIncluded(layerFromType(adjacent.getType()), layer)) {
+      // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
+      const edgePair: EdgePair = [w, s];
+      edgePair.sort();
+      connections.set(edgePair.toString(), edgePair);
+    } else {
+      // continue with recursive search
+      layerDFS(datagraph, layer, s, w, visited, connections);
+    }
+  });
 }

@@ -19,14 +19,11 @@ import { Colors, ZIndexLevels } from "../../utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
-import { DeviceId, DataNode } from "../graphs/datagraph";
+import { DeviceId, RemovedNodeData } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer } from "../layer";
-import { Packet } from "../packet";
-import { MacAddress } from "../../packets/ethernet";
+import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
-
-export { Layer } from "../layer";
 
 export enum DeviceType {
   Host = 0,
@@ -73,8 +70,7 @@ export abstract class ViewDevice extends Container {
    * Returns the id for the next device to send the packet to, or
    * null if there’s no next device to send the packet.
    * */
-  // TODO: Might be general for all device in the future.
-  abstract receivePacket(packet: Packet): Promise<DeviceId | null>;
+  abstract receiveFrame(frame: EthernetFrame): void;
 
   constructor(
     id: DeviceId,
@@ -130,19 +126,11 @@ export abstract class ViewDevice extends Container {
     this.addChild(idText); // Add the ID text as a child of the device
   }
 
-  /// Returns the data needed to create the device
-  getCreateDevice(): DataNode {
-    const node: DataNode = this.viewgraph
-      .getDataGraph()
-      .getDevice(this.id)
-      .getDataNode();
-    return node;
-  }
-
-  delete(): void {
-    this.viewgraph.removeDevice(this.id);
+  delete(): RemovedNodeData {
+    const deviceData = this.viewgraph.removeDevice(this.id);
     console.log(`Device ${this.id} deleted`);
     this.destroy();
+    return deviceData;
   }
 
   onPointerDown(event: FederatedPointerEvent): void {
@@ -160,23 +148,6 @@ export abstract class ViewDevice extends Container {
     this.parent.on("pointerup", onPointerUp);
   }
 
-  // TODO: why is this even here??
-  connectTo(adjacentId: DeviceId): boolean {
-    // Connects both devices with an edge.
-    const edgeId = this.viewgraph.addEdge(this.id, adjacentId);
-    if (edgeId) {
-      // Register move
-      const move = new AddEdgeMove(this.viewgraph.getLayer(), {
-        n1: this.id,
-        n2: adjacentId,
-      });
-      urManager.push(move);
-
-      return true;
-    }
-    return false;
-  }
-
   onClick(e: FederatedPointerEvent) {
     e.stopPropagation();
 
@@ -184,12 +155,15 @@ export abstract class ViewDevice extends Container {
       selectElement(this);
       return;
     }
-    // If the stored device is this, reset it
+    // If the stored device is this, ignore
     if (ViewDevice.connectionTarget === this) {
       return;
     }
-    // The "LineStart" device ends up as the end of the drawing but it's the same
-    if (this.connectTo(ViewDevice.connectionTarget.id)) {
+    // Connect both devices
+    const n1 = ViewDevice.connectionTarget.id;
+    const n2 = this.id;
+    const move = new AddEdgeMove(this.viewgraph.getLayer(), { n1, n2 });
+    if (urManager.push(this.viewgraph, move)) {
       refreshElement();
       ViewDevice.connectionTarget = null;
     }
@@ -259,7 +233,6 @@ export abstract class ViewDevice extends Container {
   abstract getLayer(): Layer;
 
   destroy() {
-    // Clear connections
     deselectElement();
     super.destroy();
   }
@@ -279,13 +252,14 @@ function onPointerMove(event: FederatedPointerEvent): void {
 }
 
 function onPointerUp(): void {
-  if (ViewDevice.dragTarget && ViewDevice.startPosition) {
+  const target = ViewDevice.dragTarget;
+  if (target && ViewDevice.startPosition) {
     const endPosition: Position = {
-      x: ViewDevice.dragTarget.x,
-      y: ViewDevice.dragTarget.y,
+      x: target.x,
+      y: target.y,
     };
     console.log("Finalizing move for device:", {
-      id: ViewDevice.dragTarget.id,
+      id: target.id,
       startPosition: ViewDevice.startPosition,
       endPosition,
     });
@@ -295,24 +269,24 @@ function onPointerUp(): void {
       ViewDevice.startPosition.y === endPosition.y
     ) {
       console.log(
-        `No movement detected for device ID ${ViewDevice.dragTarget.id}. Move not registered.`,
+        `No movement detected for device ID ${target.id}. Move not registered.`,
       );
     } else {
       const move = new DragDeviceMove(
-        ViewDevice.dragTarget.viewgraph.getLayer(),
-        ViewDevice.dragTarget.id,
+        target.viewgraph.getLayer(),
+        target.id,
         ViewDevice.startPosition,
         endPosition,
       );
-      urManager.push(move);
+      urManager.push(target.viewgraph, move);
     }
 
-    // Resetear variables estáticas
+    // Reset static variables
     ViewDevice.startPosition = null;
 
     // Remove global pointermove and pointerup events
-    ViewDevice.dragTarget.parent.off("pointermove", onPointerMove);
-    ViewDevice.dragTarget.parent.off("pointerup", onPointerUp);
+    target.parent.off("pointermove", onPointerMove);
+    target.parent.off("pointerup", onPointerUp);
     ViewDevice.dragTarget = null;
   }
 }

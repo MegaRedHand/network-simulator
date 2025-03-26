@@ -2,6 +2,7 @@ import { Layer } from "../../layer";
 import { EdgeEdges } from "../../edge";
 import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
+import { deselectElement } from "../../viewportManager";
 import { BaseMove } from "./move";
 
 export abstract class AddRemoveEdgeMove extends BaseMove {
@@ -21,25 +22,32 @@ export abstract class AddRemoveEdgeMove extends BaseMove {
     const device2 = viewgraph.getDevice(n2);
     if (!device1 || !device2) {
       console.warn("Edge's devices not found in viewgraph");
-      return;
+      return false;
     }
     viewgraph.addEdge(n1, n2);
+    return true;
   }
 
   removeEdge(viewgraph: ViewGraph) {
     this.adjustLayer(viewgraph);
     const { n1, n2 } = this.connectedNodes;
-    viewgraph.removeEdge(n1, n2);
+    const ok = viewgraph.removeEdge(n1, n2);
+    // Avoid deselecting in case of failure, since it's probably a virtual edge
+    if (ok) {
+      // Deselect to avoid showing the information of the deleted edge
+      deselectElement();
+    }
+    return ok;
   }
 }
 
 export class AddEdgeMove extends AddRemoveEdgeMove {
-  undo(viewgraph: ViewGraph): void {
-    this.removeEdge(viewgraph);
+  undo(viewgraph: ViewGraph): boolean {
+    return this.removeEdge(viewgraph);
   }
 
-  redo(viewgraph: ViewGraph): void {
-    this.addEdge(viewgraph);
+  redo(viewgraph: ViewGraph): boolean {
+    return this.addEdge(viewgraph);
   }
 }
 
@@ -55,16 +63,19 @@ export class RemoveEdgeMove extends AddRemoveEdgeMove {
     this.storedRoutingTables = storedRoutingTables;
   }
 
-  undo(viewgraph: ViewGraph): void {
-    this.addEdge(viewgraph);
+  undo(viewgraph: ViewGraph): boolean {
+    if (!this.addEdge(viewgraph)) {
+      return false;
+    }
 
-    // Restaurar las tablas de enrutamiento guardadas
+    // Restore stored routing tables
     this.storedRoutingTables.forEach((table, deviceId) => {
       viewgraph.getDataGraph().setRoutingTable(deviceId, table);
     });
+    return true;
   }
 
-  redo(viewgraph: ViewGraph): void {
-    this.removeEdge(viewgraph);
+  redo(viewgraph: ViewGraph): boolean {
+    return this.removeEdge(viewgraph);
   }
 }

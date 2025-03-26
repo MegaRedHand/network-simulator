@@ -1,3 +1,4 @@
+// MARCADO V1
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { EchoReply, EchoRequest } from "../../packets/icmp";
 import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
@@ -7,6 +8,7 @@ import {
   DataNode,
   NetworkDataNode,
 } from "../graphs/datagraph";
+import { Layer } from "../layer";
 import { Packet, sendRawPacket } from "../packet";
 import { DataDevice } from "./dDevice";
 
@@ -20,19 +22,19 @@ export abstract class DataNetworkDevice extends DataDevice {
     this.ipMask = IpAddress.parse(graphData.mask);
   }
 
-  getDataNode(): DataNode {
+  getDataNode(): NetworkDataNode {
     return {
       ...super.getDataNode(),
-      mac: this.mac.toString(),
       ip: this.ip.toString(),
       mask: this.ipMask.toString(),
     };
   }
 
-  abstract receiveDatagram(packet: Packet): Promise<DeviceId | null>;
+  abstract receiveDatagram(datagram: IPv4Packet): void;
 
   // TODO: Most probably it will be different for each type of device
   handlePacket(datagram: IPv4Packet) {
+    console.debug("Packet has reach its destination!");
     const dstDevice: DataDevice = this.datagraph.getDeviceByIP(
       datagram.sourceAddress,
     );
@@ -57,7 +59,14 @@ export abstract class DataNetworkDevice extends DataDevice {
           const echoReply = new EchoReply(0);
           const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
           const ethernet = new EthernetFrame(this.mac, dstMac, ipPacket);
-          // sendRawPacket(this.datagraph, this.id, dstDevice.id, ethernet);
+          // TODO: Belonging layer should be known
+          sendRawPacket(
+            this.datagraph,
+            Layer.Network,
+            this.id,
+            ethernet,
+            false,
+          );
         }
         break;
       }
@@ -66,13 +75,16 @@ export abstract class DataNetworkDevice extends DataDevice {
     }
   }
 
-  async receivePacket(packet: Packet): Promise<DeviceId | null> {
-    const frame = packet.rawPacket;
+  receiveFrame(frame: EthernetFrame): void {
     console.debug(
       `Dispositivo ${this.mac.toString()} recibe frame con destino ${frame.destination.toString()}`,
     );
+    if (!(frame.payload instanceof IPv4Packet)) {
+      console.warn("Frame's payload is not an IPv4Packet");
+      return null;
+    }
     if (this.mac.equals(frame.destination)) {
-      return this.receiveDatagram(packet);
+      return this.receiveDatagram(frame.payload);
     }
     return null;
   }

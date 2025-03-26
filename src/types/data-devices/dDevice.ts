@@ -1,5 +1,5 @@
-import { MacAddress } from "../../packets/ethernet";
-import { Packet, sendRawPacket } from "../packet";
+// MARCADO V1
+import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { DataGraph, DeviceId, DataNode } from "../graphs/datagraph";
 import { DeviceType } from "../view-devices/vDevice";
 import { Position } from "../common";
@@ -39,7 +39,6 @@ export abstract class DataDevice {
       x: this.x,
       y: this.y,
       mac: this.mac.toString(),
-      connections: this.datagraph.getConnections(this.id),
     };
   }
 
@@ -54,5 +53,5 @@ export abstract class DataDevice {
    * null if there’s no next device to send the packet.
    * */
   // TODO: Might be general for all device in the future.
-  abstract receivePacket(packet: Packet): Promise<DeviceId | null>;
+  abstract receiveFrame(frame: EthernetFrame): void;
 }

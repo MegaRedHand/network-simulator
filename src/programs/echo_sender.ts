@@ -6,7 +6,7 @@ import { ViewGraph } from "../types/graphs/viewgraph";
 import { ProgramInfo } from "../graphics/renderables/device_info";
 import { EchoRequest } from "../packets/icmp";
 import { IPv4Packet } from "../packets/ip";
-import { ViewNetworkDevice } from "../types/view-devices";
+import { ViewNetworkDevice } from "../types/view-devices/vNetworkDevice";
 import { EthernetFrame } from "../packets/ethernet";
 import { Layer } from "../types/layer";
 
@@ -75,13 +75,7 @@ export class SingleEcho extends ProgramBase {
       }
     }
     const ethernetFrame = new EthernetFrame(srcDevice.mac, dstMac, ipPacket);
-    sendRawPacket(
-      this.viewgraph,
-      Layer.Network,
-      this.srcId,
-      this.dstId,
-      ethernetFrame,
-    );
+    sendRawPacket(this.viewgraph, Layer.Network, this.srcId, ethernetFrame);
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {

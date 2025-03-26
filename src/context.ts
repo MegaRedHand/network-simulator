@@ -6,11 +6,14 @@ import {
   saveToLocalStorage,
   urManager,
 } from "./types/viewportManager";
-import { Layer } from "./types/layer";
-import { IpAddress, IpAddressGenerator } from "./packets/ip";
-import { layerFromName } from "./types/layer";
+import { compareIps, IpAddress, IpAddressGenerator } from "./packets/ip";
+import { layerFromName, Layer } from "./types/layer";
 import { SpeedMultiplier } from "./types/speedMultiplier";
-import { MacAddress, MacAddressGenerator } from "./packets/ethernet";
+import {
+  compareMacs,
+  MacAddress,
+  MacAddressGenerator,
+} from "./packets/ethernet";
 import { Colors } from "./utils";
 import { DataNetworkDevice } from "./types/data-devices";
 
@@ -138,15 +141,19 @@ export class GlobalContext {
 
   private setIpGenerator() {
     let maxIp = IpAddress.parse("10.0.0.0");
+
     for (const [, device] of this.datagraph.getDevices()) {
       if (device instanceof DataNetworkDevice) {
         const ip = IpAddress.parse(device.ip.toString());
-        if (maxIp.octets < ip.octets) {
-          maxIp = ip;
+        if (ip === null) {
+          console.error("Failed to parse IP address: " + device.ip.toString());
+        } else {
+          if (compareIps(maxIp, ip) < 0) {
+            maxIp = ip;
+          }
         }
       }
     }
-    // TODO: we should use IpAddress instead of string here and in Datagraph
     const baseIp = maxIp.toString();
     const mask = "255.255.255.255";
     this.ipGenerator = new IpAddressGenerator(baseIp, mask);
@@ -156,7 +163,7 @@ export class GlobalContext {
     let maxMac = MacAddress.parse("00:00:10:00:00:00");
     for (const [, device] of this.datagraph.getDevices()) {
       const mac = MacAddress.parse(device.mac.toString());
-      if (maxMac.octets < mac.octets) {
+      if (compareMacs(maxMac, mac) < 0) {
         maxMac = mac;
       }
     }

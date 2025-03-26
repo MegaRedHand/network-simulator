@@ -1,19 +1,26 @@
-import { View } from "pixi.js";
+// MARCADO V1
+import { Ticker, View } from "pixi.js";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceType } from "../view-devices/vDevice";
+import { Layer } from "../layer";
 import {
   DataGraph,
+  DataNode,
+  NetworkDataNode,
   DeviceId,
   RouterDataNode,
   RoutingTableEntry,
 } from "../graphs/datagraph";
-import { Packet } from "../packet";
+import { Packet, sendRawPacket } from "../packet";
 import { DataNetworkDevice } from "./dNetworkDevice";
+import { EthernetFrame } from "../../packets/ethernet";
 
 export class DataRouter extends DataNetworkDevice {
-  private packetQueueSize = 0;
-  private maxQueueSize = 5;
-  private timePerPacket = 1000;
+  private packetQueue = new PacketQueue(1024);
+  // Time in ms to process a single byte
+  private timePerByte = 8;
+  // Number of bytes processed
+  private processingProgress = 0;
   routingTable: RoutingTableEntry[];
 
   constructor(graphData: RouterDataNode, datagraph: DataGraph) {
@@ -21,19 +28,86 @@ export class DataRouter extends DataNetworkDevice {
     this.routingTable = graphData.routingTable ?? [];
   }
 
-  async routePacket(datagram: IPv4Packet): Promise<DeviceId | null> {
+  getDataNode(): RouterDataNode {
+    return {
+      ...super.getDataNode(),
+      type: DeviceType.Router,
+      routingTable: this.routingTable,
+    };
+  }
+
+  receiveDatagram(datagram: IPv4Packet) {
+    if (this.ip.equals(datagram.destinationAddress)) {
+      this.handlePacket(datagram);
+      return;
+    }
+    this.addPacketToQueue(datagram);
+  }
+
+  addPacketToQueue(datagram: IPv4Packet) {
+    const wasEmpty = this.packetQueue.isEmpty();
+    if (!this.packetQueue.enqueue(datagram)) {
+      console.debug("Packet queue full, dropping packet");
+      return;
+    }
+    if (wasEmpty) {
+      this.startPacketProcessor();
+    }
+  }
+
+  processPacket(ticker: Ticker) {
+    const datagram = this.getPacketsToProcess(ticker.deltaMS);
+    if (!datagram) {
+      return;
+    }
+    const devices = this.routePacket(datagram);
+
+    if (!devices || devices.length === 0) {
+      return;
+    }
+    for (const nextHopId of devices) {
+      // Wrap the datagram in a new frame
+      const nextHop = this.datagraph.getDevice(nextHopId);
+      if (!nextHop) {
+        console.error("Next hop not found");
+        continue;
+      }
+      const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
+      // TODO: Belonging layer should be known and not hardcoded
+      sendRawPacket(this.datagraph, Layer.Network, this.id, newFrame, false);
+    }
+
+    if (this.packetQueue.isEmpty()) {
+      this.stopPacketProcessor();
+    }
+  }
+
+  startPacketProcessor() {
+    this.processingProgress = 0;
+    Ticker.shared.add(this.processPacket, this);
+  }
+
+  stopPacketProcessor() {
+    this.processingProgress = 0;
+    Ticker.shared.remove(this.processPacket, this);
+  }
+
+  getPacketsToProcess(timeMs: number): IPv4Packet | null {
+    this.processingProgress += timeMs;
+    const packetLength = this.packetQueue.getHead()?.totalLength;
+    const progressNeeded = this.timePerByte * packetLength;
+    if (this.processingProgress < progressNeeded) {
+      return null;
+    }
+    this.processingProgress -= progressNeeded;
+    return this.packetQueue.dequeue();
+  }
+
+  routePacket(datagram: IPv4Packet): DeviceId[] {
     const device = this.datagraph.getDevice(this.id);
     if (!device || !(device instanceof DataRouter)) {
-      return null;
+      return;
     }
-    if (this.packetQueueSize >= this.maxQueueSize) {
-      console.debug("Packet queue full, dropping packet");
-      return null;
-    }
-    this.packetQueueSize += 1;
-    console.debug("Processing packet, queue size:", this.packetQueueSize);
-    await new Promise((resolve) => setTimeout(resolve, this.timePerPacket));
-    this.packetQueueSize -= 1;
 
     const result = device.routingTable.find((entry) => {
       if (entry.deleted) {
@@ -42,48 +116,65 @@ export class DataRouter extends DataNetworkDevice {
       }
       const ip = IpAddress.parse(entry.ip);
       const mask = IpAddress.parse(entry.mask);
-      console.log("Considering entry:", entry);
+      // console.debug("Considering entry:", entry);
       return datagram.destinationAddress.isInSubnet(ip, mask);
     });
-    console.debug("Result:", result);
-    return result === undefined ? null : result.iface;
-  }
 
-  async receiveDatagram(packet: Packet): Promise<DeviceId | null> {
-    const datagram = packet.rawPacket.payload;
-    if (!(datagram instanceof IPv4Packet)) {
-      return null;
+    if (!result) {
+      console.warn("No route found for", datagram.destinationAddress);
+      return [];
     }
-    console.debug(
-      `Dispositivo ${this.ip.toString()} recibe datagram con destino ${datagram.destinationAddress.toString()}`,
+
+    const devices = this.datagraph.getConnectionsInInterface(
+      this.id,
+      result.iface,
     );
-    if (this.ip.equals(datagram.destinationAddress)) {
-      this.handlePacket(datagram);
-      return null;
+
+    if (!devices) {
+      console.error("Current device doesn't exist!", this.id);
+      return [];
     }
-    // a router changed forward datagram to destination, have to change current destination mac
-    const dstDevice = this.datagraph.getDeviceByIP(datagram.destinationAddress);
-    if (!dstDevice) {
-      console.error("Destination device not found");
-      return null;
-    }
-    // copy datagraph
-    const path = this.datagraph.getPathBetween(this.id, dstDevice.id);
-    let dstMac = dstDevice.mac;
-    if (!path) return null;
-    for (const id of path.slice(1)) {
-      // copy datagraph
-      const device = this.datagraph.getDevice(id);
-      if (device instanceof DataNetworkDevice) {
-        dstMac = device.mac;
-        break;
-      }
-    }
-    packet.rawPacket.destination = dstMac;
-    return this.routePacket(datagram);
+
+    return devices;
   }
 
   getType(): DeviceType {
     return DeviceType.Router;
+  }
+}
+
+class PacketQueue {
+  private queue: IPv4Packet[] = [];
+  private queueSizeBytes = 0;
+  private maxQueueSizeBytes: number;
+
+  constructor(maxQueueSizeBytes: number) {
+    this.maxQueueSizeBytes = maxQueueSizeBytes;
+  }
+
+  enqueue(packet: IPv4Packet) {
+    if (this.queueSizeBytes >= this.maxQueueSizeBytes) {
+      return false;
+    }
+    this.queue.push(packet);
+    this.queueSizeBytes += packet.totalLength;
+    return true;
+  }
+
+  dequeue(): IPv4Packet | undefined {
+    if (this.queue.length === 0) {
+      return;
+    }
+    const packet = this.queue.shift();
+    this.queueSizeBytes -= packet.totalLength;
+    return packet;
+  }
+
+  getHead(): IPv4Packet | undefined {
+    return this.queue[0];
+  }
+
+  isEmpty(): boolean {
+    return this.queue.length === 0;
   }
 }

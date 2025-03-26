@@ -1,5 +1,11 @@
+// MARCADO V1
 import { IPv4Packet } from "../../packets/ip";
-import { DataGraph, DeviceId, HostDataNode } from "../graphs/datagraph";
+import {
+  DataGraph,
+  DeviceId,
+  HostDataNode,
+  NetworkDataNode,
+} from "../graphs/datagraph";
 import { Layer } from "../layer";
 import { Packet } from "../packet";
 import { DataNetworkDevice } from "./dNetworkDevice";
@@ -14,15 +20,21 @@ export class DataHost extends DataNetworkDevice {
     this.runningPrograms = graphData.runningPrograms ?? [];
   }
 
-  receiveDatagram(packet: Packet): Promise<DeviceId | null> {
-    const datagram = packet.rawPacket.payload;
+  getDataNode(): HostDataNode {
+    return {
+      ...super.getDataNode(),
+      type: DeviceType.Host,
+      runningPrograms: this.runningPrograms,
+    };
+  }
+
+  receiveDatagram(datagram: IPv4Packet): void {
     if (!(datagram instanceof IPv4Packet)) {
       return null;
     }
     if (this.ip.equals(datagram.destinationAddress)) {
       this.handlePacket(datagram);
     }
-    return null;
   }
 
   getType(): DeviceType {

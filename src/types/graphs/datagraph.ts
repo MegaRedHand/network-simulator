@@ -1,15 +1,17 @@
+// MARCADO V1
 import { IpAddress } from "../../packets/ip";
 import { RunningProgram } from "../../programs";
 import { DeviceType, layerFromType } from "../view-devices/vDevice";
 import { layerIncluded, Layer } from "../layer";
-import { DataDevice } from "../data-devices/";
-import { Graph, VertexId } from "./graph";
+import { Graph, RemovedVertexData, VertexId } from "./graph";
 import {
-  DataHost,
-  DataNetworkDevice,
-  DataRouter,
+  DataDevice,
   DataSwitch,
+  DataNetworkDevice,
+  DataHost,
+  DataRouter,
 } from "../data-devices";
+import { GlobalContext } from "../../context";
 
 export type DeviceId = VertexId;
 
@@ -20,7 +22,6 @@ interface CommonDataNode {
   type: DeviceType;
   mac: string;
   arpTable?: Map<string, string>;
-  connections?: DeviceId[];
 }
 
 export interface SwitchDataNode extends CommonDataNode {
@@ -74,36 +75,61 @@ export type DataNode =
   | HostDataNode
   | SwitchDataNode;
 
-export type GraphData = DataNode[];
+interface EdgeTip {
+  id: DeviceId;
+  iface: number;
+}
+
+interface DataEdge {
+  from: EdgeTip;
+  to: EdgeTip;
+}
+
+export interface GraphData {
+  nodes: DataNode[];
+  edges: DataEdge[];
+}
+
+export type RemovedNodeData = RemovedVertexData<DataDevice, DataEdge>;
 
 export class DataGraph {
+  ctx: GlobalContext;
   // NOTE: we don't store data in edges yet
-  deviceGraph = new Graph<DataDevice, unknown>();
+  deviceGraph = new Graph<DataDevice, DataEdge>();
   private onChanges: (() => void)[] = [];
 
-  static fromData(data: GraphData): DataGraph {
-    const dataGraph = new DataGraph();
-    data.forEach((dataNode: DataNode) => {
-      console.log(dataNode);
+  constructor(ctx: GlobalContext) {
+    this.ctx = ctx;
+  }
 
-      dataGraph.addDevice(dataNode);
+  static fromData(data: GraphData, ctx: GlobalContext): DataGraph {
+    const dataGraph = new DataGraph(ctx);
+
+    data.nodes.forEach((nodeData: DataNode) => {
+      console.log(nodeData);
+      dataGraph.addDevice(nodeData);
+    });
+
+    data.edges.forEach((edgeData: DataEdge) => {
+      dataGraph.deviceGraph.setEdge(edgeData.from.id, edgeData.to.id, edgeData);
     });
 
     return dataGraph;
   }
 
   toData(): GraphData {
-    const graphData: GraphData = [];
+    const nodes: DataNode[] = [];
+    const edges: DataEdge[] = [];
 
     // Serialize nodes
     for (const [id, device] of this.deviceGraph.getAllVertices()) {
+      // parse to serializable format
       let dataNode: DataNode = {
         id,
         x: device.x,
         y: device.y,
         mac: device.mac.toString(),
         type: device.getType(),
-        connections: Array.from(this.deviceGraph.getNeighbors(id)),
         arpTable: new Map<string, string>(), // TODO: change this to the actual ARP table
       };
 
@@ -127,9 +153,22 @@ export class DataGraph {
           runningPrograms: device.runningPrograms,
         };
       }
-      graphData.push(dataNode);
+      nodes.push(dataNode);
     }
-    return graphData;
+    for (const [, , edge] of this.deviceGraph.getAllEdges()) {
+      edges.push(edge);
+    }
+    return { nodes, edges };
+  }
+
+  readdDevice(removedData: RemovedNodeData): DeviceId {
+    const { id, vertex, edges } = removedData;
+    this.deviceGraph.setVertex(id, vertex);
+    edges.forEach((edge) => {
+      this.deviceGraph.setEdge(edge.from.id, edge.to.id, edge);
+    });
+    this.notifyChanges();
+    return id;
   }
 
   // Add a device to the graph
@@ -141,15 +180,16 @@ export class DataGraph {
         : isHost(dataNode)
           ? new DataHost(dataNode, this)
           : undefined;
+    if (!device) {
+      console.warn(`Device type unknown: ${dataNode.type}`);
+      return;
+    }
     const deviceId = device.id;
     if (this.deviceGraph.hasVertex(deviceId)) {
       console.warn(`Device with ID ${deviceId} already exists in the graph.`);
       return;
     }
     this.deviceGraph.setVertex(deviceId, device);
-    dataNode.connections?.forEach((connectedId) => {
-      this.deviceGraph.setEdge(deviceId, connectedId);
-    });
     console.log(`Device added with ID ${deviceId}`);
     this.notifyChanges();
     return deviceId;
@@ -177,7 +217,11 @@ export class DataGraph {
       );
       return;
     }
-    this.deviceGraph.setEdge(n1Id, n2Id);
+    const edge = {
+      from: { id: n1Id, iface: n2Id },
+      to: { id: n2Id, iface: n1Id },
+    };
+    this.deviceGraph.setEdge(n1Id, n2Id, edge);
 
     console.log(
       `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,
@@ -236,20 +280,50 @@ export class DataGraph {
   }
 
   // Get all connections of a device
+  getConnection(n1Id: DeviceId, n2Id: DeviceId): DataEdge | undefined {
+    return this.deviceGraph.getEdge(n1Id, n2Id);
+  }
+
+  // Get all connections of a device
   getConnections(id: DeviceId): DeviceId[] | undefined {
     return this.deviceGraph.getNeighbors(id);
   }
 
+  hasDevice(id: DeviceId) {
+    return this.deviceGraph.hasVertex(id);
+  }
+
+  // Get all connections of a device in a given interface
+  getConnectionsInInterface(
+    id: DeviceId,
+    iface: number,
+  ): DeviceId[] | undefined {
+    if (!this.deviceGraph.hasVertex(id)) {
+      return;
+    }
+    const connections = [];
+    for (const [neighborId, { from, to }] of this.deviceGraph.getEdges(id)) {
+      if (
+        (from.id === id && from.iface === iface) ||
+        (to.id === id && to.iface === iface)
+      ) {
+        connections.push(neighborId);
+      }
+    }
+    return connections;
+  }
+
   // Method to remove a device and all its connections
-  removeDevice(id: DeviceId): void {
+  removeDevice(id: DeviceId): RemovedNodeData | undefined {
     if (!this.deviceGraph.hasVertex(id)) {
       console.warn(`Device with ID ${id} does not exist in the graph.`);
       return;
     }
-    this.deviceGraph.removeVertex(id);
+    const removedData = this.deviceGraph.removeVertex(id);
     console.log(`Device with ID ${id} and its connections were removed.`);
     this.notifyChanges();
     this.regenerateAllRoutingTables();
+    return removedData;
   }
 
   // Same logic than the one in ViewGraph.

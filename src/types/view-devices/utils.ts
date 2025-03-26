@@ -2,21 +2,14 @@ import { GlobalContext } from "../../context";
 import { MacAddress } from "../../packets/ethernet";
 import { IpAddress } from "../../packets/ip";
 import { Position } from "../common";
-import { DataDevice } from "../data-devices";
-import { DeviceId, DataNode, isNetworkNode } from "../graphs/datagraph";
+import { DataNode, isNetworkNode } from "../graphs/datagraph";
 import { ViewGraph } from "../graphs/viewgraph";
 import { ViewDevice, DeviceType } from "./vDevice";
 import { ViewHost } from "./vHost";
 import { ViewRouter } from "./vRouter";
 import { ViewSwitch } from "./vSwitch";
 
-export interface CreateDevice {
-  id: DeviceId;
-  node: DataDevice;
-  connections: DeviceId[];
-}
-
-export function createDeviceNode(
+export function createViewDevice(
   deviceInfo: DataNode,
   viewgraph: ViewGraph,
   ctx: GlobalContext,
