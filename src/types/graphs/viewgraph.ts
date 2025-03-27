@@ -173,8 +173,10 @@ export class ViewGraph {
     this.layer = newLayer;
     this.clear();
     this.constructView();
-  
-    const event = new CustomEvent("layerChanged", { detail: { layer: newLayer } });
+
+    const event = new CustomEvent("layerChanged", {
+      detail: { layer: newLayer },
+    });
     document.dispatchEvent(event);
   }
 

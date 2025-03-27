@@ -10,7 +10,7 @@ export class LayerHandler {
   private layerDropdown: {
     container: HTMLElement;
     getValue: () => string | null;
-    setValue: (value: string) => void
+    setValue: (value: string) => void;
   } | null;
 
   constructor(ctx: GlobalContext, leftBar: LeftBar) {
