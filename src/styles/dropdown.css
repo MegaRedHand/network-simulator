@@ -68,6 +68,43 @@
 }
 
 .dropdown-option:hover {
-  background-color: #3a3a3a; /* Lighter background on hover */
-  transform: scale(1.02); /* Zoom effect */
+  background-color: #3a3a3a;
+  transform: scale(1.02);
+}
+
+.layerselectordropdown {
+  width: 15rem;
+}
+
+.layerselectordropdown .selected-option {
+  width: 100%;
+}
+
+.layerselectordropdown .options-container {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .layerselectordropdown {
+    width: 100%;
+  }
+
+  .layerselectordropdown .selected-option {
+    width: 100%;
+    font-size: 0.9rem;
+    padding: 0.8vh 1.5vw;
+  }
+
+  .layerselectordropdown .options-container {
+    width: 100%;
+    font-size: 0.9rem;
+  }
+
+  .dropdown-option {
+    padding: 0.8vh 1.5vw;
+  }
 }

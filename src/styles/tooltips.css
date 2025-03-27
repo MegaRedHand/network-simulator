@@ -1,28 +1,29 @@
+/* Tooltip container with global styles */
 .global-tooltip {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #2b2b2b; /* Fondo oscuro */
-  color: #ffffff; /* Texto blanco */
-  padding: 20px 25px; /* Espaciado interno */
-  border-radius: 12px; /* Bordes redondeados */
-  font-size: 1rem; /* Tamaño de fuente */
-  text-align: left; /* Alinear texto a la izquierda */
-  z-index: 1000;
-  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3); /* Sombra */
-  border: 1px solid rgba(255, 255, 255, 0.1); /* Borde sutil */
-  max-width: 600px; /* Ancho máximo */
-  white-space: pre-wrap; /* Permitir saltos de línea */
-  line-height: 1.8; /* Espaciado entre líneas */
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; /* Fuente */
-  overflow-y: auto; /* Habilitar scroll si el contenido es muy largo */
-  max-height: 300px; /* Altura máxima para evitar tooltips demasiado grandes */
+  display: none; /* Hidden by default */
+  position: fixed; /* Fixed position on the screen */
+  top: 50%; /* Center vertically */
+  left: 50%; /* Center horizontally */
+  transform: translate(-50%, -50%); /* Adjust position to center */
+  background: #2b2b2b; /* Dark background */
+  color: #ffffff; /* White text */
+  padding: 20px 25px; /* Internal spacing */
+  border-radius: 12px; /* Rounded corners */
+  font-size: 1rem; /* Font size */
+  text-align: left; /* Align text to the left */
+  z-index: 1000; /* Ensure it appears above other elements */
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3); /* Shadow effect */
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
+  max-width: 600px; /* Maximum width */
+  white-space: pre-wrap; /* Allow line breaks */
+  line-height: 1.8; /* Line spacing */
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; /* Font family */
+  overflow-y: auto; /* Enable scrolling for long content */
+  max-height: 300px; /* Maximum height to avoid oversized tooltips */
 }
 
 .has-tooltip {
-  cursor: pointer;
+  cursor: help; /* Change cursor to a help icon */
   transition: color 0.2s ease-in-out;
 }
 
