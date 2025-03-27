@@ -26,6 +26,14 @@ export const tooltipsDictionary: Record<string, string> = {
     "- Transport Layer: Ensures reliable data transfer between devices.\n" +
     "- Network Layer: Handles routing of data between devices across networks.\n" +
     "- Link Layer: Manages physical transmission of data between devices.",
+  Program: "Select a program to run on the host device.",
+  "Send ICMP echo":
+    "Send an ICMP echo request to a specified IP address. This command is used to test network connectivity and determine if a remote host is reachable.",
+  "Echo server":
+    "An Echo server is a network service that sends back any data it receives to the sender. It is commonly used for testing and debugging network connections.",
+  Destination: "Select the destination for the packet to be sent.",
+  "Time between pings":
+    "Specify the time interval between consecutive ping requests.",
 };
 
 /**

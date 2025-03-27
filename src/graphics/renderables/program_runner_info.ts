@@ -33,9 +33,9 @@ export class ProgramRunnerInfo implements Renderable {
     const selectProgramDropdown = createDropdown(
       "Program",
       programOptions,
-      "program-selector",
       (v) => {
         selectedProgram = programs[parseInt(v)];
+        console.log("Selected program: ", selectedProgram.name);
         programInputs.replaceChildren(...selectedProgram.toHTML());
       },
     );
@@ -44,11 +44,16 @@ export class ProgramRunnerInfo implements Renderable {
       const { name } = selectedProgram;
       console.log("Started program: ", name);
       const inputs = selectedProgram.getInputValues();
+      // Validar que se hayan proporcionado todas las entradas necesarias
+      if (inputs.some((input) => input === null || input === undefined)) {
+        console.error("Some inputs are missing or invalid.");
+        return;
+      }
       this.runner.addRunningProgram(name, inputs);
       this.refreshTable();
     });
     this.inputFields.push(
-      selectProgramDropdown,
+      selectProgramDropdown.container,
       programInputs,
       startProgramButton,
     );

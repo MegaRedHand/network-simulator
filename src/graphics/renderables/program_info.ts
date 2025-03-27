@@ -7,20 +7,21 @@ interface HasValue {
 export class ProgramInfo implements Renderable {
   readonly name: string;
   private inputs: Node[] = [];
-  private inputsValues: HasValue[] = [];
+  private inputsValues: (() => string)[] = [];
 
   constructor(name: string) {
     this.name = name;
   }
 
   withDropdown(name: string, options: { value: string; text: string }[]) {
-    const dropdown = createDropdown(name, options);
-    this.inputs.push(dropdown);
-    this.inputsValues.push(dropdown.querySelector("select"));
+    const { container, getValue } = createDropdown(name, options);
+    this.inputs.push(container);
+    this.inputsValues.push(getValue);
   }
-
   getInputValues() {
-    return this.inputsValues.map(({ value }) => value);
+    console.log("getInputValues", this.inputsValues);
+
+    return this.inputsValues.map((getValue) => getValue());
   }
 
   toHTML() {
