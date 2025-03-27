@@ -4,7 +4,7 @@ import {
   RoutingTableEntry,
 } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
-import { attachTooltip } from "./renderables/tooltip_manager";
+import { TooltipManager } from "./renderables/tooltip_manager";
 
 export { StyledInfo } from "./renderables/styled_info";
 export { DeviceInfo } from "./renderables/device_info";
@@ -204,7 +204,7 @@ export function createTable(
     const th = document.createElement("th");
     th.textContent = header;
 
-    attachTooltip(th, header);
+    TooltipManager.getInstance().attachTooltip(th, header);
 
     headerRow.appendChild(th);
   });
@@ -598,7 +598,7 @@ export function createDropdown(
   labelElement.innerHTML = `<strong>${label}</strong>`; // Use innerHTML for consistency
 
   // Attach tooltip to the label
-  attachTooltip(labelElement, label);
+  TooltipManager.getInstance().attachTooltip(labelElement, label);
 
   // Append the label to the container
   container.appendChild(labelElement);
@@ -636,7 +636,7 @@ export function createDropdown(
     option.classList.add("dropdown-option");
     option.textContent = optionData.text;
     console.log("Attaching tooltip to", optionData.text);
-    attachTooltip(option, optionData.text); // Attach tooltip to the option
+    TooltipManager.getInstance().attachTooltip(option, optionData.text); // Attach tooltip to the option
 
     // Set up click event for option selection
     option.onclick = (e) => {

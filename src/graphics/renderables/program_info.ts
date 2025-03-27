@@ -1,9 +1,5 @@
 import { createDropdown, Renderable } from "../right_bar";
 
-interface HasValue {
-  value: string;
-}
-
 export class ProgramInfo implements Renderable {
   readonly name: string;
   private inputs: Node[] = [];

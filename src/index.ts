@@ -28,6 +28,7 @@ import {
   triggerPrint,
   triggerSave,
 } from "./handlers/triggers";
+import { TooltipManager } from "./graphics/renderables/tooltip_manager";
 
 const assets = [
   RouterSvg,
@@ -92,6 +93,9 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     const button = document.getElementById(id);
     if (button) button.onclick = action;
   });
+
+  // Initialize tooltips
+  TooltipManager.getInstance().setGlobalContext(ctx);
 
   console.log("✅ Initialized!");
 })();

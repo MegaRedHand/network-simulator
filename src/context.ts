@@ -26,9 +26,11 @@ export class GlobalContext {
   private ipGenerator: IpAddressGenerator;
   private macGenerator: MacAddressGenerator;
   private selectColor: number;
+  private tooltipsEnabled: boolean;
 
   constructor(viewport: Viewport) {
     this.selectColor = Colors.Violet;
+    this.tooltipsEnabled = true;
     this.viewport = viewport;
 
     // Sets the initial datagraph and viewgraph
@@ -186,5 +188,13 @@ export class GlobalContext {
 
   public get_select_color() {
     return this.selectColor;
+  }
+
+  public change_enable_tooltips(enabled: boolean) {
+    this.tooltipsEnabled = enabled;
+  }
+
+  public get_enable_tooltips() {
+    return this.tooltipsEnabled;
   }
 }

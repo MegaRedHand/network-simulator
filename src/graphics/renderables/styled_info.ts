@@ -1,5 +1,5 @@
 import { Renderable } from "../right_bar";
-import { attachTooltip } from "./tooltip_manager";
+import { TooltipManager } from "./tooltip_manager";
 
 export interface Field {
   label: string;
@@ -36,7 +36,7 @@ export class StyledInfo implements Renderable {
     const header = document.createElement("h3");
     header.textContent = this.title;
 
-    attachTooltip(header, this.title);
+    TooltipManager.getInstance().attachTooltip(header, this.title);
 
     childNodes.push(header);
 
@@ -44,7 +44,7 @@ export class StyledInfo implements Renderable {
       const p = document.createElement("p");
       p.innerHTML = `<strong>${item.label}:</strong> ${item.value}`;
 
-      attachTooltip(p, item.label);
+      TooltipManager.getInstance().attachTooltip(p, item.label);
 
       childNodes.push(p);
     });
