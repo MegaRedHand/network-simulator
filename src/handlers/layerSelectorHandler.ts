@@ -10,6 +10,7 @@ export class LayerHandler {
   private layerDropdown: {
     container: HTMLElement;
     getValue: () => string | null;
+    setValue: (value: string) => void
   } | null;
 
   constructor(ctx: GlobalContext, leftBar: LeftBar) {
@@ -30,36 +31,42 @@ export class LayerHandler {
       dropdownContainer.appendChild(this.layerDropdown.container);
     }
 
-    this.updateLayer();
+    // Escucha el evento layerChanged y sincroniza el estado del dropdown
+    document.addEventListener("layerChanged", (event: CustomEvent) => {
+      this.updateLayer(layerToName(event.detail.layer));
+    });
+
+    // Inicializa el estado del dropdown con la capa actual
+    this.selectNewLayer(layerToName(this.ctx.getCurrentLayer()));
   }
 
   private getLayerOptions() {
     return [
-      { value: "app", text: "Application Layer" },
+      { value: "application", text: "App Layer" },
       { value: "transport", text: "Transport Layer" },
       { value: "network", text: "Network Layer" },
       { value: "link", text: "Link Layer" },
     ];
   }
 
+  private updateLayer(currentLayer: string | null) {
+    if (!currentLayer || !this.layerDropdown) return;
+
+    this.layerDropdown.setValue(currentLayer); // update dropdown
+    console.log(`Dropdown updated to layer: ${currentLayer}`);
+  }
+
   private selectNewLayer(selectedLayer: string | null) {
     if (!selectedLayer) return;
+
+    if (this.layerDropdown) {
+      this.layerDropdown.setValue(selectedLayer);
+    }
 
     console.log(`Layer selected: ${selectedLayer}`);
     this.ctx.changeViewGraph(selectedLayer);
     saveToLocalStorage(this.ctx);
     this.leftBar.setButtonsByLayer(selectedLayer);
     deselectElement();
-  }
-
-  private updateLayer() {
-    const currLayer = layerToName(this.ctx.getCurrentLayer());
-    if (this.layerDropdown) {
-      const dropdownValue = this.layerDropdown.getValue();
-      if (dropdownValue !== currLayer) {
-        console.log(`Updating dropdown to current layer: ${currLayer}`);
-      }
-    }
-    this.leftBar.setButtonsByLayer(currLayer);
   }
 }

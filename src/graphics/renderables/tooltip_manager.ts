@@ -25,7 +25,7 @@ export class TooltipManager {
         "A switch is a networking device that connects devices within a local area network (LAN). It operates at the data link layer and uses MAC addresses to forward data to the correct device. Switches improve network efficiency by reducing collisions.",
 
       // Layer Information
-      "Application Layer":
+      "App Layer":
         "The topmost layer in the OSI model, responsible for providing network services directly to user applications, such as email, file transfer, and web browsing.",
       "Transport Layer":
         "Ensures reliable data transfer between devices by managing error detection, data flow control, and retransmission of lost packets. Examples include TCP and UDP protocols.",
