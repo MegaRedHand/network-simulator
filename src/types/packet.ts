@@ -20,6 +20,7 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
   "ICMP-8": circleGraphicsContext(Colors.Red, 0, 0, 5),
   "ICMP-0": circleGraphicsContext(Colors.Yellow, 0, 0, 5),
+  TCP: circleGraphicsContext(Colors.Hazel, 0, 0, 5), // for HTTP
 };
 
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
@@ -33,16 +34,6 @@ export class Packet extends Graphics {
   private currentStart: number;
   private type: string;
   private rawPacket: EthernetFrame;
-
-  static animationPaused = false;
-
-  static pauseAnimation() {
-    Packet.animationPaused = true;
-  }
-
-  static unpauseAnimation() {
-    Packet.animationPaused = false;
-  }
 
   constructor(viewgraph: ViewGraph, type: string, rawPacket: EthernetFrame) {
     super();
@@ -164,10 +155,8 @@ export class Packet extends Graphics {
     const normalizedSpeed = this.speed / edgeLength;
 
     // Update progress with normalized speed
-    if (!Packet.animationPaused) {
-      this.progress +=
-        (ticker.deltaMS * normalizedSpeed * this.viewgraph.getSpeed()) / 1000;
-    }
+    this.progress +=
+      (ticker.deltaMS * normalizedSpeed * this.viewgraph.getSpeed()) / 1000;
 
     this.updatePosition();
   }

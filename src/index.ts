@@ -77,7 +77,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   new LayerHandler(ctx, leftBar);
   new ResponsiveHandler(app, viewport);
   new UndoRedoHandler(ctx);
-  new PauseHandler();
+  new PauseHandler(ctx);
   new SpeedControlHandler(ctx);
 
   const configModal = new ConfigModal(ctx);
