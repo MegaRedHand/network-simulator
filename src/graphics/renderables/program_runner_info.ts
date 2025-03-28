@@ -40,18 +40,22 @@ export class ProgramRunnerInfo implements Renderable {
       },
     );
     // Button to run program
-    const startProgramButton = createRightBarButton("Start program", () => {
-      const { name } = selectedProgram;
-      console.log("Started program: ", name);
-      const inputs = selectedProgram.getInputValues();
-      // Validar que se hayan proporcionado todas las entradas necesarias
-      if (inputs.some((input) => input === null || input === undefined)) {
-        console.error("Some inputs are missing or invalid.");
-        return;
-      }
-      this.runner.addRunningProgram(name, inputs);
-      this.refreshTable();
-    });
+    const startProgramButton = createRightBarButton(
+      "Start program",
+      () => {
+        const { name } = selectedProgram;
+        console.log("Started program: ", name);
+        const inputs = selectedProgram.getInputValues();
+        // Validar que se hayan proporcionado todas las entradas necesarias
+        if (inputs.some((input) => input === null || input === undefined)) {
+          console.error("Some inputs are missing or invalid.");
+          return;
+        }
+        this.runner.addRunningProgram(name, inputs);
+        this.refreshTable();
+      },
+      "right-bar-start-button",
+    );
     this.inputFields.push(
       selectProgramDropdown.container,
       programInputs,
@@ -62,6 +66,7 @@ export class ProgramRunnerInfo implements Renderable {
   private addRunningProgramsList() {
     this.runningProgramsTable = this.generateProgramsTable();
     this.inputFields.push(this.runningProgramsTable);
+    this.inputFields.push(document.createElement("br"));
   }
 
   private createProgramsTable(
