@@ -83,26 +83,6 @@ export class ConfigModal {
                     <span class="switch-slider"></span>
                   </label>
                 </li>
-                <li class="setting-item">
-                  <label for="autoConnections">Config_1</label>
-                  <input type="checkbox" id="Config_1" class="switch-input">
-                </li>
-                <li class="setting-item">
-                  <label for="autoConnections">Config_2</label>
-                  <input type="checkbox" id="Config_2" class="switch-input">
-                </li>
-                <li class="setting-item">
-                  <label for="autoConnections">Config_3</label>
-                  <input type="checkbox" id="Config_3" class="switch-input">
-                </li>
-                <li class="setting-item">
-                  <label for="autoConnections">Config_4</label>
-                  <input type="checkbox" id="Config_4" class="switch-input">
-                </li>
-                <li class="setting-item">
-                  <label for="autoConnections">Config_5</label>
-                  <input type="checkbox" id="Config_5" class="switch-input">
-                </li>
               </ul>
             </div>
           </div>
