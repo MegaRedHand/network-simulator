@@ -144,13 +144,8 @@ export class GlobalContext {
 
     for (const [, device] of this.datagraph.getDevices()) {
       if (device instanceof DataNetworkDevice) {
-        const ip = IpAddress.parse(device.ip.toString());
-        if (ip === null) {
-          console.error("Failed to parse IP address: " + device.ip.toString());
-        } else {
-          if (compareIps(maxIp, ip) < 0) {
-            maxIp = ip;
-          }
+        if (compareIps(maxIp, device.ip) < 0) {
+          maxIp = device.ip;
         }
       }
     }
@@ -162,9 +157,8 @@ export class GlobalContext {
   private setMacGenerator() {
     let maxMac = MacAddress.parse("00:00:10:00:00:00");
     for (const [, device] of this.datagraph.getDevices()) {
-      const mac = MacAddress.parse(device.mac.toString());
-      if (compareMacs(maxMac, mac) < 0) {
-        maxMac = mac;
+      if (compareMacs(maxMac, device.mac) < 0) {
+        maxMac = device.mac;
       }
     }
     // TODO: we should use MacAddress instead of string here and in Datagraph
