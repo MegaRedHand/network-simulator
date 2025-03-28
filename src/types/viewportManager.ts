@@ -1,4 +1,3 @@
-// MARCADO V1
 import { GlobalContext } from "./../context";
 import { DataGraph, GraphData, DataNode } from "./graphs/datagraph";
 import { ViewDevice } from "./view-devices/";
@@ -95,7 +94,7 @@ document.addEventListener("keydown", (event) => {
         );
         urManager.push(viewgraph, move);
       } else {
-        // it’s a packet
+        // its a packet
         selectedElement.delete();
       }
     }

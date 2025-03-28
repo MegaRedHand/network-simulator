@@ -1,9 +1,6 @@
-// MARCADO V1
 import { IPv4Packet } from "../../packets/ip";
 import { DeviceType } from "../view-devices/vDevice";
-import { Layer } from "../layer";
-import { DeviceId } from "../graphs/datagraph";
-import { Packet, sendRawPacket } from "../packet";
+import { sendDataPacket } from "../packet";
 import { DataDevice } from "./dDevice";
 import { EthernetFrame } from "../../packets/ethernet";
 
@@ -31,8 +28,7 @@ export class DataSwitch extends DataDevice {
       return;
     }
     const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
-    // TODO: Belonging layer should be known
-    sendRawPacket(this.datagraph, Layer.Network, this.id, newFrame, false);
+    sendDataPacket(this.datagraph, this.id, newFrame);
   }
 
   getType(): DeviceType {

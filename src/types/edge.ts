@@ -4,7 +4,7 @@ import { ViewDevice } from "./view-devices/index"; // Import the Device class
 import { deselectElement, selectElement, urManager } from "./viewportManager";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils";
-import { Packet, ViewPacket } from "./packet";
+import { Packet } from "./packet";
 import { RemoveEdgeMove } from "./undo-redo";
 import { DeviceId } from "./graphs/datagraph";
 
@@ -74,7 +74,7 @@ export class Edge extends Graphics {
 
     this.children.forEach((child) => {
       if (child instanceof Packet) {
-        child.updatePosition(this);
+        child.updatePosition();
       }
     });
   }

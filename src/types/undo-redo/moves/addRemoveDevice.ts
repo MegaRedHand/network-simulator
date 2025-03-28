@@ -1,4 +1,3 @@
-// MARCADO V1
 import { Layer } from "../../layer";
 import { DeviceId, RemovedNodeData } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";

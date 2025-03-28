@@ -4,7 +4,6 @@ import {
   GraphicsContext,
   Ticker,
 } from "pixi.js";
-import { Edge } from "./edge";
 import { deselectElement, isSelected, selectElement } from "./viewportManager";
 import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
@@ -13,31 +12,66 @@ import { ViewGraph } from "./graphs/viewgraph";
 import { Layer } from "./layer";
 //import { EchoMessage } from "../packets/icmp";
 import { DataGraph, DeviceId } from "./graphs/datagraph";
-import { EthernetFrame } from "../packets/ethernet";
-import { IPv4Packet } from "../packets/ip";
+import { EthernetFrame, IP_PROTOCOL_TYPE } from "../packets/ethernet";
+import { ICMP_PROTOCOL_NUMBER, IPv4Packet } from "../packets/ip";
 import { GlobalContext } from "../context";
 import { DataRouter, DataSwitch } from "./data-devices";
+import {
+  ICMP_REPLY_TYPE_NUMBER,
+  ICMP_REQUEST_TYPE_NUMBER,
+  IcmpPacket,
+} from "../packets/icmp";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
   "ICMP-8": circleGraphicsContext(Colors.Red, 0, 0, 5),
   "ICMP-0": circleGraphicsContext(Colors.Yellow, 0, 0, 5),
+  EMPTY: circleGraphicsContext(Colors.Grey, 0, 0, 5),
 };
 
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
 
 export interface PacketLocation {
-  prevDevice: DeviceId;
-  nextDevice: DeviceId;
+  startId: DeviceId;
+  endId: DeviceId;
   currProgress: number;
 }
 
-export abstract class Packet extends Graphics {
+interface PacketContext {
+  type: string;
+  layer: Layer;
+}
+
+function packetIsVisible(
+  _: ViewGraph | DataGraph,
+  isVisible: boolean,
+): _ is ViewGraph {
+  return isVisible;
+}
+
+function packetContext(frame: EthernetFrame): PacketContext {
+  if (frame.payload.type() === IP_PROTOCOL_TYPE) {
+    const datagram = frame.payload as IPv4Packet;
+    if (datagram.payload.protocol() === ICMP_PROTOCOL_NUMBER) {
+      const packet = datagram.payload as IcmpPacket;
+      if (packet.type === ICMP_REQUEST_TYPE_NUMBER) {
+        return { type: "ICMP-8", layer: Layer.Network };
+      }
+      if (packet.type === ICMP_REPLY_TYPE_NUMBER) {
+        return { type: "ICMP-0", layer: Layer.Network };
+      }
+    }
+  }
+  return { type: "EMPTY", layer: Layer.Link };
+}
+
+export class Packet extends Graphics {
   packetId: string;
   protected speed = 100;
   protected progress = 0;
   protected currStart: DeviceId;
   protected currEnd: DeviceId;
+  protected graph: ViewGraph | DataGraph;
   protected type: string;
   protected rawPacket: EthernetFrame;
   ctx: GlobalContext;
@@ -54,14 +88,16 @@ export abstract class Packet extends Graphics {
   }
 
   constructor(
-    belongingLayer: Layer,
-    type: string,
+    graph: ViewGraph | DataGraph,
     rawPacket: EthernetFrame,
     ctx: GlobalContext,
+    isVisible: boolean,
   ) {
     super();
     this.packetId = crypto.randomUUID();
-    this.belongingLayer = belongingLayer;
+    this.graph = graph;
+    const { type, layer } = packetContext(rawPacket);
+    this.belongingLayer = layer;
     this.type = type;
     this.context = contextPerPacketType[this.type];
     this.zIndex = ZIndexLevels.Packet;
@@ -74,6 +110,7 @@ export abstract class Packet extends Graphics {
     this.on("tap", this.onClick, this);
     // register in Packet Manger
     ctx.getViewGraph().getPacketManager().registerPacket(this);
+    this.visible = isVisible;
   }
 
   setProgress(progress: number) {
@@ -96,6 +133,14 @@ export abstract class Packet extends Graphics {
 
   private getPacketDetails(layer: Layer, rawPacket: EthernetFrame) {
     return rawPacket.getDetails(layer);
+  }
+
+  getPacketLocation(): PacketLocation {
+    return {
+      startId: this.currStart,
+      endId: this.currEnd,
+      currProgress: this.progress,
+    };
   }
 
   showInfo() {
@@ -133,8 +178,6 @@ export abstract class Packet extends Graphics {
     rightbar.addToggleButton("Packet Details", packetDetails);
   }
 
-  abstract getPacketLocation(): PacketLocation;
-
   highlight() {
     this.context = highlightedPacketContext;
   }
@@ -149,6 +192,10 @@ export abstract class Packet extends Graphics {
 
   getCurrStart(): DeviceId {
     return this.currStart;
+  }
+
+  getCurrEnd(): DeviceId {
+    return this.currEnd;
   }
 
   getProgress(): number {
@@ -167,224 +214,128 @@ export abstract class Packet extends Graphics {
     this.currStart = id;
   }
 
-  abstract deliverPacket(): void;
+  deliverPacket() {
+    const newStartDevice = this.graph.getDevice(this.currEnd);
 
-  updatePosition(edge: Edge) {
-    const startPos = edge.nodePosition(this.currStart);
-    const endPos = edge.nodePosition(edge.otherEnd(this.currStart));
-    this.setPositionAlongEdge(startPos, endPos, this.progress);
+    // Viewgraph may return undefined when trying to get the device
+    // as the device may have been removed by the user.
+    if (!newStartDevice) {
+      return;
+    }
+    newStartDevice.receiveFrame(this.rawPacket);
+  }
+
+  traverseEdge(startId: DeviceId, endId: DeviceId): void {
+    this.currStart = startId;
+    this.currEnd = endId;
+
+    // if the packet is shown in viewgraph
+    if (packetIsVisible(this.graph, this.visible)) {
+      const currEdge = this.graph.getEdge(startId, endId);
+      currEdge.addChild(this);
+      const start = currEdge.nodePosition(this.currStart);
+      const end = currEdge.nodePosition(this.currEnd);
+      this.updatePosition(start, end);
+    } else {
+      this.updatePosition();
+    }
+    Ticker.shared.add(this.animationTick, this);
+  }
+
+  animationTick(ticker: Ticker) {
+    let start: Position;
+    let end: Position;
+    if (packetIsVisible(this.graph, this.visible)) {
+      const currEdge = this.graph.getEdge(this.currStart, this.currEnd);
+      if (!currEdge) {
+        console.warn(
+          `No edge connecting devices ${this.currStart} and ${this.currEnd} in viewgraph`,
+        );
+        this.delete();
+        return;
+      }
+      start = currEdge.nodePosition(this.currStart);
+      end = currEdge.nodePosition(this.currEnd);
+    } else {
+      const currStartDevice = this.graph.getDevice(this.currStart);
+      const currEndDevice = this.graph.getDevice(this.currEnd);
+      if (!currStartDevice) {
+        console.warn("Current start device not found.");
+        this.delete();
+        return;
+      }
+      if (!currEndDevice) {
+        console.warn("Current end device not found.");
+        this.delete();
+        return;
+      }
+      start = currStartDevice.getPosition();
+      end = currEndDevice.getPosition();
+    }
+
+    const edgeLength = Math.sqrt(
+      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
+    );
+
+    const normalizedSpeed = this.speed / edgeLength;
+
+    if (!Packet.animationPaused) {
+      const progressIncrement =
+        (ticker.deltaMS * normalizedSpeed * this.ctx.getCurrentSpeed().value) /
+        1000;
+      this.progress += progressIncrement;
+      this.updatePosition(start, end);
+    }
+
+    if (this.progress >= 1) {
+      // Deliver packet
+      this.deliverPacket();
+      // Clean up
+      this.delete();
+    }
+  }
+
+  updatePosition(start?: Position, end?: Position) {
+    if (start && end) {
+      this.setPositionAlongEdge(start, end);
+    } else {
+      this.setPositionAlongEdge(
+        this.graph.getDevice(this.currStart).getPosition(),
+        this.graph.getDevice(this.currEnd).getPosition(),
+      );
+    }
   }
 
   /// Updates the position according to the current progress.
-  setPositionAlongEdge(start: Position, end: Position, progress: number) {
+  private setPositionAlongEdge(start: Position, end: Position) {
     const dx = end.x - start.x;
     const dy = end.y - start.y;
 
-    this.x = start.x + progress * dx;
-    this.y = start.y + progress * dy;
+    this.x = start.x + this.progress * dx;
+    this.y = start.y + this.progress * dy;
   }
 
   delete() {
+    // Remove packet from Ticker to stop animation
+    Ticker.shared.remove(this.animationTick, this);
+
     this.removeAllListeners();
+
+    // Remove packet from the edge
     this.removeFromParent();
 
     if (isSelected(this)) {
       deselectElement();
     }
 
+    // Deregister packet from PacketManager
     this.ctx.getViewGraph().getPacketManager().deregisterPacket(this.packetId);
     this.destroy();
   }
 }
 
-export class ViewPacket extends Packet {
-  viewgraph: ViewGraph;
-  currentEdge: Edge;
-
-  constructor(
-    viewgraph: ViewGraph,
-    belongingLayer: Layer,
-    type: string,
-    rawPacket: EthernetFrame,
-    ctx: GlobalContext,
-  ) {
-    super(belongingLayer, type, rawPacket, ctx);
-    this.viewgraph = viewgraph;
-  }
-
-  setCurrEdge(edge: Edge) {
-    this.currentEdge = edge;
-  }
-
-  getPacketLocation(): PacketLocation {
-    const nextDevice = this.currentEdge.otherEnd(this.currStart);
-    return {
-      prevDevice: this.currStart,
-      nextDevice,
-      currProgress: this.progress,
-    };
-  }
-
-  deliverPacket() {
-    const newStart = this.currentEdge.otherEnd(this.currStart);
-    const newStartDevice = this.viewgraph.getDevice(newStart);
-
-    // Viewgraph may return undefined when trying to get the device
-    // as the device may have been removed by the user.
-    if (!newStartDevice) {
-      return;
-    }
-    newStartDevice.receiveFrame(this.rawPacket);
-  }
-
-  traverseEdge(edge: Edge, start: DeviceId): void {
-    this.currentEdge = edge;
-    this.currStart = start;
-
-    // lo agrega como hijo (despues sacarlo)
-    this.currentEdge.addChild(this);
-    this.updatePosition(this.currentEdge);
-    Ticker.shared.add(this.animationTick, this);
-  }
-
-  async animationTick(ticker: Ticker) {
-    const start = this.currentEdge.startPos;
-    const end = this.currentEdge.endPos;
-
-    const edgeLength = Math.sqrt(
-      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
-    );
-
-    const normalizedSpeed = this.speed / edgeLength;
-
-    if (!Packet.animationPaused) {
-      const progressIncrement =
-        (ticker.deltaMS * normalizedSpeed * this.ctx.getCurrentSpeed().value) /
-        1000;
-      this.progress += progressIncrement;
-      this.updatePosition(this.currentEdge);
-    }
-
-    if (this.progress >= 1) {
-      // Deliver packet
-      this.deliverPacket();
-      // Clean up
-      this.delete();
-    }
-  }
-
-  delete() {
-    // Remove packet from Ticker to stop animation
-    Ticker.shared.remove(this.animationTick, this);
-
-    super.delete();
-  }
-}
-
-export class DataPacket extends Packet {
-  datagraph: DataGraph;
-  currNextDevice: DeviceId;
-
-  constructor(
-    datagraph: DataGraph,
-    belongingLayer: Layer,
-    type: string,
-    rawPacket: EthernetFrame,
-    ctx: GlobalContext,
-  ) {
-    super(belongingLayer, type, rawPacket, ctx);
-    this.datagraph = datagraph;
-  }
-
-  getPacketLocation(): PacketLocation {
-    return {
-      prevDevice: this.currStart,
-      nextDevice: this.currNextDevice,
-      currProgress: this.progress,
-    };
-  }
-
-  deliverPacket() {
-    const newStartDevice = this.datagraph.getDevice(this.currNextDevice);
-
-    // Viewgraph may return undefined when trying to get the device
-    // as the device may have been removed by the user.
-    if (!newStartDevice) {
-      return;
-    }
-    newStartDevice.receiveFrame(this.rawPacket);
-  }
-
-  traverseEdge(start: DeviceId, end: DeviceId): void {
-    this.currStart = start;
-    this.currNextDevice = end;
-
-    Ticker.shared.add(this.animationTick, this);
-  }
-
-  async animationTick(ticker: Ticker) {
-    const currStartDevice = this.datagraph.getDevice(this.currStart);
-    const currNextDevice = this.datagraph.getDevice(this.currNextDevice);
-    if (!currStartDevice) {
-      console.warn("Current start device not found.");
-      this.delete();
-      return;
-    }
-    if (!currNextDevice) {
-      console.warn("Current next device not found.");
-      this.delete();
-      return;
-    }
-    const start = currStartDevice.getPosition();
-    const end = currNextDevice.getPosition();
-
-    const edgeLength = Math.sqrt(
-      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
-    );
-
-    const normalizedSpeed = this.speed / edgeLength;
-
-    if (!Packet.animationPaused) {
-      const progressIncrement =
-        (ticker.deltaMS * normalizedSpeed * this.ctx.getCurrentSpeed().value) /
-        1000;
-      this.progress += progressIncrement;
-      this.setPositionAlongEdge(start, end, this.progress);
-    }
-
-    if (this.progress >= 1) {
-      // Deliver packet
-      this.deliverPacket();
-      // Clean up
-      this.delete();
-    }
-  }
-
-  delete() {
-    // Remove packet from Ticker to stop animation
-    Ticker.shared.remove(this.animationTick, this);
-
-    super.delete();
-  }
-}
-
-export function sendRawPacket(
-  graph: ViewGraph | DataGraph,
-  belongingLayer: Layer,
-  srcId: DeviceId,
-  rawPacket: EthernetFrame,
-  isV: boolean = true,
-) {
-  if (isV) {
-    sendViewPacket(graph as ViewGraph, belongingLayer, srcId, rawPacket);
-  } else {
-    sendDataPacket(graph as DataGraph, belongingLayer, srcId, rawPacket);
-  }
-}
-
-function sendViewPacket(
+export function sendViewPacket(
   viewgraph: ViewGraph,
-  belongingLayer: Layer,
   srcId: DeviceId,
   rawPacket: EthernetFrame,
 ) {
@@ -401,7 +352,6 @@ function sendViewPacket(
   let firstEdge = originConnections.find((edge) => {
     const otherId = edge.otherEnd(srcId);
     const otherDevice = viewgraph.getDevice(otherId);
-    console.debug(otherDevice.mac);
     return otherDevice.mac.equals(dstMac);
   });
   if (firstEdge === undefined) {
@@ -420,27 +370,12 @@ function sendViewPacket(
     );
     return;
   }
-  let type;
-  if (rawPacket.payload instanceof IPv4Packet) {
-    const payload = rawPacket.payload as IPv4Packet;
-    type = payload.payload.getPacketType();
-  } else {
-    console.warn("Packet is not IPv4");
-    type = "ICMP-8";
-  }
-  const packet = new ViewPacket(
-    viewgraph,
-    belongingLayer,
-    type,
-    rawPacket,
-    viewgraph.ctx,
-  );
-  packet.traverseEdge(firstEdge, srcId);
+  const packet = new Packet(viewgraph, rawPacket, viewgraph.ctx, true);
+  packet.traverseEdge(srcId, firstEdge.otherEnd(srcId));
 }
 
-function sendDataPacket(
+export function sendDataPacket(
   datagraph: DataGraph,
-  belongingLayer: Layer,
   srcId: DeviceId,
   rawPacket: EthernetFrame,
 ) {
@@ -456,7 +391,6 @@ function sendDataPacket(
   }
   let firstHop = originConnections.find((otherId) => {
     const otherDevice = datagraph.getDevice(otherId);
-    console.debug(otherDevice.mac);
     return otherDevice.mac.equals(dstMac);
   });
   if (firstHop === undefined) {
@@ -473,20 +407,6 @@ function sendDataPacket(
     );
     return;
   }
-  let type;
-  if (rawPacket.payload instanceof IPv4Packet) {
-    const payload = rawPacket.payload as IPv4Packet;
-    type = payload.payload.getPacketType();
-  } else {
-    console.warn("Packet is not IPv4");
-    type = "ICMP-8";
-  }
-  const packet = new DataPacket(
-    datagraph,
-    belongingLayer,
-    type,
-    rawPacket,
-    datagraph.ctx,
-  );
+  const packet = new Packet(datagraph, rawPacket, datagraph.ctx, false);
   packet.traverseEdge(srcId, firstHop);
 }

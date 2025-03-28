@@ -15,7 +15,7 @@ export const ICMP_REPLY_TYPE_NUMBER = 0;
 //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //  |                         variant data                          |
 //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-abstract class IcmpPacket implements IpPayload {
+export abstract class IcmpPacket implements IpPayload {
   // 8 bits
   type: number;
 

@@ -7,7 +7,6 @@ import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "../layer";
-import { isHost } from "../graphs/datagraph";
 import {
   getProgramList,
   newProgram,

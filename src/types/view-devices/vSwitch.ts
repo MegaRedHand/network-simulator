@@ -1,4 +1,3 @@
-// MARCADO V1
 import { ViewDevice, DeviceType } from "./vDevice";
 import { Layer } from "../layer";
 import { ViewGraph } from "../graphs/viewgraph";
@@ -10,7 +9,7 @@ import { Texture } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { IPv4Packet } from "../../packets/ip";
 import { GlobalContext } from "../../context";
-import { sendRawPacket } from "../packet";
+import { sendViewPacket } from "../packet";
 
 export class ViewSwitch extends ViewDevice {
   static DEVICE_TEXTURE: Texture;
@@ -71,7 +70,6 @@ export class ViewSwitch extends ViewDevice {
       return;
     }
     const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
-    // TODO: Belonging layer should be known
-    sendRawPacket(this.viewgraph, Layer.Network, this.id, newFrame);
+    sendViewPacket(this.viewgraph, this.id, newFrame);
   }
 }

@@ -1,11 +1,10 @@
-// MARCADO V1
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
-import { DataGraph, DeviceId, DataNode } from "../graphs/datagraph";
+import { DataGraph, DataNode } from "../graphs/datagraph";
 import { DeviceType } from "../view-devices/vDevice";
 import { Position } from "../common";
 
 export abstract class DataDevice {
-  private static idCounter: number = 1;
+  private static idCounter = 1;
 
   id: number;
   x: number;

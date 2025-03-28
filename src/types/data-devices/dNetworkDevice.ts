@@ -1,15 +1,8 @@
-// MARCADO V1
-import { EthernetFrame, MacAddress } from "../../packets/ethernet";
+import { EthernetFrame } from "../../packets/ethernet";
 import { EchoReply, EchoRequest } from "../../packets/icmp";
 import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
-import {
-  DataGraph,
-  DeviceId,
-  DataNode,
-  NetworkDataNode,
-} from "../graphs/datagraph";
-import { Layer } from "../layer";
-import { Packet, sendRawPacket } from "../packet";
+import { DataGraph, NetworkDataNode } from "../graphs/datagraph";
+import { sendDataPacket } from "../packet";
 import { DataDevice } from "./dDevice";
 
 export abstract class DataNetworkDevice extends DataDevice {
@@ -59,14 +52,7 @@ export abstract class DataNetworkDevice extends DataDevice {
           const echoReply = new EchoReply(0);
           const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
           const ethernet = new EthernetFrame(this.mac, dstMac, ipPacket);
-          // TODO: Belonging layer should be known
-          sendRawPacket(
-            this.datagraph,
-            Layer.Network,
-            this.id,
-            ethernet,
-            false,
-          );
+          sendDataPacket(this.datagraph, this.id, ethernet);
         }
         break;
       }
@@ -77,7 +63,7 @@ export abstract class DataNetworkDevice extends DataDevice {
 
   receiveFrame(frame: EthernetFrame): void {
     console.debug(
-      `Dispositivo ${this.mac.toString()} recibe frame con destino ${frame.destination.toString()}`,
+      `Device ${this.mac.toString()} receive frame with destination ${frame.destination.toString()}`,
     );
     if (!(frame.payload instanceof IPv4Packet)) {
       console.warn("Frame's payload is not an IPv4Packet");

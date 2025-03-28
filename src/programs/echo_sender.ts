@@ -1,6 +1,6 @@
 import { Ticker } from "pixi.js";
 import { DeviceId } from "../types/graphs/datagraph";
-import { sendRawPacket } from "../types/packet";
+import { sendViewPacket } from "../types/packet";
 import { ProgramBase } from "./program_base";
 import { ViewGraph } from "../types/graphs/viewgraph";
 import { ProgramInfo } from "../graphics/renderables/device_info";
@@ -8,7 +8,6 @@ import { EchoRequest } from "../packets/icmp";
 import { IPv4Packet } from "../packets/ip";
 import { ViewNetworkDevice } from "../types/view-devices/vNetworkDevice";
 import { EthernetFrame } from "../packets/ethernet";
-import { Layer } from "../types/layer";
 
 function adjacentDevices(viewgraph: ViewGraph, srcId: DeviceId) {
   const adjacentDevices = viewgraph
@@ -75,7 +74,7 @@ export class SingleEcho extends ProgramBase {
       }
     }
     const ethernetFrame = new EthernetFrame(srcDevice.mac, dstMac, ipPacket);
-    sendRawPacket(this.viewgraph, Layer.Network, this.srcId, ethernetFrame);
+    sendViewPacket(this.viewgraph, this.srcId, ethernetFrame);
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {

@@ -1,4 +1,3 @@
-// MARCADO V1
 import { ViewDevice } from "../view-devices";
 import { Edge, EdgeEdges } from "./../edge";
 import { DataGraph, DeviceId, DataNode, RemovedNodeData } from "./datagraph";
@@ -71,17 +70,6 @@ export class ViewGraph {
     this.addConnections(connections);
     return device;
   }
-
-  // addDeviceCurrent(deviceData: DataNode): ViewDevice {
-  //   const device = this.createDeviceNode(deviceData);
-  //   if (deviceData.connections.length !== 0) {
-  //     const connections = new Map<string, EdgePair>();
-  //     this.computeLayerConnections(deviceData.id, connections);
-
-  //     this.addConnections(connections);
-  //   }
-  //   return device;
-  // }
 
   // Add a device to the graph
   private addDevice(id: DeviceId, node: DataNode): ViewDevice {
@@ -197,7 +185,7 @@ export class ViewGraph {
     this.clear();
     this.constructView();
 
-    // le avisa al packet manager que cambia de capa
+    // warn Packet Manager that the layer has been changed
     this.packetManager.layerChanged(formerLayer, newLayer);
 
     const layerSelect = document.getElementById(

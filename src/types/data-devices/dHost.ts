@@ -1,13 +1,6 @@
-// MARCADO V1
 import { IPv4Packet } from "../../packets/ip";
-import {
-  DataGraph,
-  DeviceId,
-  HostDataNode,
-  NetworkDataNode,
-} from "../graphs/datagraph";
+import { DataGraph, HostDataNode } from "../graphs/datagraph";
 import { Layer } from "../layer";
-import { Packet } from "../packet";
 import { DataNetworkDevice } from "./dNetworkDevice";
 import { DeviceType } from "../view-devices/vDevice";
 import { RunningProgram } from "../../programs";

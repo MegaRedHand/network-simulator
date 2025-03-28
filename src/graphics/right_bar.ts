@@ -1,9 +1,5 @@
 import { DataRouter } from "../types/data-devices";
-import {
-  DeviceId,
-  isRouter,
-  RoutingTableEntry,
-} from "../types/graphs/datagraph";
+import { DeviceId, RoutingTableEntry } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
 
 export { StyledInfo } from "./renderables/styled_info";

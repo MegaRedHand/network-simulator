@@ -10,6 +10,7 @@ export enum Colors {
   White = 0xffffff,
   Black = 0x000000,
   Yellow = 0xffff00,
+  Grey = 0x5e5e5e,
 }
 
 export function circleGraphicsContext(

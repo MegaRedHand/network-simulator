@@ -1,5 +1,5 @@
 import { Viewport } from "./graphics/viewport";
-import { DataGraph, isNetworkNode } from "./types/graphs/datagraph";
+import { DataGraph } from "./types/graphs/datagraph";
 import { ViewGraph } from "./types/graphs/viewgraph";
 import {
   loadFromLocalStorage,

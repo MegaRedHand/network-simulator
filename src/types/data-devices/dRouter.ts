@@ -1,17 +1,13 @@
-// MARCADO V1
-import { Ticker, View } from "pixi.js";
+import { Ticker } from "pixi.js";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceType } from "../view-devices/vDevice";
-import { Layer } from "../layer";
 import {
   DataGraph,
-  DataNode,
-  NetworkDataNode,
   DeviceId,
   RouterDataNode,
   RoutingTableEntry,
 } from "../graphs/datagraph";
-import { Packet, sendRawPacket } from "../packet";
+import { sendDataPacket } from "../packet";
 import { DataNetworkDevice } from "./dNetworkDevice";
 import { EthernetFrame } from "../../packets/ethernet";
 
@@ -73,8 +69,7 @@ export class DataRouter extends DataNetworkDevice {
         continue;
       }
       const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
-      // TODO: Belonging layer should be known and not hardcoded
-      sendRawPacket(this.datagraph, Layer.Network, this.id, newFrame, false);
+      sendDataPacket(this.datagraph, this.id, newFrame);
     }
 
     if (this.packetQueue.isEmpty()) {
@@ -116,7 +111,6 @@ export class DataRouter extends DataNetworkDevice {
       }
       const ip = IpAddress.parse(entry.ip);
       const mask = IpAddress.parse(entry.mask);
-      // console.debug("Considering entry:", entry);
       return datagram.destinationAddress.isInSubnet(ip, mask);
     });
 

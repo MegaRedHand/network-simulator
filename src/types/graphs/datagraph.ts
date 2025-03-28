@@ -1,4 +1,3 @@
-// MARCADO V1
 import { IpAddress } from "../../packets/ip";
 import { RunningProgram } from "../../programs";
 import { DeviceType, layerFromType } from "../view-devices/vDevice";
@@ -250,7 +249,7 @@ export class DataGraph {
   // Same logic than the one in ViewGraph.
   // Get a device by its IP address
   getDeviceByIP(sourceAddress: IpAddress): DataDevice {
-    for (const [_, device] of this.getDevices()) {
+    for (const [, device] of this.getDevices()) {
       if (
         device instanceof DataNetworkDevice &&
         device.ip.equals(sourceAddress)

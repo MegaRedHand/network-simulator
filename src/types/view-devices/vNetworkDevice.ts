@@ -2,11 +2,10 @@ import { Texture } from "pixi.js";
 import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
 import { ViewDevice } from "./vDevice";
-import { Layer } from "../layer";
 import { ViewGraph } from "../graphs/viewgraph";
 import { Position } from "../common";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
-import { sendRawPacket } from "../packet";
+import { sendViewPacket } from "../packet";
 import { EchoReply, EchoRequest } from "../../packets/icmp";
 import { GlobalContext } from "../../context";
 
@@ -40,9 +39,7 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     switch (datagram.payload.protocol()) {
       case ICMP_PROTOCOL_NUMBER: {
         const request: EchoRequest = datagram.payload as EchoRequest;
-        console.debug(`${dstDevice} y ${request.type}`);
         if (dstDevice && request.type) {
-          console.debug("Voy a mandar un EchoReply!");
           const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
           let dstMac = dstDevice.mac;
           if (!path) return;
@@ -57,8 +54,8 @@ export abstract class ViewNetworkDevice extends ViewDevice {
           const echoReply = new EchoReply(0);
           const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
           const ethernet = new EthernetFrame(this.mac, dstMac, ipPacket);
-          // TODO: Belonging layer should be known
-          sendRawPacket(this.viewgraph, Layer.Network, this.id, ethernet);
+          console.debug(`Sending EchoReply to ${dstDevice}`);
+          sendViewPacket(this.viewgraph, this.id, ethernet);
         }
         break;
       }

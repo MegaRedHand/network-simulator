@@ -126,6 +126,10 @@ export abstract class ViewDevice extends Container {
     this.addChild(idText); // Add the ID text as a child of the device
   }
 
+  getPosition(): Position {
+    return { x: this.x, y: this.y };
+  }
+
   delete(): RemovedNodeData {
     const deviceData = this.viewgraph.removeDevice(this.id);
     console.log(`Device ${this.id} deleted`);

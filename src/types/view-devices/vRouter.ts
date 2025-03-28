@@ -6,12 +6,12 @@ import RouterImage from "../../assets/router.svg";
 import { Position } from "../common";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
-import { DeviceId, isRouter } from "../graphs/datagraph";
+import { DeviceId } from "../graphs/datagraph";
 import { Texture, Ticker } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataRouter } from "../data-devices";
-import { sendRawPacket } from "../packet";
+import { sendViewPacket } from "../packet";
 
 export class ViewRouter extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -96,8 +96,7 @@ export class ViewRouter extends ViewNetworkDevice {
         continue;
       }
       const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
-      // TODO: Belonging layer has to be known
-      sendRawPacket(this.viewgraph, Layer.Network, this.id, newFrame);
+      sendViewPacket(this.viewgraph, this.id, newFrame);
     }
 
     if (this.packetQueue.isEmpty()) {
@@ -139,7 +138,6 @@ export class ViewRouter extends ViewNetworkDevice {
       }
       const ip = IpAddress.parse(entry.ip);
       const mask = IpAddress.parse(entry.mask);
-      console.debug("Considering entry:", entry);
       return datagram.destinationAddress.isInSubnet(ip, mask);
     });
 
