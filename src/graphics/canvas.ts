@@ -25,7 +25,7 @@ export function createLayerSelector(
     option.classList.add("dropdown-option");
     option.textContent = optionData.text;
 
-    TooltipManager.getInstance().attachTooltip(option, optionData.text);
+    TooltipManager.getInstance().attachTooltip(option, optionData.text, true);
 
     option.onclick = (e) => {
       selected.textContent = optionData.text;

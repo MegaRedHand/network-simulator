@@ -54,6 +54,13 @@ export class TooltipManager {
       PID: "The Process ID (PID) is a unique identifier assigned to a running program or process.",
       Inputs:
         "The input parameters or arguments provided to the program when it was started.",
+
+      // top bar buttons
+      "new-button": "Clears the canvas.",
+      "save-button": "Saves the current network.",
+      "load-button": "Loads the current network.",
+      "print-button": "Generates an image of the network.",
+      "help-button": "Opens the help and settings menu.",
     };
   }
 
@@ -68,7 +75,7 @@ export class TooltipManager {
     this.globalContext = globalContext;
   }
 
-  public attachTooltip(element: HTMLElement, key: string) {
+  public attachTooltip(element: HTMLElement, key: string, hideDelay = false) {
     const tooltipsEnabled = this.globalContext?.get_enable_tooltips() ?? true;
 
     if (key in this.tooltipsDictionary) {
@@ -76,7 +83,11 @@ export class TooltipManager {
         element.classList.add("has-tooltip");
         element.addEventListener("mouseenter", () => this.showTooltip(key));
         element.addEventListener("mouseleave", () => {
-          this.startHideTooltipDelay();
+          if (hideDelay) {
+            this.startHideTooltipDelay();
+          } else {
+            this.hideTooltip();
+          }
         });
       } else {
         element.classList.remove("has-tooltip");

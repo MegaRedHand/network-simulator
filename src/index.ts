@@ -66,6 +66,9 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   app.stage.addChild(viewport);
   const ctx = new GlobalContext(viewport);
 
+  // Initialize tooltips
+  TooltipManager.getInstance().setGlobalContext(ctx);
+
   // Initialize UI components
   RightBar.getInstance();
   const leftBar = LeftBar.getFrom(document, ctx);
@@ -91,11 +94,11 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   buttonActions.forEach(({ id, action }) => {
     const button = document.getElementById(id);
-    if (button) button.onclick = action;
+    if (button) {
+      button.onclick = action;
+      TooltipManager.getInstance().attachTooltip(button, id);
+    }
   });
-
-  // Initialize tooltips
-  TooltipManager.getInstance().setGlobalContext(ctx);
 
   console.log("✅ Initialized!");
 })();
