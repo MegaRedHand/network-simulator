@@ -21,7 +21,7 @@ export class GlobalContext {
   private viewport: Viewport = null;
   private datagraph: DataGraph;
   private viewgraph: ViewGraph;
-  private speedMultiplier: SpeedMultiplier;
+  private speedMultiplier = new SpeedMultiplier(1);
   private saveIntervalId: NodeJS.Timeout | null = null;
   private ipGenerator: IpAddressGenerator;
   private macGenerator: MacAddressGenerator;
@@ -58,17 +58,16 @@ export class GlobalContext {
   }
 
   private setSpeedMultiplier(speedMultiplier: SpeedMultiplier) {
-    if (speedMultiplier && speedMultiplier.value > 0) {
-      this.changeSpeedMultiplier(speedMultiplier.value);
-      // Update the wheel display after setting the speed
-      const speedWheel = document.getElementById(
-        "speed-wheel",
-      ) as HTMLInputElement;
-      const valueDisplay = document.querySelector(".value-display");
-      if (speedWheel && valueDisplay) {
-        speedWheel.value = speedMultiplier.value.toString();
-        valueDisplay.textContent = `${speedMultiplier.value}x`;
-      }
+    this.speedMultiplier = speedMultiplier;
+    // TODO: make this change go through SpeedControlHandler
+    // Update the wheel display after setting the speed
+    const speedWheel = document.getElementById(
+      "speed-wheel",
+    ) as HTMLInputElement;
+    const valueDisplay = document.querySelector(".value-display");
+    if (speedWheel && valueDisplay) {
+      speedWheel.value = speedMultiplier.value.toString();
+      valueDisplay.textContent = `${speedMultiplier.value}x`;
     }
   }
 
@@ -97,7 +96,7 @@ export class GlobalContext {
   }
 
   getCurrentSpeed() {
-    return this.speedMultiplier;
+    return this.speedMultiplier.value;
   }
 
   getDataGraph() {
@@ -109,11 +108,17 @@ export class GlobalContext {
     this.setNetwork(this.datagraph, layer);
   }
 
+  pause() {
+    this.speedMultiplier.pause();
+  }
+
+  unpause() {
+    this.speedMultiplier.unpause();
+  }
+
   changeSpeedMultiplier(speedMultiplier: number) {
-    if (this.viewgraph) {
-      this.speedMultiplier = new SpeedMultiplier(speedMultiplier);
-      saveToLocalStorage(this);
-    }
+    this.speedMultiplier.setSpeed(speedMultiplier);
+    saveToLocalStorage(this);
   }
 
   private setupAutoSave() {

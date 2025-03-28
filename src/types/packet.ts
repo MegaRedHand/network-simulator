@@ -34,16 +34,6 @@ export class Packet extends Graphics {
   private type: string;
   private rawPacket: EthernetFrame;
 
-  static animationPaused = false;
-
-  static pauseAnimation() {
-    Packet.animationPaused = true;
-  }
-
-  static unpauseAnimation() {
-    Packet.animationPaused = false;
-  }
-
   constructor(viewgraph: ViewGraph, type: string, rawPacket: EthernetFrame) {
     super();
 
@@ -164,10 +154,8 @@ export class Packet extends Graphics {
     const normalizedSpeed = this.speed / edgeLength;
 
     // Update progress with normalized speed
-    if (!Packet.animationPaused) {
-      this.progress +=
-        (ticker.deltaMS * normalizedSpeed * this.viewgraph.getSpeed()) / 1000;
-    }
+    this.progress +=
+      (ticker.deltaMS * normalizedSpeed * this.viewgraph.getSpeed()) / 1000;
 
     this.updatePosition();
   }
