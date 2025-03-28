@@ -5,6 +5,7 @@ import { addDevice } from "../types/viewportManager";
 import { GlobalContext } from "../context";
 import { DeviceType } from "../types/devices/device";
 import { Layer, layerFromName } from "../types/devices/layer";
+import { TooltipManager } from "./renderables/tooltip_manager";
 
 export class LeftBar {
   private leftBar: HTMLElement;
@@ -25,6 +26,7 @@ export class LeftBar {
     button.setAttribute("title", label); // Shows Text
 
     button.onclick = onClick;
+    TooltipManager.getInstance().attachTooltip(button, label);
     this.leftBar.appendChild(button);
 
     const img = document.createElement("img");

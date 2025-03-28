@@ -1,4 +1,5 @@
 import { GlobalContext } from "../context";
+import { TooltipManager } from "../graphics/renderables/tooltip_manager";
 
 export class SpeedControlHandler {
   private ctx: GlobalContext; // Adjust the type based on GlobalContext
@@ -10,6 +11,7 @@ export class SpeedControlHandler {
     this.speedWheel = document.getElementById(
       "speed-wheel",
     ) as HTMLInputElement;
+    TooltipManager.getInstance().attachTooltip(this.speedWheel, "speed-wheel");
     this.valueDisplay = document.querySelector(".value-display");
 
     if (this.speedWheel && this.valueDisplay) {

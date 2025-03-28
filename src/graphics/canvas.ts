@@ -11,6 +11,8 @@ export function createLayerSelector(
   dropdown.classList.add("custom-dropdown", "layerselectordropdown");
 
   const selected = document.createElement("div");
+  // Attach tooltip to the selector
+  TooltipManager.getInstance().attachTooltip(selected, "layer-selector");
   selected.classList.add("selected-option");
   selected.textContent = "Link Layer";
   dropdown.appendChild(selected);

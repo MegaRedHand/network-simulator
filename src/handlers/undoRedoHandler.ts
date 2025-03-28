@@ -2,6 +2,7 @@ import { GlobalContext } from "../context";
 import { urManager } from "../types/viewportManager";
 import UndoSvg from "../assets/left-curve-arrow.svg";
 import RedoSvg from "../assets/right-curve-arrow.svg";
+import { TooltipManager } from "../graphics/renderables/tooltip_manager";
 
 export class UndoRedoHandler {
   private ctx: GlobalContext;
@@ -38,10 +39,12 @@ export class UndoRedoHandler {
     if (this.undoButton) {
       this.undoButton.appendChild(this.undoIcon);
       this.undoButton.onclick = () => this.triggerUndo();
+      TooltipManager.getInstance().attachTooltip(this.undoButton, "undo");
     }
     if (this.redoButton) {
       this.redoButton.appendChild(this.redoIcon);
       this.redoButton.onclick = () => this.triggerRedo();
+      TooltipManager.getInstance().attachTooltip(this.redoButton, "redo");
     }
   }
 

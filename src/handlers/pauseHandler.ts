@@ -1,6 +1,7 @@
 import PlaySvg from "../assets/play-icon.svg";
 import PauseSvg from "../assets/pause-icon.svg";
 import { Packet } from "../types/packet";
+import { TooltipManager } from "../graphics/renderables/tooltip_manager";
 
 export class PauseHandler {
   private pauseButton: HTMLButtonElement | null;
@@ -26,6 +27,10 @@ export class PauseHandler {
       this.pauseIcon.alt = "Pause Icon";
       this.pauseButton.appendChild(this.pauseIcon);
       this.pauseButton.onclick = () => this.togglePause();
+      TooltipManager.getInstance().attachTooltip(
+        this.pauseButton,
+        "pause-button",
+      );
     }
   }
 

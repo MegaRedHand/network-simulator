@@ -549,6 +549,7 @@ export function createRightBarButton(
   toggleSelected = false,
 ) {
   const button = document.createElement("button");
+  TooltipManager.getInstance().attachTooltip(button, text);
   button.classList.add("right-bar-button");
   if (buttonClass) {
     button.classList.add(...buttonClass.split(" "));
@@ -609,6 +610,9 @@ export function createDropdown(
 
   // Create the element displaying the selected option
   const selected = document.createElement("div");
+
+  // Attach tooltip to the selected
+  TooltipManager.getInstance().attachTooltip(selected, label);
   selected.classList.add("selected-option");
   selected.textContent = "Select" + (label ? ` ${label}` : "");
   dropdown.appendChild(selected);

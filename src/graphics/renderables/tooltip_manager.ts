@@ -26,6 +26,7 @@ export class TooltipManager {
         "A switch is a networking device that connects devices within a local area network (LAN). It operates at the data link layer and uses MAC addresses to forward data to the correct device. Switches improve network efficiency by reducing collisions.",
 
       // Layer Information
+      "layer-selector": "Select a Layer.",
       "App Layer":
         "The Application Layer enables communication between network applications, defining protocols that specify how messages are formatted, transmitted, and processed. It supports different architectures, such as client-server (used in HTTP, SMTP, and DNS) and peer-to-peer (P2P). This layer powers essential services like web browsing, email, file transfers, and domain name resolution, ensuring seamless interaction between users and network services.",
       "Transport Layer":
@@ -55,12 +56,30 @@ export class TooltipManager {
       Inputs:
         "The input parameters or arguments provided to the program when it was started.",
 
-      // top bar buttons
-      "new-button": "Clears the canvas.",
-      "save-button": "Saves the current network.",
-      "load-button": "Loads the current network.",
-      "print-button": "Generates an image of the network.",
-      "help-button": "Opens the help and settings menu.",
+      // top bar & canvas buttons
+      "new-button": "Clears the canvas. Shortcut: [N] key.",
+      "save-button": "Saves the current network. Shortcut: [S] key.",
+      "load-button": "Loads the current network. Shortcut: [L] key.",
+      "print-button": "Generates an image of the network. Shortcut: [P] key.",
+      "help-button": "Opens the help and settings menu. Shortcut: [H] key.",
+      "pause-button":
+        "Pauses the simulation. Click again to resume. Shortcut: [Space] key.",
+      undo: "Undoes the last action. Shortcut: [Ctrl + Z] key.",
+      redo: "Redoes the last undone action. Shortcut: [Ctrl + Y] key.",
+      "speed-wheel": "Adjusts the simulation speed.",
+
+      // left bar buttons
+      "Add Host": "Adds a host to the canvas.",
+      "Add Router": "Adds a router to the canvas.",
+      "Add Switch": "Adds a switch to the canvas.",
+
+      // right bar buttons
+      "Connect device":
+        "Connects the selected device to another device. Click on the target device to establish the connection. Shortcut: [C] key.",
+      "Delete device":
+        "Deletes the selected device from the canvas. Shortcut: [Delete] key.",
+      "Start program":
+        "Starts the selected program on the host device. Ensure all required inputs are provided.",
     };
   }
 
