@@ -4,6 +4,7 @@ export class TooltipManager {
   private static instance: TooltipManager | null = null; // Singleton instance
   private tooltipsDictionary: Record<string, string>;
   private globalContext: GlobalContext | null = null; // GlobalContext puede ser opcional
+  private tooltipTimeout: NodeJS.Timeout | null = null;
 
   private constructor() {
     this.tooltipsDictionary = {
@@ -26,13 +27,13 @@ export class TooltipManager {
 
       // Layer Information
       "App Layer":
-        "The topmost layer in the OSI model, responsible for providing network services directly to user applications, such as email, file transfer, and web browsing.",
+        "The Application Layer enables communication between network applications, defining protocols that specify how messages are formatted, transmitted, and processed. It supports different architectures, such as client-server (used in HTTP, SMTP, and DNS) and peer-to-peer (P2P). This layer powers essential services like web browsing, email, file transfers, and domain name resolution, ensuring seamless interaction between users and network services.",
       "Transport Layer":
-        "Ensures reliable data transfer between devices by managing error detection, data flow control, and retransmission of lost packets. Examples include TCP and UDP protocols.",
+        "The Transport Layer ensures end-to-end communication between applications on different devices. It provides essential services such as multiplexing, reliable data transfer, congestion control, and flow control. Protocols like TCP offer reliability through acknowledgments, retransmissions, and sequence numbers, while UDP provides a simpler, connectionless service with lower overhead. This layer plays a crucial role in ensuring data is transmitted efficiently and reliably across the network.",
       "Network Layer":
-        "Handles the routing and forwarding of data packets between devices across different networks. It determines the best path for data to travel. Examples include IP and ICMP protocols.",
+        "The Network Layer is responsible for delivering data packets across different networks, ensuring they reach the correct destination. It determines the best paths for data transmission using routing protocols and manages addressing through IPv4 and IPv6. This layer also includes mechanisms for forwarding packets efficiently and handling network-wide configurations. Through routing algorithms like link-state and distance-vector, as well as protocols such as OSPF and BGP, the Network Layer plays a crucial role in maintaining global connectivity across the internet.",
       "Link Layer":
-        "The layer responsible for managing the physical transmission of data between devices on the same network. It includes error detection and MAC addressing. Examples include Ethernet and Wi-Fi.",
+        "The Link Layer is responsible for transferring data between directly connected nodes, such as hosts, switches, routers, and WiFi access points. It encapsulates network-layer packets into frames and ensures efficient transmission over different types of links. This layer also includes mechanisms for error detection and correction, multiple access control for shared networks, and link-layer addressing using MAC addresses. Technologies like Ethernet, WiFi, and VLANs operate at this level, enabling both wired and wireless communication within local networks.",
 
       // Routing Table Information
       IP: "The IP (Internet Protocol) address is a unique identifier assigned to a device on a network.",
@@ -74,7 +75,9 @@ export class TooltipManager {
       if (tooltipsEnabled) {
         element.classList.add("has-tooltip");
         element.addEventListener("mouseenter", () => this.showTooltip(key));
-        element.addEventListener("mouseleave", () => this.hideTooltip());
+        element.addEventListener("mouseleave", () => {
+          this.startHideTooltipDelay();
+        });
       } else {
         element.classList.remove("has-tooltip");
       }
@@ -90,6 +93,22 @@ export class TooltipManager {
     if (tooltip) {
       tooltip.textContent = text;
       tooltip.style.display = "block";
+
+      if (this.tooltipTimeout) {
+        clearTimeout(this.tooltipTimeout);
+        this.tooltipTimeout = null;
+      }
+
+      tooltip.addEventListener("mouseenter", () => {
+        if (this.tooltipTimeout) {
+          clearTimeout(this.tooltipTimeout);
+          this.tooltipTimeout = null;
+        }
+      });
+
+      tooltip.addEventListener("mouseleave", () => {
+        this.startHideTooltipDelay();
+      });
     }
   }
 
@@ -115,5 +134,11 @@ export class TooltipManager {
         htmlElement.classList.remove("has-tooltip");
       }
     });
+  }
+
+  private startHideTooltipDelay() {
+    this.tooltipTimeout = setTimeout(() => {
+      this.hideTooltip();
+    }, 300); // 300ms
   }
 }

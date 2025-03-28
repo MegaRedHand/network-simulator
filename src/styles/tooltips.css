@@ -2,8 +2,8 @@
 .global-tooltip {
   display: none; /* Hidden by default */
   position: fixed; /* Fixed position on the screen */
-  top: 50%; /* Center vertically */
-  left: 50%; /* Center horizontally */
+  top: 80%; /* Center vertically */
+  left: 40%; /* Center horizontally */
   transform: translate(-50%, -50%); /* Adjust position to center */
   background: #2b2b2b; /* Dark background */
   color: #ffffff; /* White text */
@@ -14,12 +14,11 @@
   z-index: 1000; /* Ensure it appears above other elements */
   box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3); /* Shadow effect */
   border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
-  max-width: 600px; /* Maximum width */
+  max-width: 37.5rem; /* Maximum width in rem (600px / 16) */
   white-space: pre-wrap; /* Allow line breaks */
   line-height: 1.8; /* Line spacing */
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; /* Font family */
   overflow-y: auto; /* Enable scrolling for long content */
-  max-height: 300px; /* Maximum height to avoid oversized tooltips */
 }
 
 .has-tooltip {
@@ -29,4 +28,21 @@
 
 .has-tooltip:hover {
   color: #0078d7;
+}
+
+@media (max-width: 768px) {
+  .global-tooltip {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 22.5rem;
+    max-height: 80vh;
+    font-size: 0.875rem;
+    overflow-y: scroll; /* Enable scrolling */
+    scrollbar-width: none; /* Hide scrollbar in Firefox */
+  }
+
+  .global-tooltip::-webkit-scrollbar {
+    display: none; /* Hide scrollbar in WebKit browsers */
+  }
 }
