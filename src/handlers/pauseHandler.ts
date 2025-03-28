@@ -1,6 +1,5 @@
 import PlaySvg from "../assets/play-icon.svg";
 import PauseSvg from "../assets/pause-icon.svg";
-import { Packet } from "../types/packet";
 import { TooltipManager } from "../graphics/renderables/tooltip_manager";
 import { GlobalContext } from "../context";
 

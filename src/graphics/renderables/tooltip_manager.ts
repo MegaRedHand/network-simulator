@@ -49,6 +49,8 @@ export class TooltipManager {
       "Echo server":
         "An Echo server is a network service that sends back any data it receives to the sender. It is commonly used for testing and debugging network connections.",
       Destination: "Select the destination for the packet to be sent.",
+      "Send HTTP request":
+        "Send an HTTP request to a specified URL. This command is used to retrieve web pages or other resources from a web server.",
       "Time between pings":
         "Specify the time interval between consecutive ping requests.",
       Name: "The name of the program or process currently running.",
