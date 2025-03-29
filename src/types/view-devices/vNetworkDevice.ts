@@ -32,6 +32,7 @@ export abstract class ViewNetworkDevice extends ViewDevice {
 
   // TODO: Most probably it will be different for each type of device
   handlePacket(datagram: IPv4Packet) {
+    console.debug("Packet has reach its destination!");
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.sourceAddress);
     if (!(dstDevice instanceof ViewNetworkDevice)) {
       return;

@@ -42,11 +42,19 @@ export class PacketManager {
       const packet = this.packetsInTransit.get(key);
       const rawPacket = packet.getRawPacket();
       // newEndDevice calculation
-      const dstDevice = this.viewgraph.getDeviceByIP(
-        rawPacket.payload instanceof IPv4Packet
-          ? rawPacket.payload.destinationAddress
-          : undefined,
-      );
+      const dstDevice = this.viewgraph
+        .getDataGraph()
+        .getDeviceByIP(
+          rawPacket.payload instanceof IPv4Packet
+            ? rawPacket.payload.destinationAddress
+            : undefined,
+        );
+      if (!dstDevice) {
+        // device was deleted, so packet also has to be deleted.
+        // TODO: let packet continue until a device previously adjacent to deleted device drops it
+        packet.delete();
+        continue;
+      }
       if (layerIncluded(packet.belongingLayer, newLayer)) {
         // Its a ViewPacket
         let newStartId: DeviceId;
@@ -134,6 +142,9 @@ export class PacketManager {
     return [newsStartId, newEnd];
   }
 
+  // TODO:
+  // Route calculation depends on the ultimately destination of the packet transmition.
+  // Route calculation could depend on the next device following the packet currEndDevice.
   private newRouteForUpperLayer(
     packet: Packet,
     graph: DataGraph | ViewGraph,

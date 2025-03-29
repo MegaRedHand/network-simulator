@@ -48,8 +48,8 @@ export class GlobalContext {
 
   private setNetwork(datagraph: DataGraph, layer: Layer) {
     this.datagraph = datagraph;
-    this.viewport.clear();
     if (this.viewgraph) {
+      this.viewgraph.setDataGraph(datagraph);
       this.viewgraph.changeCurrLayer(layer);
     } else {
       this.viewgraph = new ViewGraph(datagraph, this, layer);

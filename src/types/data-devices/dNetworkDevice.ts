@@ -52,6 +52,7 @@ export abstract class DataNetworkDevice extends DataDevice {
           const echoReply = new EchoReply(0);
           const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
           const ethernet = new EthernetFrame(this.mac, dstMac, ipPacket);
+          console.debug(`Sending EchoReply to ${dstDevice}`);
           sendDataPacket(this.datagraph, this.id, ethernet);
         }
         break;

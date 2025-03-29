@@ -28,7 +28,7 @@ export class LayerHandler {
 
   private selectNewLayer(event: Event) {
     const selectedLayer = (event.target as HTMLSelectElement).value;
-    console.log(`Layer selected: ${selectedLayer}`);
+    console.debug(`Layer selected: ${selectedLayer}`);
 
     if (selectedLayer) {
       this.ctx.changeViewGraph(selectedLayer);

@@ -98,6 +98,7 @@ export class DataGraph {
   private onChanges: (() => void)[] = [];
 
   constructor(ctx: GlobalContext) {
+    DataDevice.initializedIdCounter();
     this.ctx = ctx;
   }
 

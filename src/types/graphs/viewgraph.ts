@@ -334,6 +334,10 @@ export class ViewGraph {
     return this.graph.hasVertex(id);
   }
 
+  setDataGraph(datagraph: DataGraph): void {
+    this.datagraph = datagraph;
+  }
+
   /// Returns shortest path between two devices using BFS
   getPathBetween(startId: DeviceId, endId: DeviceId): DeviceId[] {
     // try to avoid having a host in the middle of the path

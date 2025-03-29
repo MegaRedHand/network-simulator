@@ -31,6 +31,10 @@ export abstract class DataDevice {
     this.datagraph = datagraph;
   }
 
+  static initializedIdCounter() {
+    this.idCounter = 1;
+  }
+
   getDataNode(): DataNode {
     return {
       id: this.id,
