@@ -20,6 +20,7 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
   "ICMP-8": circleGraphicsContext(Colors.Red, 0, 0, 5),
   "ICMP-0": circleGraphicsContext(Colors.Yellow, 0, 0, 5),
+  TCP: circleGraphicsContext(Colors.Hazel, 0, 0, 5), // for HTTP
 };
 
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
