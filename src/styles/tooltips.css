@@ -19,6 +19,8 @@
   line-height: 1.8; /* Line spacing */
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; /* Font family */
   overflow-y: auto; /* Enable scrolling for long content */
+  opacity: 0.8; /* Slightly transparent */
+  transition: opacity 0.2s ease-in-out; /* Smooth transition for opacity */
 }
 
 .has-tooltip {
