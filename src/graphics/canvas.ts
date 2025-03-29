@@ -1,3 +1,4 @@
+import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 import { TooltipManager } from "./renderables/tooltip_manager";
 
 export function createLayerSelector(
@@ -12,9 +13,12 @@ export function createLayerSelector(
 
   const selected = document.createElement("div");
   // Attach tooltip to the selector
-  TooltipManager.getInstance().attachTooltip(selected, "layer-selector");
+  TooltipManager.getInstance().attachTooltip(
+    selected,
+    TOOLTIP_KEYS.LAYER_SELECTOR,
+  );
   selected.classList.add("selected-option");
-  selected.textContent = "Link Layer";
+  selected.textContent = TOOLTIP_KEYS.LINK_LAYER;
   dropdown.appendChild(selected);
 
   const optionsContainer = document.createElement("div");

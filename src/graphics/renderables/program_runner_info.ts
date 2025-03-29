@@ -1,4 +1,5 @@
 import { ProgramRunner, RunningProgram } from "../../programs";
+import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import {
   createDropdown,
   createRightBarButton,
@@ -41,7 +42,7 @@ export class ProgramRunnerInfo implements Renderable {
     );
     // Button to run program
     const startProgramButton = createRightBarButton(
-      "Start program",
+      TOOLTIP_KEYS.START_PROGRAM,
       () => {
         const { name } = selectedProgram;
         console.log("Started program: ", name);

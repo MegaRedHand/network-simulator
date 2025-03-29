@@ -1,5 +1,5 @@
 import { Application, GraphicsContext, RenderTexture } from "pixi.js";
-import { Viewport } from "./graphics/viewport";
+import { Viewport } from "../graphics/viewport";
 
 export enum Colors {
   Violet = 0x4b0082,

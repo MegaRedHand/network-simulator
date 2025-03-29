@@ -29,6 +29,7 @@ import {
   triggerSave,
 } from "./handlers/triggers";
 import { TooltipManager } from "./graphics/renderables/tooltip_manager";
+import { TOOLTIP_KEYS } from "./utils/constants/tooltips_constants";
 
 const assets = [
   RouterSvg,
@@ -85,11 +86,11 @@ async function loadAssets(otherPromises: Promise<void>[]) {
 
   // Setup button event handlers
   const buttonActions: { id: string; action: () => void }[] = [
-    { id: "new-button", action: () => triggerNew(ctx) },
-    { id: "save-button", action: () => triggerSave(ctx) },
-    { id: "load-button", action: () => triggerLoad(ctx) },
-    { id: "print-button", action: () => triggerPrint(app, ctx) },
-    { id: "help-button", action: () => triggerHelp(configModal) },
+    { id: TOOLTIP_KEYS.NEW_BUTTON, action: () => triggerNew(ctx) },
+    { id: TOOLTIP_KEYS.SAVE_BUTTON, action: () => triggerSave(ctx) },
+    { id: TOOLTIP_KEYS.LOAD_BUTTON, action: () => triggerLoad(ctx) },
+    { id: TOOLTIP_KEYS.PRINT_BUTTON, action: () => triggerPrint(app, ctx) },
+    { id: TOOLTIP_KEYS.HELP_BUTTON, action: () => triggerHelp(configModal) },
   ];
 
   buttonActions.forEach(({ id, action }) => {

@@ -15,7 +15,7 @@ import {
   MacAddress,
   MacAddressGenerator,
 } from "./packets/ethernet";
-import { Colors } from "./utils";
+import { Colors } from "./utils/utils";
 
 export class GlobalContext {
   private viewport: Viewport = null;

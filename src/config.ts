@@ -1,7 +1,7 @@
 import { GlobalContext } from "./context";
 import { TooltipManager } from "./graphics/renderables/tooltip_manager";
 import { deselectElement } from "./types/viewportManager";
-import { Colors } from "./utils";
+import { Colors } from "./utils/utils";
 
 export class ConfigModal {
   private ctx: GlobalContext;

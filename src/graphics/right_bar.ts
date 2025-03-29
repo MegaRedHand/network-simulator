@@ -4,6 +4,7 @@ import {
   RoutingTableEntry,
 } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
+import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 import { TooltipManager } from "./renderables/tooltip_manager";
 
 export { StyledInfo } from "./renderables/styled_info";
@@ -148,6 +149,11 @@ export function createRoutingTable(
   const table = createTable(headers, rows, options);
   table.classList.add(...tableClasses);
   const button = createToggleButton(title, buttonClass, table);
+
+  TooltipManager.getInstance().attachTooltip(
+    button,
+    TOOLTIP_KEYS.ROUTING_TABLE,
+  );
 
   tableWrapper.appendChild(table);
   container.appendChild(button);
