@@ -351,6 +351,33 @@ export class ViewGraph {
     }
     this.graph.clear();
   }
+
+  // Make all edges transparent except for the ones connected to the device
+  transparentEdgesForDevice(id: DeviceId) {
+    for (const [, , edge] of this.graph.getAllEdges()) {
+      if (edge.connectedNodes.n1 !== id && edge.connectedNodes.n2 !== id) {
+        edge.becomeTransparent();
+      }
+    }
+  }
+
+  // Make all edges transparent except for the edge between the two devices
+  transparentEdgesForEdge(n1: DeviceId, n2: DeviceId) {
+    for (const [, , edge] of this.graph.getAllEdges()) {
+      if (
+        (edge.connectedNodes.n1 !== n1 || edge.connectedNodes.n2 !== n2) &&
+        (edge.connectedNodes.n1 !== n2 || edge.connectedNodes.n2 !== n1)
+      ) {
+        edge.becomeTransparent();
+      }
+    }
+  }
+
+  untransparentEdges() {
+    for (const [, , edge] of this.graph.getAllEdges()) {
+      edge.becomeOpaque();
+    }
+  }
 }
 
 function layerDFS(
