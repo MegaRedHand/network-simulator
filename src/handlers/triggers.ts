@@ -5,7 +5,7 @@ import {
   saveToFile,
   loadFromFile,
 } from "../types/viewportManager";
-import { captureAndDownloadViewport } from "../utils";
+import { captureAndDownloadViewport } from "../utils/utils";
 import { ConfigModal } from "../config";
 import { DataGraph } from "../types/graphs/datagraph";
 

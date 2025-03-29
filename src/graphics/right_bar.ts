@@ -4,6 +4,8 @@ import {
   RoutingTableEntry,
 } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
+import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
+import { TooltipManager } from "./renderables/tooltip_manager";
 
 export { StyledInfo } from "./renderables/styled_info";
 export { DeviceInfo } from "./renderables/device_info";
@@ -101,15 +103,11 @@ export class RightBar {
   }
 
   // Adds a select dropdown to the right-bar
-  addDropdown(
-    label: string,
-    options: { value: string; text: string }[],
-    selectId?: string,
-  ) {
-    const container = createDropdown(label, options, selectId);
+  addDropdown(label: string, options: { value: string; text: string }[]) {
+    const container = createDropdown(label, options);
     const infoContent = document.getElementById("info-content");
     if (infoContent) {
-      infoContent.appendChild(container);
+      infoContent.appendChild(container.container);
     }
   }
 }
@@ -151,6 +149,11 @@ export function createRoutingTable(
   const table = createTable(headers, rows, options);
   table.classList.add(...tableClasses);
   const button = createToggleButton(title, buttonClass, table);
+
+  TooltipManager.getInstance().attachTooltip(
+    button,
+    TOOLTIP_KEYS.ROUTING_TABLE,
+  );
 
   tableWrapper.appendChild(table);
   container.appendChild(button);
@@ -206,6 +209,9 @@ export function createTable(
   headers.forEach((header) => {
     const th = document.createElement("th");
     th.textContent = header;
+
+    TooltipManager.getInstance().attachTooltip(th, header);
+
     headerRow.appendChild(th);
   });
 
@@ -549,6 +555,7 @@ export function createRightBarButton(
   toggleSelected = false,
 ) {
   const button = document.createElement("button");
+  TooltipManager.getInstance().attachTooltip(button, text);
   button.classList.add("right-bar-button");
   if (buttonClass) {
     button.classList.add(...buttonClass.split(" "));
@@ -563,37 +570,104 @@ export function createRightBarButton(
   return button;
 }
 
+/**
+ * Creates a custom dropdown component with a label, options, and an optional onchange handler.
+ *
+ * @param label - The text to display as the label for the dropdown.
+ * @param options - An array of objects representing the dropdown options. Each object should have:
+ *   - `value`: The value associated with the option.
+ *   - `text`: The text to display for the option.
+ * @param selectId - (Optional) An ID to assign to the dropdown for identification purposes.
+ * @param onchange - (Optional) A callback function triggered when an option is selected.
+ *                   Receives the selected value and the event as arguments.
+ *                   Defaults to a no-op function.
+ * @returns An object containing:
+ *   - `container`: The DOM element representing the dropdown container.
+ *   - `getValue`: A function to retrieve the currently selected value, or `null` if no option is selected.
+ *
+ * @remarks
+ * - The dropdown uses a custom design with a "selected option" display and a toggleable options container.
+ * - Tooltips are attached to each option using the `attachTooltip` function.
+ * - Invalid options in the `options` array are logged as warnings and skipped.
+ * - The dropdown's options container is toggled open/closed when the selected option is clicked.
+ */
 export function createDropdown(
   label: string,
   options: { value: string; text: string }[],
-  selectId?: string,
   onchange: (value: string, event: Event) => void = () => undefined,
 ) {
+  // Create the main dropdown container
   const container = document.createElement("div");
   container.classList.add("dropdown-container");
 
+  // Create and set up the label element
   const labelElement = document.createElement("label");
-  labelElement.textContent = label;
-  labelElement.classList.add("right-bar-label");
+  labelElement.innerHTML = `<strong>${label}</strong>`; // Use innerHTML for consistency
 
-  const select = document.createElement("select");
-  select.classList.add("right-bar-select");
-  if (selectId) select.id = selectId;
+  // Attach tooltip to the label
+  TooltipManager.getInstance().attachTooltip(labelElement, label);
 
+  // Append the label to the container
+  container.appendChild(labelElement);
+
+  // Create the custom dropdown element
+  const dropdown = document.createElement("div");
+  dropdown.classList.add("custom-dropdown");
+
+  // Create the element displaying the selected option
+  const selected = document.createElement("div");
+
+  // Attach tooltip to the selected
+  TooltipManager.getInstance().attachTooltip(selected, label);
+  selected.classList.add("selected-option");
+  selected.textContent = "Select" + (label ? ` ${label}` : "");
+  dropdown.appendChild(selected);
+
+  // Create the container for dropdown options
+  const optionsContainer = document.createElement("div");
+  optionsContainer.classList.add("options-container");
+
+  let selectedValue: string | null = null; // Store the selected value
+
+  // Loop through each option and create its corresponding DOM element
   options.forEach((optionData) => {
-    const option = document.createElement("option");
-    option.value = optionData.value;
+    // Validate the option object
+    if (
+      !optionData ||
+      typeof optionData.value !== "string" ||
+      typeof optionData.text !== "string"
+    ) {
+      console.warn("Invalid option data:", optionData);
+      return;
+    }
+
+    // Create an element for the option
+    const option = document.createElement("div");
+    option.classList.add("dropdown-option");
     option.textContent = optionData.text;
-    select.appendChild(option);
+    console.log("Attaching tooltip to", optionData.text);
+    TooltipManager.getInstance().attachTooltip(option, optionData.text); // Attach tooltip to the option
+
+    // Set up click event for option selection
+    option.onclick = (e) => {
+      console.log("Selected option value:", optionData.value);
+      selected.textContent = optionData.text;
+      selectedValue = optionData.value;
+      optionsContainer.classList.remove("show"); // Close the options container
+      onchange(optionData.value, e); // Trigger the onchange callback
+    };
+
+    optionsContainer.appendChild(option); // Append option to container
   });
 
-  // Default onchange behavior: logs the selected value
-  select.onchange = (e) => {
-    console.log(`Selected ${label}:`, select.value);
-    onchange(select.value, e);
+  // Toggle the dropdown options visibility when clicking the selected option
+  selected.onclick = () => {
+    optionsContainer.classList.toggle("show");
   };
 
+  dropdown.appendChild(optionsContainer);
   container.appendChild(labelElement);
-  container.appendChild(select);
-  return container;
+  container.appendChild(dropdown);
+
+  return { container, getValue: () => selectedValue }; // Return dropdown container and getValue function
 }

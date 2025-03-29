@@ -1,4 +1,6 @@
 import { GlobalContext } from "../context";
+import { TooltipManager } from "../graphics/renderables/tooltip_manager";
+import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 
 export class SpeedControlHandler {
   private ctx: GlobalContext;
@@ -10,6 +12,10 @@ export class SpeedControlHandler {
     this.speedWheel = document.getElementById(
       "speed-wheel",
     ) as HTMLInputElement;
+    TooltipManager.getInstance().attachTooltip(
+      this.speedWheel,
+      TOOLTIP_KEYS.SPEED_WHEEL,
+    );
     this.valueDisplay = document.querySelector(".value-display");
 
     if (this.speedWheel && this.valueDisplay) {

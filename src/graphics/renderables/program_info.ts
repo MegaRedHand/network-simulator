@@ -2,14 +2,10 @@ import { DeviceId } from "../../types/graphs/datagraph";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { createDropdown, Renderable } from "../right_bar";
 
-interface HasValue {
-  value: string;
-}
-
 export class ProgramInfo implements Renderable {
   readonly name: string;
   private inputs: Node[] = [];
-  private inputsValues: HasValue[] = [];
+  private inputsValues: (() => string)[] = [];
 
   constructor(name: string) {
     this.name = name;
@@ -20,13 +16,14 @@ export class ProgramInfo implements Renderable {
   }
 
   withDropdown(name: string, options: { value: string; text: string }[]) {
-    const dropdown = createDropdown(name, options);
-    this.inputs.push(dropdown);
-    this.inputsValues.push(dropdown.querySelector("select"));
+    const { container, getValue } = createDropdown(name, options);
+    this.inputs.push(container);
+    this.inputsValues.push(getValue);
   }
-
   getInputValues() {
-    return this.inputsValues.map(({ value }) => value);
+    console.log("getInputValues", this.inputsValues);
+
+    return this.inputsValues.map((getValue) => getValue());
   }
 
   toHTML() {

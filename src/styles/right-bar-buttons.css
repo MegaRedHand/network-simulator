@@ -33,50 +33,40 @@
   background-color: #d32f2f; /* Darker red on hover */
 }
 
-/* 🔹 Toggle button with dropdown arrow */
+/* 🔹 Delete button styling */
+.right-bar-start-button {
+  background-color: #228b22; /* Red background for delete action */
+}
+
+.right-bar-start-button:hover {
+  background-color: #006400; /* Darker red on hover */
+}
+
+/* 🔹 Toggle button styled like the dropdown button */
 .right-bar-toggle-button {
-  background-color: #007bff; /* Matches general buttons */
-  border: none;
-  color: white;
-  padding: 1vh 2vw; /* Same padding as regular buttons */
-  text-align: center;
-  display: flex; /* Flexbox for better alignment */
-  justify-content: center; /* Centers text */
-  align-items: center; /* Vertically aligns elements */
-  font-size: 1rem;
-  margin: 1vh 0;
-  cursor: pointer;
-  border-radius: 0.5rem;
-  width: 100%;
-  box-sizing: border-box;
-  position: relative; /* Needed for positioning arrow */
+  background-color: #2b2b2b; /* Dark background to match dropdown */
+  border: none; /* No border */
+  color: white; /* White text */
+  padding: 1vh 2vw; /* Same padding as dropdown */
+  text-align: center; /* Center text */
+  display: block; /* Ensures full width */
+  font-size: 1rem; /* Font size */
+  margin: 1vh 0; /* Vertical spacing */
+  cursor: pointer; /* Changes cursor to pointer */
+  border-radius: 0.5rem; /* Rounded corners */
+  width: 100%; /* Full width */
+  box-sizing: border-box; /* Includes padding and borders in width */
   transition:
     background-color 0.3s ease,
     transform 0.2s ease; /* Smooth hover effect */
+  font-family: Arial, sans-serif; /* Ensures consistent font family */
+  position: relative; /* Needed for positioning arrow */
 }
 
+/* Hover effect for the toggle button */
 .right-bar-toggle-button:hover {
-  background-color: #162a6d; /* Darker blue on hover */
+  background-color: #3a3a3a; /* Lighter background on hover */
   transform: scale(1.02); /* Slight zoom effect */
-}
-
-/* 🔹 Dropdown arrow styling */
-.right-bar-toggle-button::after {
-  content: ""; /* Adds an empty element for the arrow */
-  display: inline-block;
-  position: absolute;
-  right: 1vw; /* Positions the arrow */
-  width: 0;
-  height: 0;
-  border-left: 0.6rem solid transparent; /* Creates arrow effect */
-  border-right: 0.6rem solid transparent;
-  border-top: 0.6rem solid white; /* White arrow pointing down */
-  transition: transform 0.3s ease; /* Smooth transition for opening */
-}
-
-/* 🔹 Rotate arrow when button is active */
-.right-bar-toggle-button.open::after {
-  transform: rotate(180deg); /* Rotates arrow upwards */
 }
 
 /* 🔹 Container for packet options */

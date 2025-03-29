@@ -44,7 +44,6 @@ export class ViewGraph {
       }
     }
     this.addConnections(allConnections);
-    console.log("Finished constructing ViewGraph");
   }
 
   loadDevice(deviceId: DeviceId) {
@@ -174,11 +173,11 @@ export class ViewGraph {
     this.layer = newLayer;
     this.clear();
     this.constructView();
-    const layerSelect = document.getElementById(
-      "layer-select",
-    ) as HTMLSelectElement;
-    const event = new CustomEvent("layerChanged");
-    layerSelect.dispatchEvent(event);
+
+    const event = new CustomEvent("layerChanged", {
+      detail: { layer: newLayer },
+    });
+    document.dispatchEvent(event);
   }
 
   getSpeed(): number {
@@ -196,7 +195,8 @@ export class ViewGraph {
 
   // Get a specific device by its ID
   getDevice(id: DeviceId): Device | undefined {
-    return this.graph.getVertex(id);
+    const device = this.graph.getVertex(id);
+    return device;
   }
 
   // Get all devices in the graph

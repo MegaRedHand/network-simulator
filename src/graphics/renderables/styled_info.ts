@@ -1,4 +1,5 @@
 import { Renderable } from "../right_bar";
+import { TooltipManager } from "./tooltip_manager";
 
 export interface Field {
   label: string;
@@ -30,16 +31,21 @@ export class StyledInfo implements Renderable {
     this.info.push({ label, value });
   }
 
-  // Returns a list of HTML nodes with the info to show
   toHTML() {
     const childNodes: Node[] = [];
     const header = document.createElement("h3");
     header.textContent = this.title;
+
+    TooltipManager.getInstance().attachTooltip(header, this.title);
+
     childNodes.push(header);
 
     this.info.forEach((item) => {
       const p = document.createElement("p");
       p.innerHTML = `<strong>${item.label}:</strong> ${item.value}`;
+
+      TooltipManager.getInstance().attachTooltip(p, item.label);
+
       childNodes.push(p);
     });
     return childNodes;

@@ -6,7 +6,7 @@ import {
 } from "pixi.js";
 import { Edge } from "./edge";
 import { deselectElement, isSelected, selectElement } from "./viewportManager";
-import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
+import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils/utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
