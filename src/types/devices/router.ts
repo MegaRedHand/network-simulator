@@ -9,7 +9,7 @@ import { DeviceId, isRouter } from "../graphs/datagraph";
 import { Texture, Ticker } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
-import { sendRawPacket } from "../packet";
+import { dropPacket, sendRawPacket } from "../packet";
 
 export class Router extends NetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -69,6 +69,9 @@ export class Router extends NetworkDevice {
     const wasEmpty = this.packetQueue.isEmpty();
     if (!this.packetQueue.enqueue(datagram)) {
       console.debug("Packet queue full, dropping packet");
+      // dummy values
+      const frame = new EthernetFrame(this.mac, this.mac, datagram);
+      dropPacket(this.viewgraph, this.id, frame);
       return;
     }
     if (wasEmpty) {
@@ -85,6 +88,9 @@ export class Router extends NetworkDevice {
     const devices = this.routePacket(datagram);
 
     if (!devices || devices.length === 0) {
+      // dummy values
+      const frame = new EthernetFrame(this.mac, this.mac, datagram);
+      dropPacket(this.viewgraph, this.id, frame);
       return;
     }
     for (const nextHopId of devices) {
