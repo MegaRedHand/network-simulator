@@ -5,7 +5,7 @@ import { Device } from "./device";
 import { ViewGraph } from "../graphs/viewgraph";
 import { Position } from "../common";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
-import { sendRawPacket } from "../packet";
+import { dropPacket, sendRawPacket } from "../packet";
 import { EchoReply, EchoRequest } from "../../packets/icmp";
 import { GlobalContext } from "../../context";
 
@@ -65,10 +65,12 @@ export abstract class NetworkDevice extends Device {
 
   receiveFrame(frame: EthernetFrame): void {
     if (!this.mac.equals(frame.destination)) {
+      dropPacket(this.viewgraph, this.id, frame);
       return;
     }
     if (!(frame.payload instanceof IPv4Packet)) {
       console.error("Packet's type not IPv4");
+      dropPacket(this.viewgraph, this.id, frame);
       return;
     }
     const datagram = frame.payload;
