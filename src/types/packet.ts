@@ -190,9 +190,47 @@ export class Packet extends Graphics {
     this.y = start.y + progress * dy;
   }
 
+  animateDrop(deviceId: DeviceId) {
+    // Drop the packet on the device
+    const device = this.viewgraph.getDevice(deviceId);
+    if (!device) {
+      console.error("Device not found");
+      return;
+    }
+    this.currentStart = deviceId;
+    device.addChild(this);
+    // Position is relative to the device
+    this.x = 0;
+    this.y = device.height;
+    Ticker.shared.add(this.dropAnimationTick, this);
+  }
+
+  dropAnimationTick(ticker: Ticker) {
+    const device = this.viewgraph.getDevice(this.currentStart);
+    if (!device) {
+      console.error("Device not found");
+      return;
+    }
+    this.progress += (ticker.deltaMS * this.viewgraph.getSpeed()) / 1000;
+    this.y = device.height + 30 * this.progress;
+    let newAlpha = 1 - this.progress;
+    if (newAlpha <= 0) {
+      newAlpha = 0;
+      // Clean up
+      this.destroy();
+      ticker.remove(this.dropAnimationTick, this);
+      if (isSelected(this)) {
+        deselectElement();
+      }
+      this.removeFromParent();
+    }
+    this.alpha = newAlpha;
+  }
+
   delete() {
     // Remove packet from Ticker to stop animation
     Ticker.shared.remove(this.animationTick, this);
+    Ticker.shared.remove(this.dropAnimationTick, this);
 
     // Remove all event listeners
     this.removeAllListeners();
@@ -208,6 +246,18 @@ export class Packet extends Graphics {
     // Destroy the packet
     this.destroy();
   }
+}
+
+function getPacketType(rawPacket: EthernetFrame): string {
+  let type;
+  if (rawPacket.payload instanceof IPv4Packet) {
+    const payload = rawPacket.payload as IPv4Packet;
+    type = payload.payload.getPacketType();
+  } else {
+    console.warn("Packet is not IPv4");
+    type = "ICMP-8";
+  }
+  return type;
 }
 
 export function sendRawPacket(
@@ -245,14 +295,17 @@ export function sendRawPacket(
     );
     return;
   }
-  let type;
-  if (rawPacket.payload instanceof IPv4Packet) {
-    const payload = rawPacket.payload as IPv4Packet;
-    type = payload.payload.getPacketType();
-  } else {
-    console.warn("Packet is not IPv4");
-    type = "ICMP-8";
-  }
+  const type = getPacketType(rawPacket);
   const packet = new Packet(viewgraph, type, rawPacket);
   packet.traverseEdge(firstEdge, srcId);
+}
+
+export function dropPacket(
+  viewgraph: ViewGraph,
+  srcId: DeviceId,
+  rawPacket: EthernetFrame,
+) {
+  const type = getPacketType(rawPacket);
+  const packet = new Packet(viewgraph, type, rawPacket);
+  packet.animateDrop(srcId);
 }
