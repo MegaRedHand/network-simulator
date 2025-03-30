@@ -87,10 +87,15 @@ export class Edge extends Graphics {
 
   highlight() {
     this.drawEdge(this.startPos, this.endPos, Colors.Violet);
+    this.viewgraph.transparentEdgesForEdge(
+      this.connectedNodes.n1,
+      this.connectedNodes.n2,
+    );
   }
 
   removeHighlight() {
     this.drawEdge(this.startPos, this.endPos, Colors.Lightblue);
+    this.viewgraph.untransparentEdges();
   }
 
   // Method to show the Edge information
@@ -149,6 +154,14 @@ export class Edge extends Graphics {
   destroy() {
     deselectElement();
     super.destroy();
+  }
+
+  becomeTransparent() {
+    this.alpha = 0.2;
+  }
+
+  becomeOpaque() {
+    this.alpha = 1;
   }
 
   public updatePosition(device1: Device, device2: Device) {
