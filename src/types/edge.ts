@@ -20,11 +20,6 @@ export class Edge extends Graphics {
   viewgraph: ViewGraph;
   rightbar: RightBar;
 
-  static generateConnectionKey(connectedNodes: EdgeEdges): string {
-    const { n1, n2 } = connectedNodes;
-    return [n1, n2].sort().join(",");
-  }
-
   constructor(
     connectedNodes: EdgeEdges,
     device1: ViewDevice,
