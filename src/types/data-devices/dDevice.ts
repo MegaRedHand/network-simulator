@@ -55,6 +55,5 @@ export abstract class DataDevice {
    * Returns the id for the next device to send the packet to, or
    * null if there’s no next device to send the packet.
    * */
-  // TODO: Might be general for all device in the future.
   abstract receiveFrame(frame: EthernetFrame): void;
 }
