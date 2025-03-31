@@ -1,4 +1,5 @@
 import { ProgramRunner, RunningProgram } from "../../programs";
+import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import {
   createDropdown,
   createRightBarButton,
@@ -33,22 +34,31 @@ export class ProgramRunnerInfo implements Renderable {
     const selectProgramDropdown = createDropdown(
       "Program",
       programOptions,
-      "program-selector",
       (v) => {
         selectedProgram = programs[parseInt(v)];
+        console.log("Selected program: ", selectedProgram.name);
         programInputs.replaceChildren(...selectedProgram.toHTML());
       },
     );
     // Button to run program
-    const startProgramButton = createRightBarButton("Start program", () => {
-      const { name } = selectedProgram;
-      console.log("Started program: ", name);
-      const inputs = selectedProgram.getInputValues();
-      this.runner.addRunningProgram(name, inputs);
-      this.refreshTable();
-    });
+    const startProgramButton = createRightBarButton(
+      TOOLTIP_KEYS.START_PROGRAM,
+      () => {
+        const { name } = selectedProgram;
+        console.log("Started program: ", name);
+        const inputs = selectedProgram.getInputValues();
+        // Validar que se hayan proporcionado todas las entradas necesarias
+        if (inputs.some((input) => input === null || input === undefined)) {
+          console.error("Some inputs are missing or invalid.");
+          return;
+        }
+        this.runner.addRunningProgram(name, inputs);
+        this.refreshTable();
+      },
+      "right-bar-start-button",
+    );
     this.inputFields.push(
-      selectProgramDropdown,
+      selectProgramDropdown.container,
       programInputs,
       startProgramButton,
     );
@@ -57,6 +67,7 @@ export class ProgramRunnerInfo implements Renderable {
   private addRunningProgramsList() {
     this.runningProgramsTable = this.generateProgramsTable();
     this.inputFields.push(this.runningProgramsTable);
+    this.inputFields.push(document.createElement("br"));
   }
 
   private createProgramsTable(

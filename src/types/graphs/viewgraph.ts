@@ -50,7 +50,6 @@ export class ViewGraph {
     }
     console.debug(allConnections);
     this.addConnections(allConnections);
-    console.log("Finished constructing ViewGraph");
   }
 
   loadDevice(deviceId: DeviceId): ViewDevice {
@@ -188,15 +187,14 @@ export class ViewGraph {
     // warn Packet Manager that the layer has been changed
     this.packetManager.layerChanged(formerLayer, newLayer);
 
-    const layerSelect = document.getElementById(
-      "layer-select",
-    ) as HTMLSelectElement;
-    const event = new CustomEvent("layerChanged");
-    layerSelect.dispatchEvent(event);
+    const event = new CustomEvent("layerChanged", {
+      detail: { layer: newLayer },
+    });
+    document.dispatchEvent(event);
   }
 
   getSpeed(): number {
-    return this.ctx.getCurrentSpeed().value;
+    return this.ctx.getCurrentSpeed();
   }
 
   // Get all connections of a device
@@ -386,6 +384,33 @@ export class ViewGraph {
       edge.destroy();
     }
     this.graph.clear();
+  }
+
+  // Make all edges transparent except for the ones connected to the device
+  transparentEdgesForDevice(id: DeviceId) {
+    for (const [, , edge] of this.graph.getAllEdges()) {
+      if (edge.connectedNodes.n1 !== id && edge.connectedNodes.n2 !== id) {
+        edge.becomeTransparent();
+      }
+    }
+  }
+
+  // Make all edges transparent except for the edge between the two devices
+  transparentEdgesForEdge(n1: DeviceId, n2: DeviceId) {
+    for (const [, , edge] of this.graph.getAllEdges()) {
+      if (
+        (edge.connectedNodes.n1 !== n1 || edge.connectedNodes.n2 !== n2) &&
+        (edge.connectedNodes.n1 !== n2 || edge.connectedNodes.n2 !== n1)
+      ) {
+        edge.becomeTransparent();
+      }
+    }
+  }
+
+  untransparentEdges() {
+    for (const [, , edge] of this.graph.getAllEdges()) {
+      edge.becomeOpaque();
+    }
   }
 }
 

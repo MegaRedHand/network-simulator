@@ -36,7 +36,6 @@ export class PacketManager {
     // ViewPacket: Packet shown in viewport
     // DataPacket: Packet not shown in viewport
     console.debug("Layer changed");
-    Packet.pauseAnimation();
     const currKeys = Array.from(this.packetsInTransit.keys());
     for (const key of currKeys) {
       const packet = this.packetsInTransit.get(key);
@@ -82,9 +81,9 @@ export class PacketManager {
         }
 
         const viewPacket: Packet = new Packet(
+          this.viewgraph.ctx,
           this.viewgraph,
           rawPacket,
-          this.viewgraph.ctx,
           true,
         );
         viewPacket.setProgress(packet.getProgress());
@@ -101,9 +100,9 @@ export class PacketManager {
         );
         // Its a DataPacket
         const dataPacket: Packet = new Packet(
+          packet.ctx,
           this.viewgraph.getDataGraph(),
           rawPacket,
-          packet.ctx,
           false,
         );
 
@@ -117,7 +116,6 @@ export class PacketManager {
       }
       packet.delete();
     }
-    Packet.resumeAnimation();
     console.debug("Layer changed finished");
   }
 

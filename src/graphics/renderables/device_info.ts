@@ -4,6 +4,7 @@ import { DeviceType } from "../../types/view-devices/vDevice";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { RemoveDeviceMove } from "../../types/undo-redo";
 import { urManager } from "../../types/viewportManager";
+import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { createRightBarButton, createRoutingTable } from "../right_bar";
 import { ProgramInfo } from "./program_info";
 import { ProgramRunnerInfo } from "./program_runner_info";
@@ -27,21 +28,21 @@ export class DeviceInfo extends StyledInfo {
     const connections = this.device.viewgraph
       .getConnections(id)
       .map((edge) => edge.otherEnd(id));
-    super.addField("ID", id.toString());
-    super.addField("MacAddress", mac.toString());
-    super.addListField("Connected Devices", connections);
+    super.addField(TOOLTIP_KEYS.ID, id.toString());
+    super.addField(TOOLTIP_KEYS.MAC_ADDRESS, mac.toString());
+    super.addListField(TOOLTIP_KEYS.CONNECTED_DEVICES, connections);
   }
 
   private addCommonButtons() {
     this.inputFields.push(
       createRightBarButton(
-        "Connect device",
+        TOOLTIP_KEYS.CONNECT_DEVICE,
         () => this.device.selectToConnect(),
         "right-bar-connect-button",
         true,
       ),
       createRightBarButton(
-        "Delete device",
+        TOOLTIP_KEYS.DELETE_DEVICE,
         () => {
           const currLayer = this.device.viewgraph.getLayer();
           const move = new RemoveDeviceMove(currLayer, this.device.id);
@@ -68,8 +69,8 @@ export class DeviceInfo extends StyledInfo {
     ]);
 
     const dynamicTable = createRoutingTable(
-      "Routing Table",
-      ["IP", "Mask", "Interface"],
+      TOOLTIP_KEYS.ROUTING_TABLE,
+      [TOOLTIP_KEYS.IP, TOOLTIP_KEYS.MASK, TOOLTIP_KEYS.INTERFACE],
       rows,
       viewgraph,
       deviceId,

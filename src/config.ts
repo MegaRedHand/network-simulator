@@ -1,6 +1,7 @@
 import { GlobalContext } from "./context";
+import { TooltipManager } from "./graphics/renderables/tooltip_manager";
 import { deselectElement } from "./types/viewportManager";
-import { Colors } from "./utils";
+import { Colors } from "./utils/utils";
 
 export class ConfigModal {
   private ctx: GlobalContext;
@@ -11,6 +12,9 @@ export class ConfigModal {
   private colorPicker: HTMLInputElement | null;
   private selectedColor: number; // Stores the actual selected color as a number
   private tempColor: number; // Temporary color for selection
+  private enableTooltipsSwitch: HTMLInputElement | null;
+  private enableTooltips: boolean;
+  private tempEnableTooltips: boolean;
 
   constructor(ctx: GlobalContext) {
     this.ctx = ctx;
@@ -21,6 +25,8 @@ export class ConfigModal {
     this.colorPicker = null;
     this.selectedColor = Colors.Violet; // Default saved color
     this.tempColor = this.selectedColor; // Temporary color for selection
+    this.enableTooltips = true; // Default saved value
+    this.tempEnableTooltips = this.enableTooltips; // Temporary value for selection
 
     this.createModal();
     this.setupEventListeners();
@@ -71,28 +77,11 @@ export class ConfigModal {
                   <input type="color" id="colorPicker">
                 </li>
                 <li class="setting-item">
-                  <label for="autoConnections">Auto Connections</label>
-                  <input type="checkbox" id="autoConnections" class="switch-input">
-                </li>
-                <li class="setting-item">
-                  <label for="autoConnections">Config_1</label>
-                  <input type="checkbox" id="Config_1" class="switch-input">
-                </li>
-                <li class="setting-item">
-                  <label for="autoConnections">Config_2</label>
-                  <input type="checkbox" id="Config_2" class="switch-input">
-                </li>
-                <li class="setting-item">
-                  <label for="autoConnections">Config_3</label>
-                  <input type="checkbox" id="Config_3" class="switch-input">
-                </li>
-                <li class="setting-item">
-                  <label for="autoConnections">Config_4</label>
-                  <input type="checkbox" id="Config_4" class="switch-input">
-                </li>
-                <li class="setting-item">
-                  <label for="autoConnections">Config_5</label>
-                  <input type="checkbox" id="Config_5" class="switch-input">
+                  <label for="enableTooltips">Enable Tooltips</label>
+                  <label class="switch">
+                    <input type="checkbox" id="enableTooltips" class="switch-input" checked>
+                    <span class="switch-slider"></span>
+                  </label>
                 </li>
               </ul>
             </div>
@@ -119,6 +108,9 @@ export class ConfigModal {
     this.colorPicker = document.getElementById(
       "colorPicker",
     ) as HTMLInputElement;
+    this.enableTooltipsSwitch = document.getElementById(
+      "enableTooltips",
+    ) as HTMLInputElement;
   }
 
   private setupEventListeners() {
@@ -127,7 +119,8 @@ export class ConfigModal {
       !this.modalContent ||
       !this.closeBtn ||
       !this.saveSettingsButton ||
-      !this.colorPicker
+      !this.colorPicker ||
+      !this.enableTooltipsSwitch
     ) {
       console.error("Some modal elements were not found.");
       return;
@@ -152,6 +145,12 @@ export class ConfigModal {
       if (this.colorPicker) {
         this.tempColor = this.hexToNumber(this.colorPicker.value);
       }
+    };
+
+    this.enableTooltipsSwitch.onchange = () => {
+      const isEnabled = this.enableTooltipsSwitch?.checked || false;
+      this.tempEnableTooltips = isEnabled; // Update the local variable only
+      console.log("Tooltips setting changed (not saved yet):", isEnabled);
     };
   }
 
@@ -187,6 +186,12 @@ export class ConfigModal {
         this.colorPicker.value = this.toHex(this.selectedColor);
       }
 
+      // Update tooltips setting to the saved value
+      if (this.enableTooltipsSwitch) {
+        this.tempEnableTooltips = this.enableTooltips;
+        this.enableTooltipsSwitch.checked = this.tempEnableTooltips; // Reflect the saved value in the UI
+      }
+
       this.modalOverlay.style.display = "flex"; // Make it visible first
       setTimeout(() => {
         this.modalOverlay?.classList.add("show");
@@ -212,6 +217,12 @@ export class ConfigModal {
         }
       }, 300);
     }
+
+    // Reset tooltips setting to the saved value
+    if (this.enableTooltipsSwitch) {
+      this.tempEnableTooltips = this.enableTooltips; // Reset temp value
+      this.enableTooltipsSwitch.checked = this.enableTooltips; // Reflect saved value in UI
+    }
   }
 
   private saveSettings() {
@@ -221,7 +232,19 @@ export class ConfigModal {
       this.ctx.change_select_color(this.selectedColor);
     }
 
-    console.log("Settings saved. Applied color:", this.selectedColor);
+    // Save the tooltips setting
+    if (this.enableTooltipsSwitch) {
+      this.enableTooltips = this.tempEnableTooltips; // Save the temporary value
+      this.ctx.change_enable_tooltips(this.enableTooltips); // Update the GlobalContext
+      TooltipManager.getInstance().updateTooltipsState(); // Update tooltips state in the app
+    }
+
+    console.log(
+      "Settings saved. Applied color:",
+      this.selectedColor,
+      "Tooltips enabled:",
+      this.enableTooltips,
+    );
   }
 
   // Convert a number (0xRRGGBB) to a hex string ("#RRGGBB")

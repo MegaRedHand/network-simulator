@@ -1,13 +1,17 @@
 import PlaySvg from "../assets/play-icon.svg";
 import PauseSvg from "../assets/pause-icon.svg";
-import { Packet } from "../types/packet";
+import { TooltipManager } from "../graphics/renderables/tooltip_manager";
+import { GlobalContext } from "../context";
+import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 
 export class PauseHandler {
+  private ctx: GlobalContext;
   private pauseButton: HTMLButtonElement | null;
   private pauseIcon: HTMLImageElement;
   private isPaused: boolean;
 
-  constructor() {
+  constructor(ctx: GlobalContext) {
+    this.ctx = ctx;
     this.pauseButton = document.getElementById(
       "pause-button",
     ) as HTMLButtonElement;
@@ -26,6 +30,10 @@ export class PauseHandler {
       this.pauseIcon.alt = "Pause Icon";
       this.pauseButton.appendChild(this.pauseIcon);
       this.pauseButton.onclick = () => this.togglePause();
+      TooltipManager.getInstance().attachTooltip(
+        this.pauseButton,
+        TOOLTIP_KEYS.PAUSE_BUTTON,
+      );
     }
   }
 
@@ -55,11 +63,11 @@ export class PauseHandler {
     }
     this.pauseIcon.src = this.isPaused ? PlaySvg : PauseSvg;
 
-    // Handle animation pause/resume
+    // Handle animation pause/unpause
     if (this.isPaused) {
-      Packet.pauseAnimation();
+      this.ctx.pause();
     } else {
-      Packet.resumeAnimation();
+      this.ctx.unpause();
     }
   }
 }

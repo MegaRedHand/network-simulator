@@ -1,5 +1,5 @@
 import { Application, GraphicsContext, RenderTexture } from "pixi.js";
-import { Viewport } from "./graphics/viewport";
+import { Viewport } from "../graphics/viewport";
 
 export enum Colors {
   Violet = 0x4b0082,
@@ -11,6 +11,7 @@ export enum Colors {
   Black = 0x000000,
   Yellow = 0xffff00,
   Grey = 0x5e5e5e,
+  Hazel = 0xd99802,
 }
 
 export function circleGraphicsContext(

@@ -15,7 +15,7 @@ import {
   urManager,
 } from "../viewportManager";
 import { RightBar } from "../../graphics/right_bar";
-import { Colors, ZIndexLevels } from "../../utils";
+import { Colors, ZIndexLevels } from "../../utils/utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
@@ -203,6 +203,9 @@ export abstract class ViewDevice extends Container {
     });
     this.highlightMarker.zIndex = ZIndexLevels.Device;
 
+    // Make the unselected edges transparent to improve visibility
+    this.viewgraph.transparentEdgesForDevice(this.id);
+
     // Ensure the marker is in the same container as the viewport
     this.addChild(this.highlightMarker);
   }
@@ -212,6 +215,7 @@ export abstract class ViewDevice extends Container {
       this.highlightMarker.clear(); // Clear the graphic
       this.removeChild(this.highlightMarker); // Remove the marker from the viewport
       this.highlightMarker.destroy(); // Destroy the graphic object to free memory
+      this.viewgraph.untransparentEdges(); // Make the edges opaque again
       this.highlightMarker = null;
     }
   }

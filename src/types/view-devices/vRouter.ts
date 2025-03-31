@@ -11,7 +11,7 @@ import { Texture, Ticker } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataRouter } from "../data-devices";
-import { sendViewPacket } from "../packet";
+import { dropPacket, sendViewPacket } from "../packet";
 
 export class ViewRouter extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -71,6 +71,9 @@ export class ViewRouter extends ViewNetworkDevice {
     const wasEmpty = this.packetQueue.isEmpty();
     if (!this.packetQueue.enqueue(datagram)) {
       console.debug("Packet queue full, dropping packet");
+      // dummy values
+      const frame = new EthernetFrame(this.mac, this.mac, datagram);
+      dropPacket(this.viewgraph, this.id, frame);
       return;
     }
     if (wasEmpty) {
@@ -79,13 +82,17 @@ export class ViewRouter extends ViewNetworkDevice {
   }
 
   processPacket(ticker: Ticker) {
-    const datagram = this.getPacketsToProcess(ticker.deltaMS);
+    const elapsedTime = ticker.deltaMS * this.viewgraph.getSpeed();
+    const datagram = this.getPacketsToProcess(elapsedTime);
     if (!datagram) {
       return;
     }
     const devices = this.routePacket(datagram);
 
     if (!devices || devices.length === 0) {
+      // dummy values
+      const frame = new EthernetFrame(this.mac, this.mac, datagram);
+      dropPacket(this.viewgraph, this.id, frame);
       return;
     }
     for (const nextHopId of devices) {

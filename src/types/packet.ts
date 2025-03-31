@@ -5,7 +5,7 @@ import {
   Ticker,
 } from "pixi.js";
 import { deselectElement, isSelected, selectElement } from "./viewportManager";
-import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils";
+import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils/utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
@@ -27,6 +27,7 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
   "ICMP-8": circleGraphicsContext(Colors.Red, 0, 0, 5),
   "ICMP-0": circleGraphicsContext(Colors.Yellow, 0, 0, 5),
   EMPTY: circleGraphicsContext(Colors.Grey, 0, 0, 5),
+  TCP: circleGraphicsContext(Colors.Hazel, 0, 0, 5), // for HTTP
 };
 
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
@@ -77,20 +78,10 @@ export class Packet extends Graphics {
   ctx: GlobalContext;
   belongingLayer: Layer;
 
-  static animationPaused = false;
-
-  static pauseAnimation() {
-    Packet.animationPaused = true;
-  }
-
-  static resumeAnimation() {
-    Packet.animationPaused = false;
-  }
-
   constructor(
+    ctx: GlobalContext,
     graph: ViewGraph | DataGraph,
     rawPacket: EthernetFrame,
-    ctx: GlobalContext,
     isVisible: boolean,
   ) {
     super();
@@ -279,13 +270,10 @@ export class Packet extends Graphics {
 
     const normalizedSpeed = this.speed / edgeLength;
 
-    if (!Packet.animationPaused) {
-      const progressIncrement =
-        (ticker.deltaMS * normalizedSpeed * this.ctx.getCurrentSpeed().value) /
-        1000;
-      this.progress += progressIncrement;
-      this.updatePosition(start, end);
-    }
+    const progressIncrement =
+      (ticker.deltaMS * normalizedSpeed * this.ctx.getCurrentSpeed()) / 1000;
+    this.progress += progressIncrement;
+    this.updatePosition(start, end);
 
     if (this.progress >= 1) {
       // Deliver packet
@@ -315,9 +303,55 @@ export class Packet extends Graphics {
     this.y = start.y + this.progress * dy;
   }
 
+  animateDrop(deviceId: DeviceId) {
+    if (this.graph instanceof DataGraph) {
+      // If the packet is in the datagraph, we don't need to animate it
+      return;
+    }
+    // Drop the packet on the device
+    const device = this.graph.getDevice(deviceId);
+    if (!device) {
+      console.error("Device not found");
+      return;
+    }
+    this.currStart = deviceId;
+    device.addChild(this);
+    // Position is relative to the device
+    this.x = 0;
+    this.y = device.height;
+    Ticker.shared.add(this.dropAnimationTick, this);
+  }
+
+  dropAnimationTick(ticker: Ticker) {
+    if (this.graph instanceof DataGraph) {
+      // This shouldn't happen
+      return;
+    }
+    const device = this.graph.getDevice(this.currStart);
+    if (!device) {
+      console.error("Device not found");
+      return;
+    }
+    this.progress += (ticker.deltaMS * this.graph.getSpeed()) / 1000;
+    this.y = device.height + 30 * this.progress;
+    let newAlpha = 1 - this.progress;
+    if (newAlpha <= 0) {
+      newAlpha = 0;
+      // Clean up
+      this.destroy();
+      ticker.remove(this.dropAnimationTick, this);
+      if (isSelected(this)) {
+        deselectElement();
+      }
+      this.removeFromParent();
+    }
+    this.alpha = newAlpha;
+  }
+
   delete() {
     // Remove packet from Ticker to stop animation
     Ticker.shared.remove(this.animationTick, this);
+    Ticker.shared.remove(this.dropAnimationTick, this);
 
     this.removeAllListeners();
 
@@ -370,7 +404,7 @@ export function sendViewPacket(
     );
     return;
   }
-  const packet = new Packet(viewgraph, rawPacket, viewgraph.ctx, true);
+  const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket, true);
   packet.traverseEdge(srcId, firstEdge.otherEnd(srcId));
 }
 
@@ -407,6 +441,15 @@ export function sendDataPacket(
     );
     return;
   }
-  const packet = new Packet(datagraph, rawPacket, datagraph.ctx, false);
+  const packet = new Packet(datagraph.ctx, datagraph, rawPacket, false);
   packet.traverseEdge(srcId, firstHop);
+}
+
+export function dropPacket(
+  viewgraph: ViewGraph,
+  srcId: DeviceId,
+  rawPacket: EthernetFrame,
+) {
+  const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket, true);
+  packet.animateDrop(srcId);
 }

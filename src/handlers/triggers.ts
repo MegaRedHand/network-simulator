@@ -5,14 +5,14 @@ import {
   saveToFile,
   loadFromFile,
 } from "../types/viewportManager";
-import { captureAndDownloadViewport } from "../utils";
+import { captureAndDownloadViewport } from "../utils/utils";
 import { ConfigModal } from "../config";
 import { DataGraph } from "../types/graphs/datagraph";
 
 // Function to create a new network
 export const triggerNew = (ctx: GlobalContext) => {
   deselectElement(); // Deselect any currently selected element
-  ctx.load(new DataGraph(ctx), ctx.getCurrentLayer(), ctx.getCurrentSpeed()); // Load a new empty DataGraph into the context
+  ctx.load(new DataGraph(ctx)); // Load a new empty DataGraph into the context
 };
 
 // Function to save the network

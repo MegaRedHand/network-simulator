@@ -14,21 +14,23 @@ import {
   MacAddress,
   MacAddressGenerator,
 } from "./packets/ethernet";
-import { Colors } from "./utils";
 import { DataNetworkDevice } from "./types/data-devices";
+import { Colors } from "./utils/utils";
 
 export class GlobalContext {
   private viewport: Viewport = null;
   private datagraph: DataGraph;
   private viewgraph: ViewGraph;
-  private speedMultiplier: SpeedMultiplier;
+  private speedMultiplier = new SpeedMultiplier(1);
   private saveIntervalId: NodeJS.Timeout | null = null;
   private ipGenerator: IpAddressGenerator;
   private macGenerator: MacAddressGenerator;
   private selectColor: number;
+  private tooltipsEnabled: boolean;
 
   constructor(viewport: Viewport) {
     this.selectColor = Colors.Violet;
+    this.tooltipsEnabled = true;
     this.viewport = viewport;
 
     // Sets the initial datagraph and viewgraph
@@ -59,17 +61,16 @@ export class GlobalContext {
   }
 
   private setSpeedMultiplier(speedMultiplier: SpeedMultiplier) {
-    if (speedMultiplier && speedMultiplier.value > 0) {
-      this.changeSpeedMultiplier(speedMultiplier.value);
-      // Update the wheel display after setting the speed
-      const speedWheel = document.getElementById(
-        "speed-wheel",
-      ) as HTMLInputElement;
-      const valueDisplay = document.querySelector(".value-display");
-      if (speedWheel && valueDisplay) {
-        speedWheel.value = speedMultiplier.value.toString();
-        valueDisplay.textContent = `${speedMultiplier.value}x`;
-      }
+    this.speedMultiplier = speedMultiplier;
+    // TODO: make this change go through SpeedControlHandler
+    // Update the wheel display after setting the speed
+    const speedWheel = document.getElementById(
+      "speed-wheel",
+    ) as HTMLInputElement;
+    const valueDisplay = document.querySelector(".value-display");
+    if (speedWheel && valueDisplay) {
+      speedWheel.value = speedMultiplier.value.toString();
+      valueDisplay.textContent = `${speedMultiplier.value}x`;
     }
   }
 
@@ -98,7 +99,7 @@ export class GlobalContext {
   }
 
   getCurrentSpeed() {
-    return this.speedMultiplier;
+    return this.speedMultiplier.value;
   }
 
   getDataGraph() {
@@ -110,11 +111,17 @@ export class GlobalContext {
     this.setNetwork(this.datagraph, layer);
   }
 
+  pause() {
+    this.speedMultiplier.pause();
+  }
+
+  unpause() {
+    this.speedMultiplier.unpause();
+  }
+
   changeSpeedMultiplier(speedMultiplier: number) {
-    if (this.viewgraph) {
-      this.speedMultiplier = new SpeedMultiplier(speedMultiplier);
-      saveToLocalStorage(this);
-    }
+    this.speedMultiplier.setSpeed(speedMultiplier);
+    saveToLocalStorage(this);
   }
 
   private setupAutoSave() {
@@ -179,5 +186,13 @@ export class GlobalContext {
 
   public get_select_color() {
     return this.selectColor;
+  }
+
+  public change_enable_tooltips(enabled: boolean) {
+    this.tooltipsEnabled = enabled;
+  }
+
+  public get_enable_tooltips() {
+    return this.tooltipsEnabled;
   }
 }

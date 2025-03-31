@@ -15,9 +15,10 @@ import {
   RunningProgram,
 } from "../../programs";
 import { Texture } from "pixi.js";
-import { MacAddress } from "../../packets/ethernet";
+import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataHost } from "../data-devices";
+import { dropPacket } from "../packet";
 
 export class ViewHost extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -45,11 +46,13 @@ export class ViewHost extends ViewNetworkDevice {
     this.loadRunningPrograms();
   }
 
-  receiveDatagram(packet: IPv4Packet): Promise<DeviceId | null> {
-    if (this.ip.equals(packet.destinationAddress)) {
-      this.handlePacket(packet);
+  receiveDatagram(packet: IPv4Packet): void {
+    if (!this.ip.equals(packet.destinationAddress)) {
+      const frame = new EthernetFrame(this.mac, this.mac, packet);
+      dropPacket(this.viewgraph, this.id, frame);
+      return;
     }
-    return null;
+    this.handlePacket(packet);
   }
 
   showInfo(): void {

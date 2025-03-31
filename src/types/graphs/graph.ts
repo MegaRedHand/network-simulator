@@ -26,6 +26,7 @@ export class Graph<Vertex, Edge> {
   }
 
   getVertex(id: VertexId): Vertex | undefined {
+    console.log("Vertices in the graph:", this.vertices);
     return this.vertices.get(id);
   }
 
