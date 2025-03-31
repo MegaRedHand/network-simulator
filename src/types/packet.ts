@@ -66,6 +66,91 @@ function packetContext(frame: EthernetFrame): PacketContext {
   return { type: "EMPTY", layer: Layer.Link };
 }
 
+export class dPacket {
+  private ctx: GlobalContext;
+  private graph: DataGraph;
+  private packetId: number;
+  private speed = 100;
+  private progress = 0;
+  private start: DeviceId;
+  private end: DeviceId;
+  private type: string;
+  private rawPacket: EthernetFrame;
+
+  belongingLayer: Layer;
+
+  constructor(ctx: GlobalContext, graph: DataGraph, rawPacket: EthernetFrame) {
+    this.ctx = ctx;
+    this.graph = graph;
+    const { type, layer } = packetContext(rawPacket);
+    this.belongingLayer = layer;
+    this.type = type;
+    // TODO: register to packet manager
+    // this.packetId = ctx.getViewGraph().getPacketManager().registerPacket(this);
+  }
+
+  deliverPacket() {
+    const newStartDevice = this.graph.getDevice(this.end);
+
+    // Viewgraph may return undefined when trying to get the device
+    // as the device may have been removed by the user.
+    if (!newStartDevice) {
+      return;
+    }
+    newStartDevice.receiveFrame(this.rawPacket);
+  }
+
+  traverseEdge(startId: DeviceId, endId: DeviceId): void {
+    this.start = startId;
+    this.end = endId;
+
+    Ticker.shared.add(this.updateProgressTick, this);
+  }
+
+  updateProgressTick(ticker: Ticker) {
+    const startDevice = this.graph.getDevice(this.start);
+    const endDevice = this.graph.getDevice(this.end);
+    if (!startDevice) {
+      console.warn("Current start device not found.");
+      this.delete();
+      return;
+    }
+    if (!endDevice) {
+      console.warn("Current end device not found.");
+      this.delete();
+      return;
+    }
+    const start = startDevice.getPosition();
+    const end = endDevice.getPosition();
+
+    const edgeLength = Math.sqrt(
+      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
+    );
+
+    const normalizedSpeed = this.speed / edgeLength;
+
+    const progressIncrement =
+      (ticker.deltaMS * normalizedSpeed * this.ctx.getCurrentSpeed()) / 1000;
+    this.progress += progressIncrement;
+
+    if (this.progress >= 1) {
+      // Deliver packet
+      this.deliverPacket();
+      // Clean up
+      this.delete();
+    }
+  }
+
+  delete() {
+    // Remove packet from Ticker to stop animation
+    Ticker.shared.remove(this.updateProgressTick, this);
+
+    // Deregister packet from PacketManager
+    // this.ctx.getViewGraph().getPacketManager().deregisterPacket(this.packetId);
+    // this.destroy();
+  }
+}
+
 export class Packet extends Graphics {
   private packetId: number;
   private speed = 100;
