@@ -3,9 +3,9 @@ import ComputerSvg from "../assets/pc.svg";
 import SwitchSvg from "../assets/switch.svg";
 import { addDevice } from "../types/viewportManager";
 import { GlobalContext } from "../context";
-import { DeviceType } from "../types/devices/device";
-import { Layer, layerFromName } from "../types/devices/layer";
 import { TooltipManager } from "./renderables/tooltip_manager";
+import { DeviceType } from "../types/view-devices/vDevice";
+import { Layer, layerFromName } from "../types/layer";
 
 export class LeftBar {
   private leftBar: HTMLElement;

@@ -1,6 +1,6 @@
 import { GlobalContext } from "../context";
 import { LeftBar } from "../graphics/left_bar";
-import { layerToName } from "../types/devices/layer";
+import { layerToName } from "../types/layer";
 import { deselectElement, saveToLocalStorage } from "../types/viewportManager";
 import { createLayerSelector } from "../graphics/canvas";
 
@@ -53,7 +53,7 @@ export class LayerHandler {
     if (!currentLayer || !this.layerDropdown) return;
 
     this.layerDropdown.setValue(currentLayer); // update dropdown
-    console.log(`Dropdown updated to layer: ${currentLayer}`);
+    console.debug(`Dropdown updated to layer: ${currentLayer}`);
   }
 
   private selectNewLayer(selectedLayer: string | null) {
@@ -63,7 +63,7 @@ export class LayerHandler {
       this.layerDropdown.setValue(selectedLayer);
     }
 
-    console.log(`Layer selected: ${selectedLayer}`);
+    console.debug(`Layer selected: ${selectedLayer}`);
     this.ctx.changeViewGraph(selectedLayer);
     saveToLocalStorage(this.ctx);
     this.leftBar.setButtonsByLayer(selectedLayer);

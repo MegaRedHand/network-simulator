@@ -1,8 +1,5 @@
-import {
-  DeviceId,
-  isRouter,
-  RoutingTableEntry,
-} from "../types/graphs/datagraph";
+import { DataRouter } from "../types/data-devices";
+import { DeviceId, RoutingTableEntry } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
 import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 import { TooltipManager } from "./renderables/tooltip_manager";
@@ -167,7 +164,7 @@ function updateRoutingTableUI(
   viewgraph: ViewGraph,
 ): void {
   const router = viewgraph.getDataGraph().getDevice(deviceId);
-  if (!router || !isRouter(router)) {
+  if (!router || !(router instanceof DataRouter)) {
     console.warn(`Device with ID ${deviceId} is not a valid router.`);
     return;
   }

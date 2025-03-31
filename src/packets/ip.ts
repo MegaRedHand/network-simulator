@@ -1,5 +1,5 @@
 import { FramePayload, IP_PROTOCOL_TYPE } from "./ethernet";
-import { Layer } from "../types/devices/layer";
+import { Layer } from "../types/layer";
 
 // Taken from here: https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
 export const ICMP_PROTOCOL_NUMBER = 1;

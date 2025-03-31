@@ -1,18 +1,19 @@
-import { Layer } from "../../devices/device";
-import { DeviceId, NewDevice, RemovedNodeData } from "../../graphs/datagraph";
+import { Layer } from "../../layer";
+import { DeviceId, RemovedNodeData } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { selectElement } from "../../viewportManager";
 import { BaseMove } from "./move";
+import { DataNode } from "../../graphs/datagraph";
 
 type DeviceState =
   // Device is new
-  | { data: NewDevice }
+  | { data: DataNode }
   // Device is in graph
   | { id: DeviceId }
   // Device was removed
   | { removedData: RemovedNodeData };
 
-function isNew(state: DeviceState): state is { data: NewDevice } {
+function isNew(state: DeviceState): state is { data: DataNode } {
   return "data" in state;
 }
 
@@ -42,7 +43,7 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
     // Device is new
     if (isNew(this.state)) {
       // Add the new device
-      id = datagraph.addNewDevice(this.state.data);
+      id = datagraph.addDevice(this.state.data);
     } else if (wasRemoved(this.state)) {
       // Re-add the removed device
       id = datagraph.readdDevice(this.state.removedData);
@@ -75,7 +76,7 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
 
 // "Move" is here because it conflicts with AddDevice from viewportManager
 export class AddDeviceMove extends AddRemoveDeviceMove {
-  constructor(layer: Layer, data: NewDevice) {
+  constructor(layer: Layer, data: DataNode) {
     super(layer, { data });
   }
 

@@ -1,20 +1,20 @@
 import { Viewport } from "./graphics/viewport";
-import { DataGraph, isLinkNode, isNetworkNode } from "./types/graphs/datagraph";
+import { DataGraph } from "./types/graphs/datagraph";
 import { ViewGraph } from "./types/graphs/viewgraph";
 import {
   loadFromLocalStorage,
   saveToLocalStorage,
   urManager,
 } from "./types/viewportManager";
-import { Layer } from "./types/devices/device";
 import { compareIps, IpAddress, IpAddressGenerator } from "./packets/ip";
-import { layerFromName } from "./types/devices/layer";
-import { SpeedMultiplier } from "./types/devices/speedMultiplier";
+import { layerFromName, Layer } from "./types/layer";
+import { SpeedMultiplier } from "./types/speedMultiplier";
 import {
   compareMacs,
   MacAddress,
   MacAddressGenerator,
 } from "./packets/ethernet";
+import { DataNetworkDevice } from "./types/data-devices";
 import { Colors } from "./utils/utils";
 
 export class GlobalContext {
@@ -50,11 +50,12 @@ export class GlobalContext {
 
   private setNetwork(datagraph: DataGraph, layer: Layer) {
     this.datagraph = datagraph;
-    this.viewport.clear();
     if (this.viewgraph) {
-      this.viewgraph.clear();
+      this.viewgraph.setDataGraph(datagraph);
+      this.viewgraph.changeCurrLayer(layer);
+    } else {
+      this.viewgraph = new ViewGraph(datagraph, this, layer);
     }
-    this.viewgraph = new ViewGraph(this.datagraph, this, layer);
     this.setIpGenerator();
     this.setMacGenerator();
   }
@@ -149,14 +150,9 @@ export class GlobalContext {
     let maxIp = IpAddress.parse("10.0.0.0");
 
     for (const [, device] of this.datagraph.getDevices()) {
-      if (isNetworkNode(device)) {
-        const ip = IpAddress.parse(device.ip);
-        if (ip === null) {
-          console.error("Failed to parse IP address: " + device.ip);
-        } else {
-          if (compareIps(maxIp, ip) < 0) {
-            maxIp = ip;
-          }
+      if (device instanceof DataNetworkDevice) {
+        if (compareIps(maxIp, device.ip) < 0) {
+          maxIp = device.ip;
         }
       }
     }
@@ -168,11 +164,8 @@ export class GlobalContext {
   private setMacGenerator() {
     let maxMac = MacAddress.parse("00:00:10:00:00:00");
     for (const [, device] of this.datagraph.getDevices()) {
-      if (isLinkNode(device)) {
-        const mac = MacAddress.parse(device.mac);
-        if (compareMacs(maxMac, mac) < 0) {
-          maxMac = mac;
-        }
+      if (compareMacs(maxMac, device.mac) < 0) {
+        maxMac = device.mac;
       }
     }
     // TODO: we should use MacAddress instead of string here and in Datagraph

@@ -1,5 +1,5 @@
 import { Position } from "../../common";
-import { Layer } from "../../devices/layer";
+import { Layer } from "../../layer";
 import { DeviceId } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { BaseMove } from "./move";

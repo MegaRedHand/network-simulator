@@ -1,13 +1,12 @@
-import { DeviceType } from "./device";
-import { NetworkDevice } from "./networkDevice";
+import { DeviceType } from "./vDevice";
+import { ViewNetworkDevice } from "./vNetworkDevice";
 import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { DeviceId } from "../graphs/datagraph";
-import { Layer } from "./layer";
-import { isHost } from "../graphs/datagraph";
+import { Layer } from "../layer";
 import {
   getProgramList,
   newProgram,
@@ -18,16 +17,17 @@ import {
 import { Texture } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
+import { DataHost } from "../data-devices";
 import { dropPacket } from "../packet";
 
-export class Host extends NetworkDevice {
+export class ViewHost extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
 
   static getTexture() {
-    if (!Host.DEVICE_TEXTURE) {
-      Host.DEVICE_TEXTURE = Texture.from(PcImage);
+    if (!ViewHost.DEVICE_TEXTURE) {
+      ViewHost.DEVICE_TEXTURE = Texture.from(PcImage);
     }
-    return Host.DEVICE_TEXTURE;
+    return ViewHost.DEVICE_TEXTURE;
   }
 
   private runningPrograms = new Map<Pid, Program>();
@@ -42,7 +42,7 @@ export class Host extends NetworkDevice {
     ip: IpAddress,
     mask: IpAddress,
   ) {
-    super(id, Host.getTexture(), viewgraph, ctx, position, mac, ip, mask);
+    super(id, ViewHost.getTexture(), viewgraph, ctx, position, mac, ip, mask);
     this.loadRunningPrograms();
   }
 
@@ -76,7 +76,7 @@ export class Host extends NetworkDevice {
     const pid = this.getNextPid();
     const runningProgram = { pid, name, inputs };
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
-      if (!isHost(device)) {
+      if (!(device instanceof DataHost)) {
         console.error("Node is not a Host");
         return;
       }
@@ -88,7 +88,7 @@ export class Host extends NetworkDevice {
 
   removeRunningProgram(pid: Pid) {
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
-      if (!isHost(device)) {
+      if (!(device instanceof DataHost)) {
         console.error("Node is not a Host");
         return;
       }
@@ -108,7 +108,7 @@ export class Host extends NetworkDevice {
 
   getRunningPrograms() {
     const thisDevice = this.viewgraph.getDataGraph().getDevice(this.id);
-    if (!isHost(thisDevice)) {
+    if (!(thisDevice instanceof DataHost)) {
       console.error("Node is not a Host");
       return;
     }
