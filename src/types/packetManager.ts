@@ -6,18 +6,21 @@ import { ViewNetworkDevice } from "./view-devices/vNetworkDevice";
 import { IPv4Packet } from "../packets/ip";
 
 export class PacketManager {
+  private static nextPacketId = 0;
   private viewgraph: ViewGraph;
-  private packetsInTransit: Map<string, Packet> = new Map<string, Packet>();
+  private packetsInTransit = new Map<number, Packet>();
 
   constructor(viewgraph: ViewGraph) {
     this.viewgraph = viewgraph;
   }
 
   registerPacket(packet: Packet) {
-    this.packetsInTransit.set(packet.packetId, packet);
+    const packetId = ++PacketManager.nextPacketId;
+    this.packetsInTransit.set(packetId, packet);
+    return packetId;
   }
 
-  deregisterPacket(packetId: string) {
+  deregisterPacket(packetId: number) {
     this.packetsInTransit.delete(packetId);
   }
 

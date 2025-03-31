@@ -67,7 +67,7 @@ function packetContext(frame: EthernetFrame): PacketContext {
 }
 
 export class Packet extends Graphics {
-  packetId: string;
+  packetId: number;
   protected speed = 100;
   protected progress = 0;
   protected currStart: DeviceId;
@@ -85,7 +85,6 @@ export class Packet extends Graphics {
     isVisible: boolean,
   ) {
     super();
-    this.packetId = crypto.randomUUID();
     this.graph = graph;
     const { type, layer } = packetContext(rawPacket);
     this.belongingLayer = layer;
@@ -100,7 +99,7 @@ export class Packet extends Graphics {
     this.on("click", this.onClick, this);
     this.on("tap", this.onClick, this);
     // register in Packet Manger
-    ctx.getViewGraph().getPacketManager().registerPacket(this);
+    this.packetId = ctx.getViewGraph().getPacketManager().registerPacket(this);
     this.visible = isVisible;
   }
 
