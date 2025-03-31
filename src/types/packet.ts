@@ -181,28 +181,12 @@ export class Packet extends Graphics {
     this.context = contextPerPacketType[this.type];
   }
 
-  getCurrStart(): DeviceId {
-    return this.currStart;
-  }
-
-  getCurrEnd(): DeviceId {
-    return this.currEnd;
-  }
-
   getProgress(): number {
     return this.progress;
   }
 
   getRawPacket(): EthernetFrame {
     return this.rawPacket;
-  }
-
-  getType(): string {
-    return this.type;
-  }
-
-  setCurrStart(id: DeviceId) {
-    this.currStart = id;
   }
 
   deliverPacket() {
