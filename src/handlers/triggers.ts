@@ -12,7 +12,7 @@ import { DataGraph } from "../types/graphs/datagraph";
 // Function to create a new network
 export const triggerNew = (ctx: GlobalContext) => {
   deselectElement(); // Deselect any currently selected element
-  ctx.load(new DataGraph()); // Load a new empty DataGraph into the context
+  ctx.load(new DataGraph(ctx)); // Load a new empty DataGraph into the context
 };
 
 // Function to save the network

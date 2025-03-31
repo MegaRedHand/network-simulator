@@ -1,17 +1,19 @@
-import { DeviceType, Layer } from "./device";
-import { NetworkDevice } from "./networkDevice";
+import { DeviceType } from "./vDevice";
+import { Layer } from "../layer";
+import { ViewNetworkDevice } from "./vNetworkDevice";
 import { ViewGraph } from "../graphs/viewgraph";
 import RouterImage from "../../assets/router.svg";
 import { Position } from "../common";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
-import { DeviceId, isRouter } from "../graphs/datagraph";
+import { DeviceId } from "../graphs/datagraph";
 import { Texture, Ticker } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
-import { dropPacket, sendRawPacket } from "../packet";
+import { DataRouter } from "../data-devices";
+import { dropPacket, sendViewPacket } from "../packet";
 
-export class Router extends NetworkDevice {
+export class ViewRouter extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
 
   private packetQueue = new PacketQueue(1024);
@@ -21,10 +23,10 @@ export class Router extends NetworkDevice {
   private processingProgress = 0;
 
   static getTexture() {
-    if (!Router.DEVICE_TEXTURE) {
-      Router.DEVICE_TEXTURE = Texture.from(RouterImage);
+    if (!ViewRouter.DEVICE_TEXTURE) {
+      ViewRouter.DEVICE_TEXTURE = Texture.from(RouterImage);
     }
-    return Router.DEVICE_TEXTURE;
+    return ViewRouter.DEVICE_TEXTURE;
   }
 
   constructor(
@@ -36,7 +38,7 @@ export class Router extends NetworkDevice {
     ip: IpAddress,
     mask: IpAddress,
   ) {
-    super(id, Router.getTexture(), viewgraph, ctx, position, mac, ip, mask);
+    super(id, ViewRouter.getTexture(), viewgraph, ctx, position, mac, ip, mask);
   }
 
   showInfo(): void {
@@ -101,7 +103,7 @@ export class Router extends NetworkDevice {
         continue;
       }
       const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
-      sendRawPacket(this.viewgraph, this.id, newFrame);
+      sendViewPacket(this.viewgraph, this.id, newFrame);
     }
 
     if (this.packetQueue.isEmpty()) {
@@ -132,7 +134,7 @@ export class Router extends NetworkDevice {
 
   routePacket(datagram: IPv4Packet): DeviceId[] {
     const device = this.viewgraph.getDataGraph().getDevice(this.id);
-    if (!device || !isRouter(device)) {
+    if (!device || !(device instanceof DataRouter)) {
       return;
     }
 
@@ -143,7 +145,6 @@ export class Router extends NetworkDevice {
       }
       const ip = IpAddress.parse(entry.ip);
       const mask = IpAddress.parse(entry.mask);
-      console.debug("Considering entry:", entry);
       return datagram.destinationAddress.isInSubnet(ip, mask);
     });
 

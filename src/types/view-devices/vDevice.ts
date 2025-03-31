@@ -7,13 +7,13 @@ import {
   Text,
   Container,
 } from "pixi.js";
-import { ViewGraph } from "./../graphs/viewgraph";
+import { ViewGraph } from "../graphs/viewgraph";
 import {
   deselectElement,
   refreshElement,
   selectElement,
   urManager,
-} from "./../viewportManager";
+} from "../viewportManager";
 import { RightBar } from "../../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../../utils/utils";
 import { Position } from "../common";
@@ -21,15 +21,13 @@ import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
 import { DeviceId, RemovedNodeData } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
-import { Layer } from "./layer";
+import { Layer } from "../layer";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 
-export { Layer } from "./layer";
-
 export enum DeviceType {
-  Router = 0,
-  Host = 1,
+  Host = 0,
+  Router = 1,
   Switch = 2,
 }
 
@@ -44,7 +42,7 @@ export function layerFromType(type: DeviceType) {
   }
 }
 
-export abstract class Device extends Container {
+export abstract class ViewDevice extends Container {
   private sprite: Sprite;
 
   readonly id: DeviceId;
@@ -56,8 +54,8 @@ export abstract class Device extends Container {
 
   highlightMarker: Graphics | null = null; // Marker to indicate selection
 
-  static dragTarget: Device | null = null;
-  static connectionTarget: Device | null = null;
+  static dragTarget: ViewDevice | null = null;
+  static connectionTarget: ViewDevice | null = null;
   static startPosition: Position | null = null;
 
   get width(): number {
@@ -128,6 +126,10 @@ export abstract class Device extends Container {
     this.addChild(idText); // Add the ID text as a child of the device
   }
 
+  getPosition(): Position {
+    return { x: this.x, y: this.y };
+  }
+
   delete(): RemovedNodeData {
     const deviceData = this.viewgraph.removeDevice(this.id);
     console.log(`Device ${this.id} deleted`);
@@ -136,13 +138,13 @@ export abstract class Device extends Container {
   }
 
   onPointerDown(event: FederatedPointerEvent): void {
-    if (!Device.connectionTarget) {
+    if (!ViewDevice.connectionTarget) {
       selectElement(this);
     }
-    Device.dragTarget = this;
+    ViewDevice.dragTarget = this;
 
     // Guardar posición inicial
-    Device.startPosition = { x: this.x, y: this.y };
+    ViewDevice.startPosition = { x: this.x, y: this.y };
     event.stopPropagation();
 
     // Listen to global pointermove and pointerup events
@@ -153,30 +155,30 @@ export abstract class Device extends Container {
   onClick(e: FederatedPointerEvent) {
     e.stopPropagation();
 
-    if (!Device.connectionTarget) {
+    if (!ViewDevice.connectionTarget) {
       selectElement(this);
       return;
     }
     // If the stored device is this, ignore
-    if (Device.connectionTarget === this) {
+    if (ViewDevice.connectionTarget === this) {
       return;
     }
     // Connect both devices
-    const n1 = Device.connectionTarget.id;
+    const n1 = ViewDevice.connectionTarget.id;
     const n2 = this.id;
     const move = new AddEdgeMove(this.viewgraph.getLayer(), { n1, n2 });
     if (urManager.push(this.viewgraph, move)) {
       refreshElement();
-      Device.connectionTarget = null;
+      ViewDevice.connectionTarget = null;
     }
   }
 
   selectToConnect() {
-    if (Device.connectionTarget) {
-      Device.connectionTarget = null;
+    if (ViewDevice.connectionTarget) {
+      ViewDevice.connectionTarget = null;
       return;
     }
-    Device.connectionTarget = this;
+    ViewDevice.connectionTarget = this;
   }
 
   highlight() {
@@ -229,7 +231,7 @@ export abstract class Device extends Container {
 
   deselect() {
     this.removeHighlight(); // Calls removeHighlight on deselect
-    Device.connectionTarget = null;
+    ViewDevice.connectionTarget = null;
   }
 
   // Return the device’s type.
@@ -245,34 +247,34 @@ export abstract class Device extends Container {
 }
 
 function onPointerMove(event: FederatedPointerEvent): void {
-  if (Device.dragTarget) {
-    Device.dragTarget.parent.toLocal(
+  if (ViewDevice.dragTarget) {
+    ViewDevice.dragTarget.parent.toLocal(
       event.global,
       null,
-      Device.dragTarget.position,
+      ViewDevice.dragTarget.position,
     );
 
     // Notify view graph about its movement
-    Device.dragTarget.viewgraph.deviceMoved(Device.dragTarget.id);
+    ViewDevice.dragTarget.viewgraph.deviceMoved(ViewDevice.dragTarget.id);
   }
 }
 
 function onPointerUp(): void {
-  const target = Device.dragTarget;
-  if (target && Device.startPosition) {
+  const target = ViewDevice.dragTarget;
+  if (target && ViewDevice.startPosition) {
     const endPosition: Position = {
       x: target.x,
       y: target.y,
     };
     console.log("Finalizing move for device:", {
       id: target.id,
-      startPosition: Device.startPosition,
+      startPosition: ViewDevice.startPosition,
       endPosition,
     });
 
     if (
-      Device.startPosition.x === endPosition.x &&
-      Device.startPosition.y === endPosition.y
+      ViewDevice.startPosition.x === endPosition.x &&
+      ViewDevice.startPosition.y === endPosition.y
     ) {
       console.log(
         `No movement detected for device ID ${target.id}. Move not registered.`,
@@ -281,18 +283,18 @@ function onPointerUp(): void {
       const move = new DragDeviceMove(
         target.viewgraph.getLayer(),
         target.id,
-        Device.startPosition,
+        ViewDevice.startPosition,
         endPosition,
       );
       urManager.push(target.viewgraph, move);
     }
 
     // Reset static variables
-    Device.startPosition = null;
+    ViewDevice.startPosition = null;
 
     // Remove global pointermove and pointerup events
     target.parent.off("pointermove", onPointerMove);
     target.parent.off("pointerup", onPointerUp);
-    Device.dragTarget = null;
+    ViewDevice.dragTarget = null;
   }
 }

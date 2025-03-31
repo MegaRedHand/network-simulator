@@ -1,19 +1,20 @@
 import { GlobalContext } from "./../context";
-import { DataGraph, GraphData, NewDevice } from "./graphs/datagraph";
-import { Device } from "./devices/index";
+import { DataGraph, GraphData, DataNode } from "./graphs/datagraph";
+import { ViewDevice } from "./view-devices/";
 import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
 import { Packet } from "./packet";
-import { DeviceType, Layer } from "./devices/device";
+import { DeviceType } from "./view-devices/vDevice";
+import { Layer } from "./layer";
 import {
   UndoRedoManager,
   AddDeviceMove,
   RemoveDeviceMove,
   RemoveEdgeMove,
 } from "./undo-redo";
-import { SpeedMultiplier } from "./devices/speedMultiplier";
+import { SpeedMultiplier } from "./speedMultiplier";
 
-type Selectable = Device | Edge | Packet;
+type Selectable = ViewDevice | Edge | Packet;
 
 let selectedElement: Selectable | null = null; // Global variable to store the selected element
 
@@ -51,8 +52,8 @@ export function isSelected(element: Selectable) {
   return element === selectedElement;
 }
 
-function isDevice(selectable: Selectable): selectable is Device {
-  return selectable instanceof Device;
+function isDevice(selectable: Selectable): selectable is ViewDevice {
+  return selectable instanceof ViewDevice;
 }
 
 function isEdge(selectable: Selectable): selectable is Edge {
@@ -69,8 +70,10 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "Delete" || event.key === "Backspace") {
     if (selectedElement) {
-      const viewgraph = selectedElement.viewgraph;
-      const currLayer = viewgraph.getLayer();
+      const viewgraph = !(selectedElement instanceof Packet)
+        ? selectedElement.viewgraph
+        : undefined;
+      const currLayer = viewgraph?.getLayer();
       if (isDevice(selectedElement)) {
         const move = new RemoveDeviceMove(currLayer, selectedElement.id);
         urManager.push(viewgraph, move);
@@ -91,12 +94,12 @@ document.addEventListener("keydown", (event) => {
         );
         urManager.push(viewgraph, move);
       } else {
-        // it’s a packet
+        // its a packet
         selectedElement.delete();
       }
     }
   } else if (event.key === "c" || event.key === "C") {
-    if (selectedElement instanceof Device) {
+    if (selectedElement instanceof ViewDevice) {
       selectedElement.selectToConnect();
       const connectButton = document.querySelector(".right-bar-connect-button");
 
@@ -107,7 +110,7 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType): NewDevice {
+function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType): DataNode {
   const viewport = ctx.getViewport();
   // Get the center coordinates of the world after zoom
   const { x, y } = viewport.toWorld(
@@ -164,7 +167,7 @@ export function loadFromFile(ctx: GlobalContext) {
     reader.onload = (readerEvent) => {
       const jsonData = readerEvent.target.result as string;
       const graphData: GraphData = JSON.parse(jsonData);
-      ctx.load(DataGraph.fromData(graphData));
+      ctx.load(DataGraph.fromData(graphData, ctx));
 
       console.log("Graph loaded successfully.");
     };
@@ -196,14 +199,16 @@ export function loadFromLocalStorage(ctx: GlobalContext) {
   const jsonData = localStorage.getItem(LOCAL_STORAGE_KEY) || "{}";
   try {
     const data: LocalStorageData = JSON.parse(jsonData);
+    console.debug("Data from local storage:", data);
     const graphData: GraphData = JSON.parse(data.graph);
     const speedMultiplier = new SpeedMultiplier(data.speedMultiplier || 1);
     console.log("Speed multiplier: ", speedMultiplier);
-    ctx.load(DataGraph.fromData(graphData), data.layer, speedMultiplier);
+    console.debug("Graph data from local storage:", graphData);
+    ctx.load(DataGraph.fromData(graphData, ctx), data.layer, speedMultiplier);
   } catch (error) {
     const extraData = { jsonData, error };
     console.error("Failed to load graph from local storage.", extraData);
-    ctx.load(new DataGraph(), Layer.App, new SpeedMultiplier(1));
+    ctx.load(new DataGraph(ctx), Layer.App, new SpeedMultiplier(1));
     return;
   }
   console.log("Graph loaded from local storage.");

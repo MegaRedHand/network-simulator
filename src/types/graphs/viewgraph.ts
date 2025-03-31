@@ -1,20 +1,24 @@
-import { Device, NetworkDevice } from "./../devices";
+import { ViewDevice } from "../view-devices";
 import { Edge, EdgeEdges } from "./../edge";
-import { DataGraph, DeviceId, GraphNode, RemovedNodeData } from "./datagraph";
+import { DataGraph, DeviceId, DataNode, RemovedNodeData } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
-import { Layer, layerIncluded } from "../devices/layer";
-import { createDevice } from "../devices/utils";
-import { layerFromType } from "../devices/device";
+import { Layer, layerIncluded } from "../layer";
+import { createViewDevice } from "../view-devices/utils";
+import { layerFromType } from "../view-devices/vDevice";
 import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 import { Graph } from "./graph";
+import { PacketManager } from "../packetManager";
+import { ViewNetworkDevice } from "../view-devices/vNetworkDevice";
+import { MacAddress } from "../../packets/ethernet";
 
 export type EdgePair = [DeviceId, DeviceId];
 
 export class ViewGraph {
-  private ctx: GlobalContext;
-  private graph = new Graph<Device, Edge>();
+  ctx: GlobalContext;
+  graph = new Graph<ViewDevice, Edge>();
   private datagraph: DataGraph;
+  private packetManager: PacketManager;
   private layer: Layer;
   viewport: Viewport;
 
@@ -23,6 +27,7 @@ export class ViewGraph {
     this.datagraph = datagraph;
     this.viewport = ctx.getViewport();
     this.layer = layer;
+    this.packetManager = new PacketManager(this);
     this.constructView();
   }
 
@@ -30,9 +35,9 @@ export class ViewGraph {
     console.log("Constructing ViewGraph from DataGraph");
     const allConnections = new Map<string, EdgePair>();
 
-    for (const [deviceId, graphNode] of this.datagraph.getDevices()) {
-      if (layerIncluded(layerFromType(graphNode.type), this.layer)) {
-        this.addDevice(deviceId, graphNode);
+    for (const [deviceId, device] of this.datagraph.getDevices()) {
+      if (layerIncluded(layerFromType(device.getType()), this.layer)) {
+        this.addDevice(deviceId, device.getDataNode());
         layerDFS(
           this.datagraph,
           this.layer,
@@ -43,12 +48,13 @@ export class ViewGraph {
         );
       }
     }
+    console.debug(allConnections);
     this.addConnections(allConnections);
   }
 
-  loadDevice(deviceId: DeviceId) {
+  loadDevice(deviceId: DeviceId): ViewDevice {
     const node = this.datagraph.getDevice(deviceId);
-    const device = this.addDevice(deviceId, node);
+    const device = this.addDevice(deviceId, node.getDataNode());
 
     // load connections
     const connections = new Map<string, EdgePair>();
@@ -65,12 +71,15 @@ export class ViewGraph {
   }
 
   // Add a device to the graph
-  private addDevice(id: DeviceId, node: GraphNode): Device {
+  private addDevice(id: DeviceId, node: DataNode): ViewDevice {
+    if (!node.id) {
+      console.warn("Device does not hace ID");
+    }
     if (this.graph.hasVertex(id)) {
       console.warn(`Device with ID ${id} already exists in the graph.`);
       return this.graph.getVertex(id);
     }
-    const device = createDevice(id, node, this, this.ctx);
+    const device = createViewDevice(node, this, this.ctx);
 
     this.graph.setVertex(device.id, device);
     this.viewport.addChild(device);
@@ -90,7 +99,7 @@ export class ViewGraph {
     });
   }
 
-  drawEdge(device1: Device, device2: Device): Edge {
+  drawEdge(device1: ViewDevice, device2: ViewDevice): Edge {
     const connectedNodes: EdgeEdges = { n1: device1.id, n2: device2.id };
     if (this.graph.hasEdge(device1.id, device2.id)) {
       console.warn(`Edge with ID ${device1.id},${device2.id} already exists.`);
@@ -142,7 +151,7 @@ export class ViewGraph {
   }
 
   deviceMoved(deviceId: DeviceId) {
-    const device: Device = this.graph.getVertex(deviceId);
+    const device: ViewDevice = this.graph.getVertex(deviceId);
     this.graph.getNeighbors(deviceId).forEach((adjacentId) => {
       const edge = this.graph.getEdge(deviceId, adjacentId);
       // Get start and end devices directly
@@ -170,9 +179,13 @@ export class ViewGraph {
   }
 
   changeCurrLayer(newLayer: Layer) {
+    const formerLayer = this.layer;
     this.layer = newLayer;
     this.clear();
     this.constructView();
+
+    // warn Packet Manager that the layer has been changed
+    this.packetManager.layerChanged(formerLayer, newLayer);
 
     const event = new CustomEvent("layerChanged", {
       detail: { layer: newLayer },
@@ -193,14 +206,17 @@ export class ViewGraph {
     return Array.from(edges).map(([, edge]) => edge);
   }
 
+  getAllConnections(): Edge[] {
+    return Array.from(this.graph.getAllEdges()).map(([, , edge]) => edge);
+  }
+
   // Get a specific device by its ID
-  getDevice(id: DeviceId): Device | undefined {
-    const device = this.graph.getVertex(id);
-    return device;
+  getDevice(id: DeviceId): ViewDevice | undefined {
+    return this.graph.getVertex(id);
   }
 
   // Get all devices in the graph
-  getDevices(): Device[] {
+  getDevices(): ViewDevice[] {
     return Array.from(this.graph.getAllVertices()).map(([, device]) => device);
   }
 
@@ -212,6 +228,10 @@ export class ViewGraph {
   // Get the number of devices in the graph
   getDeviceCount(): number {
     return this.graph.getVertexCount();
+  }
+
+  getPacketManager(): PacketManager {
+    return this.packetManager;
   }
 
   // Method to remove a device and its connections (edges)
@@ -298,8 +318,22 @@ export class ViewGraph {
 
   getDeviceByIP(ipAddress: IpAddress) {
     return this.getDevices().find((device) => {
-      return device instanceof NetworkDevice && device.ip == ipAddress;
+      return device instanceof ViewNetworkDevice && device.ip.equals(ipAddress);
     });
+  }
+
+  getDeviceByMac(destination: MacAddress): ViewDevice {
+    return this.getDevices().find((device) => {
+      return device.mac.equals(destination);
+    });
+  }
+
+  hasDevice(id: DeviceId) {
+    return this.graph.hasVertex(id);
+  }
+
+  setDataGraph(datagraph: DataGraph): void {
+    this.datagraph = datagraph;
   }
 
   /// Returns shortest path between two devices using BFS
@@ -313,7 +347,7 @@ export class ViewGraph {
       console.warn(`At least one device does not exist`);
       return [];
     }
-    const queue: [Device, DeviceId[]][] = [[startDevice, [startId]]];
+    const queue: [ViewDevice, DeviceId[]][] = [[startDevice, [startId]]];
     const visited: Set<DeviceId> = new Set<DeviceId>();
 
     while (queue.length > 0) {
@@ -396,7 +430,7 @@ function layerDFS(
     // mark node as visited
     visited.add(w);
 
-    if (layerIncluded(layerFromType(adjacent.type), layer)) {
+    if (layerIncluded(layerFromType(adjacent.getType()), layer)) {
       // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
       const edgePair: EdgePair = [w, s];
       edgePair.sort();

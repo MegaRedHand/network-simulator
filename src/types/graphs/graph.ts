@@ -71,12 +71,12 @@ export class Graph<Vertex, Edge> {
     }
   }
 
-  setEdge(id: VertexId, otherId: VertexId, edge: Edge): void {
-    if (!this.hasVertex(id) || !this.hasVertex(otherId)) {
+  setEdge(id1: VertexId, id2: VertexId, edge: Edge): void {
+    if (!this.hasVertex(id1) || !this.hasVertex(id2)) {
       return;
     }
-    this.edges.get(id).set(otherId, edge);
-    this.edges.get(otherId).set(id, edge);
+    this.edges.get(id1).set(id2, edge);
+    this.edges.get(id2).set(id1, edge);
   }
 
   removeVertex(id: VertexId): RemovedVertexData<Vertex, Edge> | undefined {

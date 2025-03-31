@@ -1,15 +1,15 @@
 import { Texture } from "pixi.js";
 import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
-import { Device } from "./device";
+import { ViewDevice } from "./vDevice";
 import { ViewGraph } from "../graphs/viewgraph";
 import { Position } from "../common";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
-import { dropPacket, sendRawPacket } from "../packet";
+import { sendViewPacket, dropPacket } from "../packet";
 import { EchoReply, EchoRequest } from "../../packets/icmp";
 import { GlobalContext } from "../../context";
 
-export abstract class NetworkDevice extends Device {
+export abstract class ViewNetworkDevice extends ViewDevice {
   ip: IpAddress;
   ipMask: IpAddress;
 
@@ -32,8 +32,9 @@ export abstract class NetworkDevice extends Device {
 
   // TODO: Most probably it will be different for each type of device
   handlePacket(datagram: IPv4Packet) {
+    console.debug("Packet has reach its destination!");
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.sourceAddress);
-    if (!(dstDevice instanceof NetworkDevice)) {
+    if (!(dstDevice instanceof ViewNetworkDevice)) {
       return;
     }
     switch (datagram.payload.protocol()) {
@@ -46,7 +47,7 @@ export abstract class NetworkDevice extends Device {
           console.log(path);
           for (const id of path.slice(1)) {
             const device = this.viewgraph.getDevice(id);
-            if (device instanceof NetworkDevice) {
+            if (device instanceof ViewNetworkDevice) {
               dstMac = device.mac;
               break;
             }
@@ -54,7 +55,8 @@ export abstract class NetworkDevice extends Device {
           const echoReply = new EchoReply(0);
           const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
           const ethernet = new EthernetFrame(this.mac, dstMac, ipPacket);
-          sendRawPacket(this.viewgraph, this.id, ethernet);
+          console.debug(`Sending EchoReply to ${dstDevice}`);
+          sendViewPacket(this.viewgraph, this.id, ethernet);
         }
         break;
       }

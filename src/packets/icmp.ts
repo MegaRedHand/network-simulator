@@ -1,5 +1,5 @@
 import { ICMP_PROTOCOL_NUMBER, IpPayload, computeIpChecksum } from "./ip";
-import { Layer } from "../types/devices/layer";
+import { Layer } from "../types/layer";
 
 const ICMP_WARNING =
   "ICMP operates directly on top of IP at the Network layer, bypassing the Transport layer (TCP/UDP). This is because ICMP is primarily used for network diagnostics and error reporting, not for end-to-end data transport.";
@@ -15,7 +15,7 @@ export const ICMP_REPLY_TYPE_NUMBER = 0;
 //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //  |                         variant data                          |
 //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-abstract class IcmpPacket implements IpPayload {
+export abstract class IcmpPacket implements IpPayload {
   // 8 bits
   type: number;
 

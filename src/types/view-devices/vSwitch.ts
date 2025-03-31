@@ -1,4 +1,5 @@
-import { Device, DeviceType, Layer } from "./device";
+import { ViewDevice, DeviceType } from "./vDevice";
+import { Layer } from "../layer";
 import { ViewGraph } from "../graphs/viewgraph";
 import SwitchImage from "../../assets/switch.svg";
 import { Position } from "../common";
@@ -8,16 +9,16 @@ import { Texture } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { IPv4Packet } from "../../packets/ip";
 import { GlobalContext } from "../../context";
-import { sendRawPacket } from "../packet";
+import { sendViewPacket } from "../packet";
 
-export class Switch extends Device {
+export class ViewSwitch extends ViewDevice {
   static DEVICE_TEXTURE: Texture;
 
   static getTexture() {
-    if (!Switch.DEVICE_TEXTURE) {
-      Switch.DEVICE_TEXTURE = Texture.from(SwitchImage);
+    if (!ViewSwitch.DEVICE_TEXTURE) {
+      ViewSwitch.DEVICE_TEXTURE = Texture.from(SwitchImage);
     }
-    return Switch.DEVICE_TEXTURE;
+    return ViewSwitch.DEVICE_TEXTURE;
   }
 
   constructor(
@@ -27,7 +28,7 @@ export class Switch extends Device {
     position: Position,
     mac: MacAddress,
   ) {
-    super(id, Switch.getTexture(), viewgraph, ctx, position, mac);
+    super(id, ViewSwitch.getTexture(), viewgraph, ctx, position, mac);
   }
 
   showInfo(): void {
@@ -69,6 +70,6 @@ export class Switch extends Device {
       return;
     }
     const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
-    sendRawPacket(this.viewgraph, this.id, newFrame);
+    sendViewPacket(this.viewgraph, this.id, newFrame);
   }
 }

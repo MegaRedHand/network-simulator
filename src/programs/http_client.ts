@@ -2,10 +2,10 @@ import { ProgramInfo } from "../graphics/renderables/device_info";
 import { EthernetFrame } from "../packets/ethernet";
 import { IPv4Packet } from "../packets/ip";
 import { Flags, TcpSegment } from "../packets/tcp";
-import { NetworkDevice } from "../types/devices";
 import { DeviceId } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
-import { sendRawPacket } from "../types/packet";
+import { sendViewPacket } from "../types/packet";
+import { ViewNetworkDevice } from "../types/view-devices/vNetworkDevice";
 import { ProgramBase } from "./program_base";
 
 export class HttpClient extends ProgramBase {
@@ -40,8 +40,8 @@ export class HttpClient extends ProgramBase {
       return;
     }
     if (
-      !(srcDevice instanceof NetworkDevice) ||
-      !(dstDevice instanceof NetworkDevice)
+      !(srcDevice instanceof ViewNetworkDevice) ||
+      !(dstDevice instanceof ViewNetworkDevice)
     ) {
       console.log(
         "At least one device between source and destination is not a network device",
@@ -68,13 +68,13 @@ export class HttpClient extends ProgramBase {
     for (const id of path.slice(1)) {
       const device = this.viewgraph.getDevice(id);
       // if there’s a router in the middle, first send frame to router mac
-      if (device instanceof NetworkDevice) {
+      if (device instanceof ViewNetworkDevice) {
         dstMac = device.mac;
         break;
       }
     }
     const ethernetFrame = new EthernetFrame(srcDevice.mac, dstMac, ipPacket);
-    sendRawPacket(this.viewgraph, this.srcId, ethernetFrame);
+    sendViewPacket(this.viewgraph, this.srcId, ethernetFrame);
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
