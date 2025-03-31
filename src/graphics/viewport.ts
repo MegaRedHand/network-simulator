@@ -28,39 +28,57 @@ export class Viewport extends pixi_viewport.Viewport {
       worldHeight: WORLD_HEIGHT,
       events: events,
     });
-    this.moveCenter(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+
     this.sortableChildren = true;
     this.initializeMovement();
-
     this.addChild(new Background());
 
-    // Track drag start
+    // Restore saved position
+    this.restorePosition();
+
     this.on("drag-start", () => {
       this.isDragging = true;
     });
 
-    // Track drag end
     this.on("drag-end", () => {
       setTimeout(() => {
         this.isDragging = false;
-      }, 50); // Small delay to ensure click doesn't trigger after drag
+      }, 50);
+      this.savePosition(); // Save position after movement
     });
 
-    // Only deselect if it's a genuine click, not a drag
     const onClick = (event: FederatedPointerEvent) => {
       if (!this.isDragging && event.target === this) {
         deselectElement();
       }
     };
     this.on("click", onClick, this);
-    // NOTE: this is "click" for mobile devices
     this.on("tap", onClick, this);
   }
 
+  // Save the current position of the viewport
+  private savePosition() {
+    localStorage.setItem(
+      "viewportPosition",
+      JSON.stringify({ x: this.x, y: this.y })
+    );
+  }
+  
+
+  // Restore the saved position of the viewport
+  public restorePosition() {
+    const savedPosition = localStorage.getItem("viewportPosition");
+    if (savedPosition) {
+      const { x, y } = JSON.parse(savedPosition);
+      this.position.set(x, y); // Ajusta directamente la posición
+    } else {
+      this.moveCenter(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+    }
+  }
+  
   clear() {
     this.removeChildren();
     this.addChild(new Background());
-    this.moveCenter(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
   }
 
   private initializeMovement() {

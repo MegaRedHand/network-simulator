@@ -80,6 +80,7 @@ export class GlobalContext {
     speedMultiplier: SpeedMultiplier = new SpeedMultiplier(1),
   ) {
     this.setNetwork(datagraph, layer);
+    this.viewport.restorePosition();
     this.setSpeedMultiplier(speedMultiplier);
     this.setupAutoSave();
     saveToLocalStorage(this);
