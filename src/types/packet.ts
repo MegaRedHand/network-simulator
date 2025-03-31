@@ -67,14 +67,15 @@ function packetContext(frame: EthernetFrame): PacketContext {
 }
 
 export class Packet extends Graphics {
-  packetId: number;
-  protected speed = 100;
-  protected progress = 0;
-  protected currStart: DeviceId;
-  protected currEnd: DeviceId;
-  protected graph: ViewGraph | DataGraph;
-  protected type: string;
-  protected rawPacket: EthernetFrame;
+  private packetId: number;
+  private speed = 100;
+  private progress = 0;
+  private currStart: DeviceId;
+  private currEnd: DeviceId;
+  private graph: ViewGraph | DataGraph;
+  private type: string;
+  private rawPacket: EthernetFrame;
+
   ctx: GlobalContext;
   belongingLayer: Layer;
 
