@@ -47,6 +47,10 @@ export class Viewport extends pixi_viewport.Viewport {
       this.savePosition(); // Save position after movement
     });
 
+    this.on("zoomed-end", () => {
+      this.savePosition(); // Save position after zoom
+    });
+
     const onClick = (event: FederatedPointerEvent) => {
       if (!this.isDragging && event.target === this) {
         deselectElement();
@@ -60,25 +64,39 @@ export class Viewport extends pixi_viewport.Viewport {
   private savePosition() {
     localStorage.setItem(
       "viewportPosition",
-      JSON.stringify({ x: this.x, y: this.y })
+      JSON.stringify({ x: this.x, y: this.y }),
+    );
+    localStorage.setItem(
+      "viewportZoom",
+      JSON.stringify({ x: this.scale.x, y: this.scale.y }),
     );
   }
-  
 
   // Restore the saved position of the viewport
   public restorePosition() {
     const savedPosition = localStorage.getItem("viewportPosition");
+    const savedZoom = localStorage.getItem("viewportZoom");
+
     if (savedPosition) {
       const { x, y } = JSON.parse(savedPosition);
-      this.position.set(x, y); // Ajusta directamente la posición
+      this.position.set(x, y);
     } else {
-      this.moveCenter(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+      this.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+    }
+
+    if (savedZoom) {
+      const { x, y } = JSON.parse(savedZoom);
+      this.scale.set(x, y);
+    } else {
+      this.scale.set(1);
     }
   }
-  
+
   clear() {
     this.removeChildren();
     this.addChild(new Background());
+    localStorage.removeItem("viewportPosition");
+    localStorage.removeItem("viewportZoom");
   }
 
   private initializeMovement() {
@@ -86,7 +104,6 @@ export class Viewport extends pixi_viewport.Viewport {
       .pinch()
       .wheel()
       .clamp({ direction: "all" })
-      // TODO: revisit when all icons are finalized
       .clampZoom({
         minHeight: 200,
         minWidth: 200,
