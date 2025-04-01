@@ -2,9 +2,8 @@ import { ViewDevice } from "../view-devices";
 import { Edge, EdgeEdges } from "./../edge";
 import { DataGraph, DeviceId, DataNode, RemovedNodeData } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
-import { Layer, layerIncluded } from "../layer";
+import { Layer } from "../layer";
 import { createViewDevice } from "../view-devices/utils";
-import { layerFromType } from "../view-devices/vDevice";
 import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 import { Graph } from "./graph";
@@ -421,7 +420,6 @@ function layerDFS(
     if (visited.has(w)) {
       return;
     }
-    const adjacent = datagraph.getDevice(w);
     // mark node as visited
     visited.add(w);
 
