@@ -88,12 +88,12 @@ export class DeviceInfo extends StyledInfo {
     return super.toHTML().concat(this.inputFields);
   }
 
-  addParameterGroup<T>(
+  addParameterGroup(
     groupName: string,
     parameters: {
       label: string;
-      initialValue: T;
-      onChange: (newValue: T) => void;
+      initialValue: number | string;
+      onChange: (newValue: number | string) => void;
     }[],
   ) {
     const { toggleButton, borderedContainer } = createParameterGroup(

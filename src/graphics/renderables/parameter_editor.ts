@@ -7,10 +7,10 @@ import { TooltipManager } from "./tooltip_manager";
  * @param onChange - Function that is executed when the value changes.
  * @returns An HTML element representing the parameter editor.
  */
-export function createParameterEditor<T>(
+export function createParameterEditor(
   label: string,
-  initialValue: T,
-  onChange: (newValue: T) => void,
+  initialValue: number | string,
+  onChange: (newValue: number | string) => void,
 ): HTMLElement {
   // Create the editor container
   const container = document.createElement("div");
@@ -29,12 +29,20 @@ export function createParameterEditor<T>(
   input.className = "parameter-editor-input";
 
   // Add the change event
+  let previousValue = initialValue;
+
   input.addEventListener("change", () => {
     const newValue =
       input.type === "number"
-        ? (parseFloat(input.value) as T)
-        : (input.value as T);
-    onChange(newValue);
+        ? (parseFloat(input.value) as number)
+        : (input.value as string);
+
+    if (input.value === "") {
+      input.value = previousValue.toString();
+    } else {
+      previousValue = newValue;
+      onChange(newValue);
+    }
   });
 
   // Add the label and input to the container
@@ -50,12 +58,12 @@ export function createParameterEditor<T>(
  * @param parameters - List of parameters with label, initial value, and onChange function.
  * @returns An HTML container that includes the toggle button and the parameters.
  */
-export function createParameterGroup<T>(
+export function createParameterGroup(
   groupName: string,
   parameters: {
     label: string;
-    initialValue: T;
-    onChange: (newValue: T) => void;
+    initialValue: number | string;
+    onChange: (newValue: number | string) => void;
   }[],
 ): { toggleButton: HTMLElement; borderedContainer: HTMLElement } {
   // Create a bordered container for the parameter group

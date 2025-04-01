@@ -13,13 +13,15 @@ import { GlobalContext } from "../../context";
 import { DataRouter } from "../data-devices";
 import { dropPacket, sendViewPacket } from "../packet";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
+import { ROUTER_CONSTANTS } from "../../utils/constants/router_constants";
 
 export class ViewRouter extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
 
-  private packetQueue = new PacketQueue(1024);
+  private packetQueueSize: number;
+  private packetQueue: PacketQueue;
   // Time in ms to process a single byte
-  private timePerByte = 8;
+  private timePerByte: number;
   // Number of bytes processed
   private processingProgress = 0;
 
@@ -38,8 +40,15 @@ export class ViewRouter extends ViewNetworkDevice {
     mac: MacAddress,
     ip: IpAddress,
     mask: IpAddress,
+    packetQueueSize: number = ROUTER_CONSTANTS.PACKET_QUEUE_MAX_SIZE,
+    timePerByte: number = ROUTER_CONSTANTS.PROCESSING_SPEED,
   ) {
     super(id, ViewRouter.getTexture(), viewgraph, ctx, position, mac, ip, mask);
+    this.packetQueueSize = packetQueueSize;
+    this.packetQueue = new PacketQueue(this.packetQueueSize);
+    this.timePerByte = timePerByte;
+    console.log("packetQueueSize Vr", this.packetQueueSize);
+    console.log("processingSpeed Vr", this.timePerByte);
   }
 
   showInfo(): void {
@@ -78,8 +87,29 @@ export class ViewRouter extends ViewNetworkDevice {
     return DeviceType.Router;
   }
 
-  modifyPacketQueueSize(newSize: number): void {
+  setMaxQueueSize(newSize: number) {
     this.packetQueue.setMaxQueueSize(newSize);
+    console.log("Max queue size set to Vr", newSize);
+    this.packetQueueSize = newSize;
+  }
+
+  setTimePerByte(newTime: number) {
+    this.timePerByte = newTime;
+    console.log("Time per byte set to Vr", newTime);
+  }
+
+  /**
+   * Modifies the maximum packet queue size for the current device and updates
+   * the corresponding device in the data graph if it is a `DataRouter`.
+   *
+   * @param newSize - The new maximum size for the packet queue.
+   *
+   * This method updates the internal maximum queue size of the device and ensures
+   * that the associated `DataRouter` in the data graph reflects the same change.
+   * If the device in the data graph is not a `DataRouter`, a warning is logged.
+   */
+  modifyPacketQueueSize(newSize: number): void {
+    this.setMaxQueueSize(newSize);
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
       if (device instanceof DataRouter) {
         device.setMaxQueueSize(newSize);
@@ -89,8 +119,20 @@ export class ViewRouter extends ViewNetworkDevice {
     });
   }
 
+  /**
+   * Modifies the processing speed of the current device and updates the associated
+   * data graph representation of the device if it is a `DataRouter`.
+   *
+   * @param newSpeed - The new processing speed to set, represented as the time per byte.
+   *
+   * This method updates the internal processing speed of the device by calling
+   * `setTimePerByte` with the provided `newSpeed`. It also ensures that the
+   * corresponding device in the data graph is updated with the same processing speed,
+   * but only if the device is an instance of `DataRouter`. If the device is not a
+   * `DataRouter`, a warning is logged to the console.
+   */
   modifyProcessingSpeed(newSpeed: number): void {
-    this.timePerByte = newSpeed;
+    this.setTimePerByte(newSpeed);
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
       if (device instanceof DataRouter) {
         device.setTimePerByte(newSpeed);
@@ -220,7 +262,7 @@ class PacketQueue {
     return this.maxQueueSizeBytes;
   }
   setMaxQueueSize(newSize: number) {
-    if (newSize > 0) {
+    if (newSize >= 0) {
       this.maxQueueSizeBytes = newSize;
     } else {
       console.warn("Invalid queue size, keeping previous value");
