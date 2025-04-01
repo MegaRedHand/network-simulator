@@ -24,6 +24,14 @@ export class DataRouter extends DataNetworkDevice {
     this.routingTable = graphData.routingTable ?? [];
   }
 
+  setMaxQueueSize(newSize: number) {
+    this.packetQueue.setMaxQueueSize(newSize);
+  }
+
+  setTimePerByte(newTime: number) {
+    this.timePerByte = newTime;
+  }
+
   getDataNode(): RouterDataNode {
     return {
       ...super.getDataNode(),
@@ -144,6 +152,10 @@ class PacketQueue {
 
   constructor(maxQueueSizeBytes: number) {
     this.maxQueueSizeBytes = maxQueueSizeBytes;
+  }
+
+  setMaxQueueSize(newSize: number) {
+    this.maxQueueSizeBytes = newSize;
   }
 
   enqueue(packet: IPv4Packet) {

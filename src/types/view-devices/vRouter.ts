@@ -12,6 +12,7 @@ import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataRouter } from "../data-devices";
 import { dropPacket, sendViewPacket } from "../packet";
+import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 
 export class ViewRouter extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -43,8 +44,42 @@ export class ViewRouter extends ViewNetworkDevice {
 
   showInfo(): void {
     const info = new DeviceInfo(this);
-    info.addField("IP Address", this.ip.octets.join("."));
+    info.addField(TOOLTIP_KEYS.IP_ADDRESS, this.ip.octets.join("."));
+
     info.addEmptySpace();
+
+    info.addParameterGroup(TOOLTIP_KEYS.ROUTER_PARAMETERS, [
+      {
+        label: "Packet queue size (bytes)",
+        initialValue: this.packetQueue.getMaxQueueSize(),
+        onChange: (newSize: number) => {
+          this.packetQueue.setMaxQueueSize(newSize);
+          const device = this.viewgraph.getDataGraph().getDevice(this.id);
+          if (device instanceof DataRouter) {
+            device.setMaxQueueSize(newSize);
+          } else {
+            console.warn(
+              "Device is not a DataRouter, cannot set max queue size",
+            );
+          }
+        },
+      },
+      {
+        label: "Processing speed (ms/byte)",
+        initialValue: this.timePerByte,
+        onChange: (newSpeed: number) => {
+          this.timePerByte = newSpeed;
+          const device = this.viewgraph.getDataGraph().getDevice(this.id);
+          if (device instanceof DataRouter) {
+            device.setTimePerByte(newSpeed);
+          } else {
+            console.warn(
+              "Device is not a DataRouter, cannot set time per byte",
+            );
+          }
+        },
+      },
+    ]);
 
     info.addRoutingTable(this.viewgraph, this.id);
 
@@ -173,6 +208,17 @@ class PacketQueue {
 
   constructor(maxQueueSizeBytes: number) {
     this.maxQueueSizeBytes = maxQueueSizeBytes;
+  }
+
+  getMaxQueueSize(): number {
+    return this.maxQueueSizeBytes;
+  }
+  setMaxQueueSize(newSize: number) {
+    if (newSize > 0) {
+      this.maxQueueSizeBytes = newSize;
+    } else {
+      console.warn("Invalid queue size, keeping previous value");
+    }
   }
 
   enqueue(packet: IPv4Packet) {
