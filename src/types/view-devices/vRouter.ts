@@ -50,33 +50,17 @@ export class ViewRouter extends ViewNetworkDevice {
 
     info.addParameterGroup(TOOLTIP_KEYS.ROUTER_PARAMETERS, [
       {
-        label: "Packet queue size (bytes)",
+        label: TOOLTIP_KEYS.PACKET_QUEUE_SIZE_PARAMETER,
         initialValue: this.packetQueue.getMaxQueueSize(),
         onChange: (newSize: number) => {
-          this.packetQueue.setMaxQueueSize(newSize);
-          const device = this.viewgraph.getDataGraph().getDevice(this.id);
-          if (device instanceof DataRouter) {
-            device.setMaxQueueSize(newSize);
-          } else {
-            console.warn(
-              "Device is not a DataRouter, cannot set max queue size",
-            );
-          }
+          this.modifyPacketQueueSize(newSize);
         },
       },
       {
-        label: "Processing speed (ms/byte)",
+        label: TOOLTIP_KEYS.PROCESSING_SPEED_PARAMETER,
         initialValue: this.timePerByte,
         onChange: (newSpeed: number) => {
-          this.timePerByte = newSpeed;
-          const device = this.viewgraph.getDataGraph().getDevice(this.id);
-          if (device instanceof DataRouter) {
-            device.setTimePerByte(newSpeed);
-          } else {
-            console.warn(
-              "Device is not a DataRouter, cannot set time per byte",
-            );
-          }
+          this.modifyProcessingSpeed(newSpeed);
         },
       },
     ]);
@@ -92,6 +76,28 @@ export class ViewRouter extends ViewNetworkDevice {
 
   getType(): DeviceType {
     return DeviceType.Router;
+  }
+
+  modifyPacketQueueSize(newSize: number): void {
+    this.packetQueue.setMaxQueueSize(newSize);
+    this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
+      if (device instanceof DataRouter) {
+        device.setMaxQueueSize(newSize);
+      } else {
+        console.warn("Device is not a DataRouter, cannot set max queue size");
+      }
+    });
+  }
+
+  modifyProcessingSpeed(newSpeed: number): void {
+    this.timePerByte = newSpeed;
+    this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
+      if (device instanceof DataRouter) {
+        device.setTimePerByte(newSpeed);
+      } else {
+        console.warn("Device is not a DataRouter, cannot set time per byte");
+      }
+    });
   }
 
   receiveDatagram(datagram: IPv4Packet) {
