@@ -21,7 +21,7 @@ import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
 import { DeviceId, RemovedNodeData } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
-import { Layer } from "../layer";
+import { Layer, layerIncluded } from "../layer";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 
@@ -101,6 +101,7 @@ export abstract class ViewDevice extends Container {
     this.interactive = true;
     this.cursor = "pointer";
     this.zIndex = ZIndexLevels.Device;
+    this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());
 
     // Add device ID label using the helper function
     this.addDeviceIdLabel();

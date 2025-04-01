@@ -169,10 +169,13 @@ export class Edge extends Graphics {
     const dy = device2.y - device1.y;
     const angle = Math.atan2(dy, dx);
 
-    const offsetX1 = ((device1.width + 5) / 2) * Math.cos(angle);
-    const offsetY1 = ((device1.height + 5) / 2) * Math.sin(angle);
-    const offsetX2 = ((device2.width + 5) / 2) * Math.cos(angle);
-    const offsetY2 = ((device2.height + 5) / 2) * Math.sin(angle);
+    const n1IsVisible = device1.visible;
+    const n2IsVisible = device2.visible;
+
+    const offsetX1 = n1IsVisible ? ((device1.width + 5) / 2) * Math.cos(angle) : 0;
+    const offsetY1 = n1IsVisible ? ((device1.height + 5) / 2) * Math.sin(angle) : 0;
+    const offsetX2 = n2IsVisible ? ((device2.width + 5) / 2) * Math.cos(angle) : 0;
+    const offsetY2 = n2IsVisible ? ((device2.height + 5) / 2) * Math.sin(angle) : 0;
 
     const newStartPos: Point = new Point(
       device1.x + offsetX1,

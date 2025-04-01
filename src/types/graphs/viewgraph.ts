@@ -36,7 +36,7 @@ export class ViewGraph {
     const allConnections = new Map<string, EdgePair>();
 
     for (const [deviceId, device] of this.datagraph.getDevices()) {
-      if (layerIncluded(layerFromType(device.getType()), this.layer)) {
+      if (true) {
         this.addDevice(deviceId, device.getDataNode());
         layerDFS(
           this.datagraph,
@@ -430,7 +430,7 @@ function layerDFS(
     // mark node as visited
     visited.add(w);
 
-    if (layerIncluded(layerFromType(adjacent.getType()), layer)) {
+    if (true) {
       // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
       const edgePair: EdgePair = [w, s];
       edgePair.sort();
