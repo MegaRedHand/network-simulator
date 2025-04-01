@@ -43,13 +43,6 @@ interface PacketContext {
   layer: Layer;
 }
 
-function packetIsVisible(
-  _: ViewGraph | DataGraph,
-  isVisible: boolean,
-): _ is ViewGraph {
-  return isVisible;
-}
-
 function packetContext(frame: EthernetFrame): PacketContext {
   if (frame.payload.type() === IP_PROTOCOL_TYPE) {
     const datagram = frame.payload as IPv4Packet;
@@ -69,27 +62,37 @@ function packetContext(frame: EthernetFrame): PacketContext {
 export class dPacket {
   private ctx: GlobalContext;
   private graph: DataGraph;
-  private packetId: number;
+  // private packetId: number;
+
   private speed = 100;
   private progress = 0;
   private start: DeviceId;
   private end: DeviceId;
-  private type: string;
-  private rawPacket: EthernetFrame;
-
-  belongingLayer: Layer;
+  rawPacket: EthernetFrame;
 
   constructor(ctx: GlobalContext, graph: DataGraph, rawPacket: EthernetFrame) {
     this.ctx = ctx;
     this.graph = graph;
-    const { type, layer } = packetContext(rawPacket);
-    this.belongingLayer = layer;
-    this.type = type;
     // TODO: register to packet manager
     // this.packetId = ctx.getViewGraph().getPacketManager().registerPacket(this);
   }
 
-  deliverPacket() {
+  getPacketContext() {
+    return packetContext(this.rawPacket);
+  }
+
+  getProgress() {
+    return this.progress;
+  }
+
+  traverseEdge(startId: DeviceId, endId: DeviceId): void {
+    this.start = startId;
+    this.end = endId;
+
+    Ticker.shared.add(this.updateProgressTick, this);
+  }
+
+  private deliverPacket() {
     const newStartDevice = this.graph.getDevice(this.end);
 
     // Viewgraph may return undefined when trying to get the device
@@ -100,14 +103,7 @@ export class dPacket {
     newStartDevice.receiveFrame(this.rawPacket);
   }
 
-  traverseEdge(startId: DeviceId, endId: DeviceId): void {
-    this.start = startId;
-    this.end = endId;
-
-    Ticker.shared.add(this.updateProgressTick, this);
-  }
-
-  updateProgressTick(ticker: Ticker) {
+  private updateProgressTick(ticker: Ticker) {
     const startDevice = this.graph.getDevice(this.start);
     const endDevice = this.graph.getDevice(this.end);
     if (!startDevice) {
@@ -141,7 +137,7 @@ export class dPacket {
     }
   }
 
-  delete() {
+  private delete() {
     // Remove packet from Ticker to stop animation
     Ticker.shared.remove(this.updateProgressTick, this);
 
@@ -151,46 +147,40 @@ export class dPacket {
   }
 }
 
-export class Packet extends Graphics {
-  private packetId: number;
-  private speed = 100;
-  private progress = 0;
-  private currStart: DeviceId;
-  private currEnd: DeviceId;
-  private graph: ViewGraph | DataGraph;
-  private type: string;
-  private rawPacket: EthernetFrame;
-
+export class vPacket extends Graphics {
   ctx: GlobalContext;
+  private viewgraph: ViewGraph;
+  private dataPacket: dPacket;
+
+  private packetId: number;
+
+  private start: DeviceId;
+  private end: DeviceId;
+
+  private type: string;
   belongingLayer: Layer;
 
   constructor(
     ctx: GlobalContext,
-    graph: ViewGraph | DataGraph,
-    rawPacket: EthernetFrame,
-    isVisible: boolean,
+    viewgraph: ViewGraph,
+    packet: dPacket,
   ) {
     super();
-    this.graph = graph;
-    const { type, layer } = packetContext(rawPacket);
+    this.viewgraph = viewgraph;
+    const { type, layer } = packet.getPacketContext();
     this.belongingLayer = layer;
     this.type = type;
     this.context = contextPerPacketType[this.type];
     this.zIndex = ZIndexLevels.Packet;
 
-    this.rawPacket = rawPacket;
+    this.dataPacket = packet;
     this.ctx = ctx;
     this.interactive = true;
     this.cursor = "pointer";
     this.on("click", this.onClick, this);
     this.on("tap", this.onClick, this);
-    // register in Packet Manger
-    this.packetId = ctx.getViewGraph().getPacketManager().registerPacket(this);
-    this.visible = isVisible;
-  }
-
-  setProgress(progress: number) {
-    this.progress = progress;
+    // TODO: register in Packet Manger
+    // this.packetId = ctx.getViewGraph().getPacketManager().registerPacket(this);
   }
 
   onClick(e: FederatedPointerEvent) {
@@ -213,9 +203,9 @@ export class Packet extends Graphics {
 
   getPacketLocation(): PacketLocation {
     return {
-      startId: this.currStart,
-      endId: this.currEnd,
-      currProgress: this.progress,
+      startId: this.start,
+      endId: this.end,
+      currProgress: this.packetId,
     };
   }
 
@@ -227,11 +217,12 @@ export class Packet extends Graphics {
     }
 
     const info = new StyledInfo("Packet Information");
+    const rawPacket = this.dataPacket.rawPacket;
     info.addField("Type", this.type);
-    info.addField("Source MAC Address", this.rawPacket.source.toString());
+    info.addField("Source MAC Address", rawPacket.source.toString());
     info.addField(
       "Destination MAC Address",
-      this.rawPacket.destination.toString(),
+      rawPacket.destination.toString(),
     );
 
     rightbar.renderInfo(info);
@@ -248,7 +239,7 @@ export class Packet extends Graphics {
     // Add a toggle info section for packet details
     const packetDetails = this.getPacketDetails(
       this.belongingLayer,
-      this.rawPacket,
+      rawPacket,
     );
 
     rightbar.addToggleButton("Packet Details", packetDetails);
@@ -267,123 +258,58 @@ export class Packet extends Graphics {
   }
 
   getProgress(): number {
-    return this.progress;
+    return this.dataPacket.getProgress();
   }
 
   getRawPacket(): EthernetFrame {
-    return this.rawPacket;
+    return this.dataPacket.rawPacket;
   }
 
-  deliverPacket() {
-    const newStartDevice = this.graph.getDevice(this.currEnd);
 
-    // Viewgraph may return undefined when trying to get the device
-    // as the device may have been removed by the user.
-    if (!newStartDevice) {
+  traverseEdge(startId: DeviceId, endId: DeviceId) {
+    this.start = startId;
+    this.end = endId;
+
+    const currEdge = this.viewgraph.getEdge(startId, endId);
+    currEdge.addChild(this);
+    Ticker.shared.add(this.travelAnimationTick, this);
+  }
+
+  travelAnimationTick() {
+    const start = this.viewgraph.getDevice(this.start)?.getPosition();
+    const end = this.viewgraph.getDevice(this.end)?.getPosition();
+    if (!start) {
+      console.warn("Start device not found.");
+      this.delete();
       return;
     }
-    newStartDevice.receiveFrame(this.rawPacket);
-  }
-
-  traverseEdge(startId: DeviceId, endId: DeviceId): void {
-    this.currStart = startId;
-    this.currEnd = endId;
-
-    // if the packet is shown in viewgraph
-    if (packetIsVisible(this.graph, this.visible)) {
-      const currEdge = this.graph.getEdge(startId, endId);
-      currEdge.addChild(this);
-      const start = currEdge.nodePosition(this.currStart);
-      const end = currEdge.nodePosition(this.currEnd);
-      this.updatePosition(start, end);
-    } else {
-      this.updatePosition();
-    }
-    Ticker.shared.add(this.animationTick, this);
-  }
-
-  animationTick(ticker: Ticker) {
-    let start: Position;
-    let end: Position;
-    if (packetIsVisible(this.graph, this.visible)) {
-      const currEdge = this.graph.getEdge(this.currStart, this.currEnd);
-      if (!currEdge) {
-        console.warn(
-          `No edge connecting devices ${this.currStart} and ${this.currEnd} in viewgraph`,
-        );
-        this.delete();
-        return;
-      }
-      start = currEdge.nodePosition(this.currStart);
-      end = currEdge.nodePosition(this.currEnd);
-    } else {
-      const currStartDevice = this.graph.getDevice(this.currStart);
-      const currEndDevice = this.graph.getDevice(this.currEnd);
-      if (!currStartDevice) {
-        console.warn("Current start device not found.");
-        this.delete();
-        return;
-      }
-      if (!currEndDevice) {
-        console.warn("Current end device not found.");
-        this.delete();
-        return;
-      }
-      start = currStartDevice.getPosition();
-      end = currEndDevice.getPosition();
-    }
-
-    const edgeLength = Math.sqrt(
-      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
-    );
-
-    const normalizedSpeed = this.speed / edgeLength;
-
-    const progressIncrement =
-      (ticker.deltaMS * normalizedSpeed * this.ctx.getCurrentSpeed()) / 1000;
-    this.progress += progressIncrement;
-    this.updatePosition(start, end);
-
-    if (this.progress >= 1) {
-      // Deliver packet
-      this.deliverPacket();
-      // Clean up
+    if (!end) {
+      console.warn("End device not found.");
       this.delete();
+      return;
     }
-  }
 
-  updatePosition(start?: Position, end?: Position) {
-    if (start && end) {
-      this.setPositionAlongEdge(start, end);
-    } else {
-      this.setPositionAlongEdge(
-        this.graph.getDevice(this.currStart).getPosition(),
-        this.graph.getDevice(this.currEnd).getPosition(),
-      );
-    }
+    this.updatePositionAlongEdge(start, end);
   }
 
   /// Updates the position according to the current progress.
-  private setPositionAlongEdge(start: Position, end: Position) {
+  private updatePositionAlongEdge(start: Position, end: Position) {
     const dx = end.x - start.x;
     const dy = end.y - start.y;
+    const progress = this.dataPacket.getProgress();
 
-    this.x = start.x + this.progress * dx;
-    this.y = start.y + this.progress * dy;
+    this.x = start.x + progress * dx;
+    this.y = start.y + progress * dy;
   }
 
   animateDrop(deviceId: DeviceId) {
-    if (this.graph instanceof DataGraph) {
-      // If the packet is in the datagraph, we don't need to animate it
-      return;
-    }
     // Drop the packet on the device
-    const device = this.graph.getDevice(deviceId);
+    const device = this.viewgraph.getDevice(deviceId);
     if (!device) {
       console.error("Device not found");
       return;
     }
-    this.currStart = deviceId;
+    this.start = deviceId;
     device.addChild(this);
     // Position is relative to the device
     this.x = 0;
@@ -391,35 +317,36 @@ export class Packet extends Graphics {
     Ticker.shared.add(this.dropAnimationTick, this);
   }
 
-  dropAnimationTick(ticker: Ticker) {
-    if (this.graph instanceof DataGraph) {
-      // This shouldn't happen
-      return;
-    }
-    const device = this.graph.getDevice(this.currStart);
+  // TODO: remove this
+  private progress = 0;
+
+  private dropAnimationTick(ticker: Ticker) {
+    const device = this.viewgraph.getDevice(this.start);
     if (!device) {
       console.error("Device not found");
       return;
     }
-    this.progress += (ticker.deltaMS * this.graph.getSpeed()) / 1000;
+    this.progress += (ticker.deltaMS * this.viewgraph.getSpeed()) / 1000;
     this.y = device.height + 30 * this.progress;
     let newAlpha = 1 - this.progress;
     if (newAlpha <= 0) {
       newAlpha = 0;
       // Clean up
+      // TODO: clean up
       this.destroy();
-      ticker.remove(this.dropAnimationTick, this);
+      // ticker.remove(this.dropAnimationTick, this);
       if (isSelected(this)) {
         deselectElement();
       }
       this.removeFromParent();
+    } else {
+      this.alpha = newAlpha;
     }
-    this.alpha = newAlpha;
   }
 
   delete() {
     // Remove packet from Ticker to stop animation
-    Ticker.shared.remove(this.animationTick, this);
+    Ticker.shared.remove(this.travelAnimationTick, this);
     Ticker.shared.remove(this.dropAnimationTick, this);
 
     this.removeAllListeners();
@@ -473,7 +400,9 @@ export function sendViewPacket(
     );
     return;
   }
-  const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket, true);
+  const dataPacket = new dPacket(viewgraph.ctx, viewgraph.getDataGraph(), rawPacket);
+  dataPacket.traverseEdge(srcId, firstEdge.otherEnd(srcId));
+  const packet = new vPacket(viewgraph.ctx, viewgraph, dataPacket);
   packet.traverseEdge(srcId, firstEdge.otherEnd(srcId));
 }
 
@@ -510,7 +439,7 @@ export function sendDataPacket(
     );
     return;
   }
-  const packet = new Packet(datagraph.ctx, datagraph, rawPacket, false);
+  const packet = new dPacket(datagraph.ctx, datagraph, rawPacket);
   packet.traverseEdge(srcId, firstHop);
 }
 
@@ -519,6 +448,7 @@ export function dropPacket(
   srcId: DeviceId,
   rawPacket: EthernetFrame,
 ) {
-  const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket, true);
+  const dataPacket = new dPacket(viewgraph.ctx, viewgraph.getDataGraph(), rawPacket);
+  const packet = new vPacket(viewgraph.ctx, viewgraph, dataPacket);
   packet.animateDrop(srcId);
 }

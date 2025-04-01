@@ -3,7 +3,7 @@ import { DataGraph, GraphData, DataNode } from "./graphs/datagraph";
 import { ViewDevice } from "./view-devices/";
 import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
-import { Packet } from "./packet";
+import { vPacket } from "./packet";
 import { DeviceType } from "./view-devices/vDevice";
 import { Layer } from "./layer";
 import {
@@ -14,7 +14,7 @@ import {
 } from "./undo-redo";
 import { SpeedMultiplier } from "./speedMultiplier";
 
-type Selectable = ViewDevice | Edge | Packet;
+type Selectable = ViewDevice | Edge | vPacket;
 
 let selectedElement: Selectable | null = null; // Global variable to store the selected element
 
@@ -70,7 +70,7 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "Delete" || event.key === "Backspace") {
     if (selectedElement) {
-      const viewgraph = !(selectedElement instanceof Packet)
+      const viewgraph = !(selectedElement instanceof vPacket)
         ? selectedElement.viewgraph
         : undefined;
       const currLayer = viewgraph?.getLayer();
