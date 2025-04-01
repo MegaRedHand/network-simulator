@@ -36,17 +36,14 @@ export class ViewGraph {
     const allConnections = new Map<string, EdgePair>();
 
     for (const [deviceId, device] of this.datagraph.getDevices()) {
-      if (true) {
-        this.addDevice(deviceId, device.getDataNode());
-        layerDFS(
-          this.datagraph,
-          this.layer,
-          deviceId,
-          deviceId,
-          new Set([deviceId]),
-          allConnections,
-        );
-      }
+      this.addDevice(deviceId, device.getDataNode());
+      layerDFS(
+        this.datagraph,
+        deviceId,
+        deviceId,
+        new Set([deviceId]),
+        allConnections,
+      );
     }
     console.debug(allConnections);
     this.addConnections(allConnections);
@@ -60,7 +57,6 @@ export class ViewGraph {
     const connections = new Map<string, EdgePair>();
     layerDFS(
       this.datagraph,
-      this.layer,
       deviceId,
       deviceId,
       new Set([deviceId]),
@@ -416,7 +412,6 @@ export class ViewGraph {
 
 function layerDFS(
   datagraph: DataGraph,
-  layer: Layer,
   s: DeviceId, // source node
   v: DeviceId,
   visited: Set<DeviceId>,
@@ -430,14 +425,9 @@ function layerDFS(
     // mark node as visited
     visited.add(w);
 
-    if (true) {
-      // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
-      const edgePair: EdgePair = [w, s];
-      edgePair.sort();
-      connections.set(edgePair.toString(), edgePair);
-    } else {
-      // continue with recursive search
-      layerDFS(datagraph, layer, s, w, visited, connections);
-    }
+    // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
+    const edgePair: EdgePair = [w, s];
+    edgePair.sort();
+    connections.set(edgePair.toString(), edgePair);
   });
 }
