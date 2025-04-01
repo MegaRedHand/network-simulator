@@ -275,9 +275,6 @@ export class ViewGraph {
       return false;
     }
 
-    // Remove connection in DataGraph
-    this.datagraph.removeConnection(n1Id, n2Id);
-
     // Remove connection from each connected device
     const { n1, n2 } = edge.connectedNodes;
     const device1 = this.graph.getVertex(n1);
