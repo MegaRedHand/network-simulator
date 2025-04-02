@@ -10,18 +10,38 @@ import {
 import { sendDataPacket } from "../packet";
 import { DataNetworkDevice } from "./dNetworkDevice";
 import { EthernetFrame } from "../../packets/ethernet";
+import { ROUTER_CONSTANTS } from "../../utils/constants/router_constants";
 
 export class DataRouter extends DataNetworkDevice {
-  private packetQueue = new PacketQueue(1024);
+  packetQueueSize: number;
+  private packetQueue: PacketQueue;
   // Time in ms to process a single byte
-  private timePerByte = 8;
+  timePerByte: number;
   // Number of bytes processed
   private processingProgress = 0;
   routingTable: RoutingTableEntry[];
 
   constructor(graphData: RouterDataNode, datagraph: DataGraph) {
     super(graphData, datagraph);
+    this.packetQueueSize =
+      graphData.packetQueueSize ?? ROUTER_CONSTANTS.PACKET_QUEUE_MAX_SIZE;
+    this.packetQueue = new PacketQueue(this.packetQueueSize);
+    this.timePerByte =
+      graphData.timePerByte ?? ROUTER_CONSTANTS.PROCESSING_SPEED;
     this.routingTable = graphData.routingTable ?? [];
+    console.log("packetQueueSize Dr", this.packetQueueSize);
+    console.log("processingSpeed Dr", this.timePerByte);
+  }
+
+  setMaxQueueSize(newSize: number) {
+    this.packetQueue.setMaxQueueSize(newSize);
+    console.log("Max queue size set to Dr", newSize);
+    this.packetQueueSize = newSize;
+  }
+
+  setTimePerByte(newTime: number) {
+    this.timePerByte = newTime;
+    console.log("Time per byte set to Dr", newTime);
   }
 
   getDataNode(): RouterDataNode {
@@ -29,6 +49,8 @@ export class DataRouter extends DataNetworkDevice {
       ...super.getDataNode(),
       type: DeviceType.Router,
       routingTable: this.routingTable,
+      packetQueueSize: this.packetQueue.getMaxQueueSize(),
+      timePerByte: this.timePerByte,
     };
   }
 
@@ -144,6 +166,14 @@ class PacketQueue {
 
   constructor(maxQueueSizeBytes: number) {
     this.maxQueueSizeBytes = maxQueueSizeBytes;
+  }
+
+  setMaxQueueSize(newSize: number) {
+    this.maxQueueSizeBytes = newSize;
+  }
+
+  getMaxQueueSize(): number {
+    return this.maxQueueSizeBytes;
   }
 
   enqueue(packet: IPv4Packet) {

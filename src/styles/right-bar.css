@@ -4,7 +4,7 @@
   background-color: #f1f1f1; /* Light gray background for contrast */
   box-shadow: -0.2vw 0 0.5vw rgba(0, 0, 0, 0.2); /* Adds subtle shadow for depth */
   padding: 3vh; /* Adds internal spacing */
-  overflow-y: auto; /* Enables vertical scrolling if needed */
+  overflow-y: scroll; /* Enables vertical scrolling if needed */
   max-height: 90vh; /* Limits the maximum height */
 }
 
@@ -23,4 +23,15 @@
   font-size: 5rem; /* Large font for emphasis */
   font-weight: bold; /* Makes text stand out */
   color: #333; /* Dark gray text */
+}
+
+/* Hide the scrollbar in WebKit-based browsers */
+.right-bar::-webkit-scrollbar {
+  display: none; /* Hides the scrollbar */
+}
+
+/* Ensures the content remains scrollable */
+.right-bar {
+  -ms-overflow-style: none; /* Hides the scrollbar in IE and Edge */
+  scrollbar-width: none; /* Hides the scrollbar in Firefox */
 }
