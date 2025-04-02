@@ -2,7 +2,7 @@ import { GlobalContext } from "../../context";
 import { MacAddress } from "../../packets/ethernet";
 import { IpAddress } from "../../packets/ip";
 import { Position } from "../common";
-import { DataNode, isNetworkNode } from "../graphs/datagraph";
+import { DataNode, isNetworkNode, isRouter } from "../graphs/datagraph";
 import { ViewGraph } from "../graphs/viewgraph";
 import { ViewDevice, DeviceType } from "./vDevice";
 import { ViewHost } from "./vHost";
@@ -25,6 +25,14 @@ export function createViewDevice(
     ip = IpAddress.parse(deviceInfo.ip);
     mask = IpAddress.parse(deviceInfo.mask);
   }
+
+  let packetQueueSize: number;
+  let timePerByte: number;
+
+  if (isRouter(deviceInfo)) {
+    packetQueueSize = deviceInfo.packetQueueSize;
+    timePerByte = deviceInfo.timePerByte;
+  }
   switch (deviceInfo.type) {
     case DeviceType.Router:
       return new ViewRouter(
@@ -35,6 +43,8 @@ export function createViewDevice(
         mac,
         ip,
         mask,
+        packetQueueSize,
+        timePerByte,
       );
     case DeviceType.Host:
       return new ViewHost(
