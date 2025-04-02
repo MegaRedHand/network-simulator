@@ -20,7 +20,21 @@ interface CommonDataNode {
   y: number;
   type: DeviceType;
   mac: string;
+  interfaces: NetworkInterfaceData[];
   arpTable?: Map<string, string>;
+}
+
+export const NumberOfInterfacesPerType = {
+  [DeviceType.Host]: 1,
+  [DeviceType.Router]: 4,
+  [DeviceType.Switch]: 8,
+};
+
+interface NetworkInterfaceData {
+  name: string;
+  mac: string;
+  // TODO: add IP address
+  // ip?: string;
 }
 
 export interface SwitchDataNode extends CommonDataNode {
@@ -125,38 +139,10 @@ export class DataGraph {
 
     // Serialize nodes
     for (const [id, device] of this.deviceGraph.getAllVertices()) {
+      const type = device.getType();
+      device.getDataNode();
       // parse to serializable format
-      let dataNode: DataNode = {
-        id,
-        x: device.x,
-        y: device.y,
-        mac: device.mac.toString(),
-        type: device.getType(),
-        arpTable: new Map<string, string>(), // TODO: change this to the actual ARP table
-      };
-
-      if (device instanceof DataNetworkDevice) {
-        dataNode = {
-          ...dataNode,
-          ip: device.ip.toString(),
-          mask: device.ipMask.toString(),
-        };
-      }
-
-      if (device instanceof DataRouter) {
-        // ip and mask already set with DataNetworkDevice
-        dataNode = {
-          ...dataNode,
-          routingTable: device.routingTable,
-          packetQueueSize: device.packetQueueSize,
-          timePerByte: device.timePerByte,
-        };
-      } else if (device instanceof DataHost) {
-        dataNode = {
-          ...dataNode,
-          runningPrograms: device.runningPrograms,
-        };
-      }
+      let dataNode: DataNode = device.getDataNode();
       nodes.push(dataNode);
     }
     for (const [, , edge] of this.deviceGraph.getAllEdges()) {

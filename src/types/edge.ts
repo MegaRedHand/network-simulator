@@ -68,7 +68,7 @@ export class Edge extends Graphics {
   }
 
   // Method to draw the line
-  public drawEdge(startPos: Point, endPos: Point, color: number) {
+  drawEdge(startPos: Point, endPos: Point, color: number) {
     this.clear();
     this.moveTo(startPos.x, startPos.y);
     this.lineTo(endPos.x, endPos.y);
