@@ -25,9 +25,10 @@ export class ProgressBar {
 
   // Updates the progress of the bar
   update(current: number, max: number): void {
+    const fraction = `${current}/${max} bytes`; // Format as fraction
     const percentage = Math.min((current / max) * 100, 100); // Limit 100%
     this.progress.style.width = `${percentage}%`; // Updates the width of the green bar
-    this.text.textContent = `${Math.round(percentage)}%`; // Updates the percentage text
+    this.text.textContent = fraction; // Updates the text to show the fraction
   }
 
   // Returns the HTML container of the component
