@@ -10,6 +10,8 @@ import { ProgramInfo } from "./program_info";
 import { ProgramRunnerInfo } from "./program_runner_info";
 import { StyledInfo } from "./styled_info";
 import { createParameterGroup } from "./parameter_editor";
+import { ProgressBar } from "./progress_bar";
+import { TooltipManager } from "./tooltip_manager";
 
 export { ProgramInfo } from "./program_info";
 
@@ -103,6 +105,43 @@ export class DeviceInfo extends StyledInfo {
 
     this.inputFields.push(toggleButton);
     this.inputFields.push(borderedContainer);
+  }
+
+  /**
+   * Adds a progress bar with a label above it.
+   * @param label - The text of the label to be displayed above the progress bar.
+   * @param current - The current value of the progress bar.
+   * @param max - The maximum value of the progress bar.
+   * @param subscribe - A function that subscribes to changes in the progress bar.
+   */
+  addProgressBar(
+    label: string,
+    current: number,
+    max: number,
+    subscribe: (progressBar: ProgressBar) => void
+  ): void {
+    // Create the container for the label and the progress bar
+    const container = document.createElement("div");
+    container.className = "progress-bar-wrapper";
+
+    // Create the label
+    const labelElement = document.createElement("div");
+    labelElement.className = "progress-bar-label";
+    labelElement.textContent = label;
+    TooltipManager.getInstance().attachTooltip(labelElement, label);
+
+    // Create the progress bar
+    const progressBar = new ProgressBar({ current, max });
+
+    // Add the progress bar to the container
+    container.appendChild(labelElement);
+    container.appendChild(progressBar.render());
+
+    // Add the container to the input fields
+    this.inputFields.push(container);
+
+    // Subscribe to changes in the progress bar
+    subscribe(progressBar);
   }
 }
 

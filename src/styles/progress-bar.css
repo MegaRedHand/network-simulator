@@ -1,0 +1,65 @@
+/* Progress bar container */
+.progress-bar-container {
+  width: 100%;
+  height: 25px; /* Height of the bar */
+  background-color: #f3f3f3; /* Light gray background */
+  border: 1px solid #dcdcdc; /* Lighter border */
+  border-radius: 10px; /* Rounded corners */
+  overflow: hidden; /* Hides overflowing content */
+  position: relative; /* Necessary for positioning the text */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+/* Progress bar */
+.progress-bar {
+  height: 100%; /* Full height of the container */
+  background: linear-gradient(90deg, #4caf50, #81c784); /* Green gradient */
+  width: 0%; /* Initial width */
+  transition: width 0.4s ease-in-out, background-color 0.3s ease; /* Smooth animation */
+}
+
+/* Centered text */
+.progress-bar-text {
+  position: absolute; /* Positions the text over the container */
+  top: 50%; /* Vertically centers */
+  left: 50%; /* Horizontally centers */
+  transform: translate(-50%, -50%); /* Adjusts for full centering */
+  color: black; /* Black text */
+  font-size: 0.9rem; /* Font size */
+  font-weight: bold; /* Bold text */
+  pointer-events: none; /* Prevents text from interfering with events */
+  z-index: 1; /* Ensures the text is above the green bar */
+}
+
+/* Glow effect on the progress bar */
+.progress-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0));
+  opacity: 0.5;
+  pointer-events: none;
+  transform: translateX(-100%);
+  animation: shine 2s infinite linear; /* Glow effect */
+}
+
+/* Progress bar and its label container */
+.progress-bar-wrapper {
+  display: flex;
+  padding: auto;
+  flex-direction: column; /* Places the label above the bar */
+  margin-bottom: 10px; /* Bottom spacing */
+}
+
+/* Progress bar label */
+.progress-bar-label {
+  font-weight: bold;
+  color: #000000; /* Changes the text color to black */
+  margin-bottom: 10px; /* Spacing between the label and the input */
+  flex: 1; /* The label takes up the remaining space */
+  text-align: center; /* Aligns the label text to the center */
+  overflow: hidden; /* Hides text that doesn't fit */
+}
