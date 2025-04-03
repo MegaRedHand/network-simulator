@@ -1,20 +1,20 @@
 export interface ProgressBarProps {
   current: number; // Current size of the queue
   max: number; // Maximum size of the queue
-  }
-  
-  export class ProgressBar {
+}
+
+export class ProgressBar {
   private container: HTMLElement;
   private progress: HTMLElement;
   private text: HTMLElement;
-  
+
   constructor(props: ProgressBarProps) {
     this.container = document.createElement("div");
     this.container.className = "progress-bar-container";
-  
+
     this.progress = document.createElement("div");
     this.progress.className = "progress-bar";
-  
+
     this.text = document.createElement("div");
     this.text.className = "progress-bar-text";
 
@@ -22,16 +22,16 @@ export interface ProgressBarProps {
     this.container.appendChild(this.text);
     this.update(props.current, props.max);
   }
-  
+
   // Updates the progress of the bar
   update(current: number, max: number): void {
     const percentage = Math.min((current / max) * 100, 100); // Limit 100%
     this.progress.style.width = `${percentage}%`; // Updates the width of the green bar
     this.text.textContent = `${Math.round(percentage)}%`; // Updates the percentage text
   }
-  
+
   // Returns the HTML container of the component
   render(): HTMLElement {
     return this.container;
   }
-  }
+}

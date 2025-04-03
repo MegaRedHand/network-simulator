@@ -14,7 +14,6 @@ import { DataRouter } from "../data-devices";
 import { dropPacket, sendViewPacket } from "../packet";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { ROUTER_CONSTANTS } from "../../utils/constants/router_constants";
-import { ProgressBar } from "../../graphics/renderables/progress_bar";
 
 export class ViewRouter extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -67,10 +66,10 @@ export class ViewRouter extends ViewNetworkDevice {
         this.packetQueue.subscribe(() => {
           progressBar.update(
             this.packetQueue.getCurrentSize(),
-            this.packetQueue.getMaxQueueSize()
+            this.packetQueue.getMaxQueueSize(),
           );
         });
-      }
+      },
     );
 
     info.addParameterGroup(TOOLTIP_KEYS.ROUTER_PARAMETERS, [

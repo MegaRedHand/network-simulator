@@ -118,7 +118,7 @@ export class DeviceInfo extends StyledInfo {
     label: string,
     current: number,
     max: number,
-    subscribe: (progressBar: ProgressBar) => void
+    subscribe: (progressBar: ProgressBar) => void,
   ): void {
     // Create the container for the label and the progress bar
     const container = document.createElement("div");
