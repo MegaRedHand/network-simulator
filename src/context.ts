@@ -51,11 +51,10 @@ export class GlobalContext {
   private setNetwork(datagraph: DataGraph, layer: Layer) {
     this.datagraph = datagraph;
     if (this.viewgraph) {
-      this.viewgraph.setDataGraph(datagraph);
-      this.viewgraph.changeCurrLayer(layer);
-    } else {
-      this.viewgraph = new ViewGraph(datagraph, this, layer);
+      this.viewgraph.getPacketManager().clear();
+      this.viewgraph.clear();
     }
+    this.viewgraph = new ViewGraph(datagraph, this, layer);
     this.setIpGenerator();
     this.setMacGenerator();
   }
@@ -106,9 +105,9 @@ export class GlobalContext {
     return this.datagraph;
   }
 
-  changeViewGraph(selectedLayer: string) {
+  changeLayer(selectedLayer: string) {
     const layer = layerFromName(selectedLayer);
-    this.setNetwork(this.datagraph, layer);
+    this.viewgraph.changeCurrLayer(layer);
   }
 
   pause() {
