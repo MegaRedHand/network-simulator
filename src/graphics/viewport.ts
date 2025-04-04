@@ -123,4 +123,8 @@ export class Viewport extends pixi_viewport.Viewport {
       this.plugins.pause(plugin);
     }
   }
+
+  setCenter(x: number = WORLD_WIDTH / 2, y: number = WORLD_HEIGHT / 2) {
+    this.moveCenter(x, y);
+  }
 }
