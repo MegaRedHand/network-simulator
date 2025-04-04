@@ -40,6 +40,11 @@ export const TOOLTIP_KEYS = {
   DELETE_DEVICE: "Delete device",
   START_PROGRAM: "Start program",
   ROUTING_TABLE: "Routing Table",
+  ROUTER_PARAMETERS: "Router Parameters",
+  SWITCH_PARAMETERS: "Switch Parameters",
+  HOST_PARAMETERS: "Host Parameters",
+  PACKET_QUEUE_SIZE_PARAMETER: "Packet queue size (bytes)",
+  PROCESSING_SPEED_PARAMETER: "Processing speed (ms/byte)",
 } as const;
 
 // Tooltip Content
@@ -113,4 +118,14 @@ export const TOOLTIP_CONTENT = {
     "Deletes the selected device from the canvas. Shortcut: [Delete] key.",
   [TOOLTIP_KEYS.START_PROGRAM]:
     "Starts the selected program on the host device. Ensure all required inputs are provided.",
+  [TOOLTIP_KEYS.ROUTER_PARAMETERS]:
+    "Router parameters allow you to configure the router's settings",
+  [TOOLTIP_KEYS.SWITCH_PARAMETERS]:
+    "Switch parameters allow you to configure the switch's settings",
+  [TOOLTIP_KEYS.HOST_PARAMETERS]:
+    "Host parameters allow you to configure the host's settings",
+  [TOOLTIP_KEYS.PACKET_QUEUE_SIZE_PARAMETER]:
+    "The maximum size of the packet queue in bytes. This parameter determines how many packets can be stored in the queue before they are processed.",
+  [TOOLTIP_KEYS.PROCESSING_SPEED_PARAMETER]:
+    "The time taken to process a single byte of data. This parameter affects the speed at which packets are processed and sent.",
 } as const;

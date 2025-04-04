@@ -9,6 +9,7 @@ import { createRightBarButton, createRoutingTable } from "../right_bar";
 import { ProgramInfo } from "./program_info";
 import { ProgramRunnerInfo } from "./program_runner_info";
 import { StyledInfo } from "./styled_info";
+import { createParameterGroup } from "./parameter_editor";
 
 export { ProgramInfo } from "./program_info";
 
@@ -85,6 +86,23 @@ export class DeviceInfo extends StyledInfo {
 
   toHTML(): Node[] {
     return super.toHTML().concat(this.inputFields);
+  }
+
+  addParameterGroup(
+    groupName: string,
+    parameters: {
+      label: string;
+      initialValue: number | string;
+      onChange: (newValue: number | string) => void;
+    }[],
+  ) {
+    const { toggleButton, borderedContainer } = createParameterGroup(
+      groupName,
+      parameters,
+    );
+
+    this.inputFields.push(toggleButton);
+    this.inputFields.push(borderedContainer);
   }
 }
 

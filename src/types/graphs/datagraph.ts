@@ -35,6 +35,8 @@ export interface NetworkDataNode extends CommonDataNode {
 export interface RouterDataNode extends NetworkDataNode {
   type: DeviceType.Router;
   routingTable?: RoutingTableEntry[];
+  packetQueueSize: number;
+  timePerByte: number;
 }
 
 export interface RoutingTableEntry {
@@ -146,6 +148,8 @@ export class DataGraph {
         dataNode = {
           ...dataNode,
           routingTable: device.routingTable,
+          packetQueueSize: device.packetQueueSize,
+          timePerByte: device.timePerByte,
         };
       } else if (device instanceof DataHost) {
         dataNode = {
