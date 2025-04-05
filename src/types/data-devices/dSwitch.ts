@@ -3,7 +3,8 @@ import { DataDevice } from "./dDevice";
 import { EthernetFrame } from "../../packets/ethernet";
 
 export class DataSwitch extends DataDevice {
-  receiveFrame(_frame: EthernetFrame): void {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  receiveFrame(frame: EthernetFrame): void {
     // TODO: this is unused
   }
 

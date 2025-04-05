@@ -71,6 +71,7 @@ export class DataRouter extends DataNetworkDevice {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   processPacket(_ticker: Ticker) {
     // TODO: this is unused
   }

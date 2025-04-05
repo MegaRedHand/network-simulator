@@ -230,8 +230,6 @@ export class Packet extends Graphics {
   }
 
   animationTick(ticker: Ticker) {
-    let start: Position;
-    let end: Position;
     const currEdge = this.viewgraph.getEdge(this.currStart, this.currEnd);
     if (!currEdge) {
       console.warn(
@@ -240,8 +238,8 @@ export class Packet extends Graphics {
       this.delete();
       return;
     }
-    start = currEdge.nodePosition(this.currStart);
-    end = currEdge.nodePosition(this.currEnd);
+    const start = currEdge.nodePosition(this.currStart);
+    const end = currEdge.nodePosition(this.currEnd);
 
     const edgeLength = Math.sqrt(
       Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),

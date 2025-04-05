@@ -23,7 +23,7 @@ export abstract class DataNetworkDevice extends DataDevice {
 
   abstract receiveDatagram(datagram: IPv4Packet): void;
 
-  // TODO: Most probably it will be different for each type of device
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handlePacket(_datagram: IPv4Packet) {
     // TODO: this is unused
   }

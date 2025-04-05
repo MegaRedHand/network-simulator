@@ -2,7 +2,7 @@ import { ViewDevice } from "../view-devices";
 import { Edge, EdgeEdges } from "./../edge";
 import { DataGraph, DeviceId, DataNode, RemovedNodeData } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
-import { Layer, layerIncluded } from "../layer";
+import { Layer } from "../layer";
 import { createViewDevice } from "../view-devices/utils";
 import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
