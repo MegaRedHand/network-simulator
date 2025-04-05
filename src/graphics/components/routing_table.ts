@@ -73,7 +73,9 @@ export class RoutingTable {
   }
 
   // Function to create the regenerate button
-  private createRegenerateButton(onRegenerateCallback: () => void): HTMLButtonElement {
+  private createRegenerateButton(
+    onRegenerateCallback: () => void,
+  ): HTMLButtonElement {
     const regenerateAllButton = new Button({
       text: "🔄",
       className: CSS_CLASSES.REGENERATE_BUTTON,
@@ -105,8 +107,13 @@ export class RoutingTable {
   private setRoutingTableCallbacks(viewgraph: ViewGraph, deviceId: DeviceId) {
     const onEdit = (row: number, col: number, newValue: string) => {
       let isValid = false;
-      if (col === ROUTER_CONSTANTS.IP_COL_INDEX || col === ROUTER_CONSTANTS.MASK_COL_INDEX) isValid = isValidIP(newValue);
-      else if (col === ROUTER_CONSTANTS.INTERFACE_COL_INDEX) isValid = isValidInterface(newValue);
+      if (
+        col === ROUTER_CONSTANTS.IP_COL_INDEX ||
+        col === ROUTER_CONSTANTS.MASK_COL_INDEX
+      )
+        isValid = isValidIP(newValue);
+      else if (col === ROUTER_CONSTANTS.INTERFACE_COL_INDEX)
+        isValid = isValidInterface(newValue);
 
       if (isValid) {
         viewgraph.getDataGraph().saveManualChange(deviceId, row, col, newValue);
