@@ -13,7 +13,11 @@ import { Layer, layerIncluded } from "./layer";
 //import { EchoMessage } from "../packets/icmp";
 import { DataGraph, DeviceId } from "./graphs/datagraph";
 import { EthernetFrame, IP_PROTOCOL_TYPE } from "../packets/ethernet";
-import { ICMP_PROTOCOL_NUMBER, IPv4Packet } from "../packets/ip";
+import {
+  ICMP_PROTOCOL_NUMBER,
+  IPv4Packet,
+  TCP_PROTOCOL_NUMBER,
+} from "../packets/ip";
 import { GlobalContext } from "../context";
 import { DataRouter, DataSwitch } from "./data-devices";
 import {
@@ -27,7 +31,7 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
   "ICMP-8": circleGraphicsContext(Colors.Red, 0, 0, 5),
   "ICMP-0": circleGraphicsContext(Colors.Yellow, 0, 0, 5),
   EMPTY: circleGraphicsContext(Colors.Grey, 0, 0, 5),
-  TCP: circleGraphicsContext(Colors.Hazel, 0, 0, 5), // for HTTP
+  HTTP: circleGraphicsContext(Colors.Hazel, 0, 0, 5), // for HTTP
 };
 
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
@@ -54,6 +58,9 @@ function packetContext(frame: EthernetFrame): PacketContext {
       if (packet.type === ICMP_REPLY_TYPE_NUMBER) {
         return { type: "ICMP-0", layer: Layer.Network };
       }
+    } else if (datagram.payload.protocol() === TCP_PROTOCOL_NUMBER) {
+      // TODO: change when we have a TCP packet
+      return { type: "HTTP", layer: Layer.App };
     }
   }
   return { type: "EMPTY", layer: Layer.Link };
@@ -71,7 +78,11 @@ export class Packet extends Graphics {
   ctx: GlobalContext;
   belongingLayer: Layer;
 
-  constructor(ctx: GlobalContext, viewgraph: ViewGraph, rawPacket: EthernetFrame) {
+  constructor(
+    ctx: GlobalContext,
+    viewgraph: ViewGraph,
+    rawPacket: EthernetFrame,
+  ) {
     super();
     this.packetId = crypto.randomUUID();
     this.viewgraph = viewgraph;
