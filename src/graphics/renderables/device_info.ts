@@ -5,11 +5,12 @@ import { ViewGraph } from "../../types/graphs/viewgraph";
 import { RemoveDeviceMove } from "../../types/undo-redo";
 import { urManager } from "../../types/viewportManager";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
-import { createRightBarButton, createRoutingTable } from "../right_bar";
+import { createRightBarButton } from "../right_bar";
 import { ProgramInfo } from "./program_info";
 import { ProgramRunnerInfo } from "./program_runner_info";
 import { StyledInfo } from "./styled_info";
 import { createParameterGroup } from "./parameter_editor";
+import { RoutingTable } from "./routing_table";
 
 export { ProgramInfo } from "./program_info";
 
@@ -69,15 +70,13 @@ export class DeviceInfo extends StyledInfo {
       `eth${entry.iface}`,
     ]);
 
-    const dynamicTable = createRoutingTable(
-      TOOLTIP_KEYS.ROUTING_TABLE,
-      [TOOLTIP_KEYS.IP, TOOLTIP_KEYS.MASK, TOOLTIP_KEYS.INTERFACE],
+    const routingTable = new RoutingTable({
       rows,
       viewgraph,
       deviceId,
-    );
+    });
 
-    this.inputFields.push(dynamicTable);
+    this.inputFields.push(routingTable.render());
   }
 
   addEmptySpace() {

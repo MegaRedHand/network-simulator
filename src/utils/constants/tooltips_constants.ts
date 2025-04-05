@@ -45,6 +45,7 @@ export const TOOLTIP_KEYS = {
   HOST_PARAMETERS: "Host Parameters",
   PACKET_QUEUE_SIZE_PARAMETER: "Packet queue size (bytes)",
   PROCESSING_SPEED_PARAMETER: "Processing speed (ms/byte)",
+  REGENERATE: "Regenerate",
 } as const;
 
 // Tooltip Content
@@ -128,4 +129,5 @@ export const TOOLTIP_CONTENT = {
     "The maximum size of the packet queue in bytes. This parameter determines how many packets can be stored in the queue before they are processed.",
   [TOOLTIP_KEYS.PROCESSING_SPEED_PARAMETER]:
     "The time taken to process a single byte of data. This parameter affects the speed at which packets are processed and sent.",
+  [TOOLTIP_KEYS.REGENERATE]: "Regenerate the routing table.",
 } as const;

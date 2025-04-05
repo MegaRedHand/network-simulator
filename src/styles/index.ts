@@ -16,3 +16,6 @@ import "./config.css";
 import "./tooltips.css";
 import "./dropdown.css";
 import "./parameter_editor.css";
+import "./regenerate_button.css";
+import "./trash_button.css";
+import "./routing_table.css";
