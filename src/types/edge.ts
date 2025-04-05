@@ -80,8 +80,6 @@ export class Edge extends Graphics {
   }
 
   deselect() {
-    // TODO
-    console.log("deselected");
     this.removeHighlight();
   }
 
