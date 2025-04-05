@@ -41,6 +41,16 @@ export class Edge extends Graphics {
     this.on("tap", () => selectElement(this));
   }
 
+  /**
+   * Recomputes the edge's position based on the connected devices.
+   */
+  refresh() {
+    const { n1, n2 } = this.connectedNodes;
+    const device1 = this.viewgraph.getDevice(n1);
+    const device2 = this.viewgraph.getDevice(n2);
+    this.updatePosition(device1, device2);
+  }
+
   nodePosition(nodeId: DeviceId): Point | undefined {
     return this.connectedNodes.n1 === nodeId
       ? this.startPos
@@ -149,7 +159,7 @@ export class Edge extends Graphics {
     super.destroy();
   }
 
-  public updatePosition(device1: ViewDevice, device2: ViewDevice) {
+  private updatePosition(device1: ViewDevice, device2: ViewDevice) {
     const dx = device2.x - device1.x;
     const dy = device2.y - device1.y;
     const angle = Math.atan2(dy, dx);

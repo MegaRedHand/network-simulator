@@ -161,7 +161,7 @@ export class ViewGraph {
           : device;
 
       if (startDevice && endDevice) {
-        edge.updatePosition(startDevice, endDevice);
+        edge.refresh();
       } else {
         console.warn("At least one device in connection does not exist");
       }
@@ -176,9 +176,13 @@ export class ViewGraph {
   changeCurrLayer(newLayer: Layer) {
     this.layer = newLayer;
 
-    for (const [,device] of this.graph.getAllVertices()) {
+    for (const [, device] of this.graph.getAllVertices()) {
       device.updateVisibility();
-    };
+    }
+
+    for (const [, , edge] of this.graph.getAllEdges()) {
+      edge.refresh();
+    }
 
     // warn Packet Manager that the layer has been changed
     this.packetManager.layerChanged(newLayer);

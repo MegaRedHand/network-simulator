@@ -9,7 +9,7 @@ import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils/utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
-import { Layer } from "./layer";
+import { Layer, layerIncluded } from "./layer";
 //import { EchoMessage } from "../packets/icmp";
 import { DataGraph, DeviceId } from "./graphs/datagraph";
 import { EthernetFrame, IP_PROTOCOL_TYPE } from "../packets/ethernet";
@@ -65,21 +65,23 @@ export class Packet extends Graphics {
   protected progress = 0;
   protected currStart: DeviceId;
   protected currEnd: DeviceId;
-  protected graph: ViewGraph;
+  protected viewgraph: ViewGraph;
   protected type: string;
   protected rawPacket: EthernetFrame;
   ctx: GlobalContext;
   belongingLayer: Layer;
 
-  constructor(ctx: GlobalContext, graph: ViewGraph, rawPacket: EthernetFrame) {
+  constructor(ctx: GlobalContext, viewgraph: ViewGraph, rawPacket: EthernetFrame) {
     super();
     this.packetId = crypto.randomUUID();
-    this.graph = graph;
+    this.viewgraph = viewgraph;
     const { type, layer } = packetContext(rawPacket);
     this.belongingLayer = layer;
     this.type = type;
     this.context = contextPerPacketType[this.type];
     this.zIndex = ZIndexLevels.Packet;
+
+    this.visible = layerIncluded(layer, viewgraph.getLayer());
 
     this.rawPacket = rawPacket;
     this.ctx = ctx;
@@ -193,7 +195,7 @@ export class Packet extends Graphics {
   }
 
   deliverPacket() {
-    const newStartDevice = this.graph.getDevice(this.currEnd);
+    const newStartDevice = this.viewgraph.getDevice(this.currEnd);
 
     // Viewgraph may return undefined when trying to get the device
     // as the device may have been removed by the user.
@@ -207,7 +209,7 @@ export class Packet extends Graphics {
     this.currStart = startId;
     this.currEnd = endId;
 
-    const currEdge = this.graph.getEdge(startId, endId);
+    const currEdge = this.viewgraph.getEdge(startId, endId);
     currEdge.addChild(this);
     const start = currEdge.nodePosition(this.currStart);
     const end = currEdge.nodePosition(this.currEnd);
@@ -219,7 +221,7 @@ export class Packet extends Graphics {
   animationTick(ticker: Ticker) {
     let start: Position;
     let end: Position;
-    const currEdge = this.graph.getEdge(this.currStart, this.currEnd);
+    const currEdge = this.viewgraph.getEdge(this.currStart, this.currEnd);
     if (!currEdge) {
       console.warn(
         `No edge connecting devices ${this.currStart} and ${this.currEnd} in viewgraph`,
@@ -254,8 +256,8 @@ export class Packet extends Graphics {
       this.setPositionAlongEdge(start, end);
     } else {
       this.setPositionAlongEdge(
-        this.graph.getDevice(this.currStart).getPosition(),
-        this.graph.getDevice(this.currEnd).getPosition(),
+        this.viewgraph.getDevice(this.currStart).getPosition(),
+        this.viewgraph.getDevice(this.currEnd).getPosition(),
       );
     }
   }
@@ -270,12 +272,12 @@ export class Packet extends Graphics {
   }
 
   animateDrop(deviceId: DeviceId) {
-    if (this.graph instanceof DataGraph) {
+    if (this.viewgraph instanceof DataGraph) {
       // If the packet is in the datagraph, we don't need to animate it
       return;
     }
     // Drop the packet on the device
-    const device = this.graph.getDevice(deviceId);
+    const device = this.viewgraph.getDevice(deviceId);
     if (!device) {
       console.error("Device not found");
       return;
@@ -289,16 +291,16 @@ export class Packet extends Graphics {
   }
 
   dropAnimationTick(ticker: Ticker) {
-    if (this.graph instanceof DataGraph) {
+    if (this.viewgraph instanceof DataGraph) {
       // This shouldn't happen
       return;
     }
-    const device = this.graph.getDevice(this.currStart);
+    const device = this.viewgraph.getDevice(this.currStart);
     if (!device) {
       console.error("Device not found");
       return;
     }
-    this.progress += (ticker.deltaMS * this.graph.getSpeed()) / 1000;
+    this.progress += (ticker.deltaMS * this.viewgraph.getSpeed()) / 1000;
     this.y = device.height + 30 * this.progress;
     let newAlpha = 1 - this.progress;
     if (newAlpha <= 0) {
