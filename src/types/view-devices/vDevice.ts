@@ -204,9 +204,6 @@ export abstract class ViewDevice extends Container {
     });
     this.highlightMarker.zIndex = ZIndexLevels.Device;
 
-    // Make the unselected edges transparent to improve visibility
-    this.viewgraph.transparentEdgesForDevice(this.id);
-
     // Ensure the marker is in the same container as the viewport
     this.addChild(this.highlightMarker);
   }
@@ -216,7 +213,6 @@ export abstract class ViewDevice extends Container {
       this.highlightMarker.clear(); // Clear the graphic
       this.removeChild(this.highlightMarker); // Remove the marker from the viewport
       this.highlightMarker.destroy(); // Destroy the graphic object to free memory
-      this.viewgraph.untransparentEdges(); // Make the edges opaque again
       this.highlightMarker = null;
     }
   }
