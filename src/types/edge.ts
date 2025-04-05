@@ -6,7 +6,7 @@ import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils/utils";
 import { Packet } from "./packet";
 import { RemoveEdgeMove } from "./undo-redo";
-import { DeviceId } from "./graphs/datagraph";
+import { DataEdge, DeviceId } from "./graphs/datagraph";
 
 export interface EdgeEdges {
   n1: DeviceId;
@@ -14,24 +14,16 @@ export interface EdgeEdges {
 }
 
 export class Edge extends Graphics {
-  connectedNodes: EdgeEdges;
+  data: DataEdge;
   startPos: Point;
   endPos: Point;
   viewgraph: ViewGraph;
   rightbar: RightBar;
 
-  constructor(
-    connectedNodes: EdgeEdges,
-    device1: ViewDevice,
-    device2: ViewDevice,
-    viewgraph: ViewGraph,
-  ) {
+  constructor(viewgraph: ViewGraph, edgeData: DataEdge) {
     super();
-    this.connectedNodes = connectedNodes;
+    this.data = edgeData;
     this.viewgraph = viewgraph;
-    this.rightbar = RightBar.getInstance();
-
-    this.updatePosition(device1, device2);
 
     this.eventMode = "static";
     this.interactive = true;
@@ -39,31 +31,34 @@ export class Edge extends Graphics {
     this.on("click", () => selectElement(this));
     // NOTE: this is "click" for mobile devices
     this.on("tap", () => selectElement(this));
+
+    this.refresh();
   }
 
   /**
    * Recomputes the edge's position based on the connected devices.
    */
   refresh() {
-    const { n1, n2 } = this.connectedNodes;
+    const n1 = this.data.from.id;
+    const n2 = this.data.to.id;
     const device1 = this.viewgraph.getDevice(n1);
     const device2 = this.viewgraph.getDevice(n2);
     this.updatePosition(device1, device2);
   }
 
   nodePosition(nodeId: DeviceId): Point | undefined {
-    return this.connectedNodes.n1 === nodeId
+    return this.data.from.id === nodeId
       ? this.startPos
-      : this.connectedNodes.n2 === nodeId
+      : this.data.to.id === nodeId
         ? this.endPos
         : undefined;
   }
 
   otherEnd(nodeId: DeviceId): DeviceId | undefined {
-    return this.connectedNodes.n1 === nodeId
-      ? this.connectedNodes.n2
-      : this.connectedNodes.n2 === nodeId
-        ? this.connectedNodes.n1
+    return this.data.from.id === nodeId
+      ? this.data.to.id
+      : this.data.to.id === nodeId
+        ? this.data.from.id
         : undefined;
   }
 
@@ -103,11 +98,13 @@ export class Edge extends Graphics {
 
   // Method to show the Edge information
   showInfo() {
+    const rightbar = RightBar.getInstance();
+
+    const from = this.data.from.id;
+    const to = this.data.to.id;
+
     const info = new StyledInfo("Edge Information");
-    info.addField(
-      "Connected Devices",
-      `${this.connectedNodes.n1} <=> ${this.connectedNodes.n2}`,
-    );
+    info.addField("Connected Devices", `${from} <=> ${to}`);
     info.addField(
       "Start Position",
       `x=${this.startPos.x.toFixed(2)}, y=${this.startPos.y.toFixed(2)}`,
@@ -118,24 +115,24 @@ export class Edge extends Graphics {
     );
 
     // Calls renderInfo to display Edge information
-    this.rightbar.renderInfo(info);
+    rightbar.renderInfo(info);
 
-    this.rightbar.addButton(
+    rightbar.addButton(
       "Delete Edge",
       () => {
         const viewgraph = this.viewgraph;
         // Obtener las tablas de enrutamiento antes de eliminar la conexión
-        const routingTable1 = viewgraph.getRoutingTable(this.connectedNodes.n1);
-        const routingTable2 = viewgraph.getRoutingTable(this.connectedNodes.n2);
+        const routingTable1 = viewgraph.getRoutingTable(from);
+        const routingTable2 = viewgraph.getRoutingTable(to);
 
         // Crear el movimiento de eliminación de la arista con la información adicional
         const routingTables = new Map([
-          [this.connectedNodes.n1, routingTable1],
-          [this.connectedNodes.n2, routingTable2],
+          [from, routingTable1],
+          [to, routingTable2],
         ]);
         const move = new RemoveEdgeMove(
           viewgraph.getLayer(),
-          this.connectedNodes,
+          { n1: from, n2: to },
           routingTables,
         );
 
@@ -148,7 +145,8 @@ export class Edge extends Graphics {
   // Method to delete the edge
   delete() {
     // Remove the edge from the viewgraph and datagraph
-    const { n1, n2 } = this.connectedNodes;
+    const n1 = this.data.from.id;
+    const n2 = this.data.to.id;
     this.viewgraph.removeEdge(n1, n2);
     console.log(`Edge ${n1},${n2} deleted.`);
     this.destroy();

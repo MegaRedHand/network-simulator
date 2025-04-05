@@ -99,12 +99,12 @@ export type DataNode =
   | HostDataNode
   | SwitchDataNode;
 
-interface EdgeTip {
+export interface EdgeTip {
   id: DeviceId;
   iface: number;
 }
 
-interface DataEdge {
+export interface DataEdge {
   from: EdgeTip;
   to: EdgeTip;
 }

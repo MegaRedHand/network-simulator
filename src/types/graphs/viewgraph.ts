@@ -94,14 +94,21 @@ export class ViewGraph {
     });
   }
 
-  drawEdge(device1: ViewDevice, device2: ViewDevice): Edge {
+  private drawEdge(device1: ViewDevice, device2: ViewDevice): Edge {
     const connectedNodes: EdgeEdges = { n1: device1.id, n2: device2.id };
     if (this.graph.hasEdge(device1.id, device2.id)) {
       console.warn(`Edge with ID ${device1.id},${device2.id} already exists.`);
       return this.graph.getEdge(device1.id, device2.id);
     }
+    const edgeData = this.datagraph.getConnection(device1.id, device2.id);
+    if (!edgeData) {
+      console.warn(
+        `Edge with ID ${device1.id},${device2.id} does not exist in the datagraph.`,
+      );
+      return null;
+    }
 
-    const edge = new Edge(connectedNodes, device1, device2, this);
+    const edge = new Edge(this, edgeData);
 
     this.graph.setEdge(device1.id, device2.id, edge);
     this.viewport.addChild(edge);
@@ -131,9 +138,9 @@ export class ViewGraph {
     const device2 = this.graph.getVertex(device2Id);
 
     if (device1 && device2) {
-      const edge = this.drawEdge(device1, device2);
-
       this.datagraph.addEdge(device1Id, device2Id);
+
+      const edge = this.drawEdge(device1, device2);
 
       console.log(
         `Connection created between devices ID: ${device1Id} and ID: ${device2Id}`,
