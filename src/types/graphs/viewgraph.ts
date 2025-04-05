@@ -174,13 +174,12 @@ export class ViewGraph {
   }
 
   changeCurrLayer(newLayer: Layer) {
-    const formerLayer = this.layer;
     this.layer = newLayer;
     this.clear();
     this.constructView();
 
     // warn Packet Manager that the layer has been changed
-    this.packetManager.layerChanged(formerLayer, newLayer);
+    this.packetManager.layerChanged(newLayer);
 
     const event = new CustomEvent("layerChanged", {
       detail: { layer: newLayer },

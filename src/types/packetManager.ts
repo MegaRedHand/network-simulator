@@ -32,7 +32,7 @@ export class PacketManager {
   //     - graph
   //   el calculo del progreso es como se venia haciendo
   //   se reenvia un packet para seguir con la transmision
-  layerChanged(formerLayer: Layer, newLayer: Layer) {
+  layerChanged(newLayer: Layer) {
     // ViewPacket: Packet shown in viewport
     // DataPacket: Packet not shown in viewport
     console.debug("Layer changed");
