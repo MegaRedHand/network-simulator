@@ -65,7 +65,7 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     }
   }
 
-  receiveFrame(frame: EthernetFrame): void {
+  receiveFrame(frame: EthernetFrame, senderId: DeviceId): void {
     if (!this.mac.equals(frame.destination)) {
       dropPacket(this.viewgraph, this.id, frame);
       return;
