@@ -9,11 +9,11 @@ import { RemoveEdgeMove } from "./undo-redo";
 import { DataEdge, DeviceId } from "./graphs/datagraph";
 
 export class Edge extends Graphics {
-  data: DataEdge;
-  startPos: Point;
-  endPos: Point;
+  private data: DataEdge;
+  private startPos: Point;
+  private endPos: Point;
+
   viewgraph: ViewGraph;
-  rightbar: RightBar;
 
   constructor(viewgraph: ViewGraph, edgeData: DataEdge) {
     super();
@@ -47,6 +47,10 @@ export class Edge extends Graphics {
       : this.data.to.id === nodeId
         ? this.endPos
         : undefined;
+  }
+
+  getDeviceIds(): DeviceId[] {
+    return [this.data.from.id, this.data.to.id];
   }
 
   otherEnd(nodeId: DeviceId): DeviceId | undefined {

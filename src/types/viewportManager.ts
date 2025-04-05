@@ -84,7 +84,9 @@ document.addEventListener("keydown", (event) => {
         const move = new RemoveDeviceMove(currLayer, selectedElement.id);
         urManager.push(viewgraph, move);
       } else if (isEdge(selectedElement)) {
-        const connectedNodes = selectedElement.connectedNodes;
+        const ends = selectedElement.getDeviceIds();
+        const connectedNodes = { n1: ends[0], n2: ends[1] };
+
         // Obtener las tablas de enrutamiento antes de eliminar la conexión
         const routingTable1 = viewgraph.getRoutingTable(connectedNodes.n1);
         const routingTable2 = viewgraph.getRoutingTable(connectedNodes.n2);
