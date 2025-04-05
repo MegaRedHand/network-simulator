@@ -147,11 +147,10 @@ export class DataGraph {
     const edges: DataEdge[] = [];
 
     // Serialize nodes
-    for (const [id, device] of this.deviceGraph.getAllVertices()) {
-      const type = device.getType();
+    for (const [, device] of this.deviceGraph.getAllVertices()) {
       device.getDataNode();
       // parse to serializable format
-      let dataNode: DataNode = device.getDataNode();
+      const dataNode: DataNode = device.getDataNode();
       nodes.push(dataNode);
     }
     for (const [, , edge] of this.deviceGraph.getAllEdges()) {

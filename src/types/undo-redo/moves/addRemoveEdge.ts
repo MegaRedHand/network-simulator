@@ -1,9 +1,14 @@
 import { Layer } from "../../layer";
-import { EdgeEdges } from "../../edge";
 import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { deselectElement } from "../../viewportManager";
 import { BaseMove } from "./move";
+
+// TODO: remove
+interface EdgeEdges {
+  n1: DeviceId;
+  n2: DeviceId;
+}
 
 export abstract class AddRemoveEdgeMove extends BaseMove {
   connectedNodes: EdgeEdges;
@@ -24,7 +29,10 @@ export abstract class AddRemoveEdgeMove extends BaseMove {
       console.warn("Edge's devices not found in viewgraph");
       return false;
     }
-    viewgraph.addEdge(n1, n2);
+    if (!viewgraph.addEdge(n1, n2)) {
+      console.warn("Edge already exists");
+      return false;
+    }
     return true;
   }
 

@@ -8,11 +8,6 @@ import { Packet } from "./packet";
 import { RemoveEdgeMove } from "./undo-redo";
 import { DataEdge, DeviceId } from "./graphs/datagraph";
 
-export interface EdgeEdges {
-  n1: DeviceId;
-  n2: DeviceId;
-}
-
 export class Edge extends Graphics {
   data: DataEdge;
   startPos: Point;

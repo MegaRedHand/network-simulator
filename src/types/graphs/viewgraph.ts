@@ -1,5 +1,5 @@
 import { ViewDevice } from "../view-devices";
-import { Edge, EdgeEdges } from "./../edge";
+import { Edge } from "./../edge";
 import { DataGraph, DeviceId, DataNode, RemovedNodeData } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer } from "../layer";
@@ -94,8 +94,7 @@ export class ViewGraph {
     });
   }
 
-  private drawEdge(device1: ViewDevice, device2: ViewDevice): Edge {
-    const connectedNodes: EdgeEdges = { n1: device1.id, n2: device2.id };
+  private drawEdge(device1: ViewDevice, device2: ViewDevice): Edge | null {
     if (this.graph.hasEdge(device1.id, device2.id)) {
       console.warn(`Edge with ID ${device1.id},${device2.id} already exists.`);
       return this.graph.getEdge(device1.id, device2.id);
@@ -116,22 +115,22 @@ export class ViewGraph {
     return edge;
   }
 
-  addEdge(device1Id: DeviceId, device2Id: DeviceId): EdgePair | null {
+  addEdge(device1Id: DeviceId, device2Id: DeviceId): boolean {
     if (device1Id === device2Id) {
       console.warn(
         `Cannot create a connection between the same device (ID ${device1Id}).`,
       );
-      return null;
+      return false;
     }
 
     if (!this.graph.hasVertex(device1Id)) {
       console.warn(`Device with ID ${device1Id} does not exist in devices.`);
-      return null;
+      return false;
     }
 
     if (!this.graph.hasVertex(device2Id)) {
       console.warn(`Device with ID ${device2Id} does not exist in devices.`);
-      return null;
+      return false;
     }
 
     const device1 = this.graph.getVertex(device1Id);
@@ -140,37 +139,26 @@ export class ViewGraph {
     if (device1 && device2) {
       this.datagraph.addEdge(device1Id, device2Id);
 
-      const edge = this.drawEdge(device1, device2);
+      this.drawEdge(device1, device2);
 
       console.log(
         `Connection created between devices ID: ${device1Id} and ID: ${device2Id}`,
       );
 
-      return [edge.connectedNodes.n1, edge.connectedNodes.n2];
+      return true;
     }
 
-    return null;
+    return false;
   }
 
   deviceMoved(deviceId: DeviceId) {
     const device: ViewDevice = this.graph.getVertex(deviceId);
     this.graph.getNeighbors(deviceId).forEach((adjacentId) => {
       const edge = this.graph.getEdge(deviceId, adjacentId);
-      // Get start and end devices directly
-      const startDevice =
-        edge.connectedNodes.n1 === device.id
-          ? device
-          : this.graph.getVertex(adjacentId);
-
-      const endDevice =
-        edge.connectedNodes.n1 === device.id
-          ? this.graph.getVertex(adjacentId)
-          : device;
-
-      if (startDevice && endDevice) {
+      if (edge) {
         edge.refresh();
       } else {
-        console.warn("At least one device in connection does not exist");
+        console.warn("Edge not found in viewgraph");
       }
     });
     this.datagraph.updateDevicePosition(deviceId, { x: device.x, y: device.y });
@@ -297,16 +285,6 @@ export class ViewGraph {
     const edge = this.graph.getEdge(n1Id, n2Id);
     if (!edge) {
       console.warn(`Edge ${n1Id},${n2Id} is not in the viewgraph.`);
-      return false;
-    }
-
-    // Remove connection from each connected device
-    const { n1, n2 } = edge.connectedNodes;
-    const device1 = this.graph.getVertex(n1);
-    const device2 = this.graph.getVertex(n2);
-
-    if (!(device1 && device2)) {
-      console.warn("At least one device in connection does not exist");
       return false;
     }
 
