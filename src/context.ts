@@ -51,7 +51,7 @@ export class GlobalContext {
   private setNetwork(datagraph: DataGraph, layer: Layer) {
     this.datagraph = datagraph;
     if (this.viewgraph) {
-      this.viewgraph.getPacketManager().clear();
+      this.viewgraph.clearPacketsInTransit();
       this.viewgraph.clear();
     }
     this.viewgraph = new ViewGraph(datagraph, this, layer);
