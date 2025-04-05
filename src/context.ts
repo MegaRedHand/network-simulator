@@ -80,10 +80,12 @@ export class GlobalContext {
     speedMultiplier: SpeedMultiplier = new SpeedMultiplier(1),
   ) {
     this.setNetwork(datagraph, layer);
+    this.viewport.restorePosition();
     this.setSpeedMultiplier(speedMultiplier);
     this.setupAutoSave();
     saveToLocalStorage(this);
     urManager.reset();
+    this.centerView();
   }
 
   getViewport() {
@@ -117,6 +119,29 @@ export class GlobalContext {
 
   unpause() {
     this.speedMultiplier.unpause();
+  }
+
+  centerView() {
+    const deviceCount = this.datagraph.getDeviceCount();
+
+    if (deviceCount === 0) {
+      this.viewport.setCenter();
+      return;
+    }
+
+    const devices = this.datagraph.getDevices();
+    let sumX = 0,
+      sumY = 0;
+
+    for (const [, device] of devices) {
+      sumX += device.x;
+      sumY += device.y;
+    }
+
+    const centerX = sumX / deviceCount;
+    const centerY = sumY / deviceCount;
+
+    this.viewport.setCenter(centerX, centerY);
   }
 
   changeSpeedMultiplier(speedMultiplier: number) {

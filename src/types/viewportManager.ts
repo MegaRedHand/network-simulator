@@ -174,6 +174,7 @@ export function loadFromFile(ctx: GlobalContext) {
   };
 
   input.click();
+  ctx.centerView();
 }
 
 const LOCAL_STORAGE_KEY = "graphData";
