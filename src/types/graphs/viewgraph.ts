@@ -233,6 +233,9 @@ export class ViewGraph {
     return this.packetManager;
   }
 
+  /**
+   * Remove a device and its connections from the viewgraph and its underlying datagraph.
+   */
   // Method to remove a device and its connections (edges)
   removeDevice(id: DeviceId): RemovedNodeData | undefined {
     const device = this.graph.getVertex(id);
@@ -243,7 +246,7 @@ export class ViewGraph {
     }
 
     this.graph.getNeighbors(id).forEach((adjacentId) => {
-      this.removeEdge(id, adjacentId);
+      this._removeEdge(id, adjacentId);
     });
 
     // Remove device and its connections from the graph
@@ -259,7 +262,9 @@ export class ViewGraph {
     return removedData;
   }
 
-  // Method to remove a specific edge by its ID
+  /**
+   * Remove the edge between two devices from the viewgraph and its underlying datagraph.
+   */
   removeEdge(n1Id: DeviceId, n2Id: DeviceId): boolean {
     const datagraphEdge = this.datagraph.getConnection(n1Id, n2Id);
 
@@ -267,15 +272,21 @@ export class ViewGraph {
       console.warn(`Edge ${n1Id},${n2Id} is not in the datagraph`);
       return false;
     }
+    // Remove connection in DataGraph
+    this.datagraph.removeConnection(n1Id, n2Id);
 
+    return this._removeEdge(n1Id, n2Id);
+  }
+
+  /**
+   * Removes the edge from the viewgraph without removing from the Datagraph.
+   */
+  private _removeEdge(n1Id: DeviceId, n2Id: DeviceId): boolean {
     const edge = this.graph.getEdge(n1Id, n2Id);
     if (!edge) {
       console.warn(`Edge ${n1Id},${n2Id} is not in the viewgraph.`);
       return false;
     }
-
-    // Remove connection in DataGraph
-    this.datagraph.removeConnection(n1Id, n2Id);
 
     // Remove connection from each connected device
     const { n1, n2 } = edge.connectedNodes;
