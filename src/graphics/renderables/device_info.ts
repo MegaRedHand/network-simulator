@@ -10,7 +10,7 @@ import { ProgramInfo } from "./program_info";
 import { ProgramRunnerInfo } from "./program_runner_info";
 import { StyledInfo } from "./styled_info";
 import { createParameterGroup } from "./parameter_editor";
-import { RoutingTable } from "./routing_table";
+import { RoutingTable } from "../components/routing_table";
 
 export { ProgramInfo } from "./program_info";
 

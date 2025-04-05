@@ -4,14 +4,13 @@ import { Button } from "../basic_components/button";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { DeviceId } from "../../types/graphs/datagraph";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
+import { CSS_CLASSES } from "../../utils/constants/css_constants";
+import { ROUTER_CONSTANTS } from "../../utils/constants/router_constants";
 
 export interface RoutingTableProps {
   rows: string[][]; // Rows for the table
   viewgraph: ViewGraph; // ViewGraph instance for callbacks
   deviceId: DeviceId; // Device ID for callbacks
-  onEdit?: (row: number, col: number, newValue: string) => boolean; // Callback for editing cells
-  onDelete?: (row: number) => boolean; // Callback for deleting rows
-  onRegenerate?: () => void; // Callback for regenerating the table
 }
 
 export class RoutingTable {
@@ -21,15 +20,15 @@ export class RoutingTable {
 
   constructor(private props: RoutingTableProps) {
     this.container = document.createElement("div");
-    this.container.className = "routing-table-container";
+    this.container.className = CSS_CLASSES.ROUTING_TABLE_CONTAINER;
 
-    const { onEdit, onDelete } = routingTableCallbacks(
+    const { onEdit, onDelete, onRegenerate } = this.setRoutingTableCallbacks(
       props.viewgraph,
       props.deviceId,
     );
 
-    // Create the regenerate button using the provided function
-    const regenerateButton = this.createRegenerateButton();
+    // Create the regenerate button
+    const regenerateButton = this.createRegenerateButton(onRegenerate);
 
     const headers = {
       [TOOLTIP_KEYS.IP]: TOOLTIP_KEYS.IP,
@@ -42,21 +41,17 @@ export class RoutingTable {
       headers: headers,
       rows: props.rows,
       editableColumns: [false, true, true, false], // Make the last column non-editable
-      onEdit: props.onEdit || onEdit,
-      onDelete: props.onDelete || onDelete,
-      tableClasses: ["right-bar-table", "hidden"],
+      onEdit: onEdit,
+      onDelete: onDelete,
+      tableClasses: [CSS_CLASSES.RIGHT_BAR_TABLE, CSS_CLASSES.HIDDEN],
     });
 
     this.toggleButton = new ToggleButton({
       text: TOOLTIP_KEYS.ROUTING_TABLE,
-      className: "right-bar-toggle-button",
+      className: CSS_CLASSES.RIGHT_BAR_TOGGLE_BUTTON,
       onToggle: (isToggled) => {
         const tableElement = this.table.render();
-        if (isToggled) {
-          tableElement.classList.remove("hidden");
-        } else {
-          tableElement.classList.add("hidden");
-        }
+        tableElement.classList.toggle(CSS_CLASSES.HIDDEN, !isToggled);
       },
       tooltip: TOOLTIP_KEYS.ROUTING_TABLE,
     });
@@ -77,9 +72,18 @@ export class RoutingTable {
     this.table.updateRows(newRows); // Use the new method in Table
   }
 
-  // Default behavior for regenerating the table
-  private defaultOnRegenerate(): void {
-    console.log(`Regenerating routing table for device ${this.props.deviceId}`);
+  // Function to create the regenerate button
+  private createRegenerateButton(onRegenerateCallback: () => void): HTMLButtonElement {
+    const regenerateAllButton = new Button({
+      text: "🔄",
+      className: CSS_CLASSES.REGENERATE_BUTTON,
+      onClick: onRegenerateCallback,
+    });
+
+    return regenerateAllButton.render();
+  }
+
+  private OnRegenerate(): void {
     const newTableData = this.props.viewgraph
       .getDataGraph()
       .regenerateRoutingTableClean(this.props.deviceId);
@@ -96,47 +100,32 @@ export class RoutingTable {
     ]);
 
     this.updateRows(newRows);
-    console.log("Routing table regenerated successfully.");
   }
 
-  // Function to create the regenerate button
-  createRegenerateButton(): HTMLButtonElement {
-    const regenerateAllButton = new Button({
-      text: "🔄",
-      className: "regenerate-button",
-      onClick: () => {
-        console.log("Regenerating routing table...");
-        this.defaultOnRegenerate(); // Call the instance method
-      },
-    });
+  private setRoutingTableCallbacks(viewgraph: ViewGraph, deviceId: DeviceId) {
+    const onEdit = (row: number, col: number, newValue: string) => {
+      let isValid = false;
+      if (col === ROUTER_CONSTANTS.IP_COL_INDEX || col === ROUTER_CONSTANTS.MASK_COL_INDEX) isValid = isValidIP(newValue);
+      else if (col === ROUTER_CONSTANTS.INTERFACE_COL_INDEX) isValid = isValidInterface(newValue);
 
-    return regenerateAllButton.render();
+      if (isValid) {
+        viewgraph.getDataGraph().saveManualChange(deviceId, row, col, newValue);
+      }
+      return isValid;
+    };
+
+    const onDelete = (row: number) => {
+      viewgraph.getDataGraph().removeRoutingTableRow(deviceId, row);
+      return true;
+    };
+
+    const onRegenerate = () => {
+      console.log("Regenerating routing table...");
+      this.OnRegenerate();
+    };
+
+    return { onEdit, onDelete, onRegenerate };
   }
-}
-
-// Function to generate callbacks for RoutingTable
-export function routingTableCallbacks(
-  viewgraph: ViewGraph,
-  deviceId: DeviceId,
-) {
-  const onEdit = (row: number, col: number, newValue: string) => {
-    let isValid = false;
-    if (col === 0) isValid = isValidIP(newValue);
-    else if (col === 1) isValid = isValidIP(newValue);
-    else if (col === 2) isValid = isValidInterface(newValue);
-
-    if (isValid) {
-      viewgraph.getDataGraph().saveManualChange(deviceId, row, col, newValue);
-    }
-    return isValid;
-  };
-
-  const onDelete = (row: number) => {
-    viewgraph.getDataGraph().removeRoutingTableRow(deviceId, row);
-    return true;
-  };
-
-  return { onEdit, onDelete };
 }
 
 // Function to validate IP format

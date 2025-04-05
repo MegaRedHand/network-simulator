@@ -1,3 +1,4 @@
+import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { TooltipManager } from "../renderables/tooltip_manager";
 import { Button } from "./button";
 
@@ -68,7 +69,7 @@ export class Table {
       });
 
       if (onDelete) {
-        const deleteTd = this.createDeleteCell(tr, rowIndex, onDelete);
+        const deleteTd = this.createDeleteCell(tr, onDelete);
         tr.appendChild(deleteTd);
       }
 
@@ -99,15 +100,15 @@ export class Table {
 
   private createDeleteCell(
     tr: HTMLTableRowElement,
-    rowIndex: number,
     onDelete: (row: number) => boolean,
   ): HTMLTableCellElement {
     const deleteTd = document.createElement("td");
     const deleteButton = new Button({
       text: "🗑️",
-      className: "trash-button",
+      className: CSS_CLASSES.TRASH_BUTTON,
       onClick: () => {
-        if (onDelete(rowIndex)) {
+        const index = Array.from(this.tbody.rows).indexOf(tr); // calculate the index of the row
+        if (index !== -1 && onDelete(index)) {
           this.tbody.removeChild(tr);
         }
       },
