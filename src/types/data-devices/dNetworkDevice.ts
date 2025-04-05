@@ -1,8 +1,6 @@
 import { EthernetFrame } from "../../packets/ethernet";
-import { EchoReply, EchoRequest } from "../../packets/icmp";
-import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
+import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DataGraph, NetworkDataNode } from "../graphs/datagraph";
-import { sendDataPacket } from "../packet";
 import { DataDevice } from "./dDevice";
 
 export abstract class DataNetworkDevice extends DataDevice {
@@ -26,40 +24,8 @@ export abstract class DataNetworkDevice extends DataDevice {
   abstract receiveDatagram(datagram: IPv4Packet): void;
 
   // TODO: Most probably it will be different for each type of device
-  handlePacket(datagram: IPv4Packet) {
-    console.debug("Packet has reach its destination!");
-    const dstDevice: DataDevice = this.datagraph.getDeviceByIP(
-      datagram.sourceAddress,
-    );
-    if (!(dstDevice instanceof DataNetworkDevice)) {
-      return;
-    }
-    switch (datagram.payload.protocol()) {
-      case ICMP_PROTOCOL_NUMBER: {
-        const request: EchoRequest = datagram.payload as EchoRequest;
-        if (dstDevice && request.type) {
-          const path = this.datagraph.getPathBetween(this.id, dstDevice.id);
-          let dstMac = dstDevice.mac;
-          if (!path) return;
-          console.log(path);
-          for (const id of path.slice(1)) {
-            const device = this.datagraph.getDevice(id);
-            if (device instanceof DataNetworkDevice) {
-              dstMac = device.mac;
-              break;
-            }
-          }
-          const echoReply = new EchoReply(0);
-          const ipPacket = new IPv4Packet(this.ip, dstDevice.ip, echoReply);
-          const ethernet = new EthernetFrame(this.mac, dstMac, ipPacket);
-          console.debug(`Sending EchoReply to ${dstDevice}`);
-          sendDataPacket(this.datagraph, this.id, ethernet);
-        }
-        break;
-      }
-      default:
-        console.warn("Packet's type unrecognized");
-    }
+  handlePacket(_datagram: IPv4Packet) {
+    // TODO: this is unused
   }
 
   receiveFrame(frame: EthernetFrame): void {

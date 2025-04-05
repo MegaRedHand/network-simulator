@@ -7,9 +7,7 @@ import {
   RouterDataNode,
   RoutingTableEntry,
 } from "../graphs/datagraph";
-import { sendDataPacket } from "../packet";
 import { DataNetworkDevice } from "./dNetworkDevice";
-import { EthernetFrame } from "../../packets/ethernet";
 import { ROUTER_CONSTANTS } from "../../utils/constants/router_constants";
 
 export class DataRouter extends DataNetworkDevice {
@@ -73,30 +71,8 @@ export class DataRouter extends DataNetworkDevice {
     }
   }
 
-  processPacket(ticker: Ticker) {
-    const datagram = this.getPacketsToProcess(ticker.deltaMS);
-    if (!datagram) {
-      return;
-    }
-    const devices = this.routePacket(datagram);
-
-    if (!devices || devices.length === 0) {
-      return;
-    }
-    for (const nextHopId of devices) {
-      // Wrap the datagram in a new frame
-      const nextHop = this.datagraph.getDevice(nextHopId);
-      if (!nextHop) {
-        console.error("Next hop not found");
-        continue;
-      }
-      const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
-      sendDataPacket(this.datagraph, this.id, newFrame);
-    }
-
-    if (this.packetQueue.isEmpty()) {
-      this.stopPacketProcessor();
-    }
+  processPacket(_ticker: Ticker) {
+    // TODO: this is unused
   }
 
   startPacketProcessor() {

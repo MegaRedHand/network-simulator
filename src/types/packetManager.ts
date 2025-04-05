@@ -27,9 +27,7 @@ export class PacketManager {
     // ViewPacket: Packet shown in viewport
     // DataPacket: Packet not shown in viewport
     console.debug("Layer changed");
-    const currKeys = Array.from(this.packetsInTransit.keys());
-    for (const key of currKeys) {
-      const packet = this.packetsInTransit.get(key);
+    for (const packet of this.packetsInTransit.values()) {
       packet.visible = layerIncluded(packet.belongingLayer, newLayer);
     }
     console.debug("Layer changed finished");
