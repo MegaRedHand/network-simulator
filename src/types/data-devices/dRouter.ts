@@ -177,7 +177,7 @@ class PacketQueue {
   }
 
   enqueue(packet: IPv4Packet) {
-    if (this.queueSizeBytes >= this.maxQueueSizeBytes) {
+    if (this.queueSizeBytes + packet.totalLength > this.maxQueueSizeBytes) {
       return false;
     }
     this.queue.push(packet);
