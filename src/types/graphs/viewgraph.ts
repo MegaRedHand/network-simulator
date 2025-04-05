@@ -215,9 +215,13 @@ export class ViewGraph {
     return Array.from(this.graph.getAllVertices()).map(([, device]) => device);
   }
 
-  // Returns an array of devices’ ids
-  getDeviceIds(): DeviceId[] {
-    return Array.from(this.graph.getAllVertices()).map(([id]) => id);
+  /**
+   * Returns all devices in the layer of the viewgraph
+   */
+  getLayerDeviceIds(): DeviceId[] {
+    return Array.from(this.graph.getAllVertices())
+      .filter(([, { visible }]) => visible)
+      .map(([id]) => id);
   }
 
   // Get the number of devices in the graph
