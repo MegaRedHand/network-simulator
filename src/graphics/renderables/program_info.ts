@@ -22,8 +22,6 @@ export class ProgramInfo implements Renderable {
   }
 
   getInputValues() {
-    console.log("getInputValues", this.inputsValues);
-
     return this.inputsValues.map((getValue) => getValue());
   }
 
