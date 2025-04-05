@@ -45,7 +45,7 @@ export class ViewSwitch extends ViewDevice {
     return DeviceType.Switch;
   }
 
-  receiveFrame(frame: EthernetFrame) {
+  receiveFrame(frame: EthernetFrame, senderId: DeviceId): void {
     const datagram = frame.payload;
     if (!(datagram instanceof IPv4Packet)) {
       return;
@@ -58,18 +58,23 @@ export class ViewSwitch extends ViewDevice {
       console.error("Destination device not found");
       return;
     }
-    const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
-    if (path.length < 2) {
-      console.error("Destination device is not reachable");
-      return;
-    }
-    const nextHopId = path[1];
-    const nextHop = this.viewgraph.getDevice(nextHopId);
-    if (!nextHop) {
-      console.error("Next hop not found");
-      return;
-    }
-    const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
-    sendViewPacket(this.viewgraph, this.id, newFrame);
+    const connections = this.viewgraph.getConnections(this.id);
+    connections.forEach((connection) => {
+      const nextHopId = connection.otherEnd(this.id);
+      if (nextHopId === senderId) {
+        // Don't send the packet back to the sender
+        return;
+      }
+      const nextHop = this.viewgraph.getDevice(nextHopId);
+      if (!nextHop) {
+        console.warn(`Next hop with if ${nextHopId} not found`);
+        return;
+      }
+      const dstMac = !(nextHop instanceof ViewSwitch)
+        ? nextHop.mac
+        : dstDevice.mac;
+      const newFrame = new EthernetFrame(this.mac, dstMac, datagram);
+      sendViewPacket(this.viewgraph, this.id, newFrame);
+    });
   }
 }

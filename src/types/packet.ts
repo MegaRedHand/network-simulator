@@ -213,7 +213,7 @@ export class Packet extends Graphics {
     if (!newStartDevice) {
       return;
     }
-    newStartDevice.receiveFrame(this.rawPacket);
+    newStartDevice.receiveFrame(this.rawPacket, this.currStart);
   }
 
   traverseEdge(startId: DeviceId, endId: DeviceId): void {

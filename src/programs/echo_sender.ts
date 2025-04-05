@@ -26,6 +26,7 @@ export class SingleEcho extends ProgramBase {
 
   protected _run() {
     this.sendSingleEcho();
+    console.debug("Already stopping single echo");
     this.signalStop();
   }
 
@@ -113,6 +114,7 @@ export class EchoServer extends ProgramBase {
   }
 
   protected _stop() {
+    console.debug("Stopping EchoServer");
     Ticker.shared.remove(this.tick, this);
   }
 
