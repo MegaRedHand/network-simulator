@@ -20,9 +20,8 @@ export class ProgramInfo implements Renderable {
     this.inputs.push(container);
     this.inputsValues.push(getValue);
   }
-  getInputValues() {
-    console.log("getInputValues", this.inputsValues);
 
+  getInputValues() {
     return this.inputsValues.map((getValue) => getValue());
   }
 
@@ -33,7 +32,7 @@ export class ProgramInfo implements Renderable {
 
 function otherDevices(viewgraph: ViewGraph, srcId: DeviceId) {
   return viewgraph
-    .getDeviceIds()
+    .getLayerDeviceIds()
     .filter((id) => id !== srcId)
     .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
 }
