@@ -1,17 +1,8 @@
 import { Packet } from "./packet";
-import { ViewGraph } from "./graphs/viewgraph";
 import { Layer, layerIncluded } from "./layer";
-import { DataGraph, DeviceId } from "./graphs/datagraph";
-import { ViewNetworkDevice } from "./view-devices/vNetworkDevice";
-import { IPv4Packet } from "../packets/ip";
 
 export class PacketManager {
-  private viewgraph: ViewGraph;
   private packetsInTransit: Map<string, Packet> = new Map<string, Packet>();
-
-  constructor(viewgraph: ViewGraph) {
-    this.viewgraph = viewgraph;
-  }
 
   registerPacket(packet: Packet) {
     this.packetsInTransit.set(packet.packetId, packet);

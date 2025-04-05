@@ -26,7 +26,7 @@ export class ViewGraph {
     this.datagraph = datagraph;
     this.viewport = ctx.getViewport();
     this.layer = layer;
-    this.packetManager = new PacketManager(this);
+    this.packetManager = new PacketManager();
     this.constructView();
   }
 
