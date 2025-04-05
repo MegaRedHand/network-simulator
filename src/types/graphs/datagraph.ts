@@ -14,27 +14,35 @@ import { GlobalContext } from "../../context";
 
 export type DeviceId = VertexId;
 
-interface CommonDataNode {
-  id?: DeviceId;
-  x: number;
-  y: number;
-  type: DeviceType;
-  mac: string;
-  interfaces: NetworkInterfaceData[];
-  arpTable?: Map<string, string>;
+export function getNumberOfInterfaces(type: DeviceType): number {
+  return NumberOfInterfacesPerType[type];
 }
 
-export const NumberOfInterfacesPerType = {
+const NumberOfInterfacesPerType = {
   [DeviceType.Host]: 1,
   [DeviceType.Router]: 4,
   [DeviceType.Switch]: 8,
 };
 
-interface NetworkInterfaceData {
+interface CommonDataNode {
+  id?: DeviceId;
+  x: number;
+  y: number;
+  type: DeviceType;
+  // TODO: remove this
+  mac: string;
+  interfaces: NetworkInterfaceData[];
+  arpTable?: Map<string, string>;
+}
+
+export interface NetworkInterfaceData {
   name: string;
   mac: string;
-  // TODO: add IP address
-  // ip?: string;
+  /**
+   * IP address of the interface.
+   * On switches this field is undefined.
+   */
+  ip?: string;
 }
 
 export interface SwitchDataNode extends CommonDataNode {
@@ -42,6 +50,7 @@ export interface SwitchDataNode extends CommonDataNode {
 }
 
 export interface NetworkDataNode extends CommonDataNode {
+  // TODO: remove this
   ip: string;
   mask: string;
 }
