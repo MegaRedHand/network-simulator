@@ -57,22 +57,26 @@ export class ViewRouter extends ViewNetworkDevice {
 
     info.addEmptySpace();
 
-    info.addParameterGroup(TOOLTIP_KEYS.ROUTER_PARAMETERS, [
-      {
-        label: TOOLTIP_KEYS.PACKET_QUEUE_SIZE_PARAMETER,
-        initialValue: this.packetQueue.getMaxQueueSize(),
-        onChange: (newSize: number) => {
-          this.modifyPacketQueueSize(newSize);
+    info.addParameterGroup(
+      TOOLTIP_KEYS.ROUTER_PARAMETERS,
+      TOOLTIP_KEYS.ROUTER_PARAMETERS,
+      [
+        {
+          label: TOOLTIP_KEYS.PACKET_QUEUE_SIZE_PARAMETER,
+          initialValue: this.packetQueue.getMaxQueueSize(),
+          onChange: (newSize: number) => {
+            this.modifyPacketQueueSize(newSize);
+          },
         },
-      },
-      {
-        label: TOOLTIP_KEYS.PROCESSING_SPEED_PARAMETER,
-        initialValue: this.timePerByte,
-        onChange: (newSpeed: number) => {
-          this.modifyProcessingSpeed(newSpeed);
+        {
+          label: TOOLTIP_KEYS.PROCESSING_SPEED_PARAMETER,
+          initialValue: this.timePerByte,
+          onChange: (newSpeed: number) => {
+            this.modifyProcessingSpeed(newSpeed);
+          },
         },
-      },
-    ]);
+      ],
+    );
 
     info.addRoutingTable(this.viewgraph, this.id);
 

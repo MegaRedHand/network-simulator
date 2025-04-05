@@ -40,6 +40,7 @@ export const CSS_CLASSES = {
   GLOBAL_TOOLTIP: "global-tooltip",
 
   // Parameter Editor
+  PARAMETER_EDITOR_CONTAINER: "parameter-editor-container",
   PARAMETER_EDITOR: "parameter-editor",
   PARAMETER_EDITOR_LABEL: "parameter-editor-label",
   PARAMETER_EDITOR_INPUT: "parameter-editor-input",
