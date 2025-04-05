@@ -2,7 +2,7 @@ import { ViewDevice } from "../view-devices";
 import { Edge, EdgeEdges } from "./../edge";
 import { DataGraph, DeviceId, DataNode, RemovedNodeData } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
-import { Layer } from "../layer";
+import { Layer, layerIncluded } from "../layer";
 import { createViewDevice } from "../view-devices/utils";
 import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
@@ -175,8 +175,10 @@ export class ViewGraph {
 
   changeCurrLayer(newLayer: Layer) {
     this.layer = newLayer;
-    this.clear();
-    this.constructView();
+
+    for (const [,device] of this.graph.getAllVertices()) {
+      device.updateVisibility();
+    };
 
     // warn Packet Manager that the layer has been changed
     this.packetManager.layerChanged(newLayer);

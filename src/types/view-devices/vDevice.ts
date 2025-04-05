@@ -101,7 +101,7 @@ export abstract class ViewDevice extends Container {
     this.interactive = true;
     this.cursor = "pointer";
     this.zIndex = ZIndexLevels.Device;
-    this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());
+    this.updateVisibility();
 
     // Add device ID label using the helper function
     this.addDeviceIdLabel();
@@ -110,6 +110,10 @@ export abstract class ViewDevice extends Container {
     this.on("click", this.onClick, this);
     // NOTE: this is "click" for mobile devices
     this.on("tap", this.onClick, this);
+  }
+
+  updateVisibility() {
+    this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());
   }
 
   // Function to add the ID label to the device

@@ -29,6 +29,7 @@ export class PacketManager {
     console.debug("Layer changed");
     for (const packet of this.packetsInTransit.values()) {
       packet.visible = layerIncluded(packet.belongingLayer, newLayer);
+      console.log(packet.visible);
     }
     console.debug("Layer changed finished");
   }
