@@ -12,15 +12,16 @@
 
 /* 🔹 Right controls container */
 #right-controls {
-  display: flex; /* Uses flexbox */
-  align-items: center; /* Centers elements vertically */
-  gap: 2vw; /* Reduce spacing between elements */
-  flex-wrap: wrap; /* Allows wrapping to prevent overlapping */
-  justify-content: flex-end; /* Aligns elements to the right */
-  max-width: 90vw; /* Ensures controls do not exceed viewport width */
-  position: absolute; /* Positions element absolutely */
-  top: 1.5vh; /* Aligns it near the top */
-  right: 2vw; /* Positions it from the right */
+  position: absolute; /* Position relative to the canvas */
+  top: 0; /* Align to the top */
+  right: 0; /* Align to the right */
+  display: flex; /* Activa Flexbox */
+  align-items: center; /* Alinea verticalmente al centro */
+  justify-content: space-between; /* Espacia los elementos horizontalmente */
+  gap: 1vw; /* Espaciado entre elementos */
+  padding: 1vh 2vw; /* Espaciado interno */
+  border-radius: 0.5rem; /* Bordes redondeados */
+  box-sizing: border-box; /* Incluye padding en el tamaño total */
 }
 
 /* 🔹 Adjustments for small screens */

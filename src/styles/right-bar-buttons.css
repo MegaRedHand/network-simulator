@@ -104,11 +104,6 @@
   box-shadow: 0 0 0.4vh rgba(0, 123, 255, 0.4); /* Subtle glow */
 }
 
-/* 🔹 Compact styling for dropdown area */
-.dropdown-container {
-  margin-bottom: 0.8vh; /* Adds spacing below dropdown */
-}
-
 /* 🔹 Responsive adjustments for smaller screens */
 @media (max-width: 768px) {
   /* 🔹 More compact buttons on mobile */

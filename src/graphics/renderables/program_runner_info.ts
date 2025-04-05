@@ -1,11 +1,7 @@
 import { ProgramRunner, RunningProgram } from "../../programs";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
-import {
-  createDropdown,
-  createRightBarButton,
-  createTable,
-  Renderable,
-} from "../right_bar";
+import { Dropdown } from "../basic_components/dropdown";
+import { createRightBarButton, createTable, Renderable } from "../right_bar";
 import { ProgramInfo } from "./program_info";
 
 export class ProgramRunnerInfo implements Renderable {
@@ -30,16 +26,18 @@ export class ProgramRunnerInfo implements Renderable {
     });
     const programInputs = document.createElement("div");
     programInputs.replaceChildren(...selectedProgram.toHTML());
-    // Dropdown for selecting program
-    const selectProgramDropdown = createDropdown(
-      "Program",
-      programOptions,
-      (v) => {
+
+    // Create the dropdown using the Dropdown class
+    const selectProgramDropdown = new Dropdown({
+      label: TOOLTIP_KEYS.PROGRAM,
+      tooltip: TOOLTIP_KEYS.PROGRAM,
+      options: programOptions,
+      onchange: (v) => {
         selectedProgram = programs[parseInt(v)];
         console.log("Selected program: ", selectedProgram.name);
         programInputs.replaceChildren(...selectedProgram.toHTML());
       },
-    );
+    });
     // Button to run program
     const startProgramButton = createRightBarButton(
       TOOLTIP_KEYS.START_PROGRAM,
@@ -58,7 +56,7 @@ export class ProgramRunnerInfo implements Renderable {
       "right-bar-start-button",
     );
     this.inputFields.push(
-      selectProgramDropdown.container,
+      selectProgramDropdown.render(),
       programInputs,
       startProgramButton,
     );

@@ -1,4 +1,6 @@
+import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { TooltipManager } from "../renderables/tooltip_manager";
+import { Label } from "./label";
 
 export interface DropdownOption {
   value: string; // Value associated with the option
@@ -6,6 +8,7 @@ export interface DropdownOption {
 }
 
 export interface DropdownProps {
+  label?: string; // Optional label for the dropdown
   tooltip?: string; // Tooltip for the dropdown
   options: DropdownOption[]; // Array of dropdown options
   onchange?: (value: string, event: Event) => void; // Callback triggered when an option is selected
@@ -17,25 +20,37 @@ export class Dropdown {
   private optionsContainer: HTMLElement;
   private selectedValue: string | null = null;
 
-  constructor(private props: DropdownProps) {
+  constructor(
+    private props: DropdownProps,
+    not_push = false,
+  ) {
     this.container = document.createElement("div");
-    this.container.classList.add("dropdown-container");
 
     this.selected = document.createElement("div");
     this.optionsContainer = document.createElement("div");
-
+    if (not_push) {
+      this.optionsContainer.classList.add(
+        CSS_CLASSES.OPTIONS_CONTAINER_NOT_PUSH,
+      );
+    }
     this.initializeDropdown();
   }
 
   private initializeDropdown(): void {
-    const { tooltip, options, onchange } = this.props;
+    const { label, tooltip, options, onchange } = this.props;
+
+    // Create the label if provided
+    if (label) {
+      const dropdown_label = new Label(label, tooltip).render();
+      this.container.appendChild(dropdown_label);
+    }
 
     // Create the custom dropdown element
     const dropdown = document.createElement("div");
-    dropdown.classList.add("custom-dropdown");
+    dropdown.classList.add(CSS_CLASSES.CUSTOM_DROPDOWN);
 
     // Create the element displaying the selected option
-    this.selected.classList.add("selected-option");
+    this.selected.classList.add(CSS_CLASSES.SELECTED_OPTION);
     this.selected.textContent = "Select an option";
     if (tooltip) {
       TooltipManager.getInstance().attachTooltip(this.selected, tooltip);
@@ -43,7 +58,7 @@ export class Dropdown {
     dropdown.appendChild(this.selected);
 
     // Create the container for dropdown options
-    this.optionsContainer.classList.add("options-container");
+    this.optionsContainer.classList.add(CSS_CLASSES.OPTIONS_CONTAINER);
 
     // Populate the options
     options.forEach((optionData) => {
@@ -52,7 +67,7 @@ export class Dropdown {
 
     // Toggle the dropdown options visibility when clicking the selected option
     this.selected.onclick = () => {
-      this.optionsContainer.classList.toggle("show");
+      this.optionsContainer.classList.toggle(CSS_CLASSES.SHOW);
     };
 
     dropdown.appendChild(this.optionsContainer);
@@ -75,15 +90,15 @@ export class Dropdown {
 
     // Create an element for the option
     const option = document.createElement("div");
-    option.classList.add("dropdown-option");
+    option.classList.add(CSS_CLASSES.DROPDOWN_OPTION);
     option.textContent = optionData.text;
-    TooltipManager.getInstance().attachTooltip(option, optionData.text);
+    TooltipManager.getInstance().attachTooltip(option, optionData.text, true);
 
     // Set up click event for option selection
     option.onclick = (e) => {
       this.selected.textContent = optionData.text;
       this.selectedValue = optionData.value;
-      this.optionsContainer.classList.remove("show"); // Close the options container
+      this.optionsContainer.classList.remove(CSS_CLASSES.SHOW); // Close the options container
       if (onchange) {
         onchange(optionData.value, e); // Trigger the onchange callback
       }
@@ -103,6 +118,18 @@ export class Dropdown {
     newOptions.forEach((option) => {
       this.addOption(option, this.props.onchange);
     });
+  }
+
+  setValue(value: string): void {
+    const option = this.props.options.find((opt) => opt.value === value);
+    if (!option) {
+      console.warn(`Option with value "${value}" not found.`);
+      return;
+    }
+
+    this.selected.textContent = option.text;
+    this.selectedValue = option.value;
+    this.optionsContainer.classList.remove(CSS_CLASSES.SHOW); // Ensure the dropdown is closed
   }
 
   // Public method to render the dropdown

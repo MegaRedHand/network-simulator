@@ -3,6 +3,10 @@ export const CSS_CLASSES = {
   HIDDEN: "hidden",
   SELECTED: "selected",
   DISABLED: "disabled",
+  SHOW: "show",
+  HIDE: "hide",
+  ACTIVE: "active",
+  INACTIVE: "inactive",
 
   // Right Bar
   RIGHT_BAR: "right-bar",
@@ -29,6 +33,7 @@ export const CSS_CLASSES = {
   CUSTOM_DROPDOWN: "custom-dropdown",
   SELECTED_OPTION: "selected-option",
   OPTIONS_CONTAINER: "options-container",
+  OPTIONS_CONTAINER_NOT_PUSH: "push",
   DROPDOWN_OPTION: "dropdown-option",
 
   // Buttons

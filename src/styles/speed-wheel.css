@@ -1,12 +1,19 @@
 /* 🔹 Speed control container */
 .wheel-container {
+  background-color: #2b2b2b; /* Dark background */
+  border: none; /* No border */
+  padding: 1vh 2vw; /* Spacing similar to a button */
   display: flex; /* Uses flexbox for alignment */
   align-items: center; /* Vertically centers elements */
+  margin: 1vh 0; /* Vertical spacing */
   gap: 1vw; /* Creates space between elements */
-  background-color: #333333; /* Dark background for contrast */
-  padding: 0.8vh 1.5vw; /* Slightly increases padding for spacing */
   border-radius: 0.5rem; /* Softens corners */
   z-index: 99; /* Ensures it stays above other elements */
+  box-sizing: border-box; /* Includes padding and borders in height */
+  cursor: pointer; /* Changes cursor to pointer */
+  height: 2rem;
+  min-width: 180px;
+  max-width: 200px; /* Sets maximum width */
 }
 
 /* 🔹 Speed label text */
@@ -15,6 +22,7 @@
   color: white; /* White text for contrast */
   white-space: nowrap; /* Prevents text from wrapping */
   margin: 0; /* Removes default margin */
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 /* 🔹 Slider container */

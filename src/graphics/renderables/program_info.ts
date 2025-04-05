@@ -1,6 +1,7 @@
 import { DeviceId } from "../../types/graphs/datagraph";
 import { ViewGraph } from "../../types/graphs/viewgraph";
-import { createDropdown, Renderable } from "../right_bar";
+import { Dropdown } from "../basic_components/dropdown";
+import { Renderable } from "../right_bar";
 
 export class ProgramInfo implements Renderable {
   readonly name: string;
@@ -16,9 +17,21 @@ export class ProgramInfo implements Renderable {
   }
 
   withDropdown(name: string, options: { value: string; text: string }[]) {
-    const { container, getValue } = createDropdown(name, options);
-    this.inputs.push(container);
-    this.inputsValues.push(getValue);
+    const dropdown = new Dropdown({
+      label: name,
+      tooltip: name,
+      options: options,
+      onchange: (value) => {
+        console.log(`Selected value for ${name}:`, value);
+      },
+    });
+    this.inputs.push(dropdown.render());
+
+    // Store the function to get the selected value
+    this.inputsValues.push(() => {
+      const selectedOption = dropdown.getValue();
+      return selectedOption;
+    });
   }
   getInputValues() {
     console.log("getInputValues", this.inputsValues);
