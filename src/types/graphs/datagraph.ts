@@ -194,7 +194,9 @@ export class DataGraph {
   }
 
   // Add a connection between two devices
-  addEdge(n1Id: DeviceId, n2Id: DeviceId) {
+  addEdge(edgeData: DataEdge) {
+    const n1Id: DeviceId = edgeData.from.id;
+    const n2Id: DeviceId = edgeData.to.id;
     if (n1Id === n2Id) {
       console.warn(
         `Cannot create a connection between the same device (ID ${n1Id}).`,
@@ -215,11 +217,7 @@ export class DataGraph {
       );
       return;
     }
-    const edge = {
-      from: { id: n1Id, iface: n2Id },
-      to: { id: n2Id, iface: n1Id },
-    };
-    this.deviceGraph.setEdge(n1Id, n2Id, edge);
+    this.deviceGraph.setEdge(n1Id, n2Id, edgeData);
 
     console.log(
       `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,

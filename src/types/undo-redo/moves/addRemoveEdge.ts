@@ -34,7 +34,7 @@ export abstract class AddRemoveEdgeMove extends BaseMove {
 
     // Add the new edge
     // TODO: update
-    const ok = viewgraph.addEdge(n1, n2);
+    const ok = viewgraph.addEdge(this.state.data);
     if (!ok) {
       console.warn("Edge data is invalid");
       return false;
@@ -63,6 +63,7 @@ export abstract class AddRemoveEdgeMove extends BaseMove {
     // TODO: store routing tables
     this.state = { data: edgeData };
     // Deselect to avoid showing the information of the deleted edge
+    // TODO: this isnt needed I think
     deselectElement();
     return true;
   }

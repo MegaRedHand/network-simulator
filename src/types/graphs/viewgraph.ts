@@ -121,7 +121,9 @@ export class ViewGraph {
     return edge;
   }
 
-  addEdge(device1Id: DeviceId, device2Id: DeviceId): boolean {
+  addEdge(edgeData: DataEdge): boolean {
+    const device1Id = edgeData.from.id;
+    const device2Id = edgeData.to.id;
     if (device1Id === device2Id) {
       console.warn(
         `Cannot create a connection between the same device (ID ${device1Id}).`,
@@ -143,7 +145,7 @@ export class ViewGraph {
     const device2 = this.graph.getVertex(device2Id);
 
     if (device1 && device2) {
-      this.datagraph.addEdge(device1Id, device2Id);
+      this.datagraph.addEdge(edgeData);
 
       this.drawEdge(device1, device2);
 
