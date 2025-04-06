@@ -90,17 +90,20 @@ export class ViewGraph {
 
   private addConnections(connections: Map<string, EdgePair>) {
     connections.forEach(([id1, id2]) => {
-      const device1 = this.getDevice(id1);
-      const device2 = this.getDevice(id2);
-      if (!(device1 && device2)) {
-        console.warn("At least one device in connection does not exist");
-        return;
-      }
-      this.drawEdge(device1, device2);
+      this.drawEdge(id1, id2);
     });
   }
 
-  private drawEdge(device1: ViewDevice, device2: ViewDevice): Edge | null {
+  private drawEdge(device1Id: DeviceId, device2Id: DeviceId): Edge | null {
+    const device1 = this.graph.getVertex(device1Id);
+    const device2 = this.graph.getVertex(device2Id);
+
+    if (!device1 || !device2) {
+      console.warn(
+        `Failed to draw edge between devices ID: ${device1Id} and ID: ${device2Id}.`,
+      );
+      return null;
+    }
     if (this.graph.hasEdge(device1.id, device2.id)) {
       console.warn(`Edge with ID ${device1.id},${device2.id} already exists.`);
       return this.graph.getEdge(device1.id, device2.id);
@@ -121,42 +124,53 @@ export class ViewGraph {
     return edge;
   }
 
-  addEdge(edgeData: DataEdge): boolean {
+  reAddEdge(edgeData: DataEdge): boolean {
+    const data = this.datagraph.reAddEdge(edgeData);
+    if (!data) {
+      console.error("Failed to re-add edge");
+      return false;
+    }
+
     const device1Id = edgeData.from.id;
     const device2Id = edgeData.to.id;
-    if (device1Id === device2Id) {
+
+    const edge = this.drawEdge(device1Id, device2Id);
+
+    if (!edge) {
       console.warn(
-        `Cannot create a connection between the same device (ID ${device1Id}).`,
+        `Failed to re-add edge between devices ID: ${device1Id} and ID: ${device2Id}.`,
       );
       return false;
     }
 
-    if (!this.graph.hasVertex(device1Id)) {
-      console.warn(`Device with ID ${device1Id} does not exist in devices.`);
+    console.log(
+      `Connection created between devices ID: ${device1Id} and ID: ${device2Id}`,
+    );
+
+    return true;
+  }
+
+  addNewEdge(device1Id: DeviceId, device2Id: DeviceId): boolean {
+    const edgeData = this.datagraph.addNewEdge(device1Id, device2Id);
+
+    if (!edgeData) {
+      console.error("Failed to create new edge");
       return false;
     }
 
-    if (!this.graph.hasVertex(device2Id)) {
-      console.warn(`Device with ID ${device2Id} does not exist in devices.`);
-      return false;
-    }
-
-    const device1 = this.graph.getVertex(device1Id);
-    const device2 = this.graph.getVertex(device2Id);
-
-    if (device1 && device2) {
-      this.datagraph.addEdge(edgeData);
-
-      this.drawEdge(device1, device2);
-
-      console.log(
-        `Connection created between devices ID: ${device1Id} and ID: ${device2Id}`,
+    const edge = this.drawEdge(device1Id, device2Id);
+    if (!edge) {
+      console.warn(
+        `Failed to add edge between devices ID: ${device1Id} and ID: ${device2Id}.`,
       );
-
-      return true;
+      return false;
     }
 
-    return false;
+    console.log(
+      `Connection created between devices ID: ${device1Id} and ID: ${device2Id}`,
+    );
+
+    return true;
   }
 
   deviceMoved(deviceId: DeviceId) {

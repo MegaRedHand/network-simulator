@@ -193,29 +193,29 @@ export class DataGraph {
     return deviceId;
   }
 
-  // Add a connection between two devices
-  addEdge(edgeData: DataEdge) {
-    const n1Id: DeviceId = edgeData.from.id;
-    const n2Id: DeviceId = edgeData.to.id;
+  reAddEdge(edgeData: DataEdge): DataEdge | null {
+    const { from, to } = edgeData;
+    const n1Id = from.id;
+    const n2Id = to.id;
     if (n1Id === n2Id) {
       console.warn(
         `Cannot create a connection between the same device (ID ${n1Id}).`,
       );
-      return;
+      return null;
     }
     if (!this.deviceGraph.hasVertex(n1Id)) {
       console.warn(`Device with ID ${n1Id} does not exist.`);
-      return;
+      return null;
     }
     if (!this.deviceGraph.hasVertex(n2Id)) {
       console.warn(`Device with ID ${n2Id} does not exist.`);
-      return;
+      return null;
     }
     if (this.deviceGraph.hasEdge(n1Id, n2Id)) {
       console.warn(
         `Connection between ID ${n1Id} and ID ${n2Id} already exists.`,
       );
-      return;
+      return null;
     }
     this.deviceGraph.setEdge(n1Id, n2Id, edgeData);
 
@@ -224,6 +224,16 @@ export class DataGraph {
     );
     this.notifyChanges();
     this.regenerateAllRoutingTables();
+    return edgeData;
+  }
+
+  // Add a connection between two devices
+  addNewEdge(n1Id: DeviceId, n2Id: DeviceId): DataEdge | null {
+    const edge = {
+      from: { id: n1Id, iface: n2Id },
+      to: { id: n2Id, iface: n1Id },
+    };
+    return this.reAddEdge(edge);
   }
 
   updateDevicePosition(id: DeviceId, newValues: { x?: number; y?: number }) {

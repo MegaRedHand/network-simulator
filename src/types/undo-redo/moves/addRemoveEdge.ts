@@ -1,17 +1,32 @@
 import { Layer } from "../../layer";
-import { DataEdge, DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
+import { DataEdge, DeviceId } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { deselectElement } from "../../viewportManager";
 import { BaseMove } from "./move";
 
-type EdgeState =
-  // Edge is new / was removed
-  | { data: DataEdge }
-  // Edge is in graph
-  | { n1: DeviceId; n2: DeviceId };
+interface EdgePair {
+  n1: DeviceId;
+  n2: DeviceId;
+}
 
-function isInGraph(state: EdgeState): state is { n1: DeviceId; n2: DeviceId } {
-  return "n1" in state;
+type EdgeState =
+  // Edge is new
+  | { newData: EdgePair }
+  // Edge is in graph
+  | { connectedNodes: EdgePair }
+  // Edge was removed
+  | { removedData: DataEdge };
+
+function isNew(state: EdgeState): state is { newData: EdgePair } {
+  return "newData" in state;
+}
+
+function isInGraph(state: EdgeState): state is { connectedNodes: EdgePair } {
+  return "connectedNodes" in state;
+}
+
+function wasRemoved(state: EdgeState): state is { removedData: DataEdge } {
+  return "removedData" in state;
 }
 
 export abstract class AddRemoveEdgeMove extends BaseMove {
@@ -29,17 +44,26 @@ export abstract class AddRemoveEdgeMove extends BaseMove {
     }
     this.adjustLayer(viewgraph);
 
-    const n1 = this.state.data.from.id;
-    const n2 = this.state.data.to.id;
-
-    // Add the new edge
-    // TODO: update
-    const ok = viewgraph.addEdge(this.state.data);
-    if (!ok) {
-      console.warn("Edge data is invalid");
-      return false;
+    if (wasRemoved(this.state)) {
+      // Re-add the removed edge
+      const ok = viewgraph.reAddEdge(this.state.removedData);
+      if (!ok) {
+        console.warn("Failed to re-add edge");
+        return false;
+      }
+      const n1 = this.state.removedData.from.id;
+      const n2 = this.state.removedData.to.id;
+      this.state = { connectedNodes: { n1, n2 } };
+    } else if (isNew(this.state)) {
+      // Add the new edge
+      const pair = { n1: this.state.newData.n1, n2: this.state.newData.n2 };
+      const ok = viewgraph.addNewEdge(pair.n1, pair.n2);
+      if (!ok) {
+        console.warn("Failed to add new edge");
+        return false;
+      }
+      this.state = { connectedNodes: pair };
     }
-    this.state = { n1, n2 };
     return true;
   }
 
@@ -52,16 +76,16 @@ export abstract class AddRemoveEdgeMove extends BaseMove {
     this.adjustLayer(viewgraph);
 
     // Remove the edge
-    // TODO: update
-    const edgeData = viewgraph.removeEdge(this.state.n1, this.state.n2);
+    const n1 = this.state.connectedNodes.n1;
+    const n2 = this.state.connectedNodes.n2;
+    const edgeData = viewgraph.removeEdge(n1, n2);
 
-    // Avoid deselecting in case of failure, since it's probably a virtual edge
     if (!edgeData) {
       return false;
     }
 
     // TODO: store routing tables
-    this.state = { data: edgeData };
+    this.state = { removedData: edgeData };
     // Deselect to avoid showing the information of the deleted edge
     // TODO: this isnt needed I think
     deselectElement();
@@ -70,8 +94,8 @@ export abstract class AddRemoveEdgeMove extends BaseMove {
 }
 
 export class AddEdgeMove extends AddRemoveEdgeMove {
-  constructor(layer: Layer, edgeData: DataEdge) {
-    super(layer, { data: edgeData });
+  constructor(layer: Layer, n1: DeviceId, n2: DeviceId) {
+    super(layer, { newData: { n1, n2 } });
   }
 
   undo(viewgraph: ViewGraph): boolean {
@@ -85,7 +109,7 @@ export class AddEdgeMove extends AddRemoveEdgeMove {
 
 export class RemoveEdgeMove extends AddRemoveEdgeMove {
   constructor(layer: Layer, n1: DeviceId, n2: DeviceId) {
-    super(layer, { n1, n2 });
+    super(layer, { connectedNodes: { n1, n2 } });
   }
 
   undo(viewgraph: ViewGraph): boolean {
