@@ -21,6 +21,14 @@ export class PacketManager {
     this.packetsInTransit.delete(packetId);
   }
 
+  /**
+   * Deletes each packet in transit.
+   */
+  clear() {
+    const packetsInTransit = Array.from(this.packetsInTransit.values());
+    packetsInTransit.forEach((packet) => packet.delete());
+  }
+
   // SE CAMBIA CAPA (borrar luego)
   //   va paquete por paquete
   //   se fija si el paquete corresponde a la nueva capa (es visible o no)

@@ -338,6 +338,10 @@ export class ViewGraph {
     });
   }
 
+  clearPacketsInTransit() {
+    this.packetManager.clear();
+  }
+
   hasDevice(id: DeviceId) {
     return this.graph.hasVertex(id);
   }
