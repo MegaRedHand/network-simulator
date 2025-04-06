@@ -229,11 +229,32 @@ export class DataGraph {
 
   // Add a connection between two devices
   addNewEdge(n1Id: DeviceId, n2Id: DeviceId): DataEdge | null {
+    const device1 = this.getDevice(n1Id);
+    const device2 = this.getDevice(n2Id);
+    if (!device1 || !device2) {
+      console.warn(
+        `Cannot create a connection between devices ${n1Id} and ${n2Id}.`,
+      );
+      return null;
+    }
+    const n1Iface = this.getNextInterfaceNumber(device1);
+    const n2Iface = this.getNextInterfaceNumber(device2);
     const edge = {
-      from: { id: n1Id, iface: n2Id },
-      to: { id: n2Id, iface: n1Id },
+      from: { id: n1Id, iface: n1Iface },
+      to: { id: n2Id, iface: n2Iface },
     };
     return this.reAddEdge(edge);
+  }
+
+  private getNextInterfaceNumber(device: DataDevice): number {
+    const numberOfInterfaces = getNumberOfInterfaces(device.getType());
+    const ifaceUses = new Array(numberOfInterfaces).map((_, i) => [
+      i,
+      this.getConnectionsInInterface(device.id, i).length,
+    ]);
+    ifaceUses.sort(([, a], [, b]) => a - b);
+    // Return the interface with the least connections
+    return ifaceUses[0][0];
   }
 
   updateDevicePosition(id: DeviceId, newValues: { x?: number; y?: number }) {
