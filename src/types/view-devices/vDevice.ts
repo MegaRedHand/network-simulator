@@ -21,7 +21,7 @@ import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
 import { DeviceId, RemovedNodeData } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
-import { Layer } from "../layer";
+import { Layer, layerIncluded } from "../layer";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 
@@ -101,6 +101,7 @@ export abstract class ViewDevice extends Container {
     this.interactive = true;
     this.cursor = "pointer";
     this.zIndex = ZIndexLevels.Device;
+    this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());
 
     // Add device ID label using the helper function
     this.addDeviceIdLabel();
@@ -203,9 +204,6 @@ export abstract class ViewDevice extends Container {
     });
     this.highlightMarker.zIndex = ZIndexLevels.Device;
 
-    // Make the unselected edges transparent to improve visibility
-    this.viewgraph.transparentEdgesForDevice(this.id);
-
     // Ensure the marker is in the same container as the viewport
     this.addChild(this.highlightMarker);
   }
@@ -215,7 +213,6 @@ export abstract class ViewDevice extends Container {
       this.highlightMarker.clear(); // Clear the graphic
       this.removeChild(this.highlightMarker); // Remove the marker from the viewport
       this.highlightMarker.destroy(); // Destroy the graphic object to free memory
-      this.viewgraph.untransparentEdges(); // Make the edges opaque again
       this.highlightMarker = null;
     }
   }
