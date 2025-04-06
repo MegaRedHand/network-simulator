@@ -1,6 +1,12 @@
 import { ViewDevice } from "../view-devices";
 import { Edge } from "./../edge";
-import { DataGraph, DeviceId, DataNode, RemovedNodeData } from "./datagraph";
+import {
+  DataGraph,
+  DeviceId,
+  DataNode,
+  RemovedNodeData,
+  DataEdge,
+} from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
 import { Layer } from "../layer";
 import { createViewDevice } from "../view-devices/utils";
@@ -265,12 +271,12 @@ export class ViewGraph {
   /**
    * Remove the edge between two devices from the viewgraph and its underlying datagraph.
    */
-  removeEdge(n1Id: DeviceId, n2Id: DeviceId): boolean {
+  removeEdge(n1Id: DeviceId, n2Id: DeviceId): DataEdge | null {
     const datagraphEdge = this.datagraph.getConnection(n1Id, n2Id);
 
     if (!datagraphEdge) {
       console.warn(`Edge ${n1Id},${n2Id} is not in the datagraph`);
-      return false;
+      return null;
     }
     // Remove connection in DataGraph
     this.datagraph.removeConnection(n1Id, n2Id);
@@ -281,11 +287,11 @@ export class ViewGraph {
   /**
    * Removes the edge from the viewgraph without removing from the Datagraph.
    */
-  private _removeEdge(n1Id: DeviceId, n2Id: DeviceId): boolean {
+  private _removeEdge(n1Id: DeviceId, n2Id: DeviceId): DataEdge | null {
     const edge = this.graph.getEdge(n1Id, n2Id);
     if (!edge) {
       console.warn(`Edge ${n1Id},${n2Id} is not in the viewgraph.`);
-      return false;
+      return null;
     }
 
     // Remove the edge from the viewport
@@ -297,7 +303,7 @@ export class ViewGraph {
     console.log(
       `Edge with ID ${n1Id},${n2Id} successfully removed from ViewGraph.`,
     );
-    return true;
+    return edge.destroy();
   }
 
   getViewport() {

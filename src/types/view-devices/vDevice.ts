@@ -171,7 +171,10 @@ export abstract class ViewDevice extends Container {
     // Connect both devices
     const n1 = ViewDevice.connectionTarget.id;
     const n2 = this.id;
-    const move = new AddEdgeMove(this.viewgraph.getLayer(), { n1, n2 });
+    const from = { id: n1, iface: 0 };
+    const to = { id: n2, iface: 0 };
+    const edgeData = { from, to };
+    const move = new AddEdgeMove(this.viewgraph.getLayer(), edgeData);
     if (urManager.push(this.viewgraph, move)) {
       refreshElement();
       ViewDevice.connectionTarget = null;

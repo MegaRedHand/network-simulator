@@ -120,20 +120,7 @@ export class Edge extends Graphics {
       "Delete Edge",
       () => {
         const viewgraph = this.viewgraph;
-        // Obtener las tablas de enrutamiento antes de eliminar la conexión
-        const routingTable1 = viewgraph.getRoutingTable(from);
-        const routingTable2 = viewgraph.getRoutingTable(to);
-
-        // Crear el movimiento de eliminación de la arista con la información adicional
-        const routingTables = new Map([
-          [from, routingTable1],
-          [to, routingTable2],
-        ]);
-        const move = new RemoveEdgeMove(
-          viewgraph.getLayer(),
-          { n1: from, n2: to },
-          routingTables,
-        );
+        const move = new RemoveEdgeMove(viewgraph.getLayer(), from, to);
 
         urManager.push(viewgraph, move);
       },
@@ -151,9 +138,10 @@ export class Edge extends Graphics {
     this.destroy();
   }
 
-  destroy() {
+  destroy(): DataEdge {
     deselectElement();
     super.destroy();
+    return this.data;
   }
 
   private updatePosition(device1: ViewDevice, device2: ViewDevice) {
