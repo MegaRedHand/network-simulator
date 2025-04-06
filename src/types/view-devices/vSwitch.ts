@@ -13,6 +13,8 @@ import { sendViewPacket } from "../packet";
 
 export class ViewSwitch extends ViewDevice {
   static DEVICE_TEXTURE: Texture;
+  //                      would be interface
+  switchingTable: Map<string, DeviceId> = new Map<string, DeviceId>();
 
   static getTexture() {
     if (!ViewSwitch.DEVICE_TEXTURE) {
@@ -45,36 +47,62 @@ export class ViewSwitch extends ViewDevice {
     return DeviceType.Switch;
   }
 
+  updateSwitchingTable(mac: MacAddress, deviceId: DeviceId): void {
+    if (!this.switchingTable.has(mac.toString())) {
+      console.debug(`Adding ${mac.toString()} to the switching table`);
+      this.switchingTable.set(mac.toString(), deviceId);
+    }
+  }
+
+  private forwardFrame(
+    frame: EthernetFrame,
+    nextHopId: DeviceId, // will be the interface where to send the packet
+    senderId: DeviceId, // will be the interface where the packet came from
+  ) {
+    if (nextHopId === senderId) {
+      // Packet would be sent to the interface where it came, discard it
+      return;
+    }
+    const nextHop = this.viewgraph.getDevice(nextHopId);
+    if (!nextHop) {
+      console.warn(`Next hop with id ${nextHopId} not found`);
+      return;
+    }
+
+    // as this is a switch, frame.destination should already be
+    // the mac of the next network device to receive the packet
+    const newFrame = new EthernetFrame(
+      this.mac,
+      frame.destination,
+      frame.payload,
+    );
+    sendViewPacket(this.viewgraph, this.id, newFrame, nextHopId);
+  }
+
+  // TODO: change all related senderId features to the receiver interface
   receiveFrame(frame: EthernetFrame, senderId: DeviceId): void {
     const datagram = frame.payload;
     if (!(datagram instanceof IPv4Packet)) {
       return;
     }
-    // TODO: this should add the sender to the switching table,
-    //       try to match the packet against it to find a receiver,
-    //       and broadcast it if no receiver is found
-    const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
-    if (!dstDevice) {
-      console.error("Destination device not found");
-      return;
-    }
-    const connections = this.viewgraph.getConnections(this.id);
-    connections.forEach((connection) => {
-      const nextHopId = connection.otherEnd(this.id);
-      if (nextHopId === senderId) {
-        // Don't send the packet back to the sender
-        return;
-      }
-      const nextHop = this.viewgraph.getDevice(nextHopId);
-      if (!nextHop) {
-        console.warn(`Next hop with if ${nextHopId} not found`);
-        return;
-      }
-      const dstMac = !(nextHop instanceof ViewSwitch)
-        ? nextHop.mac
-        : dstDevice.mac;
-      const newFrame = new EthernetFrame(this.mac, dstMac, datagram);
-      sendViewPacket(this.viewgraph, this.id, newFrame);
+    // Update the switching table with the source MAC address
+    this.updateSwitchingTable(frame.source, senderId);
+    console.debug(
+      `Looking for ${frame.destination.toString()} in the switching table`,
+    );
+    // If the destination MAC address is in the switching table, send the frame
+    // to the corresponding device
+    // If the destination MAC address is not in the switching table, send the frame
+    // to all devices connected to the switch
+    const nextHops: DeviceId[] = this.switchingTable.has(
+      frame.destination.toString(),
+    )
+      ? [this.switchingTable.get(frame.destination.toString())]
+      : this.viewgraph
+          .getConnections(this.id)
+          .map((edge) => edge.otherEnd(this.id));
+    nextHops.forEach((nextHopId) => {
+      this.forwardFrame(frame, nextHopId, senderId);
     });
   }
 }

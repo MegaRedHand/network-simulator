@@ -368,10 +368,12 @@ export class Packet extends Graphics {
   }
 }
 
+// TODO: Replace srcId and nextHopId with the interface
 export function sendViewPacket(
   viewgraph: ViewGraph,
   srcId: DeviceId,
   rawPacket: EthernetFrame,
+  nextHopId?: DeviceId,
 ) {
   const srcMac = rawPacket.source;
   const dstMac = rawPacket.destination;
@@ -405,13 +407,15 @@ export function sendViewPacket(
     return;
   }
   const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket, true);
-  packet.traverseEdge(srcId, firstEdge.otherEnd(srcId));
+  packet.traverseEdge(srcId, nextHopId ? nextHopId : firstEdge.otherEnd(srcId));
 }
 
+// TODO: Replace srcId and nextHopId with the interface
 export function sendDataPacket(
   datagraph: DataGraph,
   srcId: DeviceId,
   rawPacket: EthernetFrame,
+  nextHopId?: DeviceId,
 ) {
   const srcMac = rawPacket.source;
   const dstMac = rawPacket.destination;
@@ -442,7 +446,7 @@ export function sendDataPacket(
     return;
   }
   const packet = new Packet(datagraph.ctx, datagraph, rawPacket, false);
-  packet.traverseEdge(srcId, firstHop);
+  packet.traverseEdge(srcId, nextHopId ? nextHopId : firstHop);
 }
 
 export function dropPacket(

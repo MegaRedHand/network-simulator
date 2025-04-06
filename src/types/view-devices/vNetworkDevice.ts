@@ -60,6 +60,10 @@ export abstract class ViewNetworkDevice extends ViewDevice {
         }
         break;
       }
+      case 0xfd: {
+        console.debug("Empty payload packet received!");
+        break;
+      }
       default:
         console.warn("Packet's type unrecognized");
     }

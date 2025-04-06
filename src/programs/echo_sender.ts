@@ -26,7 +26,6 @@ export class SingleEcho extends ProgramBase {
 
   protected _run() {
     this.sendSingleEcho();
-    console.debug("Already stopping single echo");
     this.signalStop();
   }
 

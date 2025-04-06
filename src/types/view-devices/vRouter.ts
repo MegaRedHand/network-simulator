@@ -185,7 +185,22 @@ export class ViewRouter extends ViewNetworkDevice {
         console.error("Next hop not found");
         continue;
       }
-      const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
+      let dstMac;
+      if (nextHop instanceof ViewNetworkDevice) {
+        // If the next hop is a network device, use its MAC address
+        dstMac = nextHop.mac;
+      } else {
+        const device = this.viewgraph.getDeviceByIP(
+          datagram.destinationAddress,
+        );
+        if (!device) {
+          console.error("Destination device not found");
+          continue;
+        }
+        // If the next hop is not a network device, use the destination MAC address
+        dstMac = device.mac;
+      }
+      const newFrame = new EthernetFrame(this.mac, dstMac, datagram);
       sendViewPacket(this.viewgraph, this.id, newFrame);
     }
 

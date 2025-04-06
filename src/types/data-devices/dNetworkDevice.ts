@@ -1,7 +1,7 @@
 import { EthernetFrame } from "../../packets/ethernet";
 import { EchoReply, EchoRequest } from "../../packets/icmp";
 import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
-import { DataGraph, NetworkDataNode } from "../graphs/datagraph";
+import { DataGraph, DeviceId, NetworkDataNode } from "../graphs/datagraph";
 import { sendDataPacket } from "../packet";
 import { DataDevice } from "./dDevice";
 
@@ -57,12 +57,16 @@ export abstract class DataNetworkDevice extends DataDevice {
         }
         break;
       }
+      case 0xfd: {
+        console.debug("Empty payload packet received!");
+        break;
+      }
       default:
         console.warn("Packet's type unrecognized");
     }
   }
 
-  receiveFrame(frame: EthernetFrame): void {
+  receiveFrame(frame: EthernetFrame, senderId: DeviceId): void {
     console.debug(
       `Device ${this.mac.toString()} receive frame with destination ${frame.destination.toString()}`,
     );
