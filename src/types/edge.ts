@@ -113,10 +113,14 @@ export class Edge extends Graphics {
 
     const info = new StyledInfo("Edge Information");
     info.addField("Connected Devices", `${from} <=> ${to}`);
-    info.addField("From Device", `${from}`);
-    info.addField("From interface", fromInterface.name);
-    info.addField("To Device", `${to}`);
-    info.addField("To interface", toInterface.name);
+    info.addField(
+      "Connected interfaces",
+      `${fromInterface.name} <=> ${toInterface.name}`,
+    );
+    info.addField(
+      "Interface MAC addresses",
+      `${fromInterface.mac} <=> ${toInterface.mac}`,
+    );
 
     // Calls renderInfo to display Edge information
     rightbar.renderInfo(info);
