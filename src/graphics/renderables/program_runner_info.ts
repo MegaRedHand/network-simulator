@@ -1,7 +1,10 @@
 import { ProgramRunner, RunningProgram } from "../../programs";
+import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
+import { Button } from "../basic_components/button";
 import { Dropdown } from "../basic_components/dropdown";
-import { createRightBarButton, createTable, Renderable } from "../right_bar";
+import { Table } from "../basic_components/table";
+import { Renderable } from "../right_bar";
 import { ProgramInfo } from "./program_info";
 
 export class ProgramRunnerInfo implements Renderable {
@@ -39,13 +42,12 @@ export class ProgramRunnerInfo implements Renderable {
       },
     });
     // Button to run program
-    const startProgramButton = createRightBarButton(
-      TOOLTIP_KEYS.START_PROGRAM,
-      () => {
+    const startProgramButton = new Button({
+      text: TOOLTIP_KEYS.START_PROGRAM,
+      onClick: () => {
         const { name } = selectedProgram;
         console.log("Started program: ", name);
         const inputs = selectedProgram.getInputValues();
-        // Validar que se hayan proporcionado todas las entradas necesarias
         if (inputs.some((input) => input === null || input === undefined)) {
           console.error("Some inputs are missing or invalid.");
           return;
@@ -53,12 +55,17 @@ export class ProgramRunnerInfo implements Renderable {
         this.runner.addRunningProgram(name, inputs);
         this.refreshTable();
       },
-      "right-bar-start-button",
-    );
+      classList: [
+        CSS_CLASSES.RIGHT_BAR_BUTTON,
+        CSS_CLASSES.RIGHT_BAR_START_BUTTON,
+      ],
+      tooltip: TOOLTIP_KEYS.START_PROGRAM,
+    });
+
     this.inputFields.push(
       selectProgramDropdown.render(),
       programInputs,
-      startProgramButton,
+      startProgramButton.render(),
     );
   }
 
@@ -86,11 +93,19 @@ export class ProgramRunnerInfo implements Renderable {
       program.name,
       JSON.stringify(program.inputs),
     ]);
-    const headers = ["PID", "Name", "Inputs"];
-    // TODO: make table editable?
-    const table = createTable(headers, rows, { onDelete });
-    table.classList.add("right-bar-table");
-    return table;
+    const headers = {
+      [TOOLTIP_KEYS.PID]: TOOLTIP_KEYS.PID,
+      [TOOLTIP_KEYS.NAME]: TOOLTIP_KEYS.NAME,
+      [TOOLTIP_KEYS.INPUTS]: TOOLTIP_KEYS.INPUTS,
+    };
+    const table = new Table({
+      headers,
+      rows,
+      onDelete,
+      tableClasses: ["right-bar-table"], // Clase CSS para la tabla
+    });
+
+    return table.render();
   }
 
   private refreshTable() {

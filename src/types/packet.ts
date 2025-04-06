@@ -6,7 +6,7 @@ import {
 } from "pixi.js";
 import { deselectElement, isSelected, selectElement } from "./viewportManager";
 import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils/utils";
-import { RightBar, StyledInfo } from "../graphics/right_bar";
+import { RightBar } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
 import { Layer } from "./layer";
@@ -21,6 +21,7 @@ import {
   ICMP_REQUEST_TYPE_NUMBER,
   IcmpPacket,
 } from "../packets/icmp";
+import { PacketInfo } from "../graphics/renderables/packet_info";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
@@ -68,13 +69,13 @@ function packetContext(frame: EthernetFrame): PacketContext {
 
 export class Packet extends Graphics {
   packetId: string;
-  protected speed = 100;
-  protected progress = 0;
-  protected currStart: DeviceId;
-  protected currEnd: DeviceId;
-  protected graph: ViewGraph | DataGraph;
-  protected type: string;
-  protected rawPacket: EthernetFrame;
+  speed = 100;
+  progress = 0;
+  currStart: DeviceId;
+  currEnd: DeviceId;
+  graph: ViewGraph | DataGraph;
+  type: string;
+  rawPacket: EthernetFrame;
   ctx: GlobalContext;
   belongingLayer: Layer;
 
@@ -122,7 +123,7 @@ export class Packet extends Graphics {
     this.removeHighlight();
   }
 
-  private getPacketDetails(layer: Layer, rawPacket: EthernetFrame) {
+  getPacketDetails(layer: Layer, rawPacket: EthernetFrame) {
     return rawPacket.getDetails(layer);
   }
 
@@ -135,38 +136,8 @@ export class Packet extends Graphics {
   }
 
   showInfo() {
-    const rightbar = RightBar.getInstance();
-    if (!rightbar) {
-      console.error("RightBar instance not found.");
-      return;
-    }
-
-    const info = new StyledInfo("Packet Information");
-    info.addField("Type", this.type);
-    info.addField("Source MAC Address", this.rawPacket.source.toString());
-    info.addField(
-      "Destination MAC Address",
-      this.rawPacket.destination.toString(),
-    );
-
-    rightbar.renderInfo(info);
-
-    // Add a delete packet button with the delete button style
-    rightbar.addButton(
-      "Delete Packet",
-      () => {
-        this.delete();
-      },
-      "right-bar-delete-button",
-    );
-
-    // Add a toggle info section for packet details
-    const packetDetails = this.getPacketDetails(
-      this.belongingLayer,
-      this.rawPacket,
-    );
-
-    rightbar.addToggleButton("Packet Details", packetDetails);
+    const info = new PacketInfo(this);
+    RightBar.getInstance().renderInfo(info);
   }
 
   highlight() {

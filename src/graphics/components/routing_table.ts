@@ -43,7 +43,7 @@ export class RoutingTable {
       editableColumns: [false, true, true, false], // Make the last column non-editable
       onEdit: onEdit,
       onDelete: onDelete,
-      tableClasses: [CSS_CLASSES.RIGHT_BAR_TABLE, CSS_CLASSES.HIDDEN],
+      tableClasses: [CSS_CLASSES.RIGHT_BAR_TABLE],
     });
 
     this.toggleButton = new ToggleButton({
@@ -51,10 +51,14 @@ export class RoutingTable {
       className: CSS_CLASSES.RIGHT_BAR_TOGGLE_BUTTON,
       onToggle: (isToggled) => {
         const tableElement = this.table.render();
-        tableElement.classList.toggle(CSS_CLASSES.HIDDEN, !isToggled);
+        tableElement.style.display = isToggled ? "block" : "none";
       },
       tooltip: TOOLTIP_KEYS.ROUTING_TABLE,
     });
+
+    // Initially hide the table
+    const tableElement = this.table.render();
+    tableElement.style.display = "none";
 
     this.initialize();
   }
@@ -78,7 +82,7 @@ export class RoutingTable {
   ): HTMLButtonElement {
     const regenerateAllButton = new Button({
       text: "🔄",
-      className: CSS_CLASSES.REGENERATE_BUTTON,
+      classList: [CSS_CLASSES.REGENERATE_BUTTON],
       onClick: onRegenerateCallback,
     });
 

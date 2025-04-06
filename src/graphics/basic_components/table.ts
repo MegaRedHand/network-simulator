@@ -33,9 +33,10 @@ export class Table {
   }
 
   private createHeaderRow(): void {
-    const { headers } = this.options;
+    const { headers, rows, onDelete } = this.options;
     const headerRow = document.createElement("tr");
 
+    // Agregar los encabezados definidos
     Object.entries(headers).forEach(([tooltip, content]) => {
       const th = document.createElement("th");
 
@@ -51,6 +52,19 @@ export class Table {
 
       headerRow.appendChild(th);
     });
+
+    if (rows.length > 0) {
+      // Verificar si se necesita un encabezado vacío para la columna de eliminación
+      const headersCount = Object.keys(headers).length;
+      const rowsHaveSameLength = rows.every(
+        (row) => row.length === headersCount,
+      );
+
+      if (onDelete && rowsHaveSameLength) {
+        const emptyTh = document.createElement("th");
+        headerRow.appendChild(emptyTh); // Agregar un encabezado vacío
+      }
+    }
 
     const thead = document.createElement("thead");
     thead.appendChild(headerRow);
@@ -105,7 +119,7 @@ export class Table {
     const deleteTd = document.createElement("td");
     const deleteButton = new Button({
       text: "🗑️",
-      className: CSS_CLASSES.TRASH_BUTTON,
+      classList: [CSS_CLASSES.TRASH_BUTTON],
       onClick: () => {
         const index = Array.from(this.tbody.rows).indexOf(tr); // calculate the index of the row
         if (index !== -1 && onDelete(index)) {

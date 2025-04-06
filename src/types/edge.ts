@@ -1,12 +1,12 @@
 import { Graphics, Point } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
 import { ViewDevice } from "./view-devices/index"; // Import the Device class
-import { deselectElement, selectElement, urManager } from "./viewportManager";
-import { RightBar, StyledInfo } from "../graphics/right_bar";
+import { deselectElement, selectElement } from "./viewportManager";
+import { RightBar } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils/utils";
 import { Packet } from "./packet";
-import { RemoveEdgeMove } from "./undo-redo";
 import { DeviceId } from "./graphs/datagraph";
+import { EdgeInfo } from "../graphics/renderables/edge_info";
 
 export interface EdgeEdges {
   n1: DeviceId;
@@ -100,46 +100,11 @@ export class Edge extends Graphics {
 
   // Method to show the Edge information
   showInfo() {
-    const info = new StyledInfo("Edge Information");
-    info.addField(
-      "Connected Devices",
-      `${this.connectedNodes.n1} <=> ${this.connectedNodes.n2}`,
-    );
-    info.addField(
-      "Start Position",
-      `x=${this.startPos.x.toFixed(2)}, y=${this.startPos.y.toFixed(2)}`,
-    );
-    info.addField(
-      "End Position",
-      `x=${this.endPos.x.toFixed(2)}, y=${this.endPos.y.toFixed(2)}`,
-    );
+    // Crear una instancia de `EdgeInfo`
+    const edgeInfo = new EdgeInfo(this);
 
-    // Calls renderInfo to display Edge information
-    this.rightbar.renderInfo(info);
-
-    this.rightbar.addButton(
-      "Delete Edge",
-      () => {
-        const viewgraph = this.viewgraph;
-        // Obtener las tablas de enrutamiento antes de eliminar la conexión
-        const routingTable1 = viewgraph.getRoutingTable(this.connectedNodes.n1);
-        const routingTable2 = viewgraph.getRoutingTable(this.connectedNodes.n2);
-
-        // Crear el movimiento de eliminación de la arista con la información adicional
-        const routingTables = new Map([
-          [this.connectedNodes.n1, routingTable1],
-          [this.connectedNodes.n2, routingTable2],
-        ]);
-        const move = new RemoveEdgeMove(
-          viewgraph.getLayer(),
-          this.connectedNodes,
-          routingTables,
-        );
-
-        urManager.push(viewgraph, move);
-      },
-      "right-bar-delete-button",
-    );
+    // Renderizar la información de la arista en la barra lateral derecha
+    RightBar.getInstance().renderInfo(edgeInfo);
   }
 
   // Method to delete the edge

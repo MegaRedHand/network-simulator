@@ -3,13 +3,14 @@ import { Layer } from "../layer";
 import { ViewGraph } from "../graphs/viewgraph";
 import SwitchImage from "../../assets/switch.svg";
 import { Position } from "../common";
-import { DeviceInfo, RightBar } from "../../graphics/right_bar";
+import { RightBar } from "../../graphics/right_bar";
 import { DeviceId } from "../graphs/datagraph";
 import { Texture } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { IPv4Packet } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 import { sendViewPacket } from "../packet";
+import { DeviceInfo } from "../../graphics/renderables/device_info";
 
 export class ViewSwitch extends ViewDevice {
   static DEVICE_TEXTURE: Texture;

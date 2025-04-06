@@ -46,6 +46,12 @@ export const TOOLTIP_KEYS = {
   PACKET_QUEUE_SIZE_PARAMETER: "Packet queue size (bytes)",
   PROCESSING_SPEED_PARAMETER: "Processing speed (ms/byte)",
   REGENERATE: "Regenerate",
+  DELETE_EDGE_BUTTON: "Delete Edge",
+  CONNECTION: "Connection",
+  PACKET_TYPE: "Packet Type",
+  SOURCE_MAC_ADDRESS: "Source MAC Address",
+  DESTINATION_MAC_ADDRESS: "Destination MAC Address",
+  DISCARD_PACKET_BUTTON: "Discard Packet",
 } as const;
 
 // Tooltip Content
@@ -130,4 +136,16 @@ export const TOOLTIP_CONTENT = {
   [TOOLTIP_KEYS.PROCESSING_SPEED_PARAMETER]:
     "The time taken to process a single byte of data. This parameter affects the speed at which packets are processed and sent.",
   [TOOLTIP_KEYS.REGENERATE]: "Regenerate the routing table.",
+  [TOOLTIP_KEYS.DELETE_EDGE_BUTTON]:
+    "Delete the selected edge. This action will remove the connection between two devices.",
+  [TOOLTIP_KEYS.CONNECTION]:
+    "The connection between two devices. This field shows the IDs of the connected devices.",
+  [TOOLTIP_KEYS.PACKET_TYPE]:
+    "The type of packet being processed. This field indicates the protocol used in the packet, such as TCP, UDP, or ICMP.",
+  [TOOLTIP_KEYS.SOURCE_MAC_ADDRESS]:
+    "The MAC address of the device that sent the packet. This address is used to identify the source device in the network.",
+  [TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS]:
+    "The MAC address of the device that is the intended recipient of the packet. This address is used to identify the destination device in the network.",
+  [TOOLTIP_KEYS.DISCARD_PACKET_BUTTON]:
+    "Discard the selected packet. This action will remove the packet from the network simulation without processing it.",
 } as const;
