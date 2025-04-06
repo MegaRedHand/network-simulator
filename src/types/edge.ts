@@ -102,16 +102,21 @@ export class Edge extends Graphics {
     const from = this.data.from.id;
     const to = this.data.to.id;
 
+    const fromDevice = this.viewgraph.getDataGraph().getDevice(from);
+    const toDevice = this.viewgraph.getDataGraph().getDevice(to);
+    if (!fromDevice || !toDevice) {
+      console.error("One of the devices is not found in the viewgraph.");
+      return;
+    }
+    const fromInterface = fromDevice.interfaces[this.data.from.iface];
+    const toInterface = toDevice.interfaces[this.data.to.iface];
+
     const info = new StyledInfo("Edge Information");
     info.addField("Connected Devices", `${from} <=> ${to}`);
-    info.addField(
-      "Start Position",
-      `x=${this.startPos.x.toFixed(2)}, y=${this.startPos.y.toFixed(2)}`,
-    );
-    info.addField(
-      "End Position",
-      `x=${this.endPos.x.toFixed(2)}, y=${this.endPos.y.toFixed(2)}`,
-    );
+    info.addField("From Device", `${from}`);
+    info.addField("From interface", fromInterface.name);
+    info.addField("To Device", `${to}`);
+    info.addField("To interface", toInterface.name);
 
     // Calls renderInfo to display Edge information
     rightbar.renderInfo(info);

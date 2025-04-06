@@ -248,11 +248,10 @@ export class DataGraph {
 
   private getNextInterfaceNumber(device: DataDevice): number {
     const numberOfInterfaces = getNumberOfInterfaces(device.getType());
-    const ifaceUses = new Array(numberOfInterfaces).map((_, i) => [
-      i,
-      this.getConnectionsInInterface(device.id, i).length,
-    ]);
-    ifaceUses.sort(([, a], [, b]) => a - b);
+    const ifaceUses = new Array(numberOfInterfaces)
+      .fill(0)
+      .map((_, i) => [i, this.getConnectionsInInterface(device.id, i).length])
+      .sort(([, a], [, b]) => a - b);
     // Return the interface with the least connections
     return ifaceUses[0][0];
   }
