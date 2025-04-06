@@ -159,7 +159,7 @@ export class DataGraph {
     return { nodes, edges };
   }
 
-  readdDevice(removedData: RemovedNodeData): DeviceId {
+  reAddDevice(removedData: RemovedNodeData): DeviceId {
     const { id, vertex, edges } = removedData;
     this.deviceGraph.setVertex(id, vertex);
     edges.forEach((edge) => {
