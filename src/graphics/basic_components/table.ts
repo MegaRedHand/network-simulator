@@ -4,6 +4,7 @@ import { Button } from "./button";
 
 export interface TableOptions {
   headers: Record<string, string | HTMLElement>; // Custom elements for headers
+  fieldsPerRow: number; // Number of fields per row
   rows: string[][]; // Table rows
   editableColumns?: boolean[]; // Array indicating which columns are editable
   onEdit?: (row: number, col: number, newValue: string) => boolean; // Callback for editing cells
@@ -33,37 +34,36 @@ export class Table {
   }
 
   private createHeaderRow(): void {
-    const { headers, rows, onDelete } = this.options;
+    const { headers, fieldsPerRow, onDelete } = this.options;
     const headerRow = document.createElement("tr");
 
-    // Agregar los encabezados definidos
+    // Add the defined headers
     Object.entries(headers).forEach(([tooltip, content]) => {
       const th = document.createElement("th");
 
-      // Asignar el contenido del encabezado
+      // Assign the header content
       if (typeof content === "string") {
-        th.textContent = content; // Si es texto, úsalo como contenido
+        th.textContent = content; // Use text as content
       } else if (content instanceof HTMLElement) {
-        th.appendChild(content); // Si es un elemento HTML, añádelo
+        th.appendChild(content); // Use HTML element as content
       }
 
-      // Asignar el tooltip
+      // Assign the tooltip
       TooltipManager.getInstance().attachTooltip(th, tooltip);
 
       headerRow.appendChild(th);
     });
 
-    if (rows.length > 0) {
-      // Verificar si se necesita un encabezado vacío para la columna de eliminación
-      const headersCount = Object.keys(headers).length;
-      const rowsHaveSameLength = rows.every(
-        (row) => row.length === headersCount,
-      );
+    // Calculate the number of empty headers needed
+    const headersCount = Object.keys(headers).length;
+    const deleteColumn = onDelete ? 1 : 0;
+    const totalHeadersNeeded = fieldsPerRow + deleteColumn;
+    const emptyHeadersNeeded = Math.max(0, totalHeadersNeeded - headersCount);
 
-      if (onDelete && rowsHaveSameLength) {
-        const emptyTh = document.createElement("th");
-        headerRow.appendChild(emptyTh); // Agregar un encabezado vacío
-      }
+    // Add empty headers if necessary
+    for (let i = 0; i < emptyHeadersNeeded; i++) {
+      const emptyTh = document.createElement("th");
+      headerRow.appendChild(emptyTh);
     }
 
     const thead = document.createElement("thead");
@@ -72,16 +72,25 @@ export class Table {
   }
 
   private createRows(): void {
-    const { rows, onEdit, onDelete } = this.options;
+    const { rows, fieldsPerRow, onEdit, onDelete } = this.options;
 
     rows.forEach((row, rowIndex) => {
       const tr = document.createElement("tr");
 
+      // Add cells for the row data
       row.forEach((cellData, colIndex) => {
         const td = this.createCell(cellData, rowIndex, colIndex, onEdit);
         tr.appendChild(td);
       });
 
+      // Add empty cells if the row has fewer fields than fieldsPerRow
+      const emptyCellsNeeded = fieldsPerRow - row.length;
+      for (let i = 0; i < emptyCellsNeeded; i++) {
+        const td = this.createCell("", rowIndex, row.length + i, onEdit);
+        tr.appendChild(td);
+      }
+
+      // Add delete button cell if onDelete is defined
       if (onDelete) {
         const deleteTd = this.createDeleteCell(tr, onDelete);
         tr.appendChild(deleteTd);
@@ -121,7 +130,7 @@ export class Table {
       text: "🗑️",
       classList: [CSS_CLASSES.TRASH_BUTTON],
       onClick: () => {
-        const index = Array.from(this.tbody.rows).indexOf(tr); // calculate the index of the row
+        const index = Array.from(this.tbody.rows).indexOf(tr); // Calculate the index of the row
         if (index !== -1 && onDelete(index)) {
           this.tbody.removeChild(tr);
         }
@@ -141,7 +150,7 @@ export class Table {
     cell.contentEditable = "true";
     const originalContent = cell.textContent;
 
-    // Avoid deleting the router while editing
+    // Prevent deleting the row while editing
     cell.addEventListener("keydown", (event) => {
       if (event.key === "Delete" || event.key === "Backspace") {
         event.stopPropagation();
@@ -175,7 +184,7 @@ export class Table {
   }
 
   private clearTableRows(): void {
-    this.tbody.innerHTML = ""; // Limpia todas las filas del tbody
+    this.tbody.innerHTML = ""; // Clear all rows from tbody
   }
 
   render(): HTMLTableElement {

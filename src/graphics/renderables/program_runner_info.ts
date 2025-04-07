@@ -37,7 +37,6 @@ export class ProgramRunnerInfo implements Renderable {
       options: programOptions,
       onchange: (v) => {
         selectedProgram = programs[parseInt(v)];
-        console.log("Selected program: ", selectedProgram.name);
         programInputs.replaceChildren(...selectedProgram.toHTML());
       },
     });
@@ -46,7 +45,6 @@ export class ProgramRunnerInfo implements Renderable {
       text: TOOLTIP_KEYS.START_PROGRAM,
       onClick: () => {
         const { name } = selectedProgram;
-        console.log("Started program: ", name);
         const inputs = selectedProgram.getInputValues();
         if (inputs.some((input) => input === null || input === undefined)) {
           console.error("Some inputs are missing or invalid.");
@@ -98,11 +96,14 @@ export class ProgramRunnerInfo implements Renderable {
       [TOOLTIP_KEYS.NAME]: TOOLTIP_KEYS.NAME,
       [TOOLTIP_KEYS.INPUTS]: TOOLTIP_KEYS.INPUTS,
     };
+
+    const maxRowLength = Math.max(...rows.map((row) => row.length));
     const table = new Table({
       headers,
+      fieldsPerRow: maxRowLength,
       rows,
       onDelete,
-      tableClasses: ["right-bar-table"], // Clase CSS para la tabla
+      tableClasses: [CSS_CLASSES.RIGHT_BAR_TABLE], // CSS class for the table
     });
 
     return table.render();
