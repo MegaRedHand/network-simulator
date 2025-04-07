@@ -32,7 +32,7 @@ export const TOOLTIP_KEYS = {
   PAUSE_BUTTON: "pause-button",
   UNDO: "undo",
   REDO: "redo",
-  SPEED_WHEEL: "speed-wheel",
+  SPEED_WHEEL: "Speed",
   ADD_HOST: "Add Host",
   ADD_ROUTER: "Add Router",
   ADD_SWITCH: "Add Switch",

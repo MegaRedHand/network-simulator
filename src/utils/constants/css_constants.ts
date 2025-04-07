@@ -79,8 +79,9 @@ export const CSS_CLASSES = {
   LAYER_SELECTOR_DROPDOWN: "layerselectordropdown",
 
   // Speed Wheel
-  WHEEL_CONTAINER: "wheel-container",
-  WHEEL_LABEL: "wheel-label",
-  CIRCULAR_SLIDER: "circular-slider",
-  VALUE_DISPLAY: "value-display",
+  SPEED_WHEEL_CONTAINER: "speed-control-container",
+  SLIDER_CONTAINER: "slider-container",
+  SLIDER_LABEL: "slider-label",
+  SLIDER_VALUE: "slider-value",
+  SLIDER_INPUT: "slider-input",
 };

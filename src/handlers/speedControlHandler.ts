@@ -1,43 +1,33 @@
 import { GlobalContext } from "../context";
-import { TooltipManager } from "../graphics/renderables/tooltip_manager";
 import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
+import { Slider } from "../graphics/basic_components/slider";
+import { CSS_CLASSES } from "../utils/constants/css_constants";
 
 export class SpeedControlHandler {
   private ctx: GlobalContext;
-  private speedWheel: HTMLInputElement | null;
-  private valueDisplay: HTMLElement | null;
+  private slider: Slider;
 
   constructor(ctx: GlobalContext) {
     this.ctx = ctx;
-    this.speedWheel = document.getElementById(
-      "speed-wheel",
-    ) as HTMLInputElement;
-    TooltipManager.getInstance().attachTooltip(
-      this.speedWheel,
-      TOOLTIP_KEYS.SPEED_WHEEL,
+
+    this.slider = new Slider({
+      label: TOOLTIP_KEYS.SPEED_WHEEL,
+      min: 0.5,
+      max: 4,
+      step: 0.1,
+      initialValue: this.ctx.getCurrentSpeed(),
+      onChange: (value) => this.handleSpeedChange(value),
+    });
+
+    const speedControlContainer = document.getElementById(
+      CSS_CLASSES.SPEED_WHEEL_CONTAINER,
     );
-    this.valueDisplay = document.querySelector(".value-display");
-
-    if (this.speedWheel && this.valueDisplay) {
-      this.updateSpeedWheel(this.ctx.getCurrentSpeed());
-      this.speedWheel.addEventListener("input", (event) =>
-        this.handleSpeedChange(event),
-      );
+    if (speedControlContainer) {
+      speedControlContainer.appendChild(this.slider.render());
     }
   }
 
-  private updateSpeedWheel(value: number) {
-    if (this.speedWheel && this.valueDisplay) {
-      this.speedWheel.value = value.toString();
-      this.valueDisplay.textContent = `${value}x`;
-    }
-  }
-
-  private handleSpeedChange(event: Event) {
-    const value = parseFloat((event.target as HTMLInputElement).value);
-    if (this.valueDisplay) {
-      this.valueDisplay.textContent = `${value}x`;
-    }
+  private handleSpeedChange(value: number) {
     this.ctx.changeSpeedMultiplier(value);
   }
 }
