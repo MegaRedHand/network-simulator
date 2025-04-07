@@ -7,7 +7,7 @@ export interface EditableParameter {
   onChange: (newValue: number | string) => void;
 }
 
-export class EditableParameters {
+export class ParameterEditor {
   private ParametersContainer: HTMLElement;
 
   constructor(private parameters: EditableParameter[]) {

@@ -7,7 +7,7 @@ import { urManager } from "../../types/viewportManager";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { ProgramInfo } from "./program_info";
 import { ProgramRunnerInfo } from "./program_runner_info";
-import { RoutingTable } from "../components/routing_table";
+import { RoutingTable } from "./routing_table";
 import { ToggleParameterEditor } from "../components/toggle_parameter_editor";
 import { Button } from "../basic_components/button";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";

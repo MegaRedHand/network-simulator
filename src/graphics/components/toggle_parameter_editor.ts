@@ -1,14 +1,14 @@
 import {
-  EditableParameters,
+  ParameterEditor,
   EditableParameter,
-} from "../basic_components/editable_parameters";
+} from "../basic_components/parameter_editor";
 import { ToggleButton } from "../basic_components/toggle_button";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 
 export class ToggleParameterEditor {
   private container: HTMLElement;
   private toggleButton: ToggleButton;
-  private editableParameters: EditableParameters;
+  private parameterEditor: ParameterEditor;
 
   constructor(
     groupName: string,
@@ -18,8 +18,8 @@ export class ToggleParameterEditor {
     // Create the main container
     this.container = document.createElement("div");
 
-    // Create the editable parameters group
-    this.editableParameters = new EditableParameters(parameters);
+    // Create the parameter editor
+    this.parameterEditor = new ParameterEditor(parameters);
 
     // Create the toggle button
     this.toggleButton = new ToggleButton({
@@ -27,17 +27,17 @@ export class ToggleParameterEditor {
       className: CSS_CLASSES.RIGHT_BAR_TOGGLE_BUTTON,
       tooltip: tooltip,
       onToggle: (isToggled) => {
-        const parametersContainer = this.editableParameters.render();
+        const parametersContainer = this.parameterEditor.render();
         parametersContainer.style.display = isToggled ? "block" : "none";
       },
     });
 
     // Initially hide the parameters
-    this.editableParameters.render().style.display = "none";
+    this.parameterEditor.render().style.display = "none";
 
     // Append the toggle button and parameters to the container
     this.container.appendChild(this.toggleButton.render());
-    this.container.appendChild(this.editableParameters.render());
+    this.container.appendChild(this.parameterEditor.render());
   }
 
   render(): HTMLElement {

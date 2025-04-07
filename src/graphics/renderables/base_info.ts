@@ -20,6 +20,10 @@ export abstract class BaseInfo {
     this.information.addListField(name, values);
   }
 
+  addEmptySpace() {
+    this.inputFields.push(document.createElement("br"));
+  }
+
   // Método para convertir la información a HTML
   toHTML(): Node[] {
     return [this.information.render(), ...this.inputFields];
