@@ -4,7 +4,7 @@ import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { Button } from "../basic_components/button";
 import { Dropdown } from "../basic_components/dropdown";
 import { Table } from "../basic_components/table";
-import { Renderable } from "../right_bar";
+import { Renderable } from "./base_info";
 import { ProgramInfo } from "./program_info";
 
 export class ProgramRunnerInfo implements Renderable {

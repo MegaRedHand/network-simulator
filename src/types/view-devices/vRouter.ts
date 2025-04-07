@@ -48,15 +48,11 @@ export class ViewRouter extends ViewNetworkDevice {
     this.packetQueueSize = packetQueueSize;
     this.packetQueue = new PacketQueue(this.packetQueueSize);
     this.timePerByte = timePerByte;
-    console.log("packetQueueSize Vr", this.packetQueueSize);
-    console.log("processingSpeed Vr", this.timePerByte);
   }
 
   showInfo(): void {
     const info = new DeviceInfo(this);
     info.addField(TOOLTIP_KEYS.IP_ADDRESS, this.ip.octets.join("."));
-
-    info.addEmptySpace();
 
     info.addParameterGroup(
       TOOLTIP_KEYS.ROUTER_PARAMETERS,
@@ -94,13 +90,11 @@ export class ViewRouter extends ViewNetworkDevice {
 
   setMaxQueueSize(newSize: number) {
     this.packetQueue.setMaxQueueSize(newSize);
-    console.log("Max queue size set to Vr", newSize);
     this.packetQueueSize = newSize;
   }
 
   setTimePerByte(newTime: number) {
     this.timePerByte = newTime;
-    console.log("Time per byte set to Vr", newTime);
   }
 
   /**

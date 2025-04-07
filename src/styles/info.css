@@ -1,57 +1,62 @@
-/* Asegura que el contenedor ocupe todo el ancho disponible */
+/* Ensures the container takes up the full available width */
 .info-container {
-  width: 100%; /* Ocupa todo el ancho del contenedor padre */
-  box-sizing: border-box; /* Incluye padding y border en el ancho total */
+  width: 100%; /* Takes up the full width of the parent container */
+  box-sizing: border-box; /* Includes padding and border in the total width */
 }
 
-/* Asegura que la lista ocupe todo el ancho */
+/* Ensures the list takes up the full width */
 .info-list {
-  width: 100%; /* Ocupa todo el ancho del contenedor */
-  padding: 0; /* Elimina el padding predeterminado */
-  margin: 0; /* Elimina el margen predeterminado */
-  list-style: none; /* Elimina los puntos de la lista */
-  overflow: auto; /* Habilita el desplazamiento si el contenido es demasiado grande */
+  width: 100%; /* Takes up the full width of the container */
+  padding: 0; /* Removes default padding */
+  margin: 0; /* Removes default margin */
+  list-style: none; /* Removes list bullets */
+  overflow: auto; /* Enables scrolling if the content is too large */
 }
 
-/* Asegura que cada elemento ocupe todo el ancho */
+/* Ensures each item takes up the full width */
 .detail-item {
-  width: 100%; /* Ocupa todo el ancho del contenedor */
-  padding: 6px 10px; /* Espaciado interno */
-  border-bottom: 1px solid #ddd; /* Línea separadora */
-  box-sizing: border-box; /* Incluye padding y border en el ancho total */
+  width: 100%; /* Takes up the full width of the container */
+  padding: 6px 10px; /* Internal spacing */
+  border-bottom: 1px solid #d6d6d6; /* Separator line */
+  box-sizing: border-box; /* Includes padding and border in the total width */
 }
 
-/* Asegura que las claves y valores estén alineados correctamente */
+/* Removes the divider from the last item */
+.detail-item:last-child {
+  border-bottom: none; /* No separator line */
+}
+
+/* Ensures keys and values are properly aligned */
 .detail-container {
-  display: flex; /* Usa flexbox para alinear los elementos */
-  justify-content: space-between; /* Mantiene la clave y el valor en extremos opuestos */
-  align-items: center; /* Alinea verticalmente los elementos */
-  width: 100%; /* Ocupa todo el ancho del contenedor */
+  display: flex; /* Uses flexbox to align elements */
+  justify-content: space-between; /* Keeps key and value at opposite ends */
+  align-items: center; /* Vertically aligns elements */
+  width: 100%; /* Takes up the full width of the container */
 }
 
-/* Estilo para las claves */
+/* Styling for keys */
 .detail-key {
-  font-weight: bold; /* Destaca la clave */
-  color: #2b2b2b; /* Color negro */
-  flex-shrink: 0; /* Evita que la clave se reduzca demasiado */
-  margin-right: 8px; /* Espaciado entre la clave y el valor */
+  font-weight: bold; /* Highlights the key */
+  color: #2b2b2b; /* Black color */
+  flex-shrink: 0; /* Prevents the key from shrinking too much */
+  margin-right: 8px; /* Spacing between the key and the value */
   cursor: default;
   text-align: left;
 }
 
-/* Estilo para los valores */
+/* Styling for values */
 .detail-value {
-  color: #2b2b2b; /* Color negro */
-  text-align: right; /* Alinea el texto a la derecha */
-  flex-grow: 1; /* Permite que el valor ocupe el espacio restante */
+  color: #2b2b2b; /* Black color */
+  text-align: right; /* Aligns text to the right */
+  flex-grow: 1; /* Allows the value to take up remaining space */
   cursor: default;
 }
 
 .info-title {
-  text-align: center; /* Centra el texto horizontalmente */
-  font-weight: bold; /* Destaca el título */
-  font-size: 1.8rem; /* Tamaño de fuente más grande */
-  color: #2b2b2b; /* Color del texto */
+  text-align: center; /* Centers the text horizontally */
+  font-weight: bold; /* Highlights the title */
+  font-size: 1.8rem; /* Larger font size */
+  color: #2b2b2b; /* Text color */
 }
 
 .payload-item {
@@ -70,7 +75,7 @@
   background-color: #f4f4f4; /* Light background for contrast */
   border-radius: 6px; /* Rounds the corners */
   padding: 10px; /* Adds padding inside the container */
-  border: 1px solid #ddd; /* Adds a subtle border */
+  border: 1px solid #bfbfbf; /* Adds a subtle border */
   width: 100%; /* Ensures the container occupies the full width */
   max-width: 100%; /* Prevents it from exceeding the sidebar width */
   overflow-x: auto; /* Enables horizontal scrolling if needed */

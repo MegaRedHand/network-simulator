@@ -1,7 +1,7 @@
 import { DeviceId } from "../../types/graphs/datagraph";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { Dropdown } from "../basic_components/dropdown";
-import { Renderable } from "../right_bar";
+import { Renderable } from "./base_info";
 
 export class ProgramInfo implements Renderable {
   readonly name: string;

@@ -1,6 +1,4 @@
-export interface Renderable {
-  toHTML(): Node[];
-}
+import { Renderable } from "./renderables/base_info";
 
 export class RightBar {
   private static instance: RightBar | null = null; // Singleton

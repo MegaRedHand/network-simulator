@@ -70,9 +70,7 @@ export const CSS_CLASSES = {
   PAYLOAD_ITEM: "payload-item",
   PAYLOAD_CONTAINER: "payload-container",
   PAYLOAD_CONTENT: "payload-content",
-  WARNING_SIGN: "warning-sign",
-  WARNING_TITLE: "warning-title",
-  WARNING_MESSAGE: "warning-message",
+  DIVIDER: "divider",
 
   // Layer Selector
   LAYER_SELECTOR_CONTAINER: "layer-selector-container",
