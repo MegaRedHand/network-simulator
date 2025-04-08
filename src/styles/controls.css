@@ -12,22 +12,21 @@
 
 /* 🔹 Right controls container */
 #right-controls {
-  position: absolute; /* Position relative to the canvas */
-  top: 0; /* Align to the top */
-  right: 0; /* Align to the right */
-  display: flex; /* Activa Flexbox */
-  align-items: center; /* Alinea verticalmente al centro */
-  justify-content: space-between; /* Espacia los elementos horizontalmente */
-  gap: 1vw; /* Espaciado entre elementos */
-  padding: 1vh 2vw; /* Espaciado interno */
-  border-radius: 0.5rem; /* Bordes redondeados */
-  box-sizing: border-box; /* Incluye padding en el tamaño total */
+  display: flex; /* Uses flexbox */
+  align-items: center; /* Centers elements vertically */
+  gap: 2vw; /* Reduce spacing between elements */
+  flex-wrap: wrap; /* Allows wrapping to prevent overlapping */
+  justify-content: flex-end; /* Aligns elements to the right */
+  max-width: 90vw; /* Ensures controls do not exceed viewport width */
+  position: absolute; /* Positions element absolutely */
+  top: 1.5vh; /* Aligns it near the top */
+  right: 2vw; /* Positions it from the right */
 }
 
 /* 🔹 Adjustments for small screens */
 @media (max-width: 768px) {
   #left-controls {
-    gap: 0.5vw; /* Reduce spacing for compact layout */
+    gap: 2vw; /* Reduce spacing for compact layout */
     flex-wrap: wrap; /* Allows wrapping if space is limited */
   }
 
@@ -46,8 +45,9 @@
 
   /* 🔹 Undo/Redo container adjustments */
   .undo-redo-container {
-    margin-left: 1vw; /* Adds slight left margin */
+    margin-left: 4vw; /* Adds slight left margin */
     flex-wrap: nowrap; /* Prevents elements from rearranging */
+    gap: 4vw; /* Adds spacing between buttons */
   }
 
   /* 🔹 Right controls adjustments */
