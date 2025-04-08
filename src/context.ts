@@ -85,7 +85,6 @@ export class GlobalContext {
     this.setupAutoSave();
     saveToLocalStorage(this);
     urManager.reset();
-    this.centerView();
   }
 
   getViewport() {

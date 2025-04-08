@@ -168,13 +168,12 @@ export function loadFromFile(ctx: GlobalContext) {
       const jsonData = readerEvent.target.result as string;
       const graphData: GraphData = JSON.parse(jsonData);
       ctx.load(DataGraph.fromData(graphData, ctx));
-
       console.log("Graph loaded successfully.");
+      ctx.centerView();
     };
   };
 
   input.click();
-  ctx.centerView();
 }
 
 const LOCAL_STORAGE_KEY = "graphData";
