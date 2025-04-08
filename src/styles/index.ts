@@ -8,7 +8,6 @@ import "./table.css";
 import "./info.css";
 import "./pause.css";
 import "./undo-redo.css";
-import "./layer-select.css";
 import "./controls.css";
 import "./help.css";
 import "./config.css";

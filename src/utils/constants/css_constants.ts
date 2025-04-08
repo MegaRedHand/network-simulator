@@ -15,9 +15,6 @@ export const CSS_CLASSES = {
   RIGHT_BAR_DELETE_BUTTON: "right-bar-delete-button",
   RIGHT_BAR_CONNECT_BUTTON: "right-bar-connect-button",
   RIGHT_BAR_START_BUTTON: "right-bar-start-button",
-  RIGHT_BAR_SELECT: "right-bar-select",
-  RIGHT_BAR_LABEL: "right-bar-label",
-  PACKET_OPTIONS_CONTAINER: "packet-options-container",
 
   // Table
   TABLE: "table",
