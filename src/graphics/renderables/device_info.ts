@@ -12,8 +12,8 @@ import { ToggleParameterEditor } from "../components/toggle_parameter_editor";
 import { Button } from "../basic_components/button";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { BaseInfo } from "./base_info";
-import { TooltipManager } from "./tooltip_manager";
 import { ProgressBar } from "../basic_components/progress_bar";
+import { LabeledProgressBar } from "../components/labeled_progress_bar";
 
 export class DeviceInfo extends BaseInfo {
   readonly device: ViewDevice;
@@ -123,28 +123,13 @@ export class DeviceInfo extends BaseInfo {
     max: number,
     subscribe: (progressBar: ProgressBar) => void,
   ): void {
-    // Create the container for the label and the progress bar
-    const container = document.createElement("div");
-    container.className = "progress-bar-wrapper";
-
-    // Create the label
-    const labelElement = document.createElement("div");
-    labelElement.className = "progress-bar-label";
-    labelElement.textContent = label;
-    TooltipManager.getInstance().attachTooltip(labelElement, label);
-
-    // Create the progress bar
-    const progressBar = new ProgressBar({ current, max });
-
-    // Add the progress bar to the container
-    container.appendChild(labelElement);
-    container.appendChild(progressBar.render());
-
-    // Add the container to the input fields
-    this.inputFields.push(container);
-
-    // Subscribe to changes in the progress bar
-    subscribe(progressBar);
+    const labeledProgressBar = new LabeledProgressBar(
+      label,
+      current,
+      max,
+      subscribe,
+    );
+    this.inputFields.push(labeledProgressBar.render());
   }
 }
 
