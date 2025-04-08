@@ -57,6 +57,21 @@ export class ViewRouter extends ViewNetworkDevice {
 
     info.addEmptySpace();
 
+    info.addProgressBar(
+      TOOLTIP_KEYS.PACKET_QUEUE_USAGE,
+      this.packetQueue.getCurrentSize(),
+      this.packetQueue.getMaxQueueSize(),
+      (progressBar) => {
+        // Suscribe
+        this.packetQueue.subscribe(() => {
+          progressBar.update(
+            this.packetQueue.getCurrentSize(),
+            this.packetQueue.getMaxQueueSize(),
+          );
+        });
+      },
+    );
+
     info.addParameterGroup(TOOLTIP_KEYS.ROUTER_PARAMETERS, [
       {
         label: TOOLTIP_KEYS.PACKET_QUEUE_SIZE_PARAMETER,
@@ -254,8 +269,24 @@ class PacketQueue {
   private queueSizeBytes = 0;
   private maxQueueSizeBytes: number;
 
+  private observers: (() => void)[] = [];
+
   constructor(maxQueueSizeBytes: number) {
     this.maxQueueSizeBytes = maxQueueSizeBytes;
+  }
+
+  // Método para suscribirse a cambios
+  subscribe(observer: () => void): void {
+    this.observers.push(observer);
+  }
+
+  // Método para notificar a los observadores
+  private notifyObservers(): void {
+    this.observers.forEach((observer) => observer());
+  }
+
+  getCurrentSize(): number {
+    return this.queueSizeBytes;
   }
 
   getMaxQueueSize(): number {
@@ -264,17 +295,19 @@ class PacketQueue {
   setMaxQueueSize(newSize: number) {
     if (newSize >= 0) {
       this.maxQueueSizeBytes = newSize;
+      this.notifyObservers();
     } else {
       console.warn("Invalid queue size, keeping previous value");
     }
   }
 
   enqueue(packet: IPv4Packet) {
-    if (this.queueSizeBytes >= this.maxQueueSizeBytes) {
+    if (this.queueSizeBytes + packet.totalLength > this.maxQueueSizeBytes) {
       return false;
     }
     this.queue.push(packet);
     this.queueSizeBytes += packet.totalLength;
+    this.notifyObservers();
     return true;
   }
 
@@ -284,6 +317,7 @@ class PacketQueue {
     }
     const packet = this.queue.shift();
     this.queueSizeBytes -= packet.totalLength;
+    this.notifyObservers();
     return packet;
   }
 

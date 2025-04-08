@@ -642,7 +642,6 @@ export function createDropdown(
     const option = document.createElement("div");
     option.classList.add("dropdown-option");
     option.textContent = optionData.text;
-    console.log("Attaching tooltip to", optionData.text);
     TooltipManager.getInstance().attachTooltip(option, optionData.text); // Attach tooltip to the option
 
     // Set up click event for option selection
