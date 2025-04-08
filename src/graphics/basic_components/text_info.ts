@@ -1,3 +1,4 @@
+import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { TooltipManager } from "../renderables/tooltip_manager";
 
 export interface InfoField {
@@ -12,19 +13,19 @@ export class TextInfo {
 
   constructor(private title?: string) {
     this.container = document.createElement("div");
-    this.container.classList.add("info-container");
+    this.container.classList.add(CSS_CLASSES.INFO_CONTAINER); // Apply styling
 
     // Crear y agregar el título si se proporciona
     if (this.title) {
       const titleElement = document.createElement("h3");
       titleElement.textContent = this.title;
-      titleElement.classList.add("info-title");
+      titleElement.classList.add(CSS_CLASSES.INFO_TITLE);
       this.container.appendChild(titleElement);
       TooltipManager.getInstance().attachTooltip(titleElement, this.title); // Attach tooltip to the title
     }
 
     this.list = document.createElement("ul");
-    this.list.classList.add("info-list");
+    this.list.classList.add(CSS_CLASSES.INFO_LIST);
 
     this.container.appendChild(this.list);
   }
@@ -65,22 +66,22 @@ export class TextInfo {
   private createPayloadElement(key: string, value: object): HTMLLIElement {
     // Create the list item that will hold the payload
     const listItem = document.createElement("li");
-    listItem.classList.add("payload-item"); // Apply styling
+    listItem.classList.add(CSS_CLASSES.PAYLOAD_ITEM); // Apply styling
 
     const keyElement = document.createElement("span");
     keyElement.textContent = `${key}`;
-    keyElement.classList.add("detail-key");
-    keyElement.style.display = "block";
+    keyElement.classList.add(CSS_CLASSES.DETAIL_KEY);
+    keyElement.style.display = CSS_CLASSES.BLOCK;
     keyElement.style.textAlign = "center";
     TooltipManager.getInstance().attachTooltip(keyElement, key); // Attach tooltip to each list item
 
     // Create a container to wrap the JSON content
     const preContainer = document.createElement("div");
-    preContainer.classList.add("payload-container"); // Apply styling
+    preContainer.classList.add(CSS_CLASSES.PAYLOAD_CONTAINER); // Apply styling
 
     // Create the <pre> element to display formatted JSON
     const pre = document.createElement("pre");
-    pre.classList.add("payload-content");
+    pre.classList.add(CSS_CLASSES.PAYLOAD_CONTENT); // Apply styling
     pre.textContent = JSON.stringify(value, null, 2); // Pretty-print JSON for readability
 
     // Append the <pre> element inside its container
@@ -97,19 +98,19 @@ export class TextInfo {
   // Create a regular detail element
   private createDetailElement(key: string, value: string): HTMLLIElement {
     const listItem = document.createElement("li");
-    listItem.classList.add("detail-item");
+    listItem.classList.add(CSS_CLASSES.DETAIL_ITEM); // Apply styling
 
     const container = document.createElement("div");
-    container.classList.add("detail-container");
+    container.classList.add(CSS_CLASSES.DETAIL_CONTAINER); // Apply styling
 
     const keyElement = document.createElement("span");
     keyElement.textContent = `${key}`;
-    keyElement.classList.add("detail-key");
+    keyElement.classList.add(CSS_CLASSES.DETAIL_KEY);
     TooltipManager.getInstance().attachTooltip(keyElement, key); // Attach tooltip to each list item
 
     const valueElement = document.createElement("span");
     valueElement.textContent = value;
-    valueElement.classList.add("detail-value");
+    valueElement.classList.add(CSS_CLASSES.DETAIL_VALUE);
 
     container.appendChild(keyElement);
     container.appendChild(valueElement);

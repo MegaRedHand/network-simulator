@@ -1,3 +1,4 @@
+import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { ProgressBar } from "../basic_components/progress_bar";
 import { TooltipManager } from "../renderables/tooltip_manager";
 
@@ -14,11 +15,11 @@ export class LabeledProgressBar {
   ) {
     // Create the container for the label and the progress bar
     this.container = document.createElement("div");
-    this.container.className = "progress-bar-wrapper";
+    this.container.className = CSS_CLASSES.PROGRESS_BAR_WRAPPER;
 
     // Create the label
     this.labelElement = document.createElement("div");
-    this.labelElement.className = "progress-bar-label";
+    this.labelElement.className = CSS_CLASSES.PROGRESS_BAR_LABEL;
     this.labelElement.textContent = label;
     TooltipManager.getInstance().attachTooltip(this.labelElement, label);
 

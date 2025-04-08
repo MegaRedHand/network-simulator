@@ -7,6 +7,7 @@ export const CSS_CLASSES = {
   HIDE: "hide",
   ACTIVE: "active",
   INACTIVE: "inactive",
+  BLOCK: "block",
 
   // Right Bar
   RIGHT_BAR: "right-bar",
@@ -68,6 +69,9 @@ export const CSS_CLASSES = {
   PAYLOAD_CONTAINER: "payload-container",
   PAYLOAD_CONTENT: "payload-content",
   DIVIDER: "divider",
+  INFO_TITLE: "info-title",
+  INFO_LIST: "info-list",
+  INFO_CONTAINER: "info-container",
 
   // Layer Selector
   LAYER_SELECTOR_CONTAINER: "layer-selector-container",
@@ -79,4 +83,11 @@ export const CSS_CLASSES = {
   SLIDER_LABEL: "slider-label",
   SLIDER_VALUE: "slider-value",
   SLIDER_INPUT: "slider-input",
+
+  // Progress Bar
+  PROGRESS_BAR: "progress-bar",
+  PROGRESS_BAR_CONTAINER: "progress-bar-container",
+  PROGRESS_BAR_WRAPPER: "progress-bar-wrapper",
+  PROGRESS_BAR_LABEL: "progress-bar-label",
+  PROGRESS_BAR_TEXT: "progress-bar-text",
 };
