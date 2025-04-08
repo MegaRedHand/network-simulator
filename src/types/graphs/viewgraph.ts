@@ -2,9 +2,8 @@ import { ViewDevice } from "../view-devices";
 import { Edge, EdgeEdges } from "./../edge";
 import { DataGraph, DeviceId, DataNode, RemovedNodeData } from "./datagraph";
 import { Viewport } from "../../graphics/viewport";
-import { Layer, layerIncluded } from "../layer";
+import { Layer } from "../layer";
 import { createViewDevice } from "../view-devices/utils";
-import { layerFromType } from "../view-devices/vDevice";
 import { IpAddress } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 import { Graph } from "./graph";
@@ -36,17 +35,14 @@ export class ViewGraph {
     const allConnections = new Map<string, EdgePair>();
 
     for (const [deviceId, device] of this.datagraph.getDevices()) {
-      if (layerIncluded(layerFromType(device.getType()), this.layer)) {
-        this.addDevice(deviceId, device.getDataNode());
-        layerDFS(
-          this.datagraph,
-          this.layer,
-          deviceId,
-          deviceId,
-          new Set([deviceId]),
-          allConnections,
-        );
-      }
+      this.addDevice(deviceId, device.getDataNode());
+      layerDFS(
+        this.datagraph,
+        deviceId,
+        deviceId,
+        new Set([deviceId]),
+        allConnections,
+      );
     }
     console.debug(allConnections);
     this.addConnections(allConnections);
@@ -60,7 +56,6 @@ export class ViewGraph {
     const connections = new Map<string, EdgePair>();
     layerDFS(
       this.datagraph,
-      this.layer,
       deviceId,
       deviceId,
       new Set([deviceId]),
@@ -220,9 +215,13 @@ export class ViewGraph {
     return Array.from(this.graph.getAllVertices()).map(([, device]) => device);
   }
 
-  // Returns an array of devices’ ids
-  getDeviceIds(): DeviceId[] {
-    return Array.from(this.graph.getAllVertices()).map(([id]) => id);
+  /**
+   * Returns all devices in the layer of the viewgraph
+   */
+  getLayerDeviceIds(): DeviceId[] {
+    return Array.from(this.graph.getAllVertices())
+      .filter(([, { visible }]) => visible)
+      .map(([id]) => id);
   }
 
   // Get the number of devices in the graph
@@ -339,6 +338,10 @@ export class ViewGraph {
     });
   }
 
+  clearPacketsInTransit() {
+    this.packetManager.clear();
+  }
+
   hasDevice(id: DeviceId) {
     return this.graph.hasVertex(id);
   }
@@ -396,38 +399,10 @@ export class ViewGraph {
     }
     this.graph.clear();
   }
-
-  // Make all edges transparent except for the ones connected to the device
-  transparentEdgesForDevice(id: DeviceId) {
-    for (const [, , edge] of this.graph.getAllEdges()) {
-      if (edge.connectedNodes.n1 !== id && edge.connectedNodes.n2 !== id) {
-        edge.becomeTransparent();
-      }
-    }
-  }
-
-  // Make all edges transparent except for the edge between the two devices
-  transparentEdgesForEdge(n1: DeviceId, n2: DeviceId) {
-    for (const [, , edge] of this.graph.getAllEdges()) {
-      if (
-        (edge.connectedNodes.n1 !== n1 || edge.connectedNodes.n2 !== n2) &&
-        (edge.connectedNodes.n1 !== n2 || edge.connectedNodes.n2 !== n1)
-      ) {
-        edge.becomeTransparent();
-      }
-    }
-  }
-
-  untransparentEdges() {
-    for (const [, , edge] of this.graph.getAllEdges()) {
-      edge.becomeOpaque();
-    }
-  }
 }
 
 function layerDFS(
   datagraph: DataGraph,
-  layer: Layer,
   s: DeviceId, // source node
   v: DeviceId,
   visited: Set<DeviceId>,
@@ -437,18 +412,12 @@ function layerDFS(
     if (visited.has(w)) {
       return;
     }
-    const adjacent = datagraph.getDevice(w);
     // mark node as visited
     visited.add(w);
 
-    if (layerIncluded(layerFromType(adjacent.getType()), layer)) {
-      // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
-      const edgePair: EdgePair = [w, s];
-      edgePair.sort();
-      connections.set(edgePair.toString(), edgePair);
-    } else {
-      // continue with recursive search
-      layerDFS(datagraph, layer, s, w, visited, connections);
-    }
+    // NOTE: we use strings because according to JavaScript, [1, 2] !== [1, 2]
+    const edgePair: EdgePair = [w, s];
+    edgePair.sort();
+    connections.set(edgePair.toString(), edgePair);
   });
 }

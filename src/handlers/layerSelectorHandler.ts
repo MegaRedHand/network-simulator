@@ -66,7 +66,7 @@ export class LayerHandler {
     if (!selectedLayer) return;
 
     console.debug(`Layer selected: ${selectedLayer}`);
-    this.ctx.changeViewGraph(selectedLayer);
+    this.ctx.changeLayer(selectedLayer);
     saveToLocalStorage(this.ctx);
     this.leftBar.setButtonsByLayer(selectedLayer);
     deselectElement();

@@ -19,3 +19,4 @@ import "./trash_button.css";
 import "./routing_table.css";
 import "./slider.css";
 import "./divider.css";
+import "./progress-bar.css";

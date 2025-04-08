@@ -52,6 +52,7 @@ export const TOOLTIP_KEYS = {
   SOURCE_MAC_ADDRESS: "Source MAC Address",
   DESTINATION_MAC_ADDRESS: "Destination MAC Address",
   DISCARD_PACKET_BUTTON: "Discard Packet",
+  PACKET_QUEUE_USAGE: "Packet Queue Usage",
 } as const;
 
 // Tooltip Content
@@ -148,4 +149,6 @@ export const TOOLTIP_CONTENT = {
     "The MAC address of the device that is the intended recipient of the packet. This address is used to identify the destination device in the network.",
   [TOOLTIP_KEYS.DISCARD_PACKET_BUTTON]:
     "Discard the selected packet. This action will remove the packet from the network simulation without processing it.",
+  [TOOLTIP_KEYS.PACKET_QUEUE_USAGE]:
+    "The progress bar visually represents the percentage of the queue currently occupied by packets waiting to be processed",
 } as const;

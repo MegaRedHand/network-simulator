@@ -54,6 +54,21 @@ export class ViewRouter extends ViewNetworkDevice {
     const info = new DeviceInfo(this);
     info.addField(TOOLTIP_KEYS.IP_ADDRESS, this.ip.octets.join("."));
 
+    info.addProgressBar(
+      TOOLTIP_KEYS.PACKET_QUEUE_USAGE,
+      this.packetQueue.getCurrentSize(),
+      this.packetQueue.getMaxQueueSize(),
+      (progressBar) => {
+        // Suscribe
+        this.packetQueue.subscribe(() => {
+          progressBar.update(
+            this.packetQueue.getCurrentSize(),
+            this.packetQueue.getMaxQueueSize(),
+          );
+        });
+      },
+    );
+    info.addDivider();
     info.addParameterGroup(
       TOOLTIP_KEYS.ROUTER_PARAMETERS,
       TOOLTIP_KEYS.ROUTER_PARAMETERS,
@@ -253,8 +268,24 @@ class PacketQueue {
   private queueSizeBytes = 0;
   private maxQueueSizeBytes: number;
 
+  private observers: (() => void)[] = [];
+
   constructor(maxQueueSizeBytes: number) {
     this.maxQueueSizeBytes = maxQueueSizeBytes;
+  }
+
+  // Método para suscribirse a cambios
+  subscribe(observer: () => void): void {
+    this.observers.push(observer);
+  }
+
+  // Método para notificar a los observadores
+  private notifyObservers(): void {
+    this.observers.forEach((observer) => observer());
+  }
+
+  getCurrentSize(): number {
+    return this.queueSizeBytes;
   }
 
   getMaxQueueSize(): number {
@@ -263,17 +294,19 @@ class PacketQueue {
   setMaxQueueSize(newSize: number) {
     if (newSize >= 0) {
       this.maxQueueSizeBytes = newSize;
+      this.notifyObservers();
     } else {
       console.warn("Invalid queue size, keeping previous value");
     }
   }
 
   enqueue(packet: IPv4Packet) {
-    if (this.queueSizeBytes >= this.maxQueueSizeBytes) {
+    if (this.queueSizeBytes + packet.totalLength > this.maxQueueSizeBytes) {
       return false;
     }
     this.queue.push(packet);
     this.queueSizeBytes += packet.totalLength;
+    this.notifyObservers();
     return true;
   }
 
@@ -283,6 +316,7 @@ class PacketQueue {
     }
     const packet = this.queue.shift();
     this.queueSizeBytes -= packet.totalLength;
+    this.notifyObservers();
     return packet;
   }
 
