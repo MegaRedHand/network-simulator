@@ -154,7 +154,7 @@ export class ViewGraph {
     const edgeData = this.datagraph.addNewEdge(device1Id, device2Id);
 
     if (!edgeData) {
-      console.error("Failed to create new edge");
+      console.warn("Failed to create new edge");
       return false;
     }
 
