@@ -241,9 +241,7 @@ export class DataGraph {
     const n2Iface = this.getNextFreeInterfaceNumber(device2);
 
     if (n1Iface === null || n2Iface === null) {
-      console.warn(
-        `No free interfaces available for devices ${n1Id} and ${n2Id}.`,
-      );
+      alert(`No free interfaces available for devices ${n1Id} and ${n2Id}.`);
       return null;
     }
     const edge = {
