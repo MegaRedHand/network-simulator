@@ -237,8 +237,15 @@ export class DataGraph {
       );
       return null;
     }
-    const n1Iface = this.getNextInterfaceNumber(device1);
-    const n2Iface = this.getNextInterfaceNumber(device2);
+    const n1Iface = this.getNextFreeInterfaceNumber(device1);
+    const n2Iface = this.getNextFreeInterfaceNumber(device2);
+
+    if (n1Iface === null || n2Iface === null) {
+      console.warn(
+        `No free interfaces available for devices ${n1Id} and ${n2Id}.`,
+      );
+      return null;
+    }
     const edge = {
       from: { id: n1Id, iface: n1Iface },
       to: { id: n2Id, iface: n2Iface },
@@ -254,6 +261,18 @@ export class DataGraph {
       .sort(([, a], [, b]) => a - b);
     // Return the interface with the least connections
     return ifaceUses[0][0];
+  }
+
+  private getNextFreeInterfaceNumber(device: DataDevice): number | null {
+    const numberOfInterfaces = getNumberOfInterfaces(device.getType());
+    for (let i = 0; i < numberOfInterfaces; i++) {
+      const connections = this.getConnectionsInInterface(device.id, i);
+      if (!connections || connections.length === 0) {
+        return i; // Return the first free interface
+      }
+    }
+    console.warn(`No free interfaces available for device ID ${device.id}`);
+    return null; // Return null if no free interface is found
   }
 
   updateDevicePosition(id: DeviceId, newValues: { x?: number; y?: number }) {
