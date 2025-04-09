@@ -21,7 +21,7 @@ import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
 import { DeviceId, RemovedNodeData } from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
-import { Layer } from "../layer";
+import { Layer, layerIncluded } from "../layer";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 
@@ -102,6 +102,7 @@ export abstract class ViewDevice extends Container {
     this.interactive = true;
     this.cursor = "pointer";
     this.zIndex = ZIndexLevels.Device;
+    this.updateVisibility();
 
     // Add device ID label using the helper function
     this.addDeviceIdLabel();
@@ -110,6 +111,10 @@ export abstract class ViewDevice extends Container {
     this.on("click", this.onClick, this);
     // NOTE: this is "click" for mobile devices
     this.on("tap", this.onClick, this);
+  }
+
+  updateVisibility() {
+    this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());
   }
 
   // Function to add the ID label to the device
@@ -167,7 +172,7 @@ export abstract class ViewDevice extends Container {
     // Connect both devices
     const n1 = ViewDevice.connectionTarget.id;
     const n2 = this.id;
-    const move = new AddEdgeMove(this.viewgraph.getLayer(), { n1, n2 });
+    const move = new AddEdgeMove(this.viewgraph.getLayer(), n1, n2);
     if (urManager.push(this.viewgraph, move)) {
       refreshElement();
       ViewDevice.connectionTarget = null;
@@ -204,9 +209,6 @@ export abstract class ViewDevice extends Container {
     });
     this.highlightMarker.zIndex = ZIndexLevels.Device;
 
-    // Make the unselected edges transparent to improve visibility
-    this.viewgraph.transparentEdgesForDevice(this.id);
-
     // Ensure the marker is in the same container as the viewport
     this.addChild(this.highlightMarker);
   }
@@ -216,7 +218,6 @@ export abstract class ViewDevice extends Container {
       this.highlightMarker.clear(); // Clear the graphic
       this.removeChild(this.highlightMarker); // Remove the marker from the viewport
       this.highlightMarker.destroy(); // Destroy the graphic object to free memory
-      this.viewgraph.untransparentEdges(); // Make the edges opaque again
       this.highlightMarker = null;
     }
   }

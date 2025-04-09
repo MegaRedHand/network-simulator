@@ -44,7 +44,6 @@ export abstract class ViewNetworkDevice extends ViewDevice {
           const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
           let dstMac = dstDevice.mac;
           if (!path) return;
-          console.log(path);
           for (const id of path.slice(1)) {
             const device = this.viewgraph.getDevice(id);
             if (device instanceof ViewNetworkDevice) {
@@ -70,7 +69,13 @@ export abstract class ViewNetworkDevice extends ViewDevice {
   }
 
   receiveFrame(frame: EthernetFrame, senderId: DeviceId): void {
+    console.debug(
+      `Device ${this.id} recibio un frame con direccion mac destino ${frame.destination.toString()}`,
+    );
     if (!this.mac.equals(frame.destination)) {
+      console.debug(
+        `Paquete no coincide con direccion mac ${this.mac.toString()}. Se dropea`,
+      );
       dropPacket(this.viewgraph, this.id, frame);
       return;
     }

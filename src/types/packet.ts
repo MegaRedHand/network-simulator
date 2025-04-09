@@ -9,11 +9,15 @@ import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils/utils";
 import { RightBar, StyledInfo } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
-import { Layer } from "./layer";
+import { Layer, layerIncluded } from "./layer";
 //import { EchoMessage } from "../packets/icmp";
 import { DataGraph, DeviceId } from "./graphs/datagraph";
 import { EthernetFrame, IP_PROTOCOL_TYPE } from "../packets/ethernet";
-import { ICMP_PROTOCOL_NUMBER, IPv4Packet } from "../packets/ip";
+import {
+  ICMP_PROTOCOL_NUMBER,
+  IPv4Packet,
+  TCP_PROTOCOL_NUMBER,
+} from "../packets/ip";
 import { GlobalContext } from "../context";
 import { DataRouter, DataSwitch } from "./data-devices";
 import {
@@ -27,7 +31,7 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
   "ICMP-8": circleGraphicsContext(Colors.Red, 0, 0, 5),
   "ICMP-0": circleGraphicsContext(Colors.Yellow, 0, 0, 5),
   EMPTY: circleGraphicsContext(Colors.Grey, 0, 0, 5),
-  TCP: circleGraphicsContext(Colors.Hazel, 0, 0, 5), // for HTTP
+  HTTP: circleGraphicsContext(Colors.Hazel, 0, 0, 5), // for HTTP
 };
 
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
@@ -43,13 +47,6 @@ interface PacketContext {
   layer: Layer;
 }
 
-function packetIsVisible(
-  _: ViewGraph | DataGraph,
-  isVisible: boolean,
-): _ is ViewGraph {
-  return isVisible;
-}
-
 function packetContext(frame: EthernetFrame): PacketContext {
   if (frame.payload.type() === IP_PROTOCOL_TYPE) {
     const datagram = frame.payload as IPv4Packet;
@@ -61,6 +58,9 @@ function packetContext(frame: EthernetFrame): PacketContext {
       if (packet.type === ICMP_REPLY_TYPE_NUMBER) {
         return { type: "ICMP-0", layer: Layer.Network };
       }
+    } else if (datagram.payload.protocol() === TCP_PROTOCOL_NUMBER) {
+      // TODO: change when we have a TCP packet
+      return { type: "HTTP", layer: Layer.App };
     }
   }
   return { type: "EMPTY", layer: Layer.Link };
@@ -72,7 +72,7 @@ export class Packet extends Graphics {
   protected progress = 0;
   protected currStart: DeviceId;
   protected currEnd: DeviceId;
-  protected graph: ViewGraph | DataGraph;
+  protected viewgraph: ViewGraph;
   protected type: string;
   protected rawPacket: EthernetFrame;
   ctx: GlobalContext;
@@ -80,18 +80,19 @@ export class Packet extends Graphics {
 
   constructor(
     ctx: GlobalContext,
-    graph: ViewGraph | DataGraph,
+    viewgraph: ViewGraph,
     rawPacket: EthernetFrame,
-    isVisible: boolean,
   ) {
     super();
     this.packetId = crypto.randomUUID();
-    this.graph = graph;
+    this.viewgraph = viewgraph;
     const { type, layer } = packetContext(rawPacket);
     this.belongingLayer = layer;
     this.type = type;
     this.context = contextPerPacketType[this.type];
     this.zIndex = ZIndexLevels.Packet;
+
+    this.visible = layerIncluded(layer, viewgraph.getLayer());
 
     this.rawPacket = rawPacket;
     this.ctx = ctx;
@@ -101,7 +102,6 @@ export class Packet extends Graphics {
     this.on("tap", this.onClick, this);
     // register in Packet Manger
     ctx.getViewGraph().getPacketManager().registerPacket(this);
-    this.visible = isVisible;
   }
 
   setProgress(progress: number) {
@@ -206,7 +206,7 @@ export class Packet extends Graphics {
   }
 
   deliverPacket() {
-    const newStartDevice = this.graph.getDevice(this.currEnd);
+    const newStartDevice = this.viewgraph.getDevice(this.currEnd);
 
     // Viewgraph may return undefined when trying to get the device
     // as the device may have been removed by the user.
@@ -220,49 +220,26 @@ export class Packet extends Graphics {
     this.currStart = startId;
     this.currEnd = endId;
 
-    // if the packet is shown in viewgraph
-    if (packetIsVisible(this.graph, this.visible)) {
-      const currEdge = this.graph.getEdge(startId, endId);
-      currEdge.addChild(this);
-      const start = currEdge.nodePosition(this.currStart);
-      const end = currEdge.nodePosition(this.currEnd);
-      this.updatePosition(start, end);
-    } else {
-      this.updatePosition();
-    }
+    const currEdge = this.viewgraph.getEdge(startId, endId);
+    currEdge.addChild(this);
+    const start = currEdge.nodePosition(this.currStart);
+    const end = currEdge.nodePosition(this.currEnd);
+    this.updatePosition(start, end);
+
     Ticker.shared.add(this.animationTick, this);
   }
 
   animationTick(ticker: Ticker) {
-    let start: Position;
-    let end: Position;
-    if (packetIsVisible(this.graph, this.visible)) {
-      const currEdge = this.graph.getEdge(this.currStart, this.currEnd);
-      if (!currEdge) {
-        console.warn(
-          `No edge connecting devices ${this.currStart} and ${this.currEnd} in viewgraph`,
-        );
-        this.delete();
-        return;
-      }
-      start = currEdge.nodePosition(this.currStart);
-      end = currEdge.nodePosition(this.currEnd);
-    } else {
-      const currStartDevice = this.graph.getDevice(this.currStart);
-      const currEndDevice = this.graph.getDevice(this.currEnd);
-      if (!currStartDevice) {
-        console.warn("Current start device not found.");
-        this.delete();
-        return;
-      }
-      if (!currEndDevice) {
-        console.warn("Current end device not found.");
-        this.delete();
-        return;
-      }
-      start = currStartDevice.getPosition();
-      end = currEndDevice.getPosition();
+    const currEdge = this.viewgraph.getEdge(this.currStart, this.currEnd);
+    if (!currEdge) {
+      console.warn(
+        `No edge connecting devices ${this.currStart} and ${this.currEnd} in viewgraph`,
+      );
+      this.delete();
+      return;
     }
+    const start = currEdge.nodePosition(this.currStart);
+    const end = currEdge.nodePosition(this.currEnd);
 
     const edgeLength = Math.sqrt(
       Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2),
@@ -288,8 +265,8 @@ export class Packet extends Graphics {
       this.setPositionAlongEdge(start, end);
     } else {
       this.setPositionAlongEdge(
-        this.graph.getDevice(this.currStart).getPosition(),
-        this.graph.getDevice(this.currEnd).getPosition(),
+        this.viewgraph.getDevice(this.currStart).getPosition(),
+        this.viewgraph.getDevice(this.currEnd).getPosition(),
       );
     }
   }
@@ -304,12 +281,12 @@ export class Packet extends Graphics {
   }
 
   animateDrop(deviceId: DeviceId) {
-    if (this.graph instanceof DataGraph) {
+    if (this.viewgraph instanceof DataGraph) {
       // If the packet is in the datagraph, we don't need to animate it
       return;
     }
     // Drop the packet on the device
-    const device = this.graph.getDevice(deviceId);
+    const device = this.viewgraph.getDevice(deviceId);
     if (!device) {
       console.error("Device not found");
       return;
@@ -323,16 +300,16 @@ export class Packet extends Graphics {
   }
 
   dropAnimationTick(ticker: Ticker) {
-    if (this.graph instanceof DataGraph) {
+    if (this.viewgraph instanceof DataGraph) {
       // This shouldn't happen
       return;
     }
-    const device = this.graph.getDevice(this.currStart);
+    const device = this.viewgraph.getDevice(this.currStart);
     if (!device) {
       console.error("Device not found");
       return;
     }
-    this.progress += (ticker.deltaMS * this.graph.getSpeed()) / 1000;
+    this.progress += (ticker.deltaMS * this.viewgraph.getSpeed()) / 1000;
     this.y = device.height + 30 * this.progress;
     let newAlpha = 1 - this.progress;
     if (newAlpha <= 0) {
@@ -377,7 +354,7 @@ export function sendViewPacket(
 ) {
   const srcMac = rawPacket.source;
   const dstMac = rawPacket.destination;
-  console.log(
+  console.debug(
     `Sending frame from ${srcMac.toString()} to ${dstMac.toString()}`,
   );
   const originConnections = viewgraph.getConnections(srcId);
@@ -406,47 +383,8 @@ export function sendViewPacket(
     );
     return;
   }
-  const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket, true);
+  const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket);
   packet.traverseEdge(srcId, nextHopId ? nextHopId : firstEdge.otherEnd(srcId));
-}
-
-// TODO: Replace srcId and nextHopId with the interface
-export function sendDataPacket(
-  datagraph: DataGraph,
-  srcId: DeviceId,
-  rawPacket: EthernetFrame,
-  nextHopId?: DeviceId,
-) {
-  const srcMac = rawPacket.source;
-  const dstMac = rawPacket.destination;
-  console.log(
-    `Sending frame from ${srcMac.toString()} to ${dstMac.toString()}`,
-  );
-  const originConnections = datagraph.getConnections(srcId);
-  if (originConnections.length === 0) {
-    console.warn("El dispositivo de origen no tiene conexiones.");
-    return;
-  }
-  let firstHop = originConnections.find((otherId) => {
-    const otherDevice = datagraph.getDevice(otherId);
-    return otherDevice.mac.equals(dstMac);
-  });
-  if (firstHop === undefined) {
-    firstHop = originConnections.find((otherId) => {
-      const otherDevice = datagraph.getDevice(otherId);
-      return (
-        otherDevice instanceof DataRouter || otherDevice instanceof DataSwitch
-      );
-    });
-  }
-  if (firstHop === undefined) {
-    console.warn(
-      "El dispositivo de origen no está conectado al destino, a un router o a un switch.",
-    );
-    return;
-  }
-  const packet = new Packet(datagraph.ctx, datagraph, rawPacket, false);
-  packet.traverseEdge(srcId, nextHopId ? nextHopId : firstHop);
 }
 
 export function dropPacket(
@@ -454,6 +392,6 @@ export function dropPacket(
   srcId: DeviceId,
   rawPacket: EthernetFrame,
 ) {
-  const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket, true);
+  const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket);
   packet.animateDrop(srcId);
 }

@@ -14,13 +14,35 @@ import { GlobalContext } from "../../context";
 
 export type DeviceId = VertexId;
 
+export function getNumberOfInterfaces(type: DeviceType): number {
+  return NumberOfInterfacesPerType[type];
+}
+
+const NumberOfInterfacesPerType = {
+  [DeviceType.Host]: 1,
+  [DeviceType.Router]: 4,
+  [DeviceType.Switch]: 8,
+};
+
 interface CommonDataNode {
   id?: DeviceId;
   x: number;
   y: number;
   type: DeviceType;
+  // TODO: remove this
   mac: string;
+  interfaces: NetworkInterfaceData[];
   arpTable?: Map<string, string>;
+}
+
+export interface NetworkInterfaceData {
+  name: string;
+  mac: string;
+  /**
+   * IP address of the interface.
+   * On switches this field is undefined.
+   */
+  ip?: string;
 }
 
 export interface SwitchDataNode extends CommonDataNode {
@@ -28,6 +50,7 @@ export interface SwitchDataNode extends CommonDataNode {
 }
 
 export interface NetworkDataNode extends CommonDataNode {
+  // TODO: remove this
   ip: string;
   mask: string;
 }
@@ -76,12 +99,12 @@ export type DataNode =
   | HostDataNode
   | SwitchDataNode;
 
-interface EdgeTip {
+export interface EdgeTip {
   id: DeviceId;
   iface: number;
 }
 
-interface DataEdge {
+export interface DataEdge {
   from: EdgeTip;
   to: EdgeTip;
 }
@@ -124,39 +147,10 @@ export class DataGraph {
     const edges: DataEdge[] = [];
 
     // Serialize nodes
-    for (const [id, device] of this.deviceGraph.getAllVertices()) {
+    for (const [, device] of this.deviceGraph.getAllVertices()) {
+      device.getDataNode();
       // parse to serializable format
-      let dataNode: DataNode = {
-        id,
-        x: device.x,
-        y: device.y,
-        mac: device.mac.toString(),
-        type: device.getType(),
-        arpTable: new Map<string, string>(), // TODO: change this to the actual ARP table
-      };
-
-      if (device instanceof DataNetworkDevice) {
-        dataNode = {
-          ...dataNode,
-          ip: device.ip.toString(),
-          mask: device.ipMask.toString(),
-        };
-      }
-
-      if (device instanceof DataRouter) {
-        // ip and mask already set with DataNetworkDevice
-        dataNode = {
-          ...dataNode,
-          routingTable: device.routingTable,
-          packetQueueSize: device.packetQueueSize,
-          timePerByte: device.timePerByte,
-        };
-      } else if (device instanceof DataHost) {
-        dataNode = {
-          ...dataNode,
-          runningPrograms: device.runningPrograms,
-        };
-      }
+      const dataNode: DataNode = device.getDataNode();
       nodes.push(dataNode);
     }
     for (const [, , edge] of this.deviceGraph.getAllEdges()) {
@@ -165,7 +159,7 @@ export class DataGraph {
     return { nodes, edges };
   }
 
-  readdDevice(removedData: RemovedNodeData): DeviceId {
+  reAddDevice(removedData: RemovedNodeData): DeviceId {
     const { id, vertex, edges } = removedData;
     this.deviceGraph.setVertex(id, vertex);
     edges.forEach((edge) => {
@@ -199,39 +193,67 @@ export class DataGraph {
     return deviceId;
   }
 
-  // Add a connection between two devices
-  addEdge(n1Id: DeviceId, n2Id: DeviceId) {
+  reAddEdge(edgeData: DataEdge): DataEdge | null {
+    const { from, to } = edgeData;
+    const n1Id = from.id;
+    const n2Id = to.id;
     if (n1Id === n2Id) {
       console.warn(
         `Cannot create a connection between the same device (ID ${n1Id}).`,
       );
-      return;
+      return null;
     }
     if (!this.deviceGraph.hasVertex(n1Id)) {
       console.warn(`Device with ID ${n1Id} does not exist.`);
-      return;
+      return null;
     }
     if (!this.deviceGraph.hasVertex(n2Id)) {
       console.warn(`Device with ID ${n2Id} does not exist.`);
-      return;
+      return null;
     }
     if (this.deviceGraph.hasEdge(n1Id, n2Id)) {
       console.warn(
         `Connection between ID ${n1Id} and ID ${n2Id} already exists.`,
       );
-      return;
+      return null;
     }
-    const edge = {
-      from: { id: n1Id, iface: n2Id },
-      to: { id: n2Id, iface: n1Id },
-    };
-    this.deviceGraph.setEdge(n1Id, n2Id, edge);
+    this.deviceGraph.setEdge(n1Id, n2Id, edgeData);
 
     console.log(
       `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,
     );
     this.notifyChanges();
     this.regenerateAllRoutingTables();
+    return edgeData;
+  }
+
+  // Add a connection between two devices
+  addNewEdge(n1Id: DeviceId, n2Id: DeviceId): DataEdge | null {
+    const device1 = this.getDevice(n1Id);
+    const device2 = this.getDevice(n2Id);
+    if (!device1 || !device2) {
+      console.warn(
+        `Cannot create a connection between devices ${n1Id} and ${n2Id}.`,
+      );
+      return null;
+    }
+    const n1Iface = this.getNextInterfaceNumber(device1);
+    const n2Iface = this.getNextInterfaceNumber(device2);
+    const edge = {
+      from: { id: n1Id, iface: n1Iface },
+      to: { id: n2Id, iface: n2Iface },
+    };
+    return this.reAddEdge(edge);
+  }
+
+  private getNextInterfaceNumber(device: DataDevice): number {
+    const numberOfInterfaces = getNumberOfInterfaces(device.getType());
+    const ifaceUses = new Array(numberOfInterfaces)
+      .fill(0)
+      .map((_, i) => [i, this.getConnectionsInInterface(device.id, i).length])
+      .sort(([, a], [, b]) => a - b);
+    // Return the interface with the least connections
+    return ifaceUses[0][0];
   }
 
   updateDevicePosition(id: DeviceId, newValues: { x?: number; y?: number }) {
@@ -307,13 +329,18 @@ export class DataGraph {
     }
     const connections = [];
     for (const [neighborId, { from, to }] of this.deviceGraph.getEdges(id)) {
+      console.debug(`Checking connection with device ${neighborId}:`);
+      console.debug(from);
+      console.debug(to);
       if (
         (from.id === id && from.iface === iface) ||
         (to.id === id && to.iface === iface)
       ) {
+        console.debug("Is in");
         connections.push(neighborId);
       }
     }
+    console.debug(connections);
     return connections;
   }
 

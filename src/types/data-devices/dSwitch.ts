@@ -1,9 +1,8 @@
-import { IPv4Packet } from "../../packets/ip";
 import { DeviceType } from "../view-devices/vDevice";
-import { sendDataPacket } from "../packet";
 import { DataDevice } from "./dDevice";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { DeviceId } from "../graphs/datagraph";
+import { sendViewPacket } from "../packet";
 
 export class DataSwitch extends DataDevice {
   //                      would be interface
@@ -45,32 +44,41 @@ export class DataSwitch extends DataDevice {
     console.debug(
       `Forwarding frame from ${this.mac.toString()} to ${nextHop.mac.toString()}`,
     );
-    sendDataPacket(this.datagraph, this.id, newFrame, nextHopId);
+    sendViewPacket(
+      this.datagraph.ctx.getViewGraph(),
+      this.id,
+      newFrame,
+      nextHopId,
+    );
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  receiveFrame(frame: EthernetFrame): void {
+    // TODO: this is unused
   }
 
-  // TODO: change all related senderId features to the receiver interface
-  receiveFrame(frame: EthernetFrame, senderId: DeviceId): void {
-    const datagram = frame.payload;
-    if (!(datagram instanceof IPv4Packet)) {
-      console.warn("Switches only forward IPv4 packets");
-      return;
-    }
-    // Update the switching table with the source MAC address
-    this.updateSwitchingTable(frame.source, senderId);
-    console.debug(
-      `Looking for ${frame.destination.toString()} in the switching table`,
-    );
-    // If the destination MAC address is in the switching table, send the frame
-    // to the corresponding device
-    // If the destination MAC address is not in the switching table, send the frame
-    // to all devices connected to the switch
-    const nextHops: DeviceId[] = this.switchingTable.has(
-      frame.destination.toString(),
-    )
-      ? [this.switchingTable.get(frame.destination.toString())]
-      : this.datagraph.getConnections(this.id);
-    nextHops.forEach((nextHopId) => {
-      this.forwardFrame(frame, nextHopId, senderId);
-    });
-  }
+  // // TODO: change all related senderId features to the receiver interface
+  // receiveFrame(frame: EthernetFrame, senderId: DeviceId): void {
+  //   const datagram = frame.payload;
+  //   if (!(datagram instanceof IPv4Packet)) {
+  //     console.warn("Switches only forward IPv4 packets");
+  //     return;
+  //   }
+  //   // Update the switching table with the source MAC address
+  //   this.updateSwitchingTable(frame.source, senderId);
+  //   console.debug(
+  //     `Looking for ${frame.destination.toString()} in the switching table`,
+  //   );
+  //   // If the destination MAC address is in the switching table, send the frame
+  //   // to the corresponding device
+  //   // If the destination MAC address is not in the switching table, send the frame
+  //   // to all devices connected to the switch
+  //   const nextHops: DeviceId[] = this.switchingTable.has(
+  //     frame.destination.toString(),
+  //   )
+  //     ? [this.switchingTable.get(frame.destination.toString())]
+  //     : this.datagraph.getConnections(this.id);
+  //   nextHops.forEach((nextHopId) => {
+  //     this.forwardFrame(frame, nextHopId, senderId);
+  //   });
+  // }
 }

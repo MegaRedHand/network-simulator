@@ -7,9 +7,7 @@ import {
   RouterDataNode,
   RoutingTableEntry,
 } from "../graphs/datagraph";
-import { sendDataPacket } from "../packet";
 import { DataNetworkDevice } from "./dNetworkDevice";
-import { EthernetFrame } from "../../packets/ethernet";
 import { ROUTER_CONSTANTS } from "../../utils/constants/router_constants";
 
 export class DataRouter extends DataNetworkDevice {
@@ -73,45 +71,9 @@ export class DataRouter extends DataNetworkDevice {
     }
   }
 
-  processPacket(ticker: Ticker) {
-    const datagram = this.getPacketsToProcess(ticker.deltaMS);
-    if (!datagram) {
-      return;
-    }
-    const devices = this.routePacket(datagram);
-
-    if (!devices || devices.length === 0) {
-      return;
-    }
-    for (const nextHopId of devices) {
-      // Wrap the datagram in a new frame
-      const nextHop = this.datagraph.getDevice(nextHopId);
-      if (!nextHop) {
-        console.error("Next hop not found");
-        continue;
-      }
-      let dstMac;
-      if (nextHop instanceof DataNetworkDevice) {
-        // If the next hop is a network device, use its MAC address
-        dstMac = nextHop.mac;
-      } else {
-        const device = this.datagraph.getDeviceByIP(
-          datagram.destinationAddress,
-        );
-        if (!device) {
-          console.error("Destination device not found");
-          continue;
-        }
-        // If the next hop is not a network device, use the destination MAC address
-        dstMac = device.mac;
-      }
-      const newFrame = new EthernetFrame(this.mac, dstMac, datagram);
-      sendDataPacket(this.datagraph, this.id, newFrame);
-    }
-
-    if (this.packetQueue.isEmpty()) {
-      this.stopPacketProcessor();
-    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  processPacket(_ticker: Ticker) {
+    // TODO: this is unused
   }
 
   startPacketProcessor() {
@@ -192,7 +154,7 @@ class PacketQueue {
   }
 
   enqueue(packet: IPv4Packet) {
-    if (this.queueSizeBytes >= this.maxQueueSizeBytes) {
+    if (this.queueSizeBytes + packet.totalLength > this.maxQueueSizeBytes) {
       return false;
     }
     this.queue.push(packet);
