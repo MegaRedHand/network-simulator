@@ -241,8 +241,12 @@ export class DataGraph {
     const n2Iface = this.getNextFreeInterfaceNumber(device2);
 
     if (n1Iface === null || n2Iface === null) {
+      const unavailableDevices =
+        n1Iface === null && n2Iface === null
+          ? `devices ${n1Id} and ${n2Id}`
+          : `device ${n1Id === null ? n1Id : n2Id}`;
       console.warn(
-        `No free interfaces available for devices ${n1Id} and ${n2Id}.`,
+        `No free interfaces available for devices ${unavailableDevices}.`,
       );
       return null;
     }
@@ -253,6 +257,7 @@ export class DataGraph {
     return this.reAddEdge(edge);
   }
 
+  // NOTE: May be used in future
   private getNextInterfaceNumber(device: DataDevice): number {
     const numberOfInterfaces = getNumberOfInterfaces(device.getType());
     const ifaceUses = new Array(numberOfInterfaces)
@@ -271,7 +276,6 @@ export class DataGraph {
         return i; // Return the first free interface
       }
     }
-    console.warn(`No free interfaces available for device ID ${device.id}`);
     return null; // Return null if no free interface is found
   }
 
