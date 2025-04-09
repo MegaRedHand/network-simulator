@@ -237,8 +237,17 @@ export class DataGraph {
       );
       return null;
     }
-    const n1Iface = this.getNextInterfaceNumber(device1);
-    const n2Iface = this.getNextInterfaceNumber(device2);
+    const n1Iface = this.getNextFreeInterfaceNumber(device1);
+    const n2Iface = this.getNextFreeInterfaceNumber(device2);
+
+    if (n1Iface === null || n2Iface === null) {
+      const unavailableDevices =
+        n1Iface === null && n2Iface === null
+          ? `devices ${n1Id} and ${n2Id}`
+          : `device ${n1Id === null ? n1Id : n2Id}`;
+      alert(`No free interfaces available for ${unavailableDevices}.`);
+      return null;
+    }
     const edge = {
       from: { id: n1Id, iface: n1Iface },
       to: { id: n2Id, iface: n2Iface },
@@ -246,6 +255,7 @@ export class DataGraph {
     return this.reAddEdge(edge);
   }
 
+  // NOTE: May be used in future
   private getNextInterfaceNumber(device: DataDevice): number {
     const numberOfInterfaces = getNumberOfInterfaces(device.getType());
     const ifaceUses = new Array(numberOfInterfaces)
@@ -254,6 +264,17 @@ export class DataGraph {
       .sort(([, a], [, b]) => a - b);
     // Return the interface with the least connections
     return ifaceUses[0][0];
+  }
+
+  private getNextFreeInterfaceNumber(device: DataDevice): number | null {
+    const numberOfInterfaces = getNumberOfInterfaces(device.getType());
+    for (let i = 0; i < numberOfInterfaces; i++) {
+      const connections = this.getConnectionsInInterface(device.id, i);
+      if (!connections || connections.length === 0) {
+        return i; // Return the first free interface
+      }
+    }
+    return null; // Return null if no free interface is found
   }
 
   updateDevicePosition(id: DeviceId, newValues: { x?: number; y?: number }) {
@@ -445,7 +466,6 @@ export class DataGraph {
     const parents = new Map<DeviceId, DeviceId>();
     parents.set(id, id);
     const queue = [id];
-
     while (queue.length > 0) {
       const currentId = queue.shift();
       const current = this.deviceGraph.getVertex(currentId);
@@ -475,10 +495,21 @@ export class DataGraph {
       const dst = this.deviceGraph.getVertex(dstId);
 
       if (dst instanceof DataNetworkDevice) {
+        const dataEdge = this.deviceGraph.getEdge(currentId, childId);
+        if (!dataEdge) {
+          console.warn(
+            `Edge between devices ${currentId} and ${childId} not found!`,
+          );
+          return;
+        }
+        const iface =
+          dataEdge.from.id === currentId
+            ? dataEdge.from.iface
+            : dataEdge.to.iface;
         newTable.push({
           ip: dst.ip.toString(),
           mask: dst.ipMask.toString(),
-          iface: childId,
+          iface,
         });
       }
     });
