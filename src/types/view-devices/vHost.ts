@@ -20,6 +20,7 @@ import { GlobalContext } from "../../context";
 import { DataHost } from "../data-devices";
 import { dropPacket } from "../packet";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
+import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 
 export class ViewHost extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -60,7 +61,11 @@ export class ViewHost extends ViewNetworkDevice {
     const programList = getProgramList(this.viewgraph, this.id);
 
     const info = new DeviceInfo(this);
-    info.addField("IP Address", this.ip.octets.join("."));
+    info.addField(
+      TOOLTIP_KEYS.IP_ADDRESS,
+      this.ip.octets.join("."),
+      TOOLTIP_KEYS.IP_ADDRESS,
+    );
     info.addProgramRunner(this, programList);
     RightBar.getInstance().renderInfo(info);
   }

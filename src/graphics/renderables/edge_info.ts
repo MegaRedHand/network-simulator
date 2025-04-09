@@ -16,10 +16,49 @@ export class EdgeInfo extends BaseInfo {
   }
 
   protected addCommonInfoFields(): void {
-    const { n1, n2 } = this.edge.connectedNodes;
+    const from = this.edge.data.from.id;
+    const to = this.edge.data.to.id;
 
-    // Agregar información básica de la arista
-    this.information.addField(TOOLTIP_KEYS.CONNECTION, `${n1} <=> ${n2}`);
+    // Obtiene los dispositivos conectados
+    const fromDevice = this.edge.viewgraph.getDataGraph().getDevice(from);
+    const toDevice = this.edge.viewgraph.getDataGraph().getDevice(to);
+
+    if (!fromDevice || !toDevice) {
+      console.error("One of the devices is not found in the viewgraph.");
+      return;
+    }
+
+    // Obtiene las interfaces conectadas
+    const fromInterface = fromDevice.interfaces[this.edge.data.from.iface];
+    const toInterface = toDevice.interfaces[this.edge.data.to.iface];
+
+    if (!fromInterface || !toInterface) {
+      console.error("One of the interfaces is not found.");
+      return;
+    }
+
+    // Añade la información básica sobre la arista
+    this.information.addField(
+      "Connected Devices",
+      `${from} ↔️ ${to}`,
+      TOOLTIP_KEYS.EDGE_CONNECTED_DEVICES,
+    );
+    this.information.addField(
+      "Connected Interfaces",
+      `${fromInterface.name} ↔️ ${toInterface.name}`,
+      TOOLTIP_KEYS.EDGE_CONNECTED_INTERFACES,
+    );
+    // Añade las direcciones MAC como campos separados
+    this.information.addField(
+      `MAC Address iface (Device ${from})`,
+      fromInterface.mac.octets.join(":"),
+      TOOLTIP_KEYS.MAC_ADDRESS_IFACE,
+    );
+    this.information.addField(
+      `MAC Address iface (Device ${to})`,
+      toInterface.mac.octets.join(":"),
+      TOOLTIP_KEYS.MAC_ADDRESS_IFACE,
+    );
   }
 
   protected addCommonButtons(): void {
@@ -28,25 +67,9 @@ export class EdgeInfo extends BaseInfo {
       text: TOOLTIP_KEYS.DELETE_EDGE_BUTTON,
       onClick: () => {
         const viewgraph = this.edge.viewgraph;
-
-        // Obtener las tablas de enrutamiento antes de eliminar la conexión
-        const routingTable1 = viewgraph.getRoutingTable(
-          this.edge.connectedNodes.n1,
-        );
-        const routingTable2 = viewgraph.getRoutingTable(
-          this.edge.connectedNodes.n2,
-        );
-
-        // Crear el movimiento de eliminación de la arista con la información adicional
-        const routingTables = new Map([
-          [this.edge.connectedNodes.n1, routingTable1],
-          [this.edge.connectedNodes.n2, routingTable2],
-        ]);
-        const move = new RemoveEdgeMove(
-          viewgraph.getLayer(),
-          this.edge.connectedNodes,
-          routingTables,
-        );
+        const from = this.edge.data.from.id;
+        const to = this.edge.data.to.id;
+        const move = new RemoveEdgeMove(viewgraph.getLayer(), from, to);
 
         urManager.push(viewgraph, move);
       },

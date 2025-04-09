@@ -4,10 +4,10 @@ import { TooltipManager } from "../renderables/tooltip_manager";
 export interface InfoField {
   key: string;
   value: string | number | object;
+  tooltip?: string;
 }
 
 export class TextInfo {
-  private fields: InfoField[] = [];
   private container: HTMLDivElement;
   private list: HTMLUListElement;
 
@@ -31,9 +31,12 @@ export class TextInfo {
   }
 
   // Add a field to the info and update the UI dynamically
-  addField(key: string, value: string | number | object): void {
-    const field: InfoField = { key, value };
-    this.fields.push(field);
+  addField(
+    key: string,
+    value: string | number | object,
+    tooltip?: string,
+  ): void {
+    const field: InfoField = { key, value, tooltip };
 
     // Create and append the new field dynamically
     const listItem = this.createListItem(field);
@@ -41,9 +44,9 @@ export class TextInfo {
   }
 
   // Adds a new field to show on the info list, which has a list of values
-  addListField(key: string, values: number[]): void {
+  addListField(key: string, values: number[], tooltip?: string): void {
     const value = values.length !== 0 ? `[${values.join(", ")}]` : "";
-    this.addField(key, value);
+    this.addField(key, value, tooltip);
   }
 
   // Generate the HTML for the info (used for initial rendering)
@@ -53,17 +56,21 @@ export class TextInfo {
 
   // Create a list item dynamically based on the field type
   private createListItem(field: InfoField): HTMLLIElement {
-    const { key, value } = field;
+    const { key, value, tooltip } = field;
 
     if (typeof value === "object" && value !== null) {
-      return this.createPayloadElement(key, value);
+      return this.createPayloadElement(key, value, tooltip);
     } else {
-      return this.createDetailElement(key, value as string);
+      return this.createDetailElement(key, value as string, tooltip);
     }
   }
 
   // Create a payload element for JSON-like objects
-  private createPayloadElement(key: string, value: object): HTMLLIElement {
+  private createPayloadElement(
+    key: string,
+    value: object,
+    tooltip?: string,
+  ): HTMLLIElement {
     // Create the list item that will hold the payload
     const listItem = document.createElement("li");
     listItem.classList.add(CSS_CLASSES.PAYLOAD_ITEM); // Apply styling
@@ -73,7 +80,9 @@ export class TextInfo {
     keyElement.classList.add(CSS_CLASSES.DETAIL_KEY);
     keyElement.style.display = CSS_CLASSES.BLOCK;
     keyElement.style.textAlign = "center";
-    TooltipManager.getInstance().attachTooltip(keyElement, key); // Attach tooltip to each list item
+    if (tooltip) {
+      TooltipManager.getInstance().attachTooltip(keyElement, tooltip);
+    }
 
     // Create a container to wrap the JSON content
     const preContainer = document.createElement("div");
@@ -96,7 +105,11 @@ export class TextInfo {
   }
 
   // Create a regular detail element
-  private createDetailElement(key: string, value: string): HTMLLIElement {
+  private createDetailElement(
+    key: string,
+    value: string,
+    tooltip?: string,
+  ): HTMLLIElement {
     const listItem = document.createElement("li");
     listItem.classList.add(CSS_CLASSES.DETAIL_ITEM); // Apply styling
 
@@ -106,7 +119,9 @@ export class TextInfo {
     const keyElement = document.createElement("span");
     keyElement.textContent = `${key}`;
     keyElement.classList.add(CSS_CLASSES.DETAIL_KEY);
-    TooltipManager.getInstance().attachTooltip(keyElement, key); // Attach tooltip to each list item
+    if (tooltip) {
+      TooltipManager.getInstance().attachTooltip(keyElement, tooltip);
+    }
 
     const valueElement = document.createElement("span");
     valueElement.textContent = value;

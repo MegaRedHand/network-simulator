@@ -17,14 +17,20 @@ export class PacketInfo extends BaseInfo {
 
   protected addCommonInfoFields(): void {
     // Información básica del paquete
-    this.information.addField(TOOLTIP_KEYS.PACKET_TYPE, this.packet.type);
+    this.information.addField(
+      TOOLTIP_KEYS.PACKET_TYPE,
+      this.packet.type,
+      TOOLTIP_KEYS.PACKET_TYPE,
+    );
     this.information.addField(
       TOOLTIP_KEYS.SOURCE_MAC_ADDRESS,
       this.packet.rawPacket.source.toString(),
+      TOOLTIP_KEYS.SOURCE_MAC_ADDRESS,
     );
     this.information.addField(
       TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS,
       this.packet.rawPacket.destination.toString(),
+      TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS,
     );
   }
 

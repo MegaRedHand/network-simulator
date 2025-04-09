@@ -6,7 +6,6 @@ import { RightBar } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils/utils";
 import { Packet } from "./packet";
 import { EdgeInfo } from "../graphics/renderables/edge_info";
-import { RemoveEdgeMove } from "./undo-redo";
 import { DataEdge, DeviceId } from "./graphs/datagraph";
 
 export interface EdgeEdges {

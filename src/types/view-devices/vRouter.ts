@@ -52,7 +52,11 @@ export class ViewRouter extends ViewNetworkDevice {
 
   showInfo(): void {
     const info = new DeviceInfo(this);
-    info.addField(TOOLTIP_KEYS.IP_ADDRESS, this.ip.octets.join("."));
+    info.addField(
+      TOOLTIP_KEYS.IP_ADDRESS,
+      this.ip.octets.join("."),
+      TOOLTIP_KEYS.IP_ADDRESS,
+    );
 
     info.addProgressBar(
       TOOLTIP_KEYS.PACKET_QUEUE_USAGE,

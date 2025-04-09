@@ -19,7 +19,7 @@ export class ToggleInfo {
     // Crear el elemento TextInfo
     this.textInfo = new TextInfo();
     this.props.fields.forEach((field) => {
-      this.textInfo.addField(field.key, field.value);
+      this.textInfo.addField(field.key, field.value, field.tooltip);
     });
 
     // Crear el botón toggle

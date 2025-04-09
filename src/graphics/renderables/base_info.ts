@@ -20,11 +20,11 @@ export abstract class BaseInfo implements Renderable {
 
   protected abstract addCommonButtons(): void;
 
-  addField(name: string, value: string): void {
-    this.information.addField(name, value);
+  addField(name: string, value: string, tooltip?: string): void {
+    this.information.addField(name, value, tooltip);
   }
-  addListField(name: string, values: number[]): void {
-    this.information.addListField(name, values);
+  addListField(name: string, values: number[], tooltip?: string): void {
+    this.information.addListField(name, values, tooltip);
   }
 
   addEmptySpace(): void {

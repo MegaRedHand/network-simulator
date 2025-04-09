@@ -53,6 +53,9 @@ export const TOOLTIP_KEYS = {
   DESTINATION_MAC_ADDRESS: "Destination MAC Address",
   DISCARD_PACKET_BUTTON: "Discard Packet",
   PACKET_QUEUE_USAGE: "Packet Queue Usage",
+  EDGE_CONNECTED_DEVICES: "edge Connected Devices",
+  EDGE_CONNECTED_INTERFACES: "Connected Interfaces",
+  MAC_ADDRESS_IFACE: "MAC Address iface",
 } as const;
 
 // Tooltip Content
@@ -151,4 +154,10 @@ export const TOOLTIP_CONTENT = {
     "Discard the selected packet. This action will remove the packet from the network simulation without processing it.",
   [TOOLTIP_KEYS.PACKET_QUEUE_USAGE]:
     "The progress bar visually represents the percentage of the queue currently occupied by packets waiting to be processed",
+  [TOOLTIP_KEYS.EDGE_CONNECTED_DEVICES]:
+    "This field shows the two devices directly connected by this edge.",
+  [TOOLTIP_KEYS.EDGE_CONNECTED_INTERFACES]:
+    "This field shows the two interfaces directly connected by this edge.",
+  [TOOLTIP_KEYS.MAC_ADDRESS_IFACE]:
+    "The MAC address of the interface. This address is used to identify the interface in the network.",
 } as const;

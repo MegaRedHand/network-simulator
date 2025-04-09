@@ -30,9 +30,17 @@ export class DeviceInfo extends BaseInfo {
       .getConnections(id)
       .map((edge) => edge.otherEnd(id));
 
-    this.information.addField(TOOLTIP_KEYS.ID, id.toString());
-    this.information.addListField(TOOLTIP_KEYS.CONNECTED_DEVICES, connections);
-    this.information.addField(TOOLTIP_KEYS.MAC_ADDRESS, mac.toString());
+    this.information.addField(TOOLTIP_KEYS.ID, id.toString(), TOOLTIP_KEYS.ID);
+    this.information.addListField(
+      TOOLTIP_KEYS.CONNECTED_DEVICES,
+      connections,
+      TOOLTIP_KEYS.CONNECTED_DEVICES,
+    );
+    this.information.addField(
+      TOOLTIP_KEYS.MAC_ADDRESS,
+      mac.toString(),
+      TOOLTIP_KEYS.MAC_ADDRESS,
+    );
   }
 
   protected addCommonButtons(): void {
