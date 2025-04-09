@@ -278,12 +278,12 @@ class PacketQueue {
     this.maxQueueSizeBytes = maxQueueSizeBytes;
   }
 
-  // Método para suscribirse a cambios
+  // method to subscribe to changes
   subscribe(observer: () => void): void {
     this.observers.push(observer);
   }
 
-  // Método para notificar a los observadores
+  // method to notify all observers
   private notifyObservers(): void {
     this.observers.forEach((observer) => observer());
   }

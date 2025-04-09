@@ -44,7 +44,6 @@ export class DeviceInfo extends BaseInfo {
   }
 
   protected addCommonButtons(): void {
-    // Botón para conectar el dispositivo
     const connectButton = new Button({
       text: TOOLTIP_KEYS.CONNECT_DEVICE,
       onClick: () => this.device.selectToConnect(),
@@ -55,7 +54,6 @@ export class DeviceInfo extends BaseInfo {
       tooltip: TOOLTIP_KEYS.CONNECT_DEVICE,
     });
 
-    // Botón para eliminar el dispositivo
     const deleteButton = new Button({
       text: TOOLTIP_KEYS.DELETE_DEVICE,
       onClick: () => {
@@ -70,7 +68,6 @@ export class DeviceInfo extends BaseInfo {
       tooltip: TOOLTIP_KEYS.DELETE_DEVICE,
     });
 
-    // Agregar los botones al array de inputFields
     this.inputFields.push(connectButton.render(), deleteButton.render());
   }
 

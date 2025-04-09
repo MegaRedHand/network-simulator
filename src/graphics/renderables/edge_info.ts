@@ -19,7 +19,7 @@ export class EdgeInfo extends BaseInfo {
     const from = this.edge.data.from.id;
     const to = this.edge.data.to.id;
 
-    // Obtiene los dispositivos conectados
+    // Get the connected devices
     const fromDevice = this.edge.viewgraph.getDataGraph().getDevice(from);
     const toDevice = this.edge.viewgraph.getDataGraph().getDevice(to);
 
@@ -28,7 +28,7 @@ export class EdgeInfo extends BaseInfo {
       return;
     }
 
-    // Obtiene las interfaces conectadas
+    // Get the connected interfaces
     const fromInterface = fromDevice.interfaces[this.edge.data.from.iface];
     const toInterface = toDevice.interfaces[this.edge.data.to.iface];
 
@@ -37,7 +37,7 @@ export class EdgeInfo extends BaseInfo {
       return;
     }
 
-    // Añade la información básica sobre la arista
+    // Add basic information about the edge
     this.information.addField(
       "Connected Devices",
       `${from} ↔️ ${to}`,
@@ -48,7 +48,7 @@ export class EdgeInfo extends BaseInfo {
       `${fromInterface.name} ↔️ ${toInterface.name}`,
       TOOLTIP_KEYS.EDGE_CONNECTED_INTERFACES,
     );
-    // Añade las direcciones MAC como campos separados
+    // Add MAC addresses as separate fields
     this.information.addField(
       `MAC Address iface (Device ${from})`,
       fromInterface.mac.octets.join(":"),
@@ -62,7 +62,7 @@ export class EdgeInfo extends BaseInfo {
   }
 
   protected addCommonButtons(): void {
-    // Botón para eliminar la arista
+    // Button to delete the edge
     const deleteEdgeButton = new Button({
       text: TOOLTIP_KEYS.DELETE_EDGE_BUTTON,
       onClick: () => {
@@ -80,7 +80,7 @@ export class EdgeInfo extends BaseInfo {
       tooltip: TOOLTIP_KEYS.DELETE_EDGE_BUTTON,
     });
 
-    // Agregar el botón al array de inputFields
+    // Add the button to the inputFields array
     this.inputFields.push(deleteEdgeButton.render());
   }
 }
