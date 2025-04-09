@@ -39,6 +39,6 @@ export abstract class BaseInfo implements Renderable {
 
   // Método para convertir la información a HTML
   toHTML(): Node[] {
-    return [this.information.render(), ...this.inputFields];
+    return [this.information.toHTML(), ...this.inputFields];
   }
 }

@@ -7,6 +7,7 @@ import {
   DropdownOption,
 } from "../graphics/basic_components/dropdown";
 import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
+import { CSS_CLASSES } from "../utils/constants/css_constants";
 
 export class LayerHandler {
   private ctx: GlobalContext;
@@ -20,6 +21,7 @@ export class LayerHandler {
     // Create the dropdown for layer selection
     this.layerDropdown = new Dropdown(
       {
+        default_text: "Layer",
         tooltip: TOOLTIP_KEYS.LAYER_SELECTOR,
         options: this.getLayerOptions(),
         onchange: (value) => {
@@ -31,10 +33,10 @@ export class LayerHandler {
 
     // Append the dropdown to the container
     const dropdownContainer = document.getElementById(
-      "layer-dropdown-container",
+      CSS_CLASSES.LAYER_DROPDOWN_CONTAINER,
     );
     if (dropdownContainer) {
-      dropdownContainer.appendChild(this.layerDropdown.render());
+      dropdownContainer.appendChild(this.layerDropdown.toHTML());
     }
 
     // Listen for the "layerChanged" event and synchronize the dropdown state

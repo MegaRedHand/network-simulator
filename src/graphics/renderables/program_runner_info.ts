@@ -5,22 +5,31 @@ import { Button } from "../basic_components/button";
 import { Dropdown } from "../basic_components/dropdown";
 import { Table } from "../basic_components/table";
 import { Renderable } from "./base_info";
-import { ProgramInfo } from "./program_info";
+import { ProgramInfo } from "./device_info";
+import { TooltipManager } from "./tooltip_manager";
 
 export class ProgramRunnerInfo implements Renderable {
   private runner: ProgramRunner;
-
   private inputFields: Node[] = [];
-
   private runningProgramsTable: HTMLTableElement;
 
   constructor(runner: ProgramRunner, programInfos: ProgramInfo[]) {
     this.runner = runner;
-
+    this.addProgamRunnerLabel();
     this.addPrograms(programInfos);
     this.addRunningProgramsList();
   }
 
+  private addProgamRunnerLabel() {
+    const labelElement = document.createElement("div");
+    labelElement.className = CSS_CLASSES.CENTRAL_LABEL;
+    labelElement.textContent = TOOLTIP_KEYS.PROGRAM_RUNNER;
+    TooltipManager.getInstance().attachTooltip(
+      labelElement,
+      TOOLTIP_KEYS.PROGRAM_RUNNER,
+    );
+    this.inputFields.push(labelElement);
+  }
   private addPrograms(programs: ProgramInfo[]) {
     let selectedProgram = programs[0];
 
@@ -32,14 +41,15 @@ export class ProgramRunnerInfo implements Renderable {
 
     // Create the dropdown using the Dropdown class
     const selectProgramDropdown = new Dropdown({
-      label: TOOLTIP_KEYS.PROGRAM,
       tooltip: TOOLTIP_KEYS.PROGRAM,
+      default_text: TOOLTIP_KEYS.PROGRAM,
       options: programOptions,
       onchange: (v) => {
         selectedProgram = programs[parseInt(v)];
         programInputs.replaceChildren(...selectedProgram.toHTML());
       },
     });
+
     // Button to run program
     const startProgramButton = new Button({
       text: TOOLTIP_KEYS.START_PROGRAM,
@@ -61,9 +71,9 @@ export class ProgramRunnerInfo implements Renderable {
     });
 
     this.inputFields.push(
-      selectProgramDropdown.render(),
+      selectProgramDropdown.toHTML(),
       programInputs,
-      startProgramButton.render(),
+      startProgramButton.toHTML(),
     );
   }
 
@@ -76,7 +86,7 @@ export class ProgramRunnerInfo implements Renderable {
   private createProgramsTable(
     runner: ProgramRunner,
     runningPrograms: RunningProgram[],
-  ) {
+  ): HTMLTableElement {
     const onDelete = (row: number) => {
       const { pid } = runningPrograms[row];
       const removedProgram = runner.removeRunningProgram(pid);
@@ -86,11 +96,13 @@ export class ProgramRunnerInfo implements Renderable {
       }
       return removedProgram;
     };
+
     const rows = runningPrograms.map((program) => [
       program.pid.toString(),
       program.name,
       JSON.stringify(program.inputs),
     ]);
+
     const headers = {
       [TOOLTIP_KEYS.PID]: TOOLTIP_KEYS.PID,
       [TOOLTIP_KEYS.NAME]: TOOLTIP_KEYS.NAME,
@@ -106,7 +118,7 @@ export class ProgramRunnerInfo implements Renderable {
       tableClasses: [CSS_CLASSES.RIGHT_BAR_TABLE], // CSS class for the table
     });
 
-    return table.render();
+    return table.toHTML();
   }
 
   private refreshTable() {
@@ -115,7 +127,7 @@ export class ProgramRunnerInfo implements Renderable {
     this.runningProgramsTable = newTable;
   }
 
-  private generateProgramsTable() {
+  private generateProgramsTable(): HTMLTableElement {
     const runningPrograms = this.runner.getRunningPrograms();
     if (runningPrograms.length === 0) {
       return document.createElement("table");
@@ -124,7 +136,8 @@ export class ProgramRunnerInfo implements Renderable {
     }
   }
 
-  toHTML() {
+  // Render method to return the content
+  toHTML(): Node[] {
     return this.inputFields;
   }
 }

@@ -56,6 +56,7 @@ export const TOOLTIP_KEYS = {
   EDGE_CONNECTED_DEVICES: "edge Connected Devices",
   EDGE_CONNECTED_INTERFACES: "Connected Interfaces",
   MAC_ADDRESS_IFACE: "MAC Address iface",
+  PROGRAM_RUNNER: "Program Runner",
 } as const;
 
 // Tooltip Content
@@ -160,4 +161,6 @@ export const TOOLTIP_CONTENT = {
     "This field shows the two interfaces directly connected by this edge.",
   [TOOLTIP_KEYS.MAC_ADDRESS_IFACE]:
     "The MAC address of the interface. This address is used to identify the interface in the network.",
+  [TOOLTIP_KEYS.PROGRAM_RUNNER]:
+    "Here you can execute different programs on the host devices.",
 } as const;

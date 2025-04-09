@@ -5,10 +5,12 @@ import { Label } from "./label";
 export interface DropdownOption {
   value: string; // Value associated with the option
   text: string; // Text to display for the option
+  tooltip?: string; // Optional tooltip for the option
 }
 
 export interface DropdownProps {
   label?: string; // Optional label for the dropdown
+  default_text?: string; // Default text to display when no option is selected
   tooltip?: string; // Tooltip for the dropdown
   options: DropdownOption[]; // Array of dropdown options
   onchange?: (value: string, event: Event) => void; // Callback triggered when an option is selected
@@ -37,11 +39,11 @@ export class Dropdown {
   }
 
   private initializeDropdown(): void {
-    const { label, tooltip, options, onchange } = this.props;
+    const { label, default_text, tooltip, options, onchange } = this.props;
 
     // Create the label if provided
     if (label) {
-      const dropdown_label = new Label(label, tooltip).render();
+      const dropdown_label = new Label(label, tooltip).toHTML();
       this.container.appendChild(dropdown_label);
     }
 
@@ -51,7 +53,9 @@ export class Dropdown {
 
     // Create the element displaying the selected option
     this.selected.classList.add(CSS_CLASSES.SELECTED_OPTION);
-    this.selected.textContent = "Select an option";
+    this.selected.textContent = default_text
+      ? `Select ${default_text}`
+      : "Select option"; // Default text or fallback
     if (tooltip) {
       TooltipManager.getInstance().attachTooltip(this.selected, tooltip);
     }
@@ -133,7 +137,7 @@ export class Dropdown {
   }
 
   // Public method to render the dropdown
-  render(): HTMLElement {
+  toHTML(): HTMLElement {
     return this.container;
   }
 }

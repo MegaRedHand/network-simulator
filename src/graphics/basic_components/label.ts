@@ -17,7 +17,7 @@ export class Label {
   }
 
   // Public method to render the label
-  render(): HTMLLabelElement {
+  toHTML(): HTMLLabelElement {
     return this.labelElement;
   }
 }

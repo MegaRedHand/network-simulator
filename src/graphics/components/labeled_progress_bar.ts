@@ -19,7 +19,7 @@ export class LabeledProgressBar {
 
     // Create the label
     this.labelElement = document.createElement("div");
-    this.labelElement.className = CSS_CLASSES.PROGRESS_BAR_LABEL;
+    this.labelElement.className = CSS_CLASSES.CENTRAL_LABEL;
     this.labelElement.textContent = label;
     TooltipManager.getInstance().attachTooltip(this.labelElement, label);
 
@@ -28,13 +28,13 @@ export class LabeledProgressBar {
 
     // Add the label and progress bar to the container
     this.container.appendChild(this.labelElement);
-    this.container.appendChild(this.progressBar.render());
+    this.container.appendChild(this.progressBar.toHTML());
 
     // Subscribe to changes in the progress bar
     subscribe(this.progressBar);
   }
 
-  render(): HTMLElement {
+  toHTML(): HTMLElement {
     return this.container;
   }
 }

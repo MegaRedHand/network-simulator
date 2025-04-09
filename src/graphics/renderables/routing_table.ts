@@ -51,25 +51,25 @@ export class RoutingTable {
       text: TOOLTIP_KEYS.ROUTING_TABLE,
       className: CSS_CLASSES.RIGHT_BAR_TOGGLE_BUTTON,
       onToggle: (isToggled) => {
-        const tableElement = this.table.render();
+        const tableElement = this.table.toHTML();
         tableElement.style.display = isToggled ? "block" : "none";
       },
       tooltip: TOOLTIP_KEYS.ROUTING_TABLE,
     });
 
     // Initially hide the table
-    const tableElement = this.table.render();
+    const tableElement = this.table.toHTML();
     tableElement.style.display = "none";
 
     this.initialize();
   }
 
   private initialize(): void {
-    this.container.appendChild(this.toggleButton.render());
-    this.container.appendChild(this.table.render());
+    this.container.appendChild(this.toggleButton.toHTML());
+    this.container.appendChild(this.table.toHTML());
   }
 
-  render(): HTMLElement {
+  toHTML(): HTMLElement {
     return this.container;
   }
 
@@ -87,7 +87,7 @@ export class RoutingTable {
       onClick: onRegenerateCallback,
     });
 
-    return regenerateAllButton.render();
+    return regenerateAllButton.toHTML();
   }
 
   private OnRegenerate(): void {

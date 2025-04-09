@@ -9,6 +9,8 @@ export const CSS_CLASSES = {
   INACTIVE: "inactive",
   BLOCK: "block",
 
+  CENTRAL_LABEL: "central-label",
+
   // Right Bar
   RIGHT_BAR: "right-bar",
   RIGHT_BAR_BUTTON: "right-bar-button",
@@ -34,6 +36,7 @@ export const CSS_CLASSES = {
   OPTIONS_CONTAINER: "options-container",
   OPTIONS_CONTAINER_NOT_PUSH: "push",
   DROPDOWN_OPTION: "dropdown-option",
+  LAYER_DROPDOWN_CONTAINER: "layer-dropdown-container",
 
   // Buttons
   TRASH_BUTTON: "trash-button",
@@ -88,6 +91,5 @@ export const CSS_CLASSES = {
   PROGRESS_BAR: "progress-bar",
   PROGRESS_BAR_CONTAINER: "progress-bar-container",
   PROGRESS_BAR_WRAPPER: "progress-bar-wrapper",
-  PROGRESS_BAR_LABEL: "progress-bar-label",
   PROGRESS_BAR_TEXT: "progress-bar-text",
 };

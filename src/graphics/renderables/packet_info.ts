@@ -50,7 +50,7 @@ export class PacketInfo extends BaseInfo {
     });
 
     // Agregar el botón al array de inputFields
-    this.inputFields.push(discardPacketButton.render());
+    this.inputFields.push(discardPacketButton.toHTML());
   }
 
   private addToggleInfo(): void {
@@ -74,6 +74,6 @@ export class PacketInfo extends BaseInfo {
     });
 
     // Agregar el ToggleInfo al array de inputFields
-    this.inputFields.push(toggleInfo.render());
+    this.inputFields.push(toggleInfo.toHTML());
   }
 }

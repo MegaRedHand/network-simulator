@@ -20,3 +20,4 @@ import "./routing_table.css";
 import "./slider.css";
 import "./divider.css";
 import "./progress-bar.css";
+import "./label.css";

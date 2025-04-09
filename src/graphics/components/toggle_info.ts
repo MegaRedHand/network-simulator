@@ -29,7 +29,7 @@ export class ToggleInfo {
       textOff: this.props.toggleButtonText.off,
       className: "right-bar-toggle-button",
       onToggle: (isToggled) => {
-        this.textInfo.render().style.display = isToggled ? "block" : "none";
+        this.textInfo.toHTML().style.display = isToggled ? "block" : "none";
       },
     });
 
@@ -38,10 +38,10 @@ export class ToggleInfo {
 
   private initialize(): void {
     // Renderizar el botón toggle
-    const toggleButtonElement = this.toggleButton.render();
+    const toggleButtonElement = this.toggleButton.toHTML();
 
     // Renderizar el TextInfo (oculto inicialmente)
-    const textInfoElement = this.textInfo.render();
+    const textInfoElement = this.textInfo.toHTML();
     textInfoElement.style.display = "none"; // Ocultar inicialmente
 
     // Agregar los elementos al contenedor principal
@@ -49,7 +49,7 @@ export class ToggleInfo {
     this.container.appendChild(textInfoElement);
   }
 
-  render(): HTMLElement {
+  toHTML(): HTMLElement {
     return this.container;
   }
 }

@@ -81,6 +81,6 @@ export class EdgeInfo extends BaseInfo {
     });
 
     // Add the button to the inputFields array
-    this.inputFields.push(deleteEdgeButton.render());
+    this.inputFields.push(deleteEdgeButton.toHTML());
   }
 }

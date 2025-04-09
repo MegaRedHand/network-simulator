@@ -136,7 +136,7 @@ export class Table {
         }
       },
     });
-    deleteTd.appendChild(deleteButton.render());
+    deleteTd.appendChild(deleteButton.toHTML());
     return deleteTd;
   }
 
@@ -187,7 +187,7 @@ export class Table {
     this.tbody.innerHTML = ""; // Clear all rows from tbody
   }
 
-  render(): HTMLTableElement {
+  toHTML(): HTMLTableElement {
     return this.table;
   }
 }

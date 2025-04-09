@@ -57,7 +57,7 @@ export class ToggleButton {
     }
   }
 
-  render(): HTMLButtonElement {
+  toHTML(): HTMLButtonElement {
     return this.button;
   }
 

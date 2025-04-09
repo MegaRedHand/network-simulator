@@ -34,7 +34,7 @@ export class ProgressBar {
   }
 
   // Returns the HTML container of the component
-  render(): HTMLElement {
+  toHTML(): HTMLElement {
     return this.container;
   }
 }

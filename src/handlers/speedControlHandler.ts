@@ -23,7 +23,7 @@ export class SpeedControlHandler {
       CSS_CLASSES.SPEED_WHEEL_CONTAINER,
     );
     if (speedControlContainer) {
-      speedControlContainer.appendChild(this.slider.render());
+      speedControlContainer.appendChild(this.slider.toHTML());
     }
   }
 

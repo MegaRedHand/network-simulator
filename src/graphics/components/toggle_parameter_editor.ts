@@ -27,20 +27,20 @@ export class ToggleParameterEditor {
       className: CSS_CLASSES.RIGHT_BAR_TOGGLE_BUTTON,
       tooltip: tooltip,
       onToggle: (isToggled) => {
-        const parametersContainer = this.parameterEditor.render();
+        const parametersContainer = this.parameterEditor.toHTML();
         parametersContainer.style.display = isToggled ? "block" : "none";
       },
     });
 
     // Initially hide the parameters
-    this.parameterEditor.render().style.display = "none";
+    this.parameterEditor.toHTML().style.display = "none";
 
     // Append the toggle button and parameters to the container
-    this.container.appendChild(this.toggleButton.render());
-    this.container.appendChild(this.parameterEditor.render());
+    this.container.appendChild(this.toggleButton.toHTML());
+    this.container.appendChild(this.parameterEditor.toHTML());
   }
 
-  render(): HTMLElement {
+  toHTML(): HTMLElement {
     return this.container;
   }
 }

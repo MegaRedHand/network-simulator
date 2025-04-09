@@ -1,5 +1,6 @@
 import { DeviceId } from "../../types/graphs/datagraph";
 import { ViewGraph } from "../../types/graphs/viewgraph";
+import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { Dropdown } from "../basic_components/dropdown";
 import { Renderable } from "./base_info";
 
@@ -13,19 +14,19 @@ export class ProgramInfo implements Renderable {
   }
 
   withDestinationDropdown(viewgraph: ViewGraph, srcId: DeviceId) {
-    this.withDropdown("Destination", otherDevices(viewgraph, srcId));
+    this.withDropdown(TOOLTIP_KEYS.DESTINATION, otherDevices(viewgraph, srcId));
   }
 
   withDropdown(name: string, options: { value: string; text: string }[]) {
     const dropdown = new Dropdown({
-      label: name,
+      default_text: name,
       tooltip: name,
       options: options,
       onchange: (value) => {
         console.log(`Selected value for ${name}:`, value);
       },
     });
-    this.inputs.push(dropdown.render());
+    this.inputs.push(dropdown.toHTML());
 
     // Store the function to get the selected value
     this.inputsValues.push(() => {

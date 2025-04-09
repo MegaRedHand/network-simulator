@@ -49,7 +49,7 @@ export class Slider {
     this.container.appendChild(this.valueDisplay);
   }
 
-  render(): HTMLElement {
+  toHTML(): HTMLElement {
     return this.container;
   }
 }

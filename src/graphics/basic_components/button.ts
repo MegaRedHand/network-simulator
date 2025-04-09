@@ -30,7 +30,7 @@ export class Button {
     this.button.onclick = onClick; // Assign the click handler
   }
 
-  render(): HTMLButtonElement {
+  toHTML(): HTMLButtonElement {
     return this.button;
   }
 }

@@ -68,7 +68,7 @@ export class DeviceInfo extends BaseInfo {
       tooltip: TOOLTIP_KEYS.DELETE_DEVICE,
     });
 
-    this.inputFields.push(connectButton.render(), deleteButton.render());
+    this.inputFields.push(connectButton.toHTML(), deleteButton.toHTML());
   }
 
   addProgramRunner(runner: ProgramRunner, programs: ProgramInfo[]): void {
@@ -91,7 +91,7 @@ export class DeviceInfo extends BaseInfo {
       deviceId,
     });
 
-    this.inputFields.push(routingTable.render());
+    this.inputFields.push(routingTable.toHTML());
   }
 
   addEmptySpace(): void {
@@ -112,7 +112,7 @@ export class DeviceInfo extends BaseInfo {
       tooltip,
       parameters,
     );
-    this.inputFields.push(parameterEditor.render());
+    this.inputFields.push(parameterEditor.toHTML());
   }
 
   /**
@@ -134,7 +134,7 @@ export class DeviceInfo extends BaseInfo {
       max,
       subscribe,
     );
-    this.inputFields.push(labeledProgressBar.render());
+    this.inputFields.push(labeledProgressBar.toHTML());
   }
 }
 

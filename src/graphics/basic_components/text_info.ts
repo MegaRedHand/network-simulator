@@ -50,7 +50,7 @@ export class TextInfo {
   }
 
   // Generate the HTML for the info (used for initial rendering)
-  render(): HTMLDivElement {
+  toHTML(): HTMLDivElement {
     return this.container;
   }
 

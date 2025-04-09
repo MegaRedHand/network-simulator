@@ -65,7 +65,7 @@ export class ParameterEditor {
     return container;
   }
 
-  render(): HTMLElement {
+  toHTML(): HTMLElement {
     return this.ParametersContainer;
   }
 }
