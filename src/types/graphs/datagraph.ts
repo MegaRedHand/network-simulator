@@ -445,7 +445,6 @@ export class DataGraph {
     const parents = new Map<DeviceId, DeviceId>();
     parents.set(id, id);
     const queue = [id];
-
     while (queue.length > 0) {
       const currentId = queue.shift();
       const current = this.deviceGraph.getVertex(currentId);
@@ -475,10 +474,21 @@ export class DataGraph {
       const dst = this.deviceGraph.getVertex(dstId);
 
       if (dst instanceof DataNetworkDevice) {
+        const dataEdge = this.deviceGraph.getEdge(currentId, childId);
+        if (!dataEdge) {
+          console.warn(
+            `Edge between devices ${currentId} and ${childId} not found!`,
+          );
+          return;
+        }
+        const iface =
+          dataEdge.from.id === currentId
+            ? dataEdge.from.iface
+            : dataEdge.to.iface;
         newTable.push({
           ip: dst.ip.toString(),
           mask: dst.ipMask.toString(),
-          iface: childId,
+          iface,
         });
       }
     });
