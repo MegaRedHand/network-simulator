@@ -1,47 +1,103 @@
 import { Layer } from "../../layer";
-import { EdgeEdges } from "../../edge";
-import { DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
+import { DataEdge, DeviceId } from "../../graphs/datagraph";
 import { ViewGraph } from "../../graphs/viewgraph";
 import { deselectElement } from "../../viewportManager";
 import { BaseMove } from "./move";
 
-export abstract class AddRemoveEdgeMove extends BaseMove {
-  connectedNodes: EdgeEdges;
+interface EdgePair {
+  n1: DeviceId;
+  n2: DeviceId;
+}
 
-  constructor(layer: Layer, connectedNodes: EdgeEdges) {
+type EdgeState =
+  // Edge is new
+  | { newData: EdgePair }
+  // Edge is in graph
+  | { connectedNodes: EdgePair }
+  // Edge was removed
+  | { removedData: DataEdge };
+
+function isNew(state: EdgeState): state is { newData: EdgePair } {
+  return "newData" in state;
+}
+
+function isInGraph(state: EdgeState): state is { connectedNodes: EdgePair } {
+  return "connectedNodes" in state;
+}
+
+function wasRemoved(state: EdgeState): state is { removedData: DataEdge } {
+  return "removedData" in state;
+}
+
+export abstract class AddRemoveEdgeMove extends BaseMove {
+  private state: EdgeState;
+
+  constructor(layer: Layer, state: EdgeState) {
     super(layer);
-    this.connectedNodes = connectedNodes;
+    this.state = state;
   }
 
   addEdge(viewgraph: ViewGraph) {
-    const { n1, n2 } = this.connectedNodes;
-
-    this.adjustLayer(viewgraph);
-
-    const device1 = viewgraph.getDevice(n1);
-    const device2 = viewgraph.getDevice(n2);
-    if (!device1 || !device2) {
-      console.warn("Edge's devices not found in viewgraph");
+    if (isInGraph(this.state)) {
+      console.error("Edge is already in graph");
       return false;
     }
-    viewgraph.addEdge(n1, n2);
+    this.adjustLayer(viewgraph);
+
+    if (wasRemoved(this.state)) {
+      // Re-add the removed edge
+      const ok = viewgraph.reAddEdge(this.state.removedData);
+      if (!ok) {
+        console.warn("Failed to re-add edge");
+        return false;
+      }
+      const n1 = this.state.removedData.from.id;
+      const n2 = this.state.removedData.to.id;
+      this.state = { connectedNodes: { n1, n2 } };
+    } else if (isNew(this.state)) {
+      // Add the new edge
+      const pair = { n1: this.state.newData.n1, n2: this.state.newData.n2 };
+      const ok = viewgraph.addNewEdge(pair.n1, pair.n2);
+      if (!ok) {
+        console.warn("Failed to add new edge");
+        return false;
+      }
+      this.state = { connectedNodes: pair };
+    }
     return true;
   }
 
   removeEdge(viewgraph: ViewGraph) {
-    this.adjustLayer(viewgraph);
-    const { n1, n2 } = this.connectedNodes;
-    const ok = viewgraph.removeEdge(n1, n2);
-    // Avoid deselecting in case of failure, since it's probably a virtual edge
-    if (ok) {
-      // Deselect to avoid showing the information of the deleted edge
-      deselectElement();
+    if (!isInGraph(this.state)) {
+      console.error("Tried to remove already removed edge");
+      return false;
     }
-    return ok;
+
+    this.adjustLayer(viewgraph);
+
+    // Remove the edge
+    const n1 = this.state.connectedNodes.n1;
+    const n2 = this.state.connectedNodes.n2;
+    const edgeData = viewgraph.removeEdge(n1, n2);
+
+    if (!edgeData) {
+      return false;
+    }
+
+    // TODO: store routing tables
+    this.state = { removedData: edgeData };
+    // Deselect to avoid showing the information of the deleted edge
+    // TODO: this isnt needed I think
+    deselectElement();
+    return true;
   }
 }
 
 export class AddEdgeMove extends AddRemoveEdgeMove {
+  constructor(layer: Layer, n1: DeviceId, n2: DeviceId) {
+    super(layer, { newData: { n1, n2 } });
+  }
+
   undo(viewgraph: ViewGraph): boolean {
     return this.removeEdge(viewgraph);
   }
@@ -52,27 +108,12 @@ export class AddEdgeMove extends AddRemoveEdgeMove {
 }
 
 export class RemoveEdgeMove extends AddRemoveEdgeMove {
-  private storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>;
-
-  constructor(
-    layer: Layer,
-    connectedNodes: EdgeEdges,
-    storedRoutingTables: Map<DeviceId, RoutingTableEntry[]>,
-  ) {
-    super(layer, connectedNodes);
-    this.storedRoutingTables = storedRoutingTables;
+  constructor(layer: Layer, n1: DeviceId, n2: DeviceId) {
+    super(layer, { connectedNodes: { n1, n2 } });
   }
 
   undo(viewgraph: ViewGraph): boolean {
-    if (!this.addEdge(viewgraph)) {
-      return false;
-    }
-
-    // Restore stored routing tables
-    this.storedRoutingTables.forEach((table, deviceId) => {
-      viewgraph.getDataGraph().setRoutingTable(deviceId, table);
-    });
-    return true;
+    return this.addEdge(viewgraph);
   }
 
   redo(viewgraph: ViewGraph): boolean {
