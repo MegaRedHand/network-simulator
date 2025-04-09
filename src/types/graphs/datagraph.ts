@@ -245,9 +245,7 @@ export class DataGraph {
         n1Iface === null && n2Iface === null
           ? `devices ${n1Id} and ${n2Id}`
           : `device ${n1Id === null ? n1Id : n2Id}`;
-      console.warn(
-        `No free interfaces available for devices ${unavailableDevices}.`,
-      );
+      alert(`No free interfaces available for ${unavailableDevices}.`);
       return null;
     }
     const edge = {
