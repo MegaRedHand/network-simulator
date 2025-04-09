@@ -5,8 +5,9 @@ import { deselectElement, selectElement } from "./viewportManager";
 import { RightBar } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils/utils";
 import { Packet } from "./packet";
-import { DeviceId } from "./graphs/datagraph";
 import { EdgeInfo } from "../graphics/renderables/edge_info";
+import { RemoveEdgeMove } from "./undo-redo";
+import { DataEdge, DeviceId } from "./graphs/datagraph";
 
 export interface EdgeEdges {
   n1: DeviceId;
@@ -14,24 +15,16 @@ export interface EdgeEdges {
 }
 
 export class Edge extends Graphics {
-  connectedNodes: EdgeEdges;
-  startPos: Point;
-  endPos: Point;
+  data: DataEdge;
+  private startPos: Point;
+  private endPos: Point;
+
   viewgraph: ViewGraph;
-  rightbar: RightBar;
 
-  constructor(
-    connectedNodes: EdgeEdges,
-    device1: ViewDevice,
-    device2: ViewDevice,
-    viewgraph: ViewGraph,
-  ) {
+  constructor(viewgraph: ViewGraph, edgeData: DataEdge) {
     super();
-    this.connectedNodes = connectedNodes;
+    this.data = edgeData;
     this.viewgraph = viewgraph;
-    this.rightbar = RightBar.getInstance();
-
-    this.updatePosition(device1, device2);
 
     this.eventMode = "static";
     this.interactive = true;
@@ -39,26 +32,43 @@ export class Edge extends Graphics {
     this.on("click", () => selectElement(this));
     // NOTE: this is "click" for mobile devices
     this.on("tap", () => selectElement(this));
+
+    this.refresh();
+  }
+
+  /**
+   * Recomputes the edge's position based on the connected devices.
+   */
+  refresh() {
+    const n1 = this.data.from.id;
+    const n2 = this.data.to.id;
+    const device1 = this.viewgraph.getDevice(n1);
+    const device2 = this.viewgraph.getDevice(n2);
+    this.updatePosition(device1, device2);
   }
 
   nodePosition(nodeId: DeviceId): Point | undefined {
-    return this.connectedNodes.n1 === nodeId
+    return this.data.from.id === nodeId
       ? this.startPos
-      : this.connectedNodes.n2 === nodeId
+      : this.data.to.id === nodeId
         ? this.endPos
         : undefined;
   }
 
+  getDeviceIds(): DeviceId[] {
+    return [this.data.from.id, this.data.to.id];
+  }
+
   otherEnd(nodeId: DeviceId): DeviceId | undefined {
-    return this.connectedNodes.n1 === nodeId
-      ? this.connectedNodes.n2
-      : this.connectedNodes.n2 === nodeId
-        ? this.connectedNodes.n1
+    return this.data.from.id === nodeId
+      ? this.data.to.id
+      : this.data.to.id === nodeId
+        ? this.data.from.id
         : undefined;
   }
 
   // Method to draw the line
-  public drawEdge(startPos: Point, endPos: Point, color: number) {
+  drawEdge(startPos: Point, endPos: Point, color: number) {
     this.clear();
     this.moveTo(startPos.x, startPos.y);
     this.lineTo(endPos.x, endPos.y);
@@ -93,28 +103,27 @@ export class Edge extends Graphics {
 
   // Method to show the Edge information
   showInfo() {
-    // Crear una instancia de `EdgeInfo`
     const edgeInfo = new EdgeInfo(this);
-
-    // Renderizar la información de la arista en la barra lateral derecha
     RightBar.getInstance().renderInfo(edgeInfo);
   }
 
   // Method to delete the edge
   delete() {
     // Remove the edge from the viewgraph and datagraph
-    const { n1, n2 } = this.connectedNodes;
+    const n1 = this.data.from.id;
+    const n2 = this.data.to.id;
     this.viewgraph.removeEdge(n1, n2);
     console.log(`Edge ${n1},${n2} deleted.`);
     this.destroy();
   }
 
-  destroy() {
+  destroy(): DataEdge {
     deselectElement();
     super.destroy();
+    return this.data;
   }
 
-  public updatePosition(device1: ViewDevice, device2: ViewDevice) {
+  private updatePosition(device1: ViewDevice, device2: ViewDevice) {
     const dx = device2.x - device1.x;
     const dy = device2.y - device1.y;
     const angle = Math.atan2(dy, dx);

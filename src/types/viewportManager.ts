@@ -1,5 +1,11 @@
 import { GlobalContext } from "./../context";
-import { DataGraph, GraphData, DataNode } from "./graphs/datagraph";
+import {
+  DataGraph,
+  GraphData,
+  DataNode,
+  getNumberOfInterfaces,
+  NetworkInterfaceData,
+} from "./graphs/datagraph";
 import { ViewDevice } from "./view-devices/";
 import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
@@ -78,20 +84,8 @@ document.addEventListener("keydown", (event) => {
         const move = new RemoveDeviceMove(currLayer, selectedElement.id);
         urManager.push(viewgraph, move);
       } else if (isEdge(selectedElement)) {
-        const connectedNodes = selectedElement.connectedNodes;
-        // Obtener las tablas de enrutamiento antes de eliminar la conexión
-        const routingTable1 = viewgraph.getRoutingTable(connectedNodes.n1);
-        const routingTable2 = viewgraph.getRoutingTable(connectedNodes.n2);
-
-        // Crear movimiento con las tablas de enrutamiento
-        const move = new RemoveEdgeMove(
-          currLayer,
-          connectedNodes,
-          new Map([
-            [connectedNodes.n1, routingTable1],
-            [connectedNodes.n2, routingTable2],
-          ]),
-        );
+        const ends = selectedElement.getDeviceIds();
+        const move = new RemoveEdgeMove(currLayer, ends[0], ends[1]);
         urManager.push(viewgraph, move);
       } else {
         // its a packet
@@ -118,11 +112,25 @@ function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType): DataNode {
     viewport.screenHeight / 2,
   );
   const mac = ctx.getNextMac();
-  if (type == DeviceType.Switch) {
-    return { x, y, type, mac };
+
+  const interfaces = [];
+  const numberOfInterfaces = getNumberOfInterfaces(type);
+
+  const isSwitch = type == DeviceType.Switch;
+
+  for (let i = 0; i < numberOfInterfaces; i++) {
+    const mac = ctx.getNextMac();
+    const iface: NetworkInterfaceData = { name: `eth${i}`, mac };
+    if (!isSwitch) {
+      iface.ip = ctx.getNextIp().ip;
+    }
+    interfaces.push(iface);
+  }
+  if (isSwitch) {
+    return { x, y, type, mac, interfaces };
   }
   const { ip, mask } = ctx.getNextIp();
-  return { x, y, type, mac, ip, mask };
+  return { x, y, type, mac, ip, mask, interfaces };
 }
 
 // Function to add a device at the center of the viewport

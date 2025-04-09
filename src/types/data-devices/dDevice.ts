@@ -3,6 +3,13 @@ import { DataGraph, DataNode } from "../graphs/datagraph";
 import { DeviceType } from "../view-devices/vDevice";
 import { Position } from "../common";
 
+interface NetworkInterface {
+  name: string;
+  mac: MacAddress;
+  // TODO: add IP address
+  // ip?: string;
+}
+
 export abstract class DataDevice {
   private static idCounter = 1;
 
@@ -11,6 +18,7 @@ export abstract class DataDevice {
   y: number;
   mac: MacAddress;
   datagraph: DataGraph;
+  interfaces: NetworkInterface[] = [];
 
   private static setIdCounter(id: number): void {
     if (id >= DataDevice.idCounter) {
@@ -28,6 +36,12 @@ export abstract class DataDevice {
     } else {
       this.id = DataDevice.idCounter++;
     }
+    graphData.interfaces.forEach((iface) => {
+      this.interfaces.push({
+        name: iface.name,
+        mac: MacAddress.parse(iface.mac),
+      });
+    });
     this.datagraph = datagraph;
   }
 
@@ -42,6 +56,10 @@ export abstract class DataDevice {
       x: this.x,
       y: this.y,
       mac: this.mac.toString(),
+      interfaces: this.interfaces.map((iface) => ({
+        name: iface.name,
+        mac: iface.mac.toString(),
+      })),
     };
   }
 
