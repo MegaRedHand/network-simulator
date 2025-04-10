@@ -1,0 +1,10 @@
+/* Progress bar label */
+.central-label {
+  font-weight: bold;
+  font-size: 18px; /* Font size for the label */
+  color: #2b2b2b; /* Changes the text color to black */
+  margin-bottom: 10px; /* Spacing between the label and the input */
+  flex: 1; /* The label takes up the remaining space */
+  text-align: center; /* Aligns the label text to the center */
+  overflow: hidden; /* Hides text that doesn't fit */
+}

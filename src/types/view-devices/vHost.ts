@@ -4,7 +4,7 @@ import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
-import { DeviceInfo, RightBar } from "../../graphics/right_bar";
+import { RightBar } from "../../graphics/right_bar";
 import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "../layer";
 import {
@@ -19,6 +19,8 @@ import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataHost } from "../data-devices";
 import { dropPacket } from "../packet";
+import { DeviceInfo } from "../../graphics/renderables/device_info";
+import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 
 export class ViewHost extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -59,7 +61,11 @@ export class ViewHost extends ViewNetworkDevice {
     const programList = getProgramList(this.viewgraph, this.id);
 
     const info = new DeviceInfo(this);
-    info.addField("IP Address", this.ip.octets.join("."));
+    info.addField(
+      TOOLTIP_KEYS.IP_ADDRESS,
+      this.ip.octets.join("."),
+      TOOLTIP_KEYS.IP_ADDRESS,
+    );
     info.addProgramRunner(this, programList);
     RightBar.getInstance().renderInfo(info);
   }

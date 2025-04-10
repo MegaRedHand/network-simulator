@@ -1,3 +1,5 @@
+import { CSS_CLASSES } from "../../utils/constants/css_constants";
+
 export interface ProgressBarProps {
   current: number; // Current size of the queue
   max: number; // Maximum size of the queue
@@ -10,13 +12,13 @@ export class ProgressBar {
 
   constructor(props: ProgressBarProps) {
     this.container = document.createElement("div");
-    this.container.className = "progress-bar-container";
+    this.container.className = CSS_CLASSES.PROGRESS_BAR_CONTAINER;
 
     this.progress = document.createElement("div");
-    this.progress.className = "progress-bar";
+    this.progress.className = CSS_CLASSES.PROGRESS_BAR;
 
     this.text = document.createElement("div");
-    this.text.className = "progress-bar-text";
+    this.text.className = CSS_CLASSES.PROGRESS_BAR_TEXT;
 
     this.container.appendChild(this.progress);
     this.container.appendChild(this.text);
@@ -32,7 +34,7 @@ export class ProgressBar {
   }
 
   // Returns the HTML container of the component
-  render(): HTMLElement {
+  toHTML(): HTMLElement {
     return this.container;
   }
 }

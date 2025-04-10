@@ -1,26 +1,16 @@
-.table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-  display: block;
-  max-width: 100%;
-}
-
-/* table.css - Table in the sidebar */
 .right-bar-table {
-  width: 100%; /* Ensures the container takes full width */
-  overflow-x: auto; /* Enables horizontal scrolling if needed */
-}
-
-table.right-bar-table {
-  width: 100%; /* Makes the table span the full container width */
-  border-collapse: collapse; /* Removes spacing between table borders */
-  font-size: 1rem; /* Sets a readable font size */
-  text-align: center; /* Centers text in all cells */
-  transition: opacity 0.5s ease-out; /* Smooth fade-in effect */
-  border-radius: 1rem; /* Softens table edges */
-  overflow: hidden; /* Prevents content from overflowing rounded corners */
-  box-shadow: 0 0.5vh 1vh rgba(0, 0, 0, 0.1); /* Adds subtle shadow for depth */
-  table-layout: auto; /* Prevents columns from stretching too much */
+  display: block; /* Hace que la tabla sea un bloque para manejar el scroll */
+  overflow-x: auto; /* Habilita el scroll horizontal */
+  width: 100%; /* Hace que la tabla ocupe todo el ancho disponible */
+  border-collapse: collapse; /* Elimina espacios entre bordes */
+  font-size: 1rem; /* Tamaño de fuente legible */
+  text-align: center; /* Centra el texto en las celdas */
+  border-radius: 1rem; /* Bordes redondeados */
+  box-shadow: 0 0.5vh 1vh rgba(0, 0, 0, 0.1); /* Sombra para profundidad */
+  table-layout: fixed; /* Fija el ancho de las columnas */
+  clip-path: inset(
+    0 round 1rem
+  ); /* Recorta el área del scroll respetando el border-radius */
 }
 
 /* Ensures columns do not overflow */

@@ -1,123 +1,62 @@
-/* info.css - Information in the sidebar */
-.toggle-info-container {
-  overflow: hidden; /* Prevents content from overflowing */
-  text-align: left; /* Aligns text to the left */
+/* Ensures the container takes up the full available width */
+.info-container {
+  width: 100%; /* Takes up the full width of the parent container */
+  box-sizing: border-box; /* Includes padding and border in the total width */
+}
+
+/* Ensures the list takes up the full width */
+.info-list {
+  width: 100%; /* Takes up the full width of the container */
+  padding: 0; /* Removes default padding */
   margin: 0; /* Removes default margin */
-  padding: 0; /* Removes default padding */
-  font-size: 1rem; /* Sets a standard font size */
+  list-style: none; /* Removes list bullets */
+  overflow: auto; /* Enables scrolling if the content is too large */
 }
 
-/* 🔹 Unordered list containing info items */
-.toggle-info-container .right-bar-info {
-  margin: 0; /* Removes default margin */
-  padding: 0; /* Removes default padding */
-  list-style: none; /* Removes bullet points */
-}
-
-/* 🔹 Individual list items */
-.toggle-info-container .right-bar-info li {
-  margin: 2vh 0; /* Adds vertical spacing between items */
-  padding: 0; /* Removes default padding */
-  display: flex; /* Uses flexbox for layout */
-  flex-direction: column; /* Stacks elements vertically */
-  align-items: flex-start; /* Ensures label and select align properly */
-}
-
-/* 🔹 Labels inside the list */
-.toggle-info-container .right-bar-info li label {
-  font-weight: bold; /* Makes labels stand out */
-  margin-bottom: 0.5vh; /* Adds spacing between label and input */
-}
-
-/* 🔹 Dropdowns inside the list */
-.toggle-info-container .right-bar-info li select {
-  width: 100%; /* Makes select dropdown full width */
-  padding: 0.8vh; /* Adds padding for a better UI */
-  font-size: 1rem; /* Matches the general text size */
-  border: 0.1rem solid #ccc; /* Light gray border */
-  border-radius: 0.5rem; /* Rounded corners */
-  background-color: #fff; /* White background */
-}
-
-/* 🔹 Preformatted text box */
-.toggle-info-container .right-bar-info li pre {
-  background-color: #000; /* Black background */
-  color: #fff; /* White text for contrast */
-  padding: 1vh; /* Adds internal spacing */
-  border-radius: 0.5rem; /* Rounded corners */
-  font-family: monospace; /* Uses monospaced font */
-  white-space: pre-wrap; /* Ensures text wraps properly */
-  overflow-x: auto; /* Allows horizontal scrolling if needed */
-}
-
-/* 🔹 Open state for info container */
-.toggle-info-container .right-bar-info.open {
-  display: block; /* Ensures it is visible */
-}
-
-/* Hide any container with 'hidden' class */
-.hidden {
-  display: none;
-}
-
-/* Style for the warning sign container */
-.warning-sign {
-  display: flex;
-  flex-direction: column;
-  border: 2px solid #ffcc3d;
-  border-radius: 8px;
-  margin: 10px 0;
-  overflow: hidden;
-}
-
-/* Title style for the warning */
-.warning-sign .warning-title {
-  background-color: #ffcc3d;
-  color: #000;
-  font-weight: bold;
-  font-size: 20px;
-  padding: 5px;
-  margin: 0;
-  text-align: center;
-  width: 100%;
-}
-
-/* Message style for the warning */
-.warning-sign .warning-message {
-  padding: 10px;
-  margin: 3px;
-  text-align: center;
-  font-size: 18px;
-  line-height: 1.4;
-}
-
+/* Ensures each item takes up the full width */
 .detail-item {
-  list-style: none; /* Removes default list styling */
-  padding: 6px 10px; /* Adds padding for spacing */
-  border-bottom: 1px solid #ddd; /* Adds a subtle separator between items */
+  width: 100%; /* Takes up the full width of the container */
+  padding: 6px 10px; /* Internal spacing */
+  border-bottom: 1px solid #d6d6d6; /* Separator line */
+  box-sizing: border-box; /* Includes padding and border in the total width */
 }
 
+/* Removes the divider from the last item */
+.detail-item:last-child {
+  border-bottom: none; /* No separator line */
+}
+
+/* Ensures keys and values are properly aligned */
 .detail-container {
-  display: flex; /* Uses flexbox for alignment */
-  justify-content: space-between; /* Keeps key and value on the same line */
-  align-items: center; /* Ensures vertical alignment */
-  width: 100%; /* Makes sure it takes up the full width */
-  white-space: nowrap; /* Prevents text from wrapping to the next line */
+  display: flex; /* Uses flexbox to align elements */
+  justify-content: space-between; /* Keeps key and value at opposite ends */
+  align-items: center; /* Vertically aligns elements */
+  width: 100%; /* Takes up the full width of the container */
 }
 
+/* Styling for keys */
 .detail-key {
-  font-weight: bold; /* Makes the key stand out */
-  color: #000000; /* Sets the text color to black */
+  font-weight: bold; /* Highlights the key */
+  color: #2b2b2b; /* Black color */
   flex-shrink: 0; /* Prevents the key from shrinking too much */
-  margin-right: 8px; /* Adds spacing between key and value */
+  margin-right: 8px; /* Spacing between the key and the value */
+  cursor: default;
+  text-align: left;
 }
 
+/* Styling for values */
 .detail-value {
-  color: #000000; /* Sets the text color to black */
-  text-align: right; /* Aligns the value to the right */
-  flex-grow: 1; /* Allows the value to expand to fill available space */
-  overflow: hidden; /* Hides any overflowing text */
-  text-overflow: ellipsis; /* Adds "..." if the text is too long */
+  color: #2b2b2b; /* Black color */
+  text-align: right; /* Aligns text to the right */
+  flex-grow: 1; /* Allows the value to take up remaining space */
+  cursor: default;
+}
+
+.info-title {
+  text-align: center; /* Centers the text horizontally */
+  font-weight: bold; /* Highlights the title */
+  font-size: 1.8rem; /* Larger font size */
+  color: #2b2b2b; /* Text color */
 }
 
 .payload-item {
@@ -136,7 +75,7 @@
   background-color: #f4f4f4; /* Light background for contrast */
   border-radius: 6px; /* Rounds the corners */
   padding: 10px; /* Adds padding inside the container */
-  border: 1px solid #ddd; /* Adds a subtle border */
+  border: 1px solid #bfbfbf; /* Adds a subtle border */
   width: 100%; /* Ensures the container occupies the full width */
   max-width: 100%; /* Prevents it from exceeding the sidebar width */
   overflow-x: auto; /* Enables horizontal scrolling if needed */

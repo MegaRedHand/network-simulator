@@ -44,7 +44,6 @@ export abstract class ViewNetworkDevice extends ViewDevice {
           const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
           let dstMac = dstDevice.mac;
           if (!path) return;
-          console.log(path);
           for (const id of path.slice(1)) {
             const device = this.viewgraph.getDevice(id);
             if (device instanceof ViewNetworkDevice) {

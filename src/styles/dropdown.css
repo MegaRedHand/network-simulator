@@ -16,6 +16,7 @@
   font-size: 1rem; /* Font size */
   margin: 1vh 0; /* Vertical spacing */
   cursor: pointer; /* Changes cursor to pointer */
+  height: 2rem; /* Altura consistente con la Speed Wheel */
   border-radius: 0.5rem; /* Rounded corners */
   width: 100%; /* Full width */
   box-sizing: border-box; /* Includes padding and borders in width */
@@ -23,6 +24,7 @@
     background-color 0.3s ease,
     transform 0.2s ease; /* Smooth effect */
   font-family: Arial, sans-serif; /* Ensures consistent font family */
+  min-width: 180px; /* Minimum width */
 }
 
 .selected-option:hover {
@@ -40,6 +42,11 @@
   margin-top: 5px; /* Spacing between selected and options */
   z-index: 1000;
   box-sizing: border-box; /* Includes padding and borders in width */
+  margin-bottom: 0.8vh; /* Adds spacing below dropdown */
+}
+
+.options-container.push {
+  position: absolute; /* Positions options below the selected option */
 }
 
 .options-container.show {
@@ -72,38 +79,7 @@
   transform: scale(1.02);
 }
 
-.layerselectordropdown {
-  width: 15rem;
-}
-
-.layerselectordropdown .selected-option {
-  width: 100%;
-}
-
-.layerselectordropdown .options-container {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 1000;
-  width: 100%;
-}
-
 @media (max-width: 768px) {
-  .layerselectordropdown {
-    width: 100%;
-  }
-
-  .layerselectordropdown .selected-option {
-    width: 100%;
-    font-size: 0.9rem;
-    padding: 0.8vh 1.5vw;
-  }
-
-  .layerselectordropdown .options-container {
-    width: 100%;
-    font-size: 0.9rem;
-  }
-
   .dropdown-option {
     padding: 0.8vh 1.5vw;
   }
