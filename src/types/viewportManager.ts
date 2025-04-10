@@ -19,6 +19,8 @@ import {
   RemoveEdgeMove,
 } from "./undo-redo";
 import { SpeedMultiplier } from "./speedMultiplier";
+import { AlertManager, AlertType } from "../graphics/renderables/alert_manager";
+import { ALERT_MESSAGES } from "../utils/constants/alert_constants";
 
 type Selectable = ViewDevice | Edge | Packet;
 
@@ -175,9 +177,23 @@ export function loadFromFile(ctx: GlobalContext) {
     reader.onload = (readerEvent) => {
       const jsonData = readerEvent.target.result as string;
       const graphData: GraphData = JSON.parse(jsonData);
-      ctx.load(DataGraph.fromData(graphData, ctx));
+      let dataGraph: DataGraph;
+      try {
+        dataGraph = DataGraph.fromData(graphData, ctx);
+      } catch (error) {
+        console.error("Failed to load graph data:", error);
+        AlertManager.getInstance().showAlert(
+          ALERT_MESSAGES.FAILED_TO_LOAD_GRAPH,
+          AlertType.Error,
+        );
+        return;
+      }
+      ctx.load(dataGraph);
 
-      console.log("Graph loaded successfully.");
+      AlertManager.getInstance().showAlert(
+        ALERT_MESSAGES.GRAPH_LOADED_SUCCESSFULLY,
+        AlertType.Success,
+      );
     };
   };
 
