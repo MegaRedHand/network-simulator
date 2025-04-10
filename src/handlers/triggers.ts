@@ -13,6 +13,7 @@ import { DataGraph } from "../types/graphs/datagraph";
 export const triggerNew = (ctx: GlobalContext) => {
   deselectElement(); // Deselect any currently selected element
   ctx.load(new DataGraph(ctx)); // Load a new empty DataGraph into the context
+  ctx.centerView(); // Center the view on the new network
 };
 
 // Function to save the network
