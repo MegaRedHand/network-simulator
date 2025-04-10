@@ -5,64 +5,78 @@ import { ViewGraph } from "../../types/graphs/viewgraph";
 import { RemoveDeviceMove } from "../../types/undo-redo";
 import { urManager } from "../../types/viewportManager";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
-import { createRightBarButton, createRoutingTable } from "../right_bar";
 import { ProgramInfo } from "./program_info";
 import { ProgramRunnerInfo } from "./program_runner_info";
-import { StyledInfo } from "./styled_info";
-import { createParameterGroup } from "./parameter_editor";
-import { ProgressBar } from "./progress_bar";
-import { TooltipManager } from "./tooltip_manager";
+import { RoutingTable } from "./routing_table";
+import { ToggleParameterEditor } from "../components/toggle_parameter_editor";
+import { Button } from "../basic_components/button";
+import { CSS_CLASSES } from "../../utils/constants/css_constants";
+import { BaseInfo } from "./base_info";
+import { ProgressBar } from "../basic_components/progress_bar";
+import { LabeledProgressBar } from "../components/labeled_progress_bar";
 
-export { ProgramInfo } from "./program_info";
-
-export class DeviceInfo extends StyledInfo {
+export class DeviceInfo extends BaseInfo {
   readonly device: ViewDevice;
-  inputFields: Node[] = [];
 
   constructor(device: ViewDevice) {
     super(getTypeName(device) + " Information");
     this.device = device;
     this.addCommonInfoFields();
-    this.addCommonButtons();
   }
 
-  private addCommonInfoFields() {
+  protected addCommonInfoFields(): void {
     const { id, mac } = this.device;
     const connections = this.device.viewgraph
       .getConnections(id)
       .map((edge) => edge.otherEnd(id));
-    super.addField(TOOLTIP_KEYS.ID, id.toString());
-    super.addField(TOOLTIP_KEYS.MAC_ADDRESS, mac.toString());
-    super.addListField(TOOLTIP_KEYS.CONNECTED_DEVICES, connections);
-  }
 
-  private addCommonButtons() {
-    this.inputFields.push(
-      createRightBarButton(
-        TOOLTIP_KEYS.CONNECT_DEVICE,
-        () => this.device.selectToConnect(),
-        "right-bar-connect-button",
-        true,
-      ),
-      createRightBarButton(
-        TOOLTIP_KEYS.DELETE_DEVICE,
-        () => {
-          const currLayer = this.device.viewgraph.getLayer();
-          const move = new RemoveDeviceMove(currLayer, this.device.id);
-          urManager.push(this.device.viewgraph, move);
-        },
-        "right-bar-delete-button",
-      ),
+    this.information.addField(TOOLTIP_KEYS.ID, id.toString(), TOOLTIP_KEYS.ID);
+    this.information.addListField(
+      TOOLTIP_KEYS.CONNECTED_DEVICES,
+      connections,
+      TOOLTIP_KEYS.CONNECTED_DEVICES,
+    );
+    this.information.addField(
+      TOOLTIP_KEYS.MAC_ADDRESS,
+      mac.toString(),
+      TOOLTIP_KEYS.MAC_ADDRESS,
     );
   }
 
-  // First argument is to avoid a circular dependency
-  addProgramRunner(runner: ProgramRunner, programs: ProgramInfo[]) {
+  protected addCommonButtons(): void {
+    const connectButton = new Button({
+      text: TOOLTIP_KEYS.CONNECT_DEVICE,
+      onClick: () => this.device.selectToConnect(),
+      classList: [
+        CSS_CLASSES.RIGHT_BAR_BUTTON,
+        CSS_CLASSES.RIGHT_BAR_CONNECT_BUTTON,
+      ],
+      tooltip: TOOLTIP_KEYS.CONNECT_DEVICE,
+    });
+
+    const deleteButton = new Button({
+      text: TOOLTIP_KEYS.DELETE_DEVICE,
+      onClick: () => {
+        const currLayer = this.device.viewgraph.getLayer();
+        const move = new RemoveDeviceMove(currLayer, this.device.id);
+        urManager.push(this.device.viewgraph, move);
+      },
+      classList: [
+        CSS_CLASSES.RIGHT_BAR_BUTTON,
+        CSS_CLASSES.RIGHT_BAR_DELETE_BUTTON,
+      ],
+      tooltip: TOOLTIP_KEYS.DELETE_DEVICE,
+    });
+
+    this.inputFields.push(connectButton.toHTML(), deleteButton.toHTML());
+  }
+
+  addProgramRunner(runner: ProgramRunner, programs: ProgramInfo[]): void {
     const programRunnerInfo = new ProgramRunnerInfo(runner, programs);
     this.inputFields.push(...programRunnerInfo.toHTML());
   }
 
-  addRoutingTable(viewgraph: ViewGraph, deviceId: number) {
+  addRoutingTable(viewgraph: ViewGraph, deviceId: number): void {
     const entries = viewgraph.getRoutingTable(deviceId);
 
     const rows = entries.map((entry) => [
@@ -71,40 +85,34 @@ export class DeviceInfo extends StyledInfo {
       `eth${entry.iface}`,
     ]);
 
-    const dynamicTable = createRoutingTable(
-      TOOLTIP_KEYS.ROUTING_TABLE,
-      [TOOLTIP_KEYS.IP, TOOLTIP_KEYS.MASK, TOOLTIP_KEYS.INTERFACE],
+    const routingTable = new RoutingTable({
       rows,
       viewgraph,
       deviceId,
-    );
+    });
 
-    this.inputFields.push(dynamicTable);
+    this.inputFields.push(routingTable.toHTML());
   }
 
-  addEmptySpace() {
+  addEmptySpace(): void {
     this.inputFields.push(document.createElement("br"));
-  }
-
-  toHTML(): Node[] {
-    return super.toHTML().concat(this.inputFields);
   }
 
   addParameterGroup(
     groupName: string,
+    tooltip: string,
     parameters: {
       label: string;
       initialValue: number | string;
       onChange: (newValue: number | string) => void;
     }[],
-  ) {
-    const { toggleButton, borderedContainer } = createParameterGroup(
+  ): void {
+    const parameterEditor = new ToggleParameterEditor(
       groupName,
+      tooltip,
       parameters,
     );
-
-    this.inputFields.push(toggleButton);
-    this.inputFields.push(borderedContainer);
+    this.inputFields.push(parameterEditor.toHTML());
   }
 
   /**
@@ -120,28 +128,13 @@ export class DeviceInfo extends StyledInfo {
     max: number,
     subscribe: (progressBar: ProgressBar) => void,
   ): void {
-    // Create the container for the label and the progress bar
-    const container = document.createElement("div");
-    container.className = "progress-bar-wrapper";
-
-    // Create the label
-    const labelElement = document.createElement("div");
-    labelElement.className = "progress-bar-label";
-    labelElement.textContent = label;
-    TooltipManager.getInstance().attachTooltip(labelElement, label);
-
-    // Create the progress bar
-    const progressBar = new ProgressBar({ current, max });
-
-    // Add the progress bar to the container
-    container.appendChild(labelElement);
-    container.appendChild(progressBar.render());
-
-    // Add the container to the input fields
-    this.inputFields.push(container);
-
-    // Subscribe to changes in the progress bar
-    subscribe(progressBar);
+    const labeledProgressBar = new LabeledProgressBar(
+      label,
+      current,
+      max,
+      subscribe,
+    );
+    this.inputFields.push(labeledProgressBar.toHTML());
   }
 }
 
@@ -153,5 +146,9 @@ function getTypeName(device: ViewDevice): string {
       return "Host";
     case DeviceType.Switch:
       return "Switch";
+    default:
+      return "Unknown Device";
   }
 }
+
+export { ProgramInfo };

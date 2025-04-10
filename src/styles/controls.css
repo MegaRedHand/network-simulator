@@ -26,7 +26,7 @@
 /* 🔹 Adjustments for small screens */
 @media (max-width: 768px) {
   #left-controls {
-    gap: 0.5vw; /* Reduce spacing for compact layout */
+    gap: 2vw; /* Reduce spacing for compact layout */
     flex-wrap: wrap; /* Allows wrapping if space is limited */
   }
 
@@ -45,8 +45,9 @@
 
   /* 🔹 Undo/Redo container adjustments */
   .undo-redo-container {
-    margin-left: 1vw; /* Adds slight left margin */
+    margin-left: 4vw; /* Adds slight left margin */
     flex-wrap: nowrap; /* Prevents elements from rearranging */
+    gap: 4vw; /* Adds spacing between buttons */
   }
 
   /* 🔹 Right controls adjustments */

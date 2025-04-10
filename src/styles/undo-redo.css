@@ -18,9 +18,26 @@
   justify-content: center; /* Centers the icon horizontally */
 }
 
-/* 🔹 Ensuring icons fit properly */
+/* 🔹 Icons inside Undo and Redo buttons */
 .undo-button img,
 .redo-button img {
-  width: 60%; /* Restricts icon width to 60% of the button */
-  height: 60%; /* Maintains aspect ratio within the button */
+  width: 2rem; /* Icon size */
+  height: 2rem; /* Icon size */
+  filter: brightness(0) invert(0.15); /* Initial color (#2b2b2b) */
+  transition:
+    filter 0.2s ease,
+    transform 0.2s ease; /* Smooth effect on interaction */
+}
+
+/* 🔹 Hover effect for Undo and Redo buttons */
+.undo-button:hover img,
+.redo-button:hover img {
+  filter: brightness(0) invert(0.2); /* Change symbol color to #3a3a3a */
+  transform: scale(1.1); /* Zoom effect */
+}
+
+/* 🔹 Active (click) effect for Undo and Redo buttons */
+.undo-button:active img,
+.redo-button:active img {
+  transform: scale(0.95); /* Slightly reduce size on click */
 }

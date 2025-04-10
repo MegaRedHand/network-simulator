@@ -53,6 +53,7 @@ export class UndoRedoHandler {
         TOOLTIP_KEYS.REDO,
       );
     }
+    this.updateButtons();
   }
 
   private updateButtons() {

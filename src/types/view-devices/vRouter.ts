@@ -4,7 +4,6 @@ import { ViewNetworkDevice } from "./vNetworkDevice";
 import { ViewGraph } from "../graphs/viewgraph";
 import RouterImage from "../../assets/router.svg";
 import { Position } from "../common";
-import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId } from "../graphs/datagraph";
 import { Texture, Ticker } from "pixi.js";
@@ -14,6 +13,8 @@ import { DataRouter } from "../data-devices";
 import { dropPacket, sendViewPacket } from "../packet";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { ROUTER_CONSTANTS } from "../../utils/constants/router_constants";
+import { DeviceInfo } from "../../graphics/renderables/device_info";
+import { RightBar } from "../../graphics/right_bar";
 
 export class ViewRouter extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -47,15 +48,15 @@ export class ViewRouter extends ViewNetworkDevice {
     this.packetQueueSize = packetQueueSize;
     this.packetQueue = new PacketQueue(this.packetQueueSize);
     this.timePerByte = timePerByte;
-    console.log("packetQueueSize Vr", this.packetQueueSize);
-    console.log("processingSpeed Vr", this.timePerByte);
   }
 
   showInfo(): void {
     const info = new DeviceInfo(this);
-    info.addField(TOOLTIP_KEYS.IP_ADDRESS, this.ip.octets.join("."));
-
-    info.addEmptySpace();
+    info.addField(
+      TOOLTIP_KEYS.IP_ADDRESS,
+      this.ip.octets.join("."),
+      TOOLTIP_KEYS.IP_ADDRESS,
+    );
 
     info.addProgressBar(
       TOOLTIP_KEYS.PACKET_QUEUE_USAGE,
@@ -71,23 +72,27 @@ export class ViewRouter extends ViewNetworkDevice {
         });
       },
     );
-
-    info.addParameterGroup(TOOLTIP_KEYS.ROUTER_PARAMETERS, [
-      {
-        label: TOOLTIP_KEYS.PACKET_QUEUE_SIZE_PARAMETER,
-        initialValue: this.packetQueue.getMaxQueueSize(),
-        onChange: (newSize: number) => {
-          this.modifyPacketQueueSize(newSize);
+    info.addDivider();
+    info.addParameterGroup(
+      TOOLTIP_KEYS.ROUTER_PARAMETERS,
+      TOOLTIP_KEYS.ROUTER_PARAMETERS,
+      [
+        {
+          label: TOOLTIP_KEYS.PACKET_QUEUE_SIZE_PARAMETER,
+          initialValue: this.packetQueue.getMaxQueueSize(),
+          onChange: (newSize: number) => {
+            this.modifyPacketQueueSize(newSize);
+          },
         },
-      },
-      {
-        label: TOOLTIP_KEYS.PROCESSING_SPEED_PARAMETER,
-        initialValue: this.timePerByte,
-        onChange: (newSpeed: number) => {
-          this.modifyProcessingSpeed(newSpeed);
+        {
+          label: TOOLTIP_KEYS.PROCESSING_SPEED_PARAMETER,
+          initialValue: this.timePerByte,
+          onChange: (newSpeed: number) => {
+            this.modifyProcessingSpeed(newSpeed);
+          },
         },
-      },
-    ]);
+      ],
+    );
 
     info.addRoutingTable(this.viewgraph, this.id);
 
@@ -104,13 +109,11 @@ export class ViewRouter extends ViewNetworkDevice {
 
   setMaxQueueSize(newSize: number) {
     this.packetQueue.setMaxQueueSize(newSize);
-    console.log("Max queue size set to Vr", newSize);
     this.packetQueueSize = newSize;
   }
 
   setTimePerByte(newTime: number) {
     this.timePerByte = newTime;
-    console.log("Time per byte set to Vr", newTime);
   }
 
   /**
@@ -275,12 +278,12 @@ class PacketQueue {
     this.maxQueueSizeBytes = maxQueueSizeBytes;
   }
 
-  // Método para suscribirse a cambios
+  // method to subscribe to changes
   subscribe(observer: () => void): void {
     this.observers.push(observer);
   }
 
-  // Método para notificar a los observadores
+  // method to notify all observers
   private notifyObservers(): void {
     this.observers.forEach((observer) => observer());
   }

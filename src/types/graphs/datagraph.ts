@@ -444,7 +444,10 @@ export class DataGraph {
   }
 
   regenerateRoutingTableClean(id: DeviceId): RoutingTableEntry[] {
-    return this.generateRoutingTable(id);
+    const router = this.deviceGraph.getVertex(id);
+    if (!(router instanceof DataRouter)) return [];
+    router.routingTable = this.generateRoutingTable(id);
+    return router.routingTable;
   }
 
   regenerateRoutingTable(id: DeviceId) {
@@ -563,8 +566,11 @@ export class DataGraph {
 
     // Obtener solo las entradas visibles (no eliminadas)
     const visibleEntries = router.routingTable.filter(
-      (entry) => !entry.deleted,
+      (entry) => entry.deleted === false || entry.deleted === undefined,
     );
+
+    console.log(`Visible entries:`, visibleEntries);
+    console.log("visibleEntries.length", visibleEntries.length);
 
     // Validar que el índice de la UI es correcto
     if (visibleRowIndex < 0 || visibleRowIndex >= visibleEntries.length) {
@@ -645,10 +651,15 @@ export class DataGraph {
       return;
     }
 
+    console.log(router.routingTable);
+
     // Obtener solo las entradas visibles (no eliminadas)
     const visibleEntries = router.routingTable.filter(
-      (entry) => !entry.deleted,
+      (entry) => entry.deleted === false || entry.deleted === undefined,
     );
+
+    console.log(`Visible entries:`, visibleEntries);
+    console.log("visibleEntries.length", visibleEntries.length);
 
     // Validar que el índice visible es correcto
     if (visibleRowIndex < 0 || visibleRowIndex >= visibleEntries.length) {

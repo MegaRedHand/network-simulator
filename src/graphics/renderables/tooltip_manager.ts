@@ -24,14 +24,33 @@ export class TooltipManager {
     if (key in this.tooltipsDictionary) {
       if (tooltipsEnabled) {
         element.classList.add("has-tooltip");
-        element.addEventListener("mouseenter", () => this.showTooltip(key));
-        element.addEventListener("mouseleave", () => {
+
+        const showHandler = () => this.showTooltip(key);
+        const hideHandler = () => {
           if (hideDelay) {
             this.startHideTooltipDelay();
           } else {
             this.hideTooltip();
           }
+        };
+
+        element.addEventListener("mouseenter", showHandler);
+        element.addEventListener("mouseleave", hideHandler);
+
+        // Add a mutation observer to detect when the element is removed
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (
+              mutation.type === "childList" &&
+              !document.body.contains(element)
+            ) {
+              this.hideTooltip(); // Hide the tooltip if the element is removed
+              observer.disconnect(); // Stop observing
+            }
+          });
         });
+
+        observer.observe(document.body, { childList: true, subtree: true });
       } else {
         element.classList.remove("has-tooltip");
       }
