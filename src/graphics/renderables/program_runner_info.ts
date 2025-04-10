@@ -1,5 +1,6 @@
 import { ProgramRunner, RunningProgram } from "../../programs";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
+import { ERROR_MESSAGES } from "../../utils/constants/error_constants";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { Button } from "../basic_components/button";
 import { Dropdown } from "../basic_components/dropdown";
@@ -57,7 +58,7 @@ export class ProgramRunnerInfo implements Renderable {
         const { name } = selectedProgram;
         const inputs = selectedProgram.getInputValues();
         if (inputs.some((input) => input === null || input === undefined)) {
-          console.error("Some inputs are missing or invalid.");
+          alert(ERROR_MESSAGES.START_PROGRAM_INVALID_INPUT);
           return;
         }
         this.runner.addRunningProgram(name, inputs);
