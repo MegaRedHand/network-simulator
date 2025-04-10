@@ -8,6 +8,8 @@ import {
 } from "../graphics/basic_components/dropdown";
 import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 import { CSS_CLASSES } from "../utils/constants/css_constants";
+import { AlertManager, AlertType } from "../graphics/renderables/alert_manager";
+import { ALERT_MESSAGES } from "../utils/constants/alert_constants";
 
 export class LayerHandler {
   private ctx: GlobalContext;
@@ -45,8 +47,11 @@ export class LayerHandler {
     });
 
     // Initialize the dropdown with the current layer
-    this.selectNewLayer(layerToName(this.ctx.getCurrentLayer()));
-    this.layerDropdown.setValue(layerToName(this.ctx.getCurrentLayer()));
+    const selectedLayer = layerToName(this.ctx.getCurrentLayer());
+    this.ctx.changeLayer(selectedLayer);
+    saveToLocalStorage(this.ctx);
+    this.leftBar.setButtonsByLayer(selectedLayer);
+    this.layerDropdown.setValue(selectedLayer);
   }
 
   private getLayerOptions(): DropdownOption[] {
@@ -67,10 +72,14 @@ export class LayerHandler {
   private selectNewLayer(selectedLayer: string | null) {
     if (!selectedLayer) return;
 
-    console.debug(`Layer selected: ${selectedLayer}`);
     this.ctx.changeLayer(selectedLayer);
     saveToLocalStorage(this.ctx);
     this.leftBar.setButtonsByLayer(selectedLayer);
     deselectElement();
+    AlertManager.getInstance().showAlert(
+      ALERT_MESSAGES.LAYER_CHANGED,
+      AlertType.Success,
+      7000,
+    );
   }
 }

@@ -13,4 +13,6 @@ export const ALERT_MESSAGES = {
   PARAMETER_UPDATED: "Parameter updated successfully.",
   NO_PROGRAM_SELECTED: "Please select a program to run.",
   ROUTING_TABLE_REGENERATED: "Routing table regenerated successfully.",
+  LAYER_CHANGED:
+    "Layer changed successfully. Programs that do not belong to the selected layer will be hidden but will continue running.",
 };

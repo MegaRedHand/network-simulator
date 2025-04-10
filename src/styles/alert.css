@@ -10,7 +10,7 @@
   padding: 15px 20px; /* Internal spacing */
   border-radius: 8px; /* Rounded corners */
   font-size: 1rem; /* Font size */
-  text-align: center; /* Center text */
+  text-align: left;
   z-index: 1000; /* Ensure it appears above other elements */
   box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3); /* Shadow effect */
   border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
