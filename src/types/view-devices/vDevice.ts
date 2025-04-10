@@ -166,6 +166,7 @@ export abstract class ViewDevice extends Container {
     }
     // If the stored device is this, ignore
     if (ViewDevice.connectionTarget === this) {
+      ViewDevice.connectionTarget = null;
       return;
     }
     // Connect both devices
@@ -174,8 +175,8 @@ export abstract class ViewDevice extends Container {
     const move = new AddEdgeMove(this.viewgraph.getLayer(), n1, n2);
     if (urManager.push(this.viewgraph, move)) {
       refreshElement();
-      ViewDevice.connectionTarget = null;
     }
+    ViewDevice.connectionTarget = null;
   }
 
   selectToConnect() {
