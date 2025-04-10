@@ -10,7 +10,7 @@ export class EdgeInfo extends BaseInfo {
   readonly edge: Edge;
 
   constructor(edge: Edge) {
-    super("Edge Information");
+    super(TOOLTIP_KEYS.EDGE_INFORMATION);
     this.edge = edge;
     this.addCommonInfoFields();
   }
