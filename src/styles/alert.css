@@ -1,0 +1,63 @@
+/* Alert container */
+.alert-container {
+  display: none; /* Hidden by default */
+  position: fixed; /* Fixed position on the screen */
+  top: 80%; /* Center vertically */
+  left: 40%; /* Center horizontally */
+  transform: translate(-50%, 0); /* Adjust position to center horizontally */
+  background: #ff4d4d; /* Default red background for errors */
+  color: #ffffff; /* White text */
+  padding: 15px 20px; /* Internal spacing */
+  border-radius: 8px; /* Rounded corners */
+  font-size: 1rem; /* Font size */
+  text-align: center; /* Center text */
+  z-index: 1000; /* Ensure it appears above other elements */
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3); /* Shadow effect */
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
+  max-width: 400px; /* Maximum width */
+  line-height: 1.5; /* Line spacing */
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; /* Font family */
+  opacity: 0; /* Initially transparent */
+  transition:
+    opacity 0.3s ease-in-out,
+    transform 0.3s ease-in-out; /* Smooth transitions */
+}
+
+/* Show the alert */
+.alert-container.show {
+  display: block; /* Make it visible */
+  opacity: 1; /* Fully opaque */
+  transform: translate(-50%, 20px); /* Slightly lower position for animation */
+}
+
+/* Success alert */
+.alert-success {
+  background: #4caf50; /* Green background for success */
+}
+
+/* Warning alert */
+.alert-warning {
+  background: #ff9800; /* Orange background for warnings */
+}
+
+/* Error alert */
+.alert-error {
+  background: #f44336; /* Red background for errors */
+}
+
+@media (max-width: 768px) {
+  .alert-container {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 22.5rem;
+    max-height: 80vh;
+    font-size: 0.875rem;
+    overflow-y: scroll; /* Enable scrolling */
+    scrollbar-width: none; /* Hide scrollbar in Firefox */
+  }
+
+  .alert-container::-webkit-scrollbar {
+    display: none; /* Hide scrollbar in WebKit browsers */
+  }
+}

@@ -1,4 +1,4 @@
-export const ERROR_MESSAGES = {
+export const ALERT_MESSAGES = {
   START_PROGRAM_INVALID_INPUT: "Some inputs are missing to start the program.",
   NO_FREE_INTERFACES: (devices: string) =>
     `No free interfaces available for ${devices}.`,
@@ -8,4 +8,9 @@ export const ERROR_MESSAGES = {
   INVALID_IFACE:
     "Invalid interface format. Expected format: ethX where X is a number.",
   EMPTY_INPUT: "Input cannot be empty.",
+  PROGRAM_STARTED: "Program started successfully.",
+  ROUTING_TABLE_UPDATED: "Routing table updated successfully.",
+  PARAMETER_UPDATED: "Parameter updated successfully.",
+  NO_PROGRAM_SELECTED: "Please select a program to run.",
+  ROUTING_TABLE_REGENERATED: "Routing table regenerated successfully.",
 };

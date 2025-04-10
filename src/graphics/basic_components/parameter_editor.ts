@@ -1,5 +1,6 @@
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
-import { ERROR_MESSAGES } from "../../utils/constants/error_constants";
+import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
+import { AlertManager, AlertType } from "../renderables/alert_manager";
 import { TooltipManager } from "../renderables/tooltip_manager";
 
 export interface EditableParameter {
@@ -52,13 +53,20 @@ export class ParameterEditor {
           : (input.value as string);
 
       if (input.value === "") {
-        alert(ERROR_MESSAGES.EMPTY_INPUT);
+        AlertManager.getInstance().showAlert(
+          ALERT_MESSAGES.EMPTY_INPUT,
+          AlertType.Error,
+        );
         input.value = previousValue.toString();
       } else if (input.type === "number" && isNaN(newValue as number)) {
         input.value = previousValue.toString();
       } else {
         previousValue = newValue;
         onChange(newValue);
+        AlertManager.getInstance().showAlert(
+          ALERT_MESSAGES.PARAMETER_UPDATED,
+          AlertType.Success,
+        );
       }
     });
 

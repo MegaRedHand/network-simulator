@@ -11,7 +11,11 @@ import {
   DataRouter,
 } from "../data-devices";
 import { GlobalContext } from "../../context";
-import { ERROR_MESSAGES } from "../../utils/constants/error_constants";
+import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
+import {
+  AlertManager,
+  AlertType,
+} from "../../graphics/renderables/alert_manager";
 
 export type DeviceId = VertexId;
 
@@ -246,7 +250,10 @@ export class DataGraph {
         n1Iface === null && n2Iface === null
           ? `devices ${n1Id} and ${n2Id}`
           : `device ${n1Iface === null ? n1Id : n2Id}`;
-      alert(ERROR_MESSAGES.NO_FREE_INTERFACES(unavailableDevices));
+      AlertManager.getInstance().showAlert(
+        ALERT_MESSAGES.NO_FREE_INTERFACES(unavailableDevices),
+        AlertType.Warning,
+      );
       return null;
     }
     const edge = {
