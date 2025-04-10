@@ -189,6 +189,7 @@ export function loadFromFile(ctx: GlobalContext) {
         return;
       }
       ctx.load(dataGraph);
+      ctx.centerView();
 
       AlertManager.getInstance().showAlert(
         ALERT_MESSAGES.GRAPH_LOADED_SUCCESSFULLY,
