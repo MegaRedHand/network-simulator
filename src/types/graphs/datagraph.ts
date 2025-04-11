@@ -11,6 +11,8 @@ import {
   DataRouter,
 } from "../data-devices";
 import { GlobalContext } from "../../context";
+import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
+import { showWarning } from "../../graphics/renderables/alert_manager";
 
 export type DeviceId = VertexId;
 
@@ -244,8 +246,8 @@ export class DataGraph {
       const unavailableDevices =
         n1Iface === null && n2Iface === null
           ? `devices ${n1Id} and ${n2Id}`
-          : `device ${n1Id === null ? n1Id : n2Id}`;
-      alert(`No free interfaces available for ${unavailableDevices}.`);
+          : `device ${n1Iface === null ? n1Id : n2Id}`;
+      showWarning(ALERT_MESSAGES.NO_FREE_INTERFACES(unavailableDevices));
       return null;
     }
     const edge = {

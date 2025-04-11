@@ -8,6 +8,8 @@ import {
 } from "../graphics/basic_components/dropdown";
 import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 import { CSS_CLASSES } from "../utils/constants/css_constants";
+import { showSuccess } from "../graphics/renderables/alert_manager";
+import { ALERT_MESSAGES } from "../utils/constants/alert_constants";
 
 export class LayerHandler {
   private ctx: GlobalContext;
@@ -45,8 +47,9 @@ export class LayerHandler {
     });
 
     // Initialize the dropdown with the current layer
-    this.selectNewLayer(layerToName(this.ctx.getCurrentLayer()));
-    this.layerDropdown.setValue(layerToName(this.ctx.getCurrentLayer()));
+    const selectedLayer = layerToName(this.ctx.getCurrentLayer());
+    this.applyLayerChange(selectedLayer, false); // No success message on initialization
+    this.layerDropdown.setValue(selectedLayer);
   }
 
   private getLayerOptions(): DropdownOption[] {
@@ -67,10 +70,22 @@ export class LayerHandler {
   private selectNewLayer(selectedLayer: string | null) {
     if (!selectedLayer) return;
 
-    console.debug(`Layer selected: ${selectedLayer}`);
+    this.applyLayerChange(selectedLayer, true); // Show success message on layer change
+  }
+
+  /**
+   * Applies the layer change logic.
+   * @param selectedLayer - The layer to change to.
+   * @param showAlert - Whether to show a success message.
+   */
+  private applyLayerChange(selectedLayer: string, showAlert: boolean) {
     this.ctx.changeLayer(selectedLayer);
     saveToLocalStorage(this.ctx);
     this.leftBar.setButtonsByLayer(selectedLayer);
     deselectElement();
+
+    if (showAlert) {
+      showSuccess(ALERT_MESSAGES.LAYER_CHANGED, 7000);
+    }
   }
 }
