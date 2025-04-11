@@ -1,5 +1,7 @@
 import { Application, GraphicsContext, RenderTexture } from "pixi.js";
 import { Viewport } from "../graphics/viewport";
+import { ALERT_MESSAGES } from "./constants/alert_constants";
+import { showError } from "../graphics/renderables/alert_manager";
 
 export enum Colors {
   Violet = 0x4b0082,
@@ -64,7 +66,7 @@ export function captureAndDownloadViewport(
   // Step 4: Convert the extracted canvas to a Blob and download it
   extractedCanvas.toBlob((blob) => {
     if (!blob) {
-      alert("Failed to generate image.");
+      showError(ALERT_MESSAGES.FAILED_TO_GENERATE_IMAGE);
       return;
     }
 

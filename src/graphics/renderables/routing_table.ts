@@ -6,6 +6,8 @@ import { DeviceId } from "../../types/graphs/datagraph";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { ROUTER_CONSTANTS } from "../../utils/constants/router_constants";
+import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
+import { showError, showSuccess } from "./alert_manager";
 
 export interface RoutingTableProps {
   rows: string[][]; // Rows for the table
@@ -107,6 +109,8 @@ export class RoutingTable {
     ]);
 
     this.updateRows(newRows);
+
+    showSuccess(ALERT_MESSAGES.ROUTING_TABLE_REGENERATED);
   }
 
   private setRoutingTableCallbacks(viewgraph: ViewGraph, deviceId: DeviceId) {
@@ -119,9 +123,9 @@ export class RoutingTable {
         isValid = isValidIP(newValue);
       else if (col === ROUTER_CONSTANTS.INTERFACE_COL_INDEX)
         isValid = isValidInterface(newValue);
-
       if (isValid) {
         viewgraph.getDataGraph().saveManualChange(deviceId, row, col, newValue);
+        showSuccess(ALERT_MESSAGES.ROUTING_TABLE_UPDATED);
       }
       return isValid;
     };
@@ -144,11 +148,19 @@ export class RoutingTable {
 function isValidIP(ip: string): boolean {
   const ipPattern =
     /^(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)$/;
-  return ipPattern.test(ip);
+  const result = ipPattern.test(ip);
+  if (!result) {
+    showError(ALERT_MESSAGES.INVALID_IP_MASK);
+  }
+  return result;
 }
 
 // Function to validate Interface format (ethX where X is a number)
 function isValidInterface(interfaceStr: string): boolean {
   const interfacePattern = /^eth[0-9]+$/;
-  return interfacePattern.test(interfaceStr);
+  const result = interfacePattern.test(interfaceStr);
+  if (!result) {
+    showError(ALERT_MESSAGES.INVALID_IFACE);
+  }
+  return result;
 }

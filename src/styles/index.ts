@@ -21,3 +21,4 @@ import "./slider.css";
 import "./divider.css";
 import "./progress-bar.css";
 import "./label.css";
+import "./alert.css";

@@ -1,9 +1,11 @@
 import { ProgramRunner, RunningProgram } from "../../programs";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
+import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { Button } from "../basic_components/button";
 import { Dropdown } from "../basic_components/dropdown";
 import { Table } from "../basic_components/table";
+import { showError, showSuccess } from "./alert_manager";
 import { Renderable } from "./base_info";
 import { ProgramInfo } from "./device_info";
 import { TooltipManager } from "./tooltip_manager";
@@ -31,13 +33,12 @@ export class ProgramRunnerInfo implements Renderable {
     this.inputFields.push(labelElement);
   }
   private addPrograms(programs: ProgramInfo[]) {
-    let selectedProgram = programs[0];
+    let selectedProgram: ProgramInfo = null;
 
     const programOptions = programs.map(({ name }, i) => {
       return { value: i.toString(), text: name };
     });
     const programInputs = document.createElement("div");
-    programInputs.replaceChildren(...selectedProgram.toHTML());
 
     // Create the dropdown using the Dropdown class
     const selectProgramDropdown = new Dropdown({
@@ -54,13 +55,18 @@ export class ProgramRunnerInfo implements Renderable {
     const startProgramButton = new Button({
       text: TOOLTIP_KEYS.START_PROGRAM,
       onClick: () => {
+        if (!selectedProgram) {
+          showError(ALERT_MESSAGES.NO_PROGRAM_SELECTED);
+          return;
+        }
         const { name } = selectedProgram;
         const inputs = selectedProgram.getInputValues();
         if (inputs.some((input) => input === null || input === undefined)) {
-          console.error("Some inputs are missing or invalid.");
+          showError(ALERT_MESSAGES.START_PROGRAM_INVALID_INPUT);
           return;
         }
         this.runner.addRunningProgram(name, inputs);
+        showSuccess(ALERT_MESSAGES.PROGRAM_STARTED);
         this.refreshTable();
       },
       classList: [
