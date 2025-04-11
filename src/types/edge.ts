@@ -8,11 +8,6 @@ import { Packet } from "./packet";
 import { EdgeInfo } from "../graphics/renderables/edge_info";
 import { DataEdge, DeviceId } from "./graphs/datagraph";
 
-export interface EdgeEdges {
-  n1: DeviceId;
-  n2: DeviceId;
-}
-
 export class Edge extends Graphics {
   data: DataEdge;
   private startPos: Point;
