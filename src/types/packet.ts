@@ -345,7 +345,8 @@ export class Packet extends Graphics {
   }
 }
 
-// TODO: Replace srcId and nextHopId with the interface
+// TODO: Replace and nextHopId with the sending interface. Like this, the function
+//       can manage to send the packet to each one of the interface connection.
 export function sendViewPacket(
   viewgraph: ViewGraph,
   srcId: DeviceId,

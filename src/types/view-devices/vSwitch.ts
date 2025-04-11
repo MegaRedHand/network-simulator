@@ -4,7 +4,7 @@ import { ViewGraph } from "../graphs/viewgraph";
 import SwitchImage from "../../assets/switch.svg";
 import { Position } from "../common";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
-import { DeviceId } from "../graphs/datagraph";
+import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { Texture } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { IPv4Packet } from "../../packets/ip";
@@ -29,8 +29,17 @@ export class ViewSwitch extends ViewDevice {
     ctx: GlobalContext,
     position: Position,
     mac: MacAddress,
+    interfaces: NetworkInterfaceData[],
   ) {
-    super(id, ViewSwitch.getTexture(), viewgraph, ctx, position, mac);
+    super(
+      id,
+      ViewSwitch.getTexture(),
+      viewgraph,
+      ctx,
+      position,
+      mac,
+      interfaces,
+    );
   }
 
   showInfo(): void {
@@ -61,11 +70,6 @@ export class ViewSwitch extends ViewDevice {
   ) {
     if (nextHopId === senderId) {
       // Packet would be sent to the interface where it came, discard it
-      return;
-    }
-    const nextHop = this.viewgraph.getDevice(nextHopId);
-    if (!nextHop) {
-      console.warn(`Next hop with id ${nextHopId} not found`);
       return;
     }
 

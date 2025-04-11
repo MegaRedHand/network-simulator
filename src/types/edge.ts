@@ -61,6 +61,10 @@ export class Edge extends Graphics {
         : undefined;
   }
 
+  getData(): DataEdge {
+    return this.data;
+  }
+
   // Method to draw the line
   drawEdge(startPos: Point, endPos: Point, color: number) {
     this.clear();

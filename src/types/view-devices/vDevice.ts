@@ -19,7 +19,11 @@ import { Colors, ZIndexLevels } from "../../utils/utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { IpAddress } from "../../packets/ip";
-import { DeviceId, RemovedNodeData } from "../graphs/datagraph";
+import {
+  DeviceId,
+  NetworkInterfaceData,
+  RemovedNodeData,
+} from "../graphs/datagraph";
 import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer, layerIncluded } from "../layer";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
@@ -29,6 +33,13 @@ export enum DeviceType {
   Host = 0,
   Router = 1,
   Switch = 2,
+}
+
+export interface NetworkInterface {
+  name: string;
+  mac: MacAddress;
+  // TODO: add IP address
+  // ip?: string;
 }
 
 export function layerFromType(type: DeviceType) {
@@ -51,6 +62,7 @@ export abstract class ViewDevice extends Container {
 
   mac: MacAddress;
   arpTable: Map<IpAddress, MacAddress> = new Map<IpAddress, MacAddress>();
+  interfaces: NetworkInterface[] = [];
 
   highlightMarker: Graphics | null = null; // Marker to indicate selection
 
@@ -80,6 +92,7 @@ export abstract class ViewDevice extends Container {
     ctx: GlobalContext,
     position: Position,
     mac: MacAddress,
+    interfaces: NetworkInterfaceData[],
   ) {
     super();
 
@@ -88,6 +101,11 @@ export abstract class ViewDevice extends Container {
     this.ctx = ctx;
 
     this.mac = mac;
+    this.interfaces = interfaces.map((iface) => ({
+      name: iface.name,
+      mac: MacAddress.parse(iface.mac),
+      // TODO: Add ip (in NetworkDevice)
+    }));
 
     this.sprite = new Sprite(texture);
 

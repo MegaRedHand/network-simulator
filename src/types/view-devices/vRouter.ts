@@ -6,7 +6,7 @@ import RouterImage from "../../assets/router.svg";
 import { Position } from "../common";
 import { DeviceInfo, RightBar } from "../../graphics/right_bar";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
-import { DeviceId } from "../graphs/datagraph";
+import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { Texture, Ticker } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
@@ -38,12 +38,23 @@ export class ViewRouter extends ViewNetworkDevice {
     ctx: GlobalContext,
     position: Position,
     mac: MacAddress,
+    interfaces: NetworkInterfaceData[],
     ip: IpAddress,
     mask: IpAddress,
     packetQueueSize: number = ROUTER_CONSTANTS.PACKET_QUEUE_MAX_SIZE,
     timePerByte: number = ROUTER_CONSTANTS.PROCESSING_SPEED,
   ) {
-    super(id, ViewRouter.getTexture(), viewgraph, ctx, position, mac, ip, mask);
+    super(
+      id,
+      ViewRouter.getTexture(),
+      viewgraph,
+      ctx,
+      position,
+      mac,
+      interfaces,
+      ip,
+      mask,
+    );
     this.packetQueueSize = packetQueueSize;
     this.packetQueue = new PacketQueue(this.packetQueueSize);
     this.timePerByte = timePerByte;
@@ -191,6 +202,11 @@ export class ViewRouter extends ViewNetworkDevice {
     if (!datagram) {
       return;
     }
+    // TODO: routePacket would return the sending interface, then the function
+    //       should find set the frame destination mac as the mac of the next
+    //       network device to receive the packet (or its interface), and
+    //       finally, call sendViewPacket, who would send the packet to all
+    //       devices connected with the interface.
     const devices = this.routePacket(datagram);
 
     if (!devices || devices.length === 0) {
@@ -211,6 +227,7 @@ export class ViewRouter extends ViewNetworkDevice {
         // If the next hop is a network device, use its MAC address
         dstMac = nextHop.mac;
       } else {
+        // NOTE: This part should be removed when router no longer register switches on its routing tables
         const device = this.viewgraph.getDeviceByIP(
           datagram.destinationAddress,
         );
@@ -251,6 +268,7 @@ export class ViewRouter extends ViewNetworkDevice {
     return this.packetQueue.dequeue();
   }
 
+  // TODO: Should retreive only the iface
   routePacket(datagram: IPv4Packet): DeviceId[] {
     console.debug(
       `Device ${this.id} va a rutear el datagram con origen ${datagram.sourceAddress.toString()} y destino ${datagram.destinationAddress.toString()}`,
@@ -267,13 +285,8 @@ export class ViewRouter extends ViewNetworkDevice {
       }
       const ip = IpAddress.parse(entry.ip);
       const mask = IpAddress.parse(entry.mask);
-      const isIn = datagram.destinationAddress.isInSubnet(ip, mask);
-      console.debug(
-        `entry check: ip ${entry.ip} & mask ${entry.mask}. Is in ${isIn}`,
-      );
-      return isIn;
+      return datagram.destinationAddress.isInSubnet(ip, mask);
     });
-    console.debug(result);
 
     if (!result) {
       console.warn("No route found for", datagram.destinationAddress);
@@ -284,13 +297,11 @@ export class ViewRouter extends ViewNetworkDevice {
       .getDataGraph()
       .getConnectionsInInterface(this.id, result.iface);
 
-    console.debug(devices);
     if (!devices) {
       console.error("Current device doesn't exist!", this.id);
       return [];
     }
 
-    console.debug(`Se llego al final de routePacket con devices ${devices}`);
     return devices;
   }
 }

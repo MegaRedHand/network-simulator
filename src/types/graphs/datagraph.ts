@@ -65,7 +65,7 @@ export interface RouterDataNode extends NetworkDataNode {
 export interface RoutingTableEntry {
   ip: string;
   mask: string;
-  iface: DeviceId;
+  iface: number;
   manuallyEdited?: boolean;
   deleted?: boolean;
 }
@@ -248,7 +248,7 @@ export class DataGraph {
       alert(`No free interfaces available for ${unavailableDevices}.`);
       return null;
     }
-    const edge = {
+    const edge: DataEdge = {
       from: { id: n1Id, iface: n1Iface },
       to: { id: n2Id, iface: n2Iface },
     };
@@ -350,18 +350,13 @@ export class DataGraph {
     }
     const connections = [];
     for (const [neighborId, { from, to }] of this.deviceGraph.getEdges(id)) {
-      console.debug(`Checking connection with device ${neighborId}:`);
-      console.debug(from);
-      console.debug(to);
       if (
         (from.id === id && from.iface === iface) ||
         (to.id === id && to.iface === iface)
       ) {
-        console.debug("Is in");
         connections.push(neighborId);
       }
     }
-    console.debug(connections);
     return connections;
   }
 

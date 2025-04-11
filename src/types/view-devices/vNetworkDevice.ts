@@ -1,6 +1,6 @@
 import { Texture } from "pixi.js";
 import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
-import { DeviceId } from "../graphs/datagraph";
+import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { ViewDevice } from "./vDevice";
 import { ViewGraph } from "../graphs/viewgraph";
 import { Position } from "../common";
@@ -20,10 +20,11 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     ctx: GlobalContext,
     position: Position,
     mac: MacAddress,
+    interfaces: NetworkInterfaceData[],
     ip: IpAddress,
     ipMask: IpAddress,
   ) {
-    super(id, texture, viewgraph, ctx, position, mac);
+    super(id, texture, viewgraph, ctx, position, mac, interfaces);
     this.ip = ip;
     this.ipMask = ipMask;
   }
@@ -68,7 +69,7 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     }
   }
 
-  receiveFrame(frame: EthernetFrame, senderId: DeviceId): void {
+  receiveFrame(frame: EthernetFrame, _senderId: DeviceId): void {
     console.debug(
       `Device ${this.id} recibio un frame con direccion mac destino ${frame.destination.toString()}`,
     );
