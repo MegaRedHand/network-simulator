@@ -1,4 +1,4 @@
-import { TooltipManager } from "../renderables/tooltip_manager";
+import { attachTooltip } from "../renderables/tooltip_manager";
 
 export class Label {
   private labelElement: HTMLLabelElement;
@@ -12,7 +12,7 @@ export class Label {
     }
 
     if (tooltip) {
-      TooltipManager.getInstance().attachTooltip(this.labelElement, tooltip); // Attach tooltip
+      attachTooltip(this.labelElement, tooltip); // Attach tooltip
     }
   }
 

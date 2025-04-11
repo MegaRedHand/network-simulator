@@ -1,4 +1,4 @@
-import { TooltipManager } from "../renderables/tooltip_manager";
+import { attachTooltip } from "../renderables/tooltip_manager";
 
 export interface ToggleButtonProps {
   text: string; // Default button text (used if textOn/textOff are not provided)
@@ -29,7 +29,7 @@ export class ToggleButton {
     }
 
     if (tooltip) {
-      TooltipManager.getInstance().attachTooltip(this.button, tooltip);
+      attachTooltip(this.button, tooltip);
     }
 
     this.button.onclick = () => {
