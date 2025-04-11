@@ -127,7 +127,7 @@ function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType): DataNode {
     interfaces.push(iface);
   }
   if (isSwitch) {
-    return { x, y, type, mac, interfaces };
+    return { x, y, type, mac, interfaces, switchingTable: [] };
   }
   const { ip, mask } = ctx.getNextIp();
   return { x, y, type, mac, ip, mask, interfaces };

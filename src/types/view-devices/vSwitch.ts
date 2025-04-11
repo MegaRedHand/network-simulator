@@ -10,6 +10,7 @@ import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { IPv4Packet } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 import { sendViewPacket } from "../packet";
+import { DataSwitch } from "../data-devices";
 
 export class ViewSwitch extends ViewDevice {
   static DEVICE_TEXTURE: Texture;
@@ -57,9 +58,20 @@ export class ViewSwitch extends ViewDevice {
   }
 
   updateSwitchingTable(mac: MacAddress, deviceId: DeviceId): void {
-    if (!this.switchingTable.has(mac.toString())) {
+    const dDevice = this.viewgraph.getDataGraph().getDevice(this.id);
+    if (!dDevice || !(dDevice instanceof DataSwitch)) {
+      console.warn(`Switch with id ${this.id} not found in datagraph`);
+      return;
+    }
+    const switchingTable = dDevice.switchingTable;
+    if (!switchingTable.has(mac.toString())) {
       console.debug(`Adding ${mac.toString()} to the switching table`);
-      this.switchingTable.set(mac.toString(), deviceId);
+      switchingTable.set(mac.toString(), deviceId);
+      this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
+        if (device instanceof DataSwitch) {
+          device.updateSwitchingTable(mac, deviceId);
+        }
+      });
     }
   }
 
@@ -91,17 +103,21 @@ export class ViewSwitch extends ViewDevice {
     }
     // Update the switching table with the source MAC address
     this.updateSwitchingTable(frame.source, senderId);
-    console.debug(
-      `Looking for ${frame.destination.toString()} in the switching table`,
-    );
+
     // If the destination MAC address is in the switching table, send the frame
     // to the corresponding device
     // If the destination MAC address is not in the switching table, send the frame
     // to all devices connected to the switch
-    const nextHops: DeviceId[] = this.switchingTable.has(
+    const dDevice = this.viewgraph.getDataGraph().getDevice(this.id);
+    if (!dDevice || !(dDevice instanceof DataSwitch)) {
+      console.warn(`Switch with id ${this.id} not found in datagraph`);
+      return;
+    }
+    const switchingTable = dDevice.switchingTable;
+    const nextHops: DeviceId[] = switchingTable.has(
       frame.destination.toString(),
     )
-      ? [this.switchingTable.get(frame.destination.toString())]
+      ? [switchingTable.get(frame.destination.toString())]
       : this.viewgraph
           .getConnections(this.id)
           .map((edge) => edge.otherEnd(this.id));

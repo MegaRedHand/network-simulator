@@ -1,6 +1,6 @@
 import { EthernetFrame } from "../../packets/ethernet";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
-import { DataGraph, DeviceId, NetworkDataNode } from "../graphs/datagraph";
+import { DataGraph, NetworkDataNode } from "../graphs/datagraph";
 import { DataDevice } from "./dDevice";
 
 export abstract class DataNetworkDevice extends DataDevice {
@@ -28,7 +28,7 @@ export abstract class DataNetworkDevice extends DataDevice {
     // TODO: this is unused
   }
 
-  receiveFrame(frame: EthernetFrame, senderId: DeviceId): void {
+  receiveFrame(frame: EthernetFrame): void {
     console.debug(
       `Device ${this.mac.toString()} receive frame with destination ${frame.destination.toString()}`,
     );

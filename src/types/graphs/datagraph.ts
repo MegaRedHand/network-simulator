@@ -32,7 +32,7 @@ interface CommonDataNode {
   // TODO: remove this
   mac: string;
   interfaces: NetworkInterfaceData[];
-  arpTable?: Map<string, string>;
+  arpTable?: [string, string][];
 }
 
 export interface NetworkInterfaceData {
@@ -46,6 +46,7 @@ export interface NetworkInterfaceData {
 }
 
 export interface SwitchDataNode extends CommonDataNode {
+  switchingTable: [string, number][];
   type: DeviceType.Switch;
 }
 
@@ -148,7 +149,6 @@ export class DataGraph {
 
     // Serialize nodes
     for (const [, device] of this.deviceGraph.getAllVertices()) {
-      device.getDataNode();
       // parse to serializable format
       const dataNode: DataNode = device.getDataNode();
       nodes.push(dataNode);

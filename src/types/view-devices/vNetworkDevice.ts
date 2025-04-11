@@ -60,23 +60,14 @@ export abstract class ViewNetworkDevice extends ViewDevice {
         }
         break;
       }
-      case 0xfd: {
-        console.debug("Empty payload packet received!");
-        break;
-      }
       default:
         console.warn("Packet's type unrecognized");
     }
   }
 
-  receiveFrame(frame: EthernetFrame, _senderId: DeviceId): void {
-    console.debug(
-      `Device ${this.id} recibio un frame con direccion mac destino ${frame.destination.toString()}`,
-    );
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  receiveFrame(frame: EthernetFrame, _: DeviceId): void {
     if (!this.mac.equals(frame.destination)) {
-      console.debug(
-        `Paquete no coincide con direccion mac ${this.mac.toString()}. Se dropea`,
-      );
       dropPacket(this.viewgraph, this.id, frame);
       return;
     }

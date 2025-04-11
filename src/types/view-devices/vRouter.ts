@@ -169,16 +169,10 @@ export class ViewRouter extends ViewNetworkDevice {
   }
 
   receiveDatagram(datagram: IPv4Packet) {
-    console.debug(
-      `Device ${this.id} recibio un datagrama con direccion ip destino ${datagram.destinationAddress.toString()}`,
-    );
     if (this.ip.equals(datagram.destinationAddress)) {
       this.handlePacket(datagram);
       return;
     }
-    console.debug(
-      `Paquete no coincide con direccion ip ${this.ip.toString()}. Se lo agrega a la cola`,
-    );
     this.addPacketToQueue(datagram);
   }
 
@@ -270,9 +264,6 @@ export class ViewRouter extends ViewNetworkDevice {
 
   // TODO: Should retreive only the iface
   routePacket(datagram: IPv4Packet): DeviceId[] {
-    console.debug(
-      `Device ${this.id} va a rutear el datagram con origen ${datagram.sourceAddress.toString()} y destino ${datagram.destinationAddress.toString()}`,
-    );
     const device = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!device || !(device instanceof DataRouter)) {
       return;

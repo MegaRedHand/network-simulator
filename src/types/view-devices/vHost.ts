@@ -1,4 +1,4 @@
-import { DeviceType, NetworkInterface } from "./vDevice";
+import { DeviceType } from "./vDevice";
 import { ViewNetworkDevice } from "./vNetworkDevice";
 import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
@@ -86,7 +86,6 @@ export class ViewHost extends ViewNetworkDevice {
   addRunningProgram(name: string, inputs: string[]) {
     const pid = this.getNextPid();
     const runningProgram = { pid, name, inputs };
-    console.debug(`Adding running program ${name} with id ${pid}`);
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
       if (!(device instanceof DataHost)) {
         console.error("Node is not a Host");
@@ -99,7 +98,6 @@ export class ViewHost extends ViewNetworkDevice {
   }
 
   removeRunningProgram(pid: Pid) {
-    console.debug(`Removing running program with id ${pid}`);
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
       if (!(device instanceof DataHost)) {
         console.error("Node is not a Host");
@@ -138,9 +136,6 @@ export class ViewHost extends ViewNetworkDevice {
   }
 
   private runProgram(runningProgram: RunningProgram) {
-    console.debug(
-      `Running program ${runningProgram.name} with id ${runningProgram.pid}`,
-    );
     const { pid } = runningProgram;
 
     const program = newProgram(this.viewgraph, this.id, runningProgram);
@@ -155,10 +150,7 @@ export class ViewHost extends ViewNetworkDevice {
 
   destroy() {
     super.destroy();
-    this.runningPrograms.forEach((program) => {
-      console.debug(`Removing program before destroying device ${this.id}`);
-      program.stop();
-    });
+    this.runningPrograms.forEach((program) => program.stop());
     this.runningPrograms.clear();
   }
 }
