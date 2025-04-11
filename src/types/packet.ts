@@ -184,7 +184,7 @@ export class Packet extends Graphics {
     if (!newStartDevice) {
       return;
     }
-    newStartDevice.receiveFrame(this.rawPacket);
+    newStartDevice.receiveFrame(this.rawPacket, this.currStart);
   }
 
   traverseEdge(startId: DeviceId, endId: DeviceId): void {
@@ -316,10 +316,13 @@ export class Packet extends Graphics {
   }
 }
 
+// TODO: Replace and nextHopId with the sending interface. Like this, the function
+//       can manage to send the packet to each one of the interface connection.
 export function sendViewPacket(
   viewgraph: ViewGraph,
   srcId: DeviceId,
   rawPacket: EthernetFrame,
+  nextHopId?: DeviceId,
 ) {
   const srcMac = rawPacket.source;
   const dstMac = rawPacket.destination;
@@ -353,7 +356,7 @@ export function sendViewPacket(
     return;
   }
   const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket);
-  packet.traverseEdge(srcId, firstEdge.otherEnd(srcId));
+  packet.traverseEdge(srcId, nextHopId ? nextHopId : firstEdge.otherEnd(srcId));
 }
 
 export function dropPacket(

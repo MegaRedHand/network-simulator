@@ -4,8 +4,8 @@ import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
+import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { RightBar } from "../../graphics/right_bar";
-import { DeviceId } from "../graphs/datagraph";
 import { Layer } from "../layer";
 import {
   getProgramList,
@@ -41,10 +41,21 @@ export class ViewHost extends ViewNetworkDevice {
     ctx: GlobalContext,
     position: Position,
     mac: MacAddress,
+    interfaces: NetworkInterfaceData[],
     ip: IpAddress,
     mask: IpAddress,
   ) {
-    super(id, ViewHost.getTexture(), viewgraph, ctx, position, mac, ip, mask);
+    super(
+      id,
+      ViewHost.getTexture(),
+      viewgraph,
+      ctx,
+      position,
+      mac,
+      interfaces,
+      ip,
+      mask,
+    );
     this.loadRunningPrograms();
   }
 

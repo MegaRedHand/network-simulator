@@ -1,14 +1,7 @@
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
-import { DataGraph, DataNode } from "../graphs/datagraph";
-import { DeviceType } from "../view-devices/vDevice";
+import { DataGraph, DataNode, DeviceId } from "../graphs/datagraph";
+import { DeviceType, NetworkInterface } from "../view-devices/vDevice";
 import { Position } from "../common";
-
-interface NetworkInterface {
-  name: string;
-  mac: MacAddress;
-  // TODO: add IP address
-  // ip?: string;
-}
 
 export abstract class DataDevice {
   private static idCounter = 1;
@@ -73,5 +66,5 @@ export abstract class DataDevice {
    * Returns the id for the next device to send the packet to, or
    * null if there’s no next device to send the packet.
    * */
-  abstract receiveFrame(frame: EthernetFrame): void;
+  abstract receiveFrame(frame: EthernetFrame, senderId: DeviceId): void;
 }

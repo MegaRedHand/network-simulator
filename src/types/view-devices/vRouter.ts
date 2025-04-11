@@ -5,7 +5,7 @@ import { ViewGraph } from "../graphs/viewgraph";
 import RouterImage from "../../assets/router.svg";
 import { Position } from "../common";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
-import { DeviceId } from "../graphs/datagraph";
+import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { Texture, Ticker } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
@@ -39,12 +39,23 @@ export class ViewRouter extends ViewNetworkDevice {
     ctx: GlobalContext,
     position: Position,
     mac: MacAddress,
+    interfaces: NetworkInterfaceData[],
     ip: IpAddress,
     mask: IpAddress,
     packetQueueSize: number = ROUTER_CONSTANTS.PACKET_QUEUE_MAX_SIZE,
     timePerByte: number = ROUTER_CONSTANTS.PROCESSING_SPEED,
   ) {
-    super(id, ViewRouter.getTexture(), viewgraph, ctx, position, mac, ip, mask);
+    super(
+      id,
+      ViewRouter.getTexture(),
+      viewgraph,
+      ctx,
+      position,
+      mac,
+      interfaces,
+      ip,
+      mask,
+    );
     this.packetQueueSize = packetQueueSize;
     this.packetQueue = new PacketQueue(this.packetQueueSize);
     this.timePerByte = timePerByte;
@@ -188,6 +199,11 @@ export class ViewRouter extends ViewNetworkDevice {
     if (!datagram) {
       return;
     }
+    // TODO: routePacket would return the sending interface, then the function
+    //       should find set the frame destination mac as the mac of the next
+    //       network device to receive the packet (or its interface), and
+    //       finally, call sendViewPacket, who would send the packet to all
+    //       devices connected with the interface.
     const devices = this.routePacket(datagram);
 
     if (!devices || devices.length === 0) {
@@ -196,15 +212,30 @@ export class ViewRouter extends ViewNetworkDevice {
       dropPacket(this.viewgraph, this.id, frame);
       return;
     }
-    for (const nextHopId of devices) {
-      // Wrap the datagram in a new frame
-      const nextHop = this.viewgraph.getDevice(nextHopId);
-      if (!nextHop) {
-        console.error("Next hop not found");
-        continue;
+
+    // TODO: Simulates the mapping of the packet's destination MAC address to the next network device in the path.
+    // This could either be the final destination of the packet or an intermediate device along the route.
+    const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
+    if (!dstDevice) {
+      console.warn(
+        `Device with ip ${datagram.destinationAddress.toString()} not found in viewgraph`,
+      );
+      return;
+    }
+    const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
+    let dstMac = dstDevice.mac;
+    if (!path) return;
+    for (const id of path.slice(1)) {
+      const device = this.viewgraph.getDevice(id);
+      // if there’s a router in the middle, first send frame to router mac
+      if (device instanceof ViewNetworkDevice) {
+        dstMac = device.mac;
+        break;
       }
-      const newFrame = new EthernetFrame(this.mac, nextHop.mac, datagram);
-      sendViewPacket(this.viewgraph, this.id, newFrame);
+    }
+    for (const nextHopId of devices) {
+      const newFrame = new EthernetFrame(this.mac, dstMac, datagram);
+      sendViewPacket(this.viewgraph, this.id, newFrame, nextHopId);
     }
 
     if (this.packetQueue.isEmpty()) {
@@ -233,6 +264,7 @@ export class ViewRouter extends ViewNetworkDevice {
     return this.packetQueue.dequeue();
   }
 
+  // TODO: Should retreive only the iface
   routePacket(datagram: IPv4Packet): DeviceId[] {
     const device = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!device || !(device instanceof DataRouter)) {

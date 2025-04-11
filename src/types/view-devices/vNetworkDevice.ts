@@ -1,6 +1,6 @@
 import { Texture } from "pixi.js";
 import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
-import { DeviceId } from "../graphs/datagraph";
+import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { ViewDevice } from "./vDevice";
 import { ViewGraph } from "../graphs/viewgraph";
 import { Position } from "../common";
@@ -20,10 +20,11 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     ctx: GlobalContext,
     position: Position,
     mac: MacAddress,
+    interfaces: NetworkInterfaceData[],
     ip: IpAddress,
     ipMask: IpAddress,
   ) {
-    super(id, texture, viewgraph, ctx, position, mac);
+    super(id, texture, viewgraph, ctx, position, mac, interfaces);
     this.ip = ip;
     this.ipMask = ipMask;
   }
@@ -64,7 +65,8 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     }
   }
 
-  receiveFrame(frame: EthernetFrame): void {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  receiveFrame(frame: EthernetFrame, _: DeviceId): void {
     if (!this.mac.equals(frame.destination)) {
       dropPacket(this.viewgraph, this.id, frame);
       return;
