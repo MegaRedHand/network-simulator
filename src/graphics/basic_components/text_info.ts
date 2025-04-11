@@ -1,5 +1,5 @@
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
-import { TooltipManager } from "../renderables/tooltip_manager";
+import { attachTooltip } from "../renderables/tooltip_manager";
 
 export interface InfoField {
   key: string;
@@ -21,7 +21,7 @@ export class TextInfo {
       titleElement.textContent = this.title;
       titleElement.classList.add(CSS_CLASSES.INFO_TITLE);
       this.container.appendChild(titleElement);
-      TooltipManager.getInstance().attachTooltip(titleElement, this.title); // Attach tooltip to the title
+      attachTooltip(titleElement, this.title); // Attach tooltip to the title
     }
 
     this.list = document.createElement("ul");
@@ -81,7 +81,7 @@ export class TextInfo {
     keyElement.style.display = CSS_CLASSES.BLOCK;
     keyElement.style.textAlign = "center";
     if (tooltip) {
-      TooltipManager.getInstance().attachTooltip(keyElement, tooltip);
+      attachTooltip(keyElement, tooltip);
     }
 
     // Create a container to wrap the JSON content
@@ -120,7 +120,7 @@ export class TextInfo {
     keyElement.textContent = `${key}`;
     keyElement.classList.add(CSS_CLASSES.DETAIL_KEY);
     if (tooltip) {
-      TooltipManager.getInstance().attachTooltip(keyElement, tooltip);
+      attachTooltip(keyElement, tooltip);
     }
 
     const valueElement = document.createElement("span");

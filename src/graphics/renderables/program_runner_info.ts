@@ -8,7 +8,7 @@ import { Table } from "../basic_components/table";
 import { showError, showSuccess } from "./alert_manager";
 import { Renderable } from "./base_info";
 import { ProgramInfo } from "./device_info";
-import { TooltipManager } from "./tooltip_manager";
+import { attachTooltip } from "./tooltip_manager";
 
 export class ProgramRunnerInfo implements Renderable {
   private runner: ProgramRunner;
@@ -26,10 +26,7 @@ export class ProgramRunnerInfo implements Renderable {
     const labelElement = document.createElement("div");
     labelElement.className = CSS_CLASSES.CENTRAL_LABEL;
     labelElement.textContent = TOOLTIP_KEYS.PROGRAM_RUNNER;
-    TooltipManager.getInstance().attachTooltip(
-      labelElement,
-      TOOLTIP_KEYS.PROGRAM_RUNNER,
-    );
+    attachTooltip(labelElement, TOOLTIP_KEYS.PROGRAM_RUNNER);
     this.inputFields.push(labelElement);
   }
   private addPrograms(programs: ProgramInfo[]) {

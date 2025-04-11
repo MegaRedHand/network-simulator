@@ -3,7 +3,7 @@ import ComputerSvg from "../assets/pc.svg";
 import SwitchSvg from "../assets/switch.svg";
 import { addDevice } from "../types/viewportManager";
 import { GlobalContext } from "../context";
-import { TooltipManager } from "./renderables/tooltip_manager";
+import { attachTooltip } from "./renderables/tooltip_manager";
 import { DeviceType } from "../types/view-devices/vDevice";
 import { Layer, layerFromName } from "../types/layer";
 
@@ -26,7 +26,7 @@ export class LeftBar {
     button.setAttribute("title", label); // Shows Text
 
     button.onclick = onClick;
-    TooltipManager.getInstance().attachTooltip(button, label);
+    attachTooltip(button, label);
     this.leftBar.appendChild(button);
 
     const img = document.createElement("img");

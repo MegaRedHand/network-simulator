@@ -28,7 +28,10 @@ import {
   triggerPrint,
   triggerSave,
 } from "./handlers/triggers";
-import { TooltipManager } from "./graphics/renderables/tooltip_manager";
+import {
+  attachTooltip,
+  TooltipManagersetGlobalContext,
+} from "./graphics/renderables/tooltip_manager";
 import { TOOLTIP_KEYS } from "./utils/constants/tooltips_constants";
 
 const assets = [
@@ -68,7 +71,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   const ctx = new GlobalContext(viewport);
 
   // Initialize tooltips
-  TooltipManager.getInstance().setGlobalContext(ctx);
+  TooltipManagersetGlobalContext(ctx);
 
   // Initialize UI components
   RightBar.getInstance();
@@ -97,7 +100,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     const button = document.getElementById(id);
     if (button) {
       button.onclick = action;
-      TooltipManager.getInstance().attachTooltip(button, id);
+      attachTooltip(button, id);
     }
   });
 

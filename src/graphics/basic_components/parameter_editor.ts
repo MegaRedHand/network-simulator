@@ -1,7 +1,7 @@
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { showError, showSuccess } from "../renderables/alert_manager";
-import { TooltipManager } from "../renderables/tooltip_manager";
+import { attachTooltip } from "../renderables/tooltip_manager";
 
 export interface EditableParameter {
   label: string;
@@ -35,7 +35,7 @@ export class ParameterEditor {
     const labelElement = document.createElement("label");
     labelElement.textContent = label;
     labelElement.className = CSS_CLASSES.PARAMETER_EDITOR_LABEL;
-    TooltipManager.getInstance().attachTooltip(labelElement, label);
+    attachTooltip(labelElement, label);
 
     // Create the input
     const input = document.createElement("input");
