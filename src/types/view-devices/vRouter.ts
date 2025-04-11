@@ -212,31 +212,30 @@ export class ViewRouter extends ViewNetworkDevice {
       dropPacket(this.viewgraph, this.id, frame);
       return;
     }
-    for (const nextHopId of devices) {
-      // Wrap the datagram in a new frame
-      const nextHop = this.viewgraph.getDevice(nextHopId);
-      if (!nextHop) {
-        console.error("Next hop not found");
-        continue;
-      }
-      let dstMac;
-      if (nextHop instanceof ViewNetworkDevice) {
-        // If the next hop is a network device, use its MAC address
-        dstMac = nextHop.mac;
-      } else {
-        // NOTE: This part should be removed when router no longer register switches on its routing tables
-        const device = this.viewgraph.getDeviceByIP(
-          datagram.destinationAddress,
-        );
-        if (!device) {
-          console.error("Destination device not found");
-          continue;
-        }
-        // If the next hop is not a network device, use the destination MAC address
+
+    // TODO: Simulates the mapping of the packet's destination MAC address to the next network device in the path.
+    // This could either be the final destination of the packet or an intermediate device along the route.
+    const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
+    if (!dstDevice) {
+      console.warn(
+        `Device with ip ${datagram.destinationAddress.toString()} not found in viewgraph`,
+      );
+      return;
+    }
+    const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
+    let dstMac = dstDevice.mac;
+    if (!path) return;
+    for (const id of path.slice(1)) {
+      const device = this.viewgraph.getDevice(id);
+      // if there’s a router in the middle, first send frame to router mac
+      if (device instanceof ViewNetworkDevice) {
         dstMac = device.mac;
+        break;
       }
+    }
+    for (const nextHopId of devices) {
       const newFrame = new EthernetFrame(this.mac, dstMac, datagram);
-      sendViewPacket(this.viewgraph, this.id, newFrame);
+      sendViewPacket(this.viewgraph, this.id, newFrame, nextHopId);
     }
 
     if (this.packetQueue.isEmpty()) {
