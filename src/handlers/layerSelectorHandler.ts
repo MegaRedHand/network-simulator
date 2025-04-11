@@ -2,45 +2,54 @@ import { GlobalContext } from "../context";
 import { LeftBar } from "../graphics/left_bar";
 import { layerToName } from "../types/layer";
 import { deselectElement, saveToLocalStorage } from "../types/viewportManager";
-import { createLayerSelector } from "../graphics/canvas";
+import {
+  Dropdown,
+  DropdownOption,
+} from "../graphics/basic_components/dropdown";
+import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
+import { CSS_CLASSES } from "../utils/constants/css_constants";
 
 export class LayerHandler {
   private ctx: GlobalContext;
   private leftBar: LeftBar;
-  private layerDropdown: {
-    container: HTMLElement;
-    getValue: () => string | null;
-    setValue: (value: string) => void;
-  } | null;
+  private layerDropdown: Dropdown;
 
   constructor(ctx: GlobalContext, leftBar: LeftBar) {
     this.ctx = ctx;
     this.leftBar = leftBar;
 
-    this.layerDropdown = createLayerSelector(
-      this.getLayerOptions(),
-      (value) => {
-        this.selectNewLayer(value);
+    // Create the dropdown for layer selection
+    this.layerDropdown = new Dropdown(
+      {
+        default_text: "Layer",
+        tooltip: TOOLTIP_KEYS.LAYER_SELECTOR,
+        options: this.getLayerOptions(),
+        onchange: (value) => {
+          this.selectNewLayer(value);
+        },
       },
-    );
+      true,
+    ); // Set not_push to true to avoid pushing the dropdown
 
+    // Append the dropdown to the container
     const dropdownContainer = document.getElementById(
-      "layer-dropdown-container",
+      CSS_CLASSES.LAYER_DROPDOWN_CONTAINER,
     );
-    if (dropdownContainer && this.layerDropdown) {
-      dropdownContainer.appendChild(this.layerDropdown.container);
+    if (dropdownContainer) {
+      dropdownContainer.appendChild(this.layerDropdown.toHTML());
     }
 
-    // Escucha el evento layerChanged y sincroniza el estado del dropdown
+    // Listen for the "layerChanged" event and synchronize the dropdown state
     document.addEventListener("layerChanged", (event: CustomEvent) => {
       this.updateLayer(layerToName(event.detail.layer));
     });
 
-    // Inicializa el estado del dropdown con la capa actual
+    // Initialize the dropdown with the current layer
     this.selectNewLayer(layerToName(this.ctx.getCurrentLayer()));
+    this.layerDropdown.setValue(layerToName(this.ctx.getCurrentLayer()));
   }
 
-  private getLayerOptions() {
+  private getLayerOptions(): DropdownOption[] {
     return [
       { value: "application", text: "App Layer" },
       { value: "transport", text: "Transport Layer" },
@@ -50,18 +59,13 @@ export class LayerHandler {
   }
 
   private updateLayer(currentLayer: string | null) {
-    if (!currentLayer || !this.layerDropdown) return;
+    if (!currentLayer) return;
 
-    this.layerDropdown.setValue(currentLayer); // update dropdown
-    console.debug(`Dropdown updated to layer: ${currentLayer}`);
+    this.layerDropdown.setValue(currentLayer);
   }
 
   private selectNewLayer(selectedLayer: string | null) {
     if (!selectedLayer) return;
-
-    if (this.layerDropdown) {
-      this.layerDropdown.setValue(selectedLayer);
-    }
 
     console.debug(`Layer selected: ${selectedLayer}`);
     this.ctx.changeLayer(selectedLayer);

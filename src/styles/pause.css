@@ -1,59 +1,40 @@
-/* 🔹 Pause button */
+/* Pause button */
 .pause-button {
-  background-color: #228b22; /* Default green color */
-  color: #ffffff; /* White text for contrast */
-  border: 0.3vh solid #000000; /* Black border */
-  width: 6vh; /* Square button with relative sizing */
-  height: 6vh;
-  border-radius: 1vh; /* Rounded corners */
-  display: flex; /* Flexbox for centering */
-  align-items: center; /* Centers content vertically */
-  justify-content: center; /* Centers content horizontally */
-  transition: background-color 0.3s ease; /* Smooth transition */
-  box-shadow: 0.4vh 0.4vh 0.8vh rgba(0, 0, 0, 0.4); /* Subtle shadow for depth */
-  outline: none; /* Removes focus outline */
-  padding: 0; /* No internal padding */
-  cursor: pointer; /* Pointer cursor for interactivity */
+  background: none; /* No background */
+  border: none; /* No border */
+  padding: 0; /* No padding */
+  display: flex; /* Center content */
+  align-items: center; /* Center vertically */
+  justify-content: center; /* Center horizontally */
+  cursor: pointer; /* Change cursor to pointer */
+  box-shadow: none; /* No shadow */
+  width: auto; /* Adjust to content size */
+  height: auto; /* Adjust to content size */
 }
 
-/* 🔹 Alternate pause button (positioned on canvas) */
-.pause-button2 {
-  background-color: #228b22; /* Default green color */
-  color: #ffffff; /* White text */
-  border: 0.3vh solid #000000; /* Black border */
-  padding: 0; /* No internal padding */
-  cursor: pointer; /* Pointer cursor for interactivity */
-  width: 6vh; /* Consistent size */
-  height: 6vh;
-  border-radius: 1vh; /* Rounded corners */
-  display: flex; /* Centers content */
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s ease; /* Smooth transition */
-  position: absolute; /* Positioned above the canvas */
-  top: 2vh; /* Offset from the top */
-  left: 2vw; /* Offset from the left */
-  box-shadow: 0.4vh 0.4vh 0.8vh rgba(0, 0, 0, 0.4); /* Subtle shadow */
-  outline: none; /* Removes focus outline */
+/* Remove default focus outline */
+.pause-button:focus {
+  outline: none; /* No focus outline */
+  box-shadow: none; /* No additional shadow */
 }
 
-/* 🔹 Hover effect */
-.pause-button:hover {
-  background-color: #006400; /* Darker green on hover */
-}
-
-/* 🔹 Active (clicked) effect */
-.pause-button:active {
-  background-color: #004d00; /* Even darker green when clicked */
-}
-
-/* 🔹 Paused state */
-.pause-button.paused {
-  background-color: #f44336; /* Red when paused */
-}
-
-/* 🔹 Icon inside the button */
+/* Icon inside the button */
 .pause-button img {
-  width: 60%; /* Icon takes 60% of the button */
-  height: 60%;
+  width: 3rem; /* Icon size */
+  height: 3rem; /* Icon size */
+  filter: brightness(0) invert(0.15); /* Initial color (#2b2b2b) */
+  transition:
+    filter 0.2s ease,
+    transform 0.2s ease; /* Smooth effect on interaction */
+}
+
+/* Hover effect */
+.pause-button:hover img {
+  filter: brightness(0) invert(0.2); /* Change symbol color to #3a3a3a */
+  transform: scale(1.1); /* Zoom effect */
+}
+
+/* Active (click) effect */
+.pause-button:active img {
+  transform: scale(0.95); /* Slightly reduce size on click */
 }

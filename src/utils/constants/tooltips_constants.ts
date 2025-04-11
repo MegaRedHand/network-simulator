@@ -32,7 +32,7 @@ export const TOOLTIP_KEYS = {
   PAUSE_BUTTON: "pause-button",
   UNDO: "undo",
   REDO: "redo",
-  SPEED_WHEEL: "speed-wheel",
+  SPEED_WHEEL: "Speed",
   ADD_HOST: "Add Host",
   ADD_ROUTER: "Add Router",
   ADD_SWITCH: "Add Switch",
@@ -45,7 +45,20 @@ export const TOOLTIP_KEYS = {
   HOST_PARAMETERS: "Host Parameters",
   PACKET_QUEUE_SIZE_PARAMETER: "Packet queue size (bytes)",
   PROCESSING_SPEED_PARAMETER: "Processing speed (ms/byte)",
+  REGENERATE: "Regenerate",
+  DELETE_EDGE_BUTTON: "Delete Edge",
+  CONNECTION: "Connection",
+  PACKET_TYPE: "Packet Type",
+  SOURCE_MAC_ADDRESS: "Source MAC Address",
+  DESTINATION_MAC_ADDRESS: "Destination MAC Address",
+  DISCARD_PACKET_BUTTON: "Discard Packet",
   PACKET_QUEUE_USAGE: "Packet Queue Usage",
+  EDGE_CONNECTED_DEVICES: "edge Connected Devices",
+  EDGE_CONNECTED_INTERFACES: "Connected Interfaces",
+  MAC_ADDRESS_IFACE: "MAC Address iface",
+  PROGRAM_RUNNER: "Program Runner",
+  EDGE_INFORMATION: "Edge Information",
+  PACKET_INFORMATION: "Packet Information",
 } as const;
 
 // Tooltip Content
@@ -129,6 +142,31 @@ export const TOOLTIP_CONTENT = {
     "The maximum size of the packet queue in bytes. This parameter determines how many packets can be stored in the queue before they are processed.",
   [TOOLTIP_KEYS.PROCESSING_SPEED_PARAMETER]:
     "The time taken to process a single byte of data. This parameter affects the speed at which packets are processed and sent.",
+  [TOOLTIP_KEYS.REGENERATE]: "Regenerate the routing table.",
+  [TOOLTIP_KEYS.DELETE_EDGE_BUTTON]:
+    "Delete the selected edge. This action will remove the connection between two devices.",
+  [TOOLTIP_KEYS.CONNECTION]:
+    "The connection between two devices. This field shows the IDs of the connected devices.",
+  [TOOLTIP_KEYS.PACKET_TYPE]:
+    "The type of packet being processed. This field indicates the protocol used in the packet, such as TCP, UDP, or ICMP.",
+  [TOOLTIP_KEYS.SOURCE_MAC_ADDRESS]:
+    "The MAC address of the device that sent the packet. This address is used to identify the source device in the network.",
+  [TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS]:
+    "The MAC address of the device that is the intended recipient of the packet. This address is used to identify the destination device in the network.",
+  [TOOLTIP_KEYS.DISCARD_PACKET_BUTTON]:
+    "Discard the selected packet. This action will remove the packet from the network simulation without processing it.",
   [TOOLTIP_KEYS.PACKET_QUEUE_USAGE]:
     "The progress bar visually represents the percentage of the queue currently occupied by packets waiting to be processed",
+  [TOOLTIP_KEYS.EDGE_CONNECTED_DEVICES]:
+    "This field shows the two devices directly connected by this edge.",
+  [TOOLTIP_KEYS.EDGE_CONNECTED_INTERFACES]:
+    "This field shows the two interfaces directly connected by this edge.",
+  [TOOLTIP_KEYS.MAC_ADDRESS_IFACE]:
+    "The MAC address of the interface. This address is used to identify the interface in the network.",
+  [TOOLTIP_KEYS.PROGRAM_RUNNER]:
+    "Here you can execute different programs on the host devices.",
+  [TOOLTIP_KEYS.EDGE_INFORMATION]:
+    "An edge represents a connection between two devices in the network. It provides information about the devices and interfaces directly connected by this link. Edges can represent physical connections, such as cables, or logical connections in a virtualized environment.",
+  [TOOLTIP_KEYS.PACKET_INFORMATION]:
+    "A packet is a unit of data transmitted across the network. This field provides detailed information about the packet, including its source, destination, and the protocol used for communication.",
 } as const;

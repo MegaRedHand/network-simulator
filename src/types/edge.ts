@@ -1,15 +1,20 @@
 import { Graphics, Point } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
 import { ViewDevice } from "./view-devices/index"; // Import the Device class
-import { deselectElement, selectElement, urManager } from "./viewportManager";
-import { RightBar, StyledInfo } from "../graphics/right_bar";
+import { deselectElement, selectElement } from "./viewportManager";
+import { RightBar } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils/utils";
 import { Packet } from "./packet";
-import { RemoveEdgeMove } from "./undo-redo";
+import { EdgeInfo } from "../graphics/renderables/edge_info";
 import { DataEdge, DeviceId } from "./graphs/datagraph";
 
+export interface EdgeEdges {
+  n1: DeviceId;
+  n2: DeviceId;
+}
+
 export class Edge extends Graphics {
-  private data: DataEdge;
+  data: DataEdge;
   private startPos: Point;
   private endPos: Point;
 
@@ -101,44 +106,8 @@ export class Edge extends Graphics {
 
   // Method to show the Edge information
   showInfo() {
-    const rightbar = RightBar.getInstance();
-
-    const from = this.data.from.id;
-    const to = this.data.to.id;
-
-    const fromDevice = this.viewgraph.getDataGraph().getDevice(from);
-    const toDevice = this.viewgraph.getDataGraph().getDevice(to);
-    if (!fromDevice || !toDevice) {
-      console.error("One of the devices is not found in the viewgraph.");
-      return;
-    }
-    const fromInterface = fromDevice.interfaces[this.data.from.iface];
-    const toInterface = toDevice.interfaces[this.data.to.iface];
-
-    const info = new StyledInfo("Edge Information");
-    info.addField("Connected Devices", `${from} <=> ${to}`);
-    info.addField(
-      "Connected interfaces",
-      `${fromInterface.name} <=> ${toInterface.name}`,
-    );
-    info.addField(
-      "Interface MAC addresses",
-      `${fromInterface.mac} <=> ${toInterface.mac}`,
-    );
-
-    // Calls renderInfo to display Edge information
-    rightbar.renderInfo(info);
-
-    rightbar.addButton(
-      "Delete Edge",
-      () => {
-        const viewgraph = this.viewgraph;
-        const move = new RemoveEdgeMove(viewgraph.getLayer(), from, to);
-
-        urManager.push(viewgraph, move);
-      },
-      "right-bar-delete-button",
-    );
+    const edgeInfo = new EdgeInfo(this);
+    RightBar.getInstance().renderInfo(edgeInfo);
   }
 
   // Method to delete the edge

@@ -1,0 +1,7 @@
+/* Style for the divider */
+.divider {
+  border-bottom: 1px solid #d6d6d6; /* Separator line */
+  margin: 10px 0; /* Spacing above and below */
+  width: 100%; /* Takes up the full width of the container */
+  box-sizing: border-box; /* Includes padding and border in the total width */
+}

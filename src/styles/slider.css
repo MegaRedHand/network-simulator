@@ -1,0 +1,78 @@
+/* Main container to align elements in a row */
+.slider-container {
+  display: flex;
+  flex-direction: row; /* Switch to row */
+  align-items: center; /* Vertically align elements */
+  justify-content: space-between; /* Spacing between elements */
+  background-color: #2b2b2b; /* Dark background */
+  padding: 0.5vh 1vw; /* Inner spacing */
+  margin: 0.5vh 0; /* Outer spacing between sliders */
+  border: 1px solid #444; /* Container border */
+  border-radius: 0.5rem; /* Rounded corners */
+  width: fit-content; /* Adjust width to content */
+  max-width: 90%; /* Maximum width relative to parent container */
+  box-sizing: border-box;
+  gap: 1rem; /* Spacing between elements */
+  max-width: max-content;
+  height: 2rem;
+}
+
+/* Slider label */
+.slider-label {
+  color: white;
+  font-size: 0.9rem; /* Relative font size */
+  width: 20%;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: center;
+}
+
+/* Dynamic slider value */
+.slider-value {
+  color: white;
+  font-size: 0.9rem; /* Relative font size */
+  font-weight: bold;
+  width: 3rem; /* Fixed relative width */
+  text-align: center; /* Center text inside the container */
+  box-sizing: border-box; /* Include padding and border in total width */
+}
+
+/* Slider input */
+.slider-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 50%; /* Width relative to container */
+  height: 0.4rem; /* Relative height */
+  background: #444;
+  border-radius: 0.3rem; /* Rounded corners */
+  outline: none;
+  margin: 0;
+  cursor: pointer;
+}
+
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1rem; /* Relative size */
+  height: 1rem; /* Relative size */
+  background: #007bff;
+  border-radius: 50%; /* Circular shape */
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.slider-input::-webkit-slider-thumb:hover {
+  background: #0056b3;
+}
+
+.slider-input::-moz-range-thumb {
+  width: 1rem; /* Relative size */
+  height: 1rem; /* Relative size */
+  background: #007bff;
+  border-radius: 50%; /* Circular shape */
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.slider-input::-moz-range-thumb:hover {
+  background: #0056b3;
+}
