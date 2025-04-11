@@ -19,7 +19,7 @@ import {
   RemoveEdgeMove,
 } from "./undo-redo";
 import { SpeedMultiplier } from "./speedMultiplier";
-import { AlertManager, AlertType } from "../graphics/renderables/alert_manager";
+import { showError, showSuccess } from "../graphics/renderables/alert_manager";
 import { ALERT_MESSAGES } from "../utils/constants/alert_constants";
 
 type Selectable = ViewDevice | Edge | Packet;
@@ -182,18 +182,12 @@ export function loadFromFile(ctx: GlobalContext) {
         dataGraph = DataGraph.fromData(graphData, ctx);
       } catch (error) {
         console.error("Failed to load graph data:", error);
-        AlertManager.getInstance().showAlert(
-          ALERT_MESSAGES.FAILED_TO_LOAD_GRAPH,
-          AlertType.Error,
-        );
+        showError(ALERT_MESSAGES.FAILED_TO_LOAD_GRAPH);
         return;
       }
       ctx.load(dataGraph);
 
-      AlertManager.getInstance().showAlert(
-        ALERT_MESSAGES.GRAPH_LOADED_SUCCESSFULLY,
-        AlertType.Success,
-      );
+      showSuccess(ALERT_MESSAGES.GRAPH_LOADED_SUCCESSFULLY);
     };
   };
 

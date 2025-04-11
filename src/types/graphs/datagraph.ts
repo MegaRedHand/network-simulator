@@ -12,10 +12,7 @@ import {
 } from "../data-devices";
 import { GlobalContext } from "../../context";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
-import {
-  AlertManager,
-  AlertType,
-} from "../../graphics/renderables/alert_manager";
+import { showWarning } from "../../graphics/renderables/alert_manager";
 
 export type DeviceId = VertexId;
 
@@ -250,10 +247,7 @@ export class DataGraph {
         n1Iface === null && n2Iface === null
           ? `devices ${n1Id} and ${n2Id}`
           : `device ${n1Iface === null ? n1Id : n2Id}`;
-      AlertManager.getInstance().showAlert(
-        ALERT_MESSAGES.NO_FREE_INTERFACES(unavailableDevices),
-        AlertType.Warning,
-      );
+      showWarning(ALERT_MESSAGES.NO_FREE_INTERFACES(unavailableDevices));
       return null;
     }
     const edge = {

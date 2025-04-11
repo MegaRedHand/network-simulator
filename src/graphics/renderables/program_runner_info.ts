@@ -5,7 +5,7 @@ import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { Button } from "../basic_components/button";
 import { Dropdown } from "../basic_components/dropdown";
 import { Table } from "../basic_components/table";
-import { AlertManager, AlertType } from "./alert_manager";
+import { showError, showSuccess } from "./alert_manager";
 import { Renderable } from "./base_info";
 import { ProgramInfo } from "./device_info";
 import { TooltipManager } from "./tooltip_manager";
@@ -56,26 +56,17 @@ export class ProgramRunnerInfo implements Renderable {
       text: TOOLTIP_KEYS.START_PROGRAM,
       onClick: () => {
         if (!selectedProgram) {
-          AlertManager.getInstance().showAlert(
-            ALERT_MESSAGES.NO_PROGRAM_SELECTED,
-            AlertType.Error,
-          );
+          showError(ALERT_MESSAGES.NO_PROGRAM_SELECTED);
           return;
         }
         const { name } = selectedProgram;
         const inputs = selectedProgram.getInputValues();
         if (inputs.some((input) => input === null || input === undefined)) {
-          AlertManager.getInstance().showAlert(
-            ALERT_MESSAGES.START_PROGRAM_INVALID_INPUT,
-            AlertType.Error,
-          );
+          showError(ALERT_MESSAGES.START_PROGRAM_INVALID_INPUT);
           return;
         }
         this.runner.addRunningProgram(name, inputs);
-        AlertManager.getInstance().showAlert(
-          ALERT_MESSAGES.PROGRAM_STARTED,
-          AlertType.Success,
-        );
+        showSuccess(ALERT_MESSAGES.PROGRAM_STARTED);
         this.refreshTable();
       },
       classList: [

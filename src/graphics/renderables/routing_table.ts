@@ -7,7 +7,7 @@ import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { ROUTER_CONSTANTS } from "../../utils/constants/router_constants";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
-import { AlertManager, AlertType } from "./alert_manager";
+import { showError, showSuccess } from "./alert_manager";
 
 export interface RoutingTableProps {
   rows: string[][]; // Rows for the table
@@ -110,10 +110,7 @@ export class RoutingTable {
 
     this.updateRows(newRows);
 
-    AlertManager.getInstance().showAlert(
-      ALERT_MESSAGES.ROUTING_TABLE_REGENERATED,
-      AlertType.Success,
-    );
+    showSuccess(ALERT_MESSAGES.ROUTING_TABLE_REGENERATED);
   }
 
   private setRoutingTableCallbacks(viewgraph: ViewGraph, deviceId: DeviceId) {
@@ -128,10 +125,7 @@ export class RoutingTable {
         isValid = isValidInterface(newValue);
       if (isValid) {
         viewgraph.getDataGraph().saveManualChange(deviceId, row, col, newValue);
-        AlertManager.getInstance().showAlert(
-          ALERT_MESSAGES.ROUTING_TABLE_UPDATED,
-          AlertType.Success,
-        );
+        showSuccess(ALERT_MESSAGES.ROUTING_TABLE_UPDATED);
       }
       return isValid;
     };
@@ -156,10 +150,7 @@ function isValidIP(ip: string): boolean {
     /^(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)$/;
   const result = ipPattern.test(ip);
   if (!result) {
-    AlertManager.getInstance().showAlert(
-      ALERT_MESSAGES.INVALID_IP_MASK,
-      AlertType.Error,
-    );
+    showError(ALERT_MESSAGES.INVALID_IP_MASK);
   }
   return result;
 }
@@ -169,10 +160,7 @@ function isValidInterface(interfaceStr: string): boolean {
   const interfacePattern = /^eth[0-9]+$/;
   const result = interfacePattern.test(interfaceStr);
   if (!result) {
-    AlertManager.getInstance().showAlert(
-      ALERT_MESSAGES.INVALID_IFACE,
-      AlertType.Error,
-    );
+    showError(ALERT_MESSAGES.INVALID_IFACE);
   }
   return result;
 }
