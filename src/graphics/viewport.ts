@@ -28,39 +28,75 @@ export class Viewport extends pixi_viewport.Viewport {
       worldHeight: WORLD_HEIGHT,
       events: events,
     });
-    this.moveCenter(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+
     this.sortableChildren = true;
     this.initializeMovement();
-
     this.addChild(new Background());
 
-    // Track drag start
+    // Restore saved position
+    this.restorePosition();
+
     this.on("drag-start", () => {
       this.isDragging = true;
     });
 
-    // Track drag end
     this.on("drag-end", () => {
       setTimeout(() => {
         this.isDragging = false;
-      }, 50); // Small delay to ensure click doesn't trigger after drag
+      }, 50);
+      this.savePosition(); // Save position after movement
     });
 
-    // Only deselect if it's a genuine click, not a drag
+    this.on("zoomed-end", () => {
+      this.savePosition(); // Save position after zoom
+    });
+
     const onClick = (event: FederatedPointerEvent) => {
       if (!this.isDragging && event.target === this) {
         deselectElement();
       }
     };
     this.on("click", onClick, this);
-    // NOTE: this is "click" for mobile devices
     this.on("tap", onClick, this);
+  }
+
+  // Save the current position of the viewport
+  private savePosition() {
+    localStorage.setItem(
+      "viewportPosition",
+      JSON.stringify({ x: this.x, y: this.y }),
+    );
+    localStorage.setItem(
+      "viewportZoom",
+      JSON.stringify({ x: this.scale.x, y: this.scale.y }),
+    );
+  }
+
+  // Restore the saved position of the viewport
+  public restorePosition() {
+    const savedPosition = localStorage.getItem("viewportPosition");
+    const savedZoom = localStorage.getItem("viewportZoom");
+
+    if (savedPosition) {
+      const { x, y } = JSON.parse(savedPosition);
+      this.position.set(x, y);
+    } else {
+      this.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+    }
+
+    if (savedZoom) {
+      const { x, y } = JSON.parse(savedZoom);
+      this.scale.set(x, y);
+    } else {
+      this.scale.set(1);
+    }
   }
 
   clear() {
     this.removeChildren();
     this.addChild(new Background());
-    this.moveCenter(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+    localStorage.removeItem("viewportPosition");
+    localStorage.removeItem("viewportZoom");
   }
 
   private initializeMovement() {
@@ -68,7 +104,6 @@ export class Viewport extends pixi_viewport.Viewport {
       .pinch()
       .wheel()
       .clamp({ direction: "all" })
-      // TODO: revisit when all icons are finalized
       .clampZoom({
         minHeight: 200,
         minWidth: 200,
@@ -87,5 +122,9 @@ export class Viewport extends pixi_viewport.Viewport {
     for (const plugin of Viewport.usedPlugins) {
       this.plugins.pause(plugin);
     }
+  }
+
+  setCenter(x: number = WORLD_WIDTH / 2, y: number = WORLD_HEIGHT / 2) {
+    this.moveCenter(x, y);
   }
 }

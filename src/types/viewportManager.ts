@@ -186,6 +186,7 @@ export function loadFromFile(ctx: GlobalContext) {
         return;
       }
       ctx.load(dataGraph);
+      ctx.centerView();
 
       showSuccess(ALERT_MESSAGES.GRAPH_LOADED_SUCCESSFULLY);
     };
