@@ -10,15 +10,22 @@ import { DataEdge, DeviceId, EdgeTip } from "./graphs/datagraph";
 import { MacAddress } from "../packets/ethernet";
 
 export class Edge extends Graphics {
-  data: DataEdge;
+  private _data: DataEdge;
   private startPos: Point;
   private endPos: Point;
 
   viewgraph: ViewGraph;
 
+  // This is to always have the same data as the datagraph
+  get data(): DataEdge {
+    return this.viewgraph
+      .getDataGraph()
+      .getConnection(this._data.from.id, this._data.to.id);
+  }
+
   constructor(viewgraph: ViewGraph, edgeData: DataEdge) {
     super();
-    this.data = edgeData;
+    this._data = edgeData;
     this.viewgraph = viewgraph;
 
     this.eventMode = "static";
@@ -156,19 +163,10 @@ export class Edge extends Graphics {
   }
 
   setInterface(deviceId: DeviceId, iface: number) {
-    const otherId = this.otherEnd(deviceId);
-    const conn = this.viewgraph.getDataGraph().getConnection(deviceId, otherId);
-
-    if (!conn) {
-      console.error(
-        `Connection not found for device ${deviceId} and interface ${iface}.`,
-      );
-      return;
-    }
-    if (conn.from.id === deviceId) {
-      conn.from.iface = iface;
+    if (this.data.from.id === deviceId) {
+      this.data.from.iface = iface;
     } else {
-      conn.to.iface = iface;
+      this.data.to.iface = iface;
     }
   }
 
