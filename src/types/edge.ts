@@ -6,7 +6,8 @@ import { RightBar } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils/utils";
 import { Packet } from "./packet";
 import { EdgeInfo } from "../graphics/renderables/edge_info";
-import { DataEdge, DeviceId } from "./graphs/datagraph";
+import { DataEdge, DeviceId, EdgeTip } from "./graphs/datagraph";
+import { MacAddress } from "../packets/ethernet";
 
 export class Edge extends Graphics {
   data: DataEdge;
@@ -152,5 +153,41 @@ export class Edge extends Graphics {
     );
 
     this.drawEdge(newStartPos, newEndPos, Colors.Lightblue);
+  }
+
+  setInterface(deviceId: DeviceId, iface: number) {
+    const otherId = this.otherEnd(deviceId);
+    const conn = this.viewgraph.getDataGraph().getConnection(deviceId, otherId);
+
+    if (!conn) {
+      console.error(
+        `Connection not found for device ${deviceId} and interface ${iface}.`,
+      );
+      return;
+    }
+    if (conn.from.id === deviceId) {
+      conn.from.iface = iface;
+    } else {
+      conn.to.iface = iface;
+    }
+  }
+
+  setInterfaceMac(deviceId: DeviceId, mac: string): void {
+    let iface;
+    if (this.data.from.id === deviceId) {
+      iface = this.data.from.iface;
+    } else {
+      iface = this.data.to.iface;
+    }
+    const device = this.viewgraph.getDataGraph().getDevice(deviceId);
+
+    if (!device) {
+      console.error(`Device with ID ${deviceId} not found.`);
+      return;
+    }
+    device.interfaces[iface].mac = MacAddress.parse(mac);
+    console.log(
+      `Updated MAC address for device ${deviceId}, interface ${iface}: ${mac}`,
+    );
   }
 }
