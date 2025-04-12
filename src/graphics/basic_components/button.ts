@@ -1,4 +1,4 @@
-import { TooltipManager } from "../renderables/tooltip_manager";
+import { attachTooltip } from "../renderables/tooltip_manager";
 
 export interface ButtonProps {
   text: string; // Button text
@@ -24,7 +24,7 @@ export class Button {
     }
 
     if (tooltip) {
-      TooltipManager.getInstance().attachTooltip(this.button, tooltip);
+      attachTooltip(this.button, tooltip);
     }
 
     this.button.onclick = onClick; // Assign the click handler

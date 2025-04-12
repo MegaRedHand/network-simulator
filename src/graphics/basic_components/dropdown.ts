@@ -1,5 +1,5 @@
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
-import { TooltipManager } from "../renderables/tooltip_manager";
+import { attachTooltip } from "../renderables/tooltip_manager";
 import { Label } from "./label";
 
 export interface DropdownOption {
@@ -57,7 +57,7 @@ export class Dropdown {
       ? `Select ${default_text}`
       : "Select option"; // Default text or fallback
     if (tooltip) {
-      TooltipManager.getInstance().attachTooltip(this.selected, tooltip);
+      attachTooltip(this.selected, tooltip);
     }
     dropdown.appendChild(this.selected);
 
@@ -96,7 +96,7 @@ export class Dropdown {
     const option = document.createElement("div");
     option.classList.add(CSS_CLASSES.DROPDOWN_OPTION);
     option.textContent = optionData.text;
-    TooltipManager.getInstance().attachTooltip(option, optionData.text, true);
+    attachTooltip(option, optionData.text, true);
 
     // Set up click event for option selection
     option.onclick = (e) => {

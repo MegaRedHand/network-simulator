@@ -1,5 +1,5 @@
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
-import { TooltipManager } from "../renderables/tooltip_manager";
+import { attachTooltip } from "../renderables/tooltip_manager";
 import { Button } from "./button";
 
 export interface TableOptions {
@@ -49,7 +49,7 @@ export class Table {
       }
 
       // Assign the tooltip
-      TooltipManager.getInstance().attachTooltip(th, tooltip);
+      attachTooltip(th, tooltip);
 
       headerRow.appendChild(th);
     });
