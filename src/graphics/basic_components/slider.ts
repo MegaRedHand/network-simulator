@@ -1,5 +1,5 @@
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
-import { TooltipManager } from "../renderables/tooltip_manager";
+import { attachTooltip } from "../renderables/tooltip_manager";
 
 export interface SliderProps {
   label: string; // Label displayed above the slider
@@ -22,7 +22,7 @@ export class Slider {
     const label = document.createElement("div");
     label.textContent = props.label;
     label.classList.add(CSS_CLASSES.SLIDER_LABEL);
-    TooltipManager.getInstance().attachTooltip(label, props.label);
+    attachTooltip(label, props.label);
 
     this.valueDisplay = document.createElement("div");
     this.valueDisplay.textContent = `${props.initialValue}x`;

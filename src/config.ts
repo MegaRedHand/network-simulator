@@ -1,5 +1,5 @@
 import { GlobalContext } from "./context";
-import { TooltipManager } from "./graphics/renderables/tooltip_manager";
+import { updateTooltipsState } from "./graphics/renderables/tooltip_manager";
 import { deselectElement } from "./types/viewportManager";
 import { Colors } from "./utils/utils";
 
@@ -236,7 +236,7 @@ export class ConfigModal {
     if (this.enableTooltipsSwitch) {
       this.enableTooltips = this.tempEnableTooltips; // Save the temporary value
       this.ctx.change_enable_tooltips(this.enableTooltips); // Update the GlobalContext
-      TooltipManager.getInstance().updateTooltipsState(); // Update tooltips state in the app
+      updateTooltipsState(); // Update tooltips state in the app
     }
 
     console.log(

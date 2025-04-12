@@ -1,6 +1,6 @@
 import PlaySvg from "../assets/play-icon.svg";
 import PauseSvg from "../assets/pause-icon.svg";
-import { TooltipManager } from "../graphics/renderables/tooltip_manager";
+import { attachTooltip } from "../graphics/renderables/tooltip_manager";
 import { GlobalContext } from "../context";
 import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 
@@ -30,10 +30,7 @@ export class PauseHandler {
       this.pauseIcon.alt = "Pause Icon";
       this.pauseButton.appendChild(this.pauseIcon);
       this.pauseButton.onclick = () => this.togglePause();
-      TooltipManager.getInstance().attachTooltip(
-        this.pauseButton,
-        TOOLTIP_KEYS.PAUSE_BUTTON,
-      );
+      attachTooltip(this.pauseButton, TOOLTIP_KEYS.PAUSE_BUTTON);
     }
   }
 
