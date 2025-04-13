@@ -4,7 +4,9 @@ import { IPv4Packet } from "../packets/ip";
 import { Flags, TcpSegment } from "../packets/tcp";
 import { DeviceId } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
+import { Layer } from "../types/layer";
 import { sendViewPacket } from "../types/packet";
+import { ViewHost } from "../types/view-devices";
 import { ViewNetworkDevice } from "../types/view-devices/vNetworkDevice";
 import { ProgramBase } from "./program_base";
 
@@ -39,10 +41,7 @@ export class HttpClient extends ProgramBase {
       console.error("Destination device not found");
       return;
     }
-    if (
-      !(srcDevice instanceof ViewNetworkDevice) ||
-      !(dstDevice instanceof ViewNetworkDevice)
-    ) {
+    if (!(srcDevice instanceof ViewHost) || !(dstDevice instanceof ViewHost)) {
       console.log(
         "At least one device between source and destination is not a network device",
       );
@@ -79,7 +78,7 @@ export class HttpClient extends ProgramBase {
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);
-    programInfo.withDestinationDropdown(viewgraph, srcId);
+    programInfo.withDestinationDropdown(viewgraph, srcId, Layer.App);
     return programInfo;
   }
 }
