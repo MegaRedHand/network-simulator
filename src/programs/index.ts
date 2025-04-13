@@ -40,12 +40,13 @@ export interface ProgramRunner {
 export interface Program {
   /**
    * Starts running the program.
-   * @param signalStop Function to call when the program should stop
+   * Returns a promise that's resolved when the program stops normally.
    */
   run(): Promise<void>;
 
   /**
-   * Preemptively stops running the program.
+   * Preemptively stops the running program.
+   * Note that this does not resolve the promise returned by `run()`.
    */
   stop(): void;
 }
