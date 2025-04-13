@@ -10,6 +10,7 @@ export abstract class ProgramBase implements Program {
   protected viewgraph: ViewGraph;
   protected srcId: DeviceId;
 
+  // Asynchronously running program
   private _signalStop?: () => void;
 
   constructor(viewgraph: ViewGraph, srcId: DeviceId, inputs: string[]) {
@@ -19,20 +20,28 @@ export abstract class ProgramBase implements Program {
     this._parseInputs(inputs);
   }
 
-  run(signalStop: () => void) {
+  run(): Promise<void> {
     if (this._signalStop) {
-      console.error("Program already running");
+      console.error("Program is already running");
       return;
     }
-    this._signalStop = signalStop;
 
+    // NOTE: this is to return a promise
+    // We store the resolve function in `ProgramBase._signalStop`.
+    // Once `_signalStop` is called, the promise resolves.
+    // The caller can attach callbacks to execute once the program stops.
+    const stopPromise = new Promise<void>((resolve) => {
+      this._signalStop = resolve;
+    });
     this._run();
+    return stopPromise;
   }
 
   stop(): void {
     // This function could be useful
     console.debug("Program stopping");
     this._stop();
+    // NOTE: we don't call `signalStop` here, since that's the caller's responsibility
   }
 
   protected signalStop() {

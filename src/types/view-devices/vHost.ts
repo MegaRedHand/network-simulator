@@ -147,7 +147,9 @@ export class ViewHost extends ViewNetworkDevice {
     const program = newProgram(this.viewgraph, this.id, runningProgram);
 
     this.runningPrograms.set(pid, program);
-    program.run(() => this.removeRunningProgram(pid));
+    // Cleanup function to execute after the program finishes
+    const cleanup = () => this.removeRunningProgram(pid);
+    program.run().then(cleanup, cleanup);
   }
 
   private getNextPid(): Pid {

@@ -105,9 +105,7 @@ export class EchoServer extends ProgramBase {
     this.progress += ticker.deltaMS * this.viewgraph.getSpeed();
 
     if (this.progress >= delay) {
-      this.echoProgram.run(() => {
-        // Do nothing
-      });
+      this.echoProgram.run();
       this.progress -= delay;
     }
   }

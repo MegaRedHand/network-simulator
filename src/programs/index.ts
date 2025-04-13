@@ -42,10 +42,10 @@ export interface Program {
    * Starts running the program.
    * @param signalStop Function to call when the program should stop
    */
-  run(signalStop: () => void): void;
+  run(): Promise<void>;
 
   /**
-   * Stops running the program.
+   * Preemptively stops running the program.
    */
   stop(): void;
 }
