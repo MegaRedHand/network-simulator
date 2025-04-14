@@ -8,11 +8,6 @@ import { Packet } from "./packet";
 import { EdgeInfo } from "../graphics/renderables/edge_info";
 import { DataEdge, DeviceId } from "./graphs/datagraph";
 
-export interface EdgeEdges {
-  n1: DeviceId;
-  n2: DeviceId;
-}
-
 export class Edge extends Graphics {
   data: DataEdge;
   private startPos: Point;
@@ -64,6 +59,10 @@ export class Edge extends Graphics {
       : this.data.to.id === nodeId
         ? this.data.from.id
         : undefined;
+  }
+
+  getData(): DataEdge {
+    return this.data;
   }
 
   // Method to draw the line

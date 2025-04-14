@@ -1,117 +1,133 @@
 import { GlobalContext } from "../../context";
 import { TOOLTIP_CONTENT } from "../../utils/constants/tooltips_constants";
 
-export class TooltipManager {
-  private static instance: TooltipManager | null = null; // Singleton instance
-  private tooltipsDictionary: Record<string, string> = TOOLTIP_CONTENT; // Dictionary for tooltips
-  private globalContext: GlobalContext | null = null; // GlobalContext puede ser opcional
-  private tooltipTimeout: NodeJS.Timeout | null = null;
+let tooltipTimeout: NodeJS.Timeout | null = null;
+let globalContext: GlobalContext | null = null;
 
-  public static getInstance(): TooltipManager {
-    if (!TooltipManager.instance) {
-      TooltipManager.instance = new TooltipManager();
-    }
-    return TooltipManager.instance;
-  }
+/**
+ * Sets the global context for tooltips.
+ * @param context - The global context to use.
+ */
+export function TooltipManagersetGlobalContext(context: GlobalContext): void {
+  globalContext = context;
+}
 
-  public setGlobalContext(globalContext: GlobalContext) {
-    this.globalContext = globalContext;
-  }
+/**
+ * Attaches a tooltip to a given element.
+ * @param element - The HTML element to attach the tooltip to.
+ * @param key - The key for the tooltip content.
+ * @param hideDelay - Whether to delay hiding the tooltip on mouse leave.
+ */
+export function attachTooltip(
+  element: HTMLElement,
+  key: string,
+  hideDelay = false,
+): void {
+  const tooltipsEnabled = globalContext?.get_enable_tooltips() ?? true;
 
-  public attachTooltip(element: HTMLElement, key: string, hideDelay = false) {
-    const tooltipsEnabled = this.globalContext?.get_enable_tooltips() ?? true;
+  if (key in TOOLTIP_CONTENT) {
+    if (tooltipsEnabled) {
+      element.classList.add("has-tooltip");
 
-    if (key in this.tooltipsDictionary) {
-      if (tooltipsEnabled) {
-        element.classList.add("has-tooltip");
-
-        const showHandler = () => this.showTooltip(key);
-        const hideHandler = () => {
-          if (hideDelay) {
-            this.startHideTooltipDelay();
-          } else {
-            this.hideTooltip();
-          }
-        };
-
-        element.addEventListener("mouseenter", showHandler);
-        element.addEventListener("mouseleave", hideHandler);
-
-        // Add a mutation observer to detect when the element is removed
-        const observer = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-            if (
-              mutation.type === "childList" &&
-              !document.body.contains(element)
-            ) {
-              this.hideTooltip(); // Hide the tooltip if the element is removed
-              observer.disconnect(); // Stop observing
-            }
-          });
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-      } else {
-        element.classList.remove("has-tooltip");
-      }
-    }
-  }
-
-  private showTooltip(key: string) {
-    const tooltipsEnabled = this.globalContext?.get_enable_tooltips() ?? true; // if no GlobalContext, assume tooltips are enabled
-    if (!tooltipsEnabled) return;
-
-    const text = this.tooltipsDictionary[key];
-    const tooltip = document.getElementById("global-tooltip");
-    if (tooltip) {
-      tooltip.textContent = text;
-      tooltip.style.display = "block";
-
-      if (this.tooltipTimeout) {
-        clearTimeout(this.tooltipTimeout);
-        this.tooltipTimeout = null;
-      }
-
-      tooltip.addEventListener("mouseenter", () => {
-        if (this.tooltipTimeout) {
-          clearTimeout(this.tooltipTimeout);
-          this.tooltipTimeout = null;
+      const showHandler = () => showTooltip(key);
+      const hideHandler = () => {
+        if (hideDelay) {
+          startHideTooltipDelay();
+        } else {
+          hideTooltip();
         }
+      };
+
+      element.addEventListener("mouseenter", showHandler);
+      element.addEventListener("mouseleave", hideHandler);
+
+      // Add a mutation observer to detect when the element is removed
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (
+            mutation.type === "childList" &&
+            !document.body.contains(element)
+          ) {
+            hideTooltip(); // Hide the tooltip if the element is removed
+            observer.disconnect(); // Stop observing
+          }
+        });
       });
 
-      tooltip.addEventListener("mouseleave", () => {
-        this.startHideTooltipDelay();
-      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    } else {
+      element.classList.remove("has-tooltip");
     }
   }
+}
 
-  private hideTooltip() {
-    const tooltip = document.getElementById("global-tooltip");
-    if (tooltip) {
-      tooltip.style.display = "none";
+/**
+ * Shows a tooltip with the specified key.
+ * @param key - The key for the tooltip content.
+ */
+export function showTooltip(key: string): void {
+  const tooltipsEnabled = globalContext?.get_enable_tooltips() ?? true;
+  if (!tooltipsEnabled) return;
+
+  const text = TOOLTIP_CONTENT[key as keyof typeof TOOLTIP_CONTENT];
+  const tooltip = document.getElementById("global-tooltip");
+  if (tooltip) {
+    tooltip.textContent = text;
+    tooltip.style.display = "block";
+
+    if (tooltipTimeout) {
+      clearTimeout(tooltipTimeout);
+      tooltipTimeout = null;
     }
-  }
 
-  public updateTooltipsState() {
-    const tooltipsEnabled = this.globalContext?.get_enable_tooltips() ?? true;
-
-    // Select all elements with the "has-tooltip" class
-    const tooltipElements = document.querySelectorAll(".has-tooltip");
-
-    tooltipElements.forEach((element) => {
-      const htmlElement = element as HTMLElement;
-
-      if (tooltipsEnabled) {
-        htmlElement.classList.add("has-tooltip");
-      } else {
-        htmlElement.classList.remove("has-tooltip");
+    tooltip.addEventListener("mouseenter", () => {
+      if (tooltipTimeout) {
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = null;
       }
     });
-  }
 
-  private startHideTooltipDelay() {
-    this.tooltipTimeout = setTimeout(() => {
-      this.hideTooltip();
-    }, 300); // 300ms
+    tooltip.addEventListener("mouseleave", () => {
+      startHideTooltipDelay();
+    });
   }
+}
+
+/**
+ * Hides the currently visible tooltip.
+ */
+export function hideTooltip(): void {
+  const tooltip = document.getElementById("global-tooltip");
+  if (tooltip) {
+    tooltip.style.display = "none";
+  }
+}
+
+/**
+ * Updates the state of tooltips (enabled/disabled).
+ */
+export function updateTooltipsState(): void {
+  const tooltipsEnabled = globalContext?.get_enable_tooltips() ?? true;
+
+  // Select all elements with the "has-tooltip" class
+  const tooltipElements = document.querySelectorAll(".has-tooltip");
+
+  tooltipElements.forEach((element) => {
+    const htmlElement = element as HTMLElement;
+
+    if (tooltipsEnabled) {
+      htmlElement.classList.add("has-tooltip");
+    } else {
+      htmlElement.classList.remove("has-tooltip");
+    }
+  });
+}
+
+/**
+ * Starts a delay before hiding the tooltip.
+ */
+function startHideTooltipDelay(): void {
+  tooltipTimeout = setTimeout(() => {
+    hideTooltip();
+  }, 300); // 300ms
 }

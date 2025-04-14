@@ -113,6 +113,7 @@ export class EchoServer extends ProgramBase {
   }
 
   protected _stop() {
+    console.debug("Stopping EchoServer");
     Ticker.shared.remove(this.tick, this);
   }
 

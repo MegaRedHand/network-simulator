@@ -34,7 +34,7 @@ interface CommonDataNode {
   // TODO: remove this
   mac: string;
   interfaces: NetworkInterfaceData[];
-  arpTable?: Map<string, string>;
+  arpTable?: [string, string][];
 }
 
 export interface NetworkInterfaceData {
@@ -48,6 +48,7 @@ export interface NetworkInterfaceData {
 }
 
 export interface SwitchDataNode extends CommonDataNode {
+  switchingTable: [string, number][];
   type: DeviceType.Switch;
 }
 
@@ -67,7 +68,7 @@ export interface RouterDataNode extends NetworkDataNode {
 export interface RoutingTableEntry {
   ip: string;
   mask: string;
-  iface: DeviceId;
+  iface: number;
   manuallyEdited?: boolean;
   deleted?: boolean;
 }
@@ -150,7 +151,6 @@ export class DataGraph {
 
     // Serialize nodes
     for (const [, device] of this.deviceGraph.getAllVertices()) {
-      device.getDataNode();
       // parse to serializable format
       const dataNode: DataNode = device.getDataNode();
       nodes.push(dataNode);
@@ -250,7 +250,7 @@ export class DataGraph {
       showWarning(ALERT_MESSAGES.NO_FREE_INTERFACES(unavailableDevices));
       return null;
     }
-    const edge = {
+    const edge: DataEdge = {
       from: { id: n1Id, iface: n1Iface },
       to: { id: n2Id, iface: n2Iface },
     };
