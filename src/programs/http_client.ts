@@ -26,15 +26,17 @@ export class HttpClient extends ProgramBase {
   }
 
   protected _run() {
+    // This starts the request from the background
     this.sendHttpRequest();
     this.signalStop();
   }
 
   protected _stop() {
+    // TODO: stop request preemptively?
     // Nothing to do
   }
 
-  private sendHttpRequest() {
+  private async sendHttpRequest() {
     const dstDevice = this.viewgraph.getDevice(this.dstId);
     const srcDevice = this.viewgraph.getDevice(this.srcId);
     if (!dstDevice) {
@@ -52,28 +54,12 @@ export class HttpClient extends ProgramBase {
     const httpRequest = "GET / HTTP/1.1\r\nHost: " + dstDevice.ip + "\r\n\r\n";
     const content = new TextEncoder().encode(httpRequest);
 
-    // Random number between 1024 and 65535
-    const srcPort = Math.floor(Math.random() * (65535 - 1024) + 1024);
-    const flags = new Flags();
+    // WIP
+    const socket = await this.runner.tcpConnect(this.dstId);
+    await socket.write(content);
 
-    // Wrap in TCP segment
-    const payload = new TcpSegment(srcPort, 80, 0, 0, flags, content);
-
-    // Wrap in IP packet
-    const ipPacket = new IPv4Packet(srcDevice.ip, dstDevice.ip, payload);
-    const path = this.viewgraph.getPathBetween(this.srcId, this.dstId);
-    let dstMac = dstDevice.mac;
-    if (!path) return;
-    for (const id of path.slice(1)) {
-      const device = this.viewgraph.getDevice(id);
-      // if there’s a router in the middle, first send frame to router mac
-      if (device instanceof ViewNetworkDevice) {
-        dstMac = device.mac;
-        break;
-      }
-    }
-    const ethernetFrame = new EthernetFrame(srcDevice.mac, dstMac, ipPacket);
-    sendViewPacket(this.viewgraph, this.srcId, ethernetFrame);
+    const buffer = new Uint8Array(1024);
+    await socket.read(buffer);
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {

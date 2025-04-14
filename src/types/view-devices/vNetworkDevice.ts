@@ -61,7 +61,6 @@ export abstract class ViewNetworkDevice extends ViewDevice {
         break;
       }
       default:
-        console.warn("Packet's type unrecognized");
     }
   }
 
