@@ -189,4 +189,8 @@ export class ViewHost extends ViewNetworkDevice {
     }
     return this.tcpModule.connect(dstDevice, 80);
   }
+
+  tcpListenOn(port: number) {
+    return this.tcpModule.listenOn(port);
+  }
 }

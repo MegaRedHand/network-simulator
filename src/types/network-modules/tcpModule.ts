@@ -69,6 +69,10 @@ export class TcpModule {
     return new TcpSocket(this.host, srcPort, dstHost, dstPort);
   }
 
+  async listenOn(port: Port) {
+    // TODO
+  }
+
   registerHandler(port: Port, otherIp: IpAddress, otherPort: Port) {
     let handlerMap = this.segmentHandlers.get(port);
     if (!handlerMap) {
@@ -108,7 +112,7 @@ function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
   sendViewPacket(src.viewgraph, src.id, frame);
 }
 
-class TcpSocket {
+export class TcpSocket {
   private srcHost: ViewHost;
   private srcPort: Port;
 
@@ -134,4 +138,8 @@ class TcpSocket {
   async write(content: Uint8Array) {
     return 0;
   }
+}
+
+export class TcpListener {
+  async next(): TcpSocket {}
 }
