@@ -185,7 +185,7 @@ export function loadFromFile(ctx: GlobalContext) {
         showError(ALERT_MESSAGES.FAILED_TO_LOAD_GRAPH);
         return;
       }
-      ctx.load(dataGraph);
+      ctx.load(dataGraph, ctx.getCurrentLayer());
       ctx.centerView();
 
       showSuccess(ALERT_MESSAGES.GRAPH_LOADED_SUCCESSFULLY);

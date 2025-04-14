@@ -78,15 +78,35 @@ export class Viewport extends pixi_viewport.Viewport {
     const savedZoom = localStorage.getItem("viewportZoom");
 
     if (savedPosition) {
-      const { x, y } = JSON.parse(savedPosition);
-      this.position.set(x, y);
+      try {
+        const { x, y } = JSON.parse(savedPosition);
+        if (typeof x === "number" && typeof y === "number") {
+          this.position.set(x, y);
+        } else {
+          console.warn("Invalid saved position, resetting to center.");
+          this.setCenter();
+        }
+      } catch (e) {
+        console.error("Error parsing viewportPosition:", e);
+        this.setCenter();
+      }
     } else {
-      this.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+      this.setCenter();
     }
 
     if (savedZoom) {
-      const { x, y } = JSON.parse(savedZoom);
-      this.scale.set(x, y);
+      try {
+        const { x, y } = JSON.parse(savedZoom);
+        if (typeof x === "number" && typeof y === "number") {
+          this.scale.set(x, y);
+        } else {
+          console.warn("Invalid saved zoom, resetting to 1.");
+          this.scale.set(1);
+        }
+      } catch (e) {
+        console.error("Error parsing viewportZoom:", e);
+        this.scale.set(1);
+      }
     } else {
       this.scale.set(1);
     }
@@ -95,6 +115,8 @@ export class Viewport extends pixi_viewport.Viewport {
   clear() {
     this.removeChildren();
     this.addChild(new Background());
+    this.setCenter();
+    this.scale.set(1);
     localStorage.removeItem("viewportPosition");
     localStorage.removeItem("viewportZoom");
   }
