@@ -168,6 +168,7 @@ export class Edge extends Graphics {
     } else {
       this.data.to.iface = iface;
     }
+    this.viewgraph.getDataGraph().regenerateAllRoutingTables();
   }
 
   setInterfaceMac(deviceId: DeviceId, mac: string): void {
@@ -187,5 +188,12 @@ export class Edge extends Graphics {
     console.log(
       `Updated MAC address for device ${deviceId}, interface ${iface}: ${mac}`,
     );
+  }
+
+  getDeviceFreeIfaces(deviceId: DeviceId): number[] {
+    const freeIfaces = this.viewgraph
+      .getDataGraph()
+      .getFreeInterfaces(deviceId);
+    return freeIfaces;
   }
 }

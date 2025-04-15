@@ -279,6 +279,23 @@ export class DataGraph {
     return null; // Return null if no free interface is found
   }
 
+  getFreeInterfaces(deviceId: DeviceId): number[] {
+    const device = this.getDevice(deviceId);
+    if (!device) {
+      console.warn(`Device with ID ${deviceId} not found.`);
+      return [];
+    }
+    const numberOfInterfaces = getNumberOfInterfaces(device.getType());
+    const freeInterfaces: number[] = [];
+    for (let i = 0; i < numberOfInterfaces; i++) {
+      const connections = this.getConnectionsInInterface(deviceId, i);
+      if (!connections || connections.length === 0) {
+        freeInterfaces.push(i); // Add the free interface to the list
+      }
+    }
+    return freeInterfaces; // Return the list of free interfaces
+  }
+
   updateDevicePosition(id: DeviceId, newValues: { x?: number; y?: number }) {
     const deviceDataNode = this.deviceGraph.getVertex(id);
     if (!deviceDataNode) {

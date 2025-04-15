@@ -59,6 +59,7 @@ export const TOOLTIP_KEYS = {
   PROGRAM_RUNNER: "Program Runner",
   EDGE_INFORMATION: "Edge Information",
   PACKET_INFORMATION: "Packet Information",
+  IFACE_EDITOR: "iface-editor",
 } as const;
 
 // Tooltip Content
@@ -169,4 +170,6 @@ export const TOOLTIP_CONTENT = {
     "An edge represents a connection between two devices in the network. It provides information about the devices and interfaces directly connected by this link. Edges can represent physical connections, such as cables, or logical connections in a virtualized environment.",
   [TOOLTIP_KEYS.PACKET_INFORMATION]:
     "A packet is a unit of data transmitted across the network. This field provides detailed information about the packet, including its source, destination, and the protocol used for communication.",
+  [TOOLTIP_KEYS.IFACE_EDITOR]:
+    "Modify the network interface used by this device.",
 } as const;
