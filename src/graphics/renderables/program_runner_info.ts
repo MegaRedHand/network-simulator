@@ -17,18 +17,19 @@ export class ProgramRunnerInfo implements Renderable {
 
   constructor(runner: ProgramRunner, programInfos: ProgramInfo[]) {
     this.runner = runner;
-    this.addProgamRunnerLabel();
+    this.addProgramRunnerLabel();
     this.addPrograms(programInfos);
     this.addRunningProgramsList();
   }
 
-  private addProgamRunnerLabel() {
+  private addProgramRunnerLabel() {
     const labelElement = document.createElement("div");
     labelElement.className = CSS_CLASSES.CENTRAL_LABEL;
     labelElement.textContent = TOOLTIP_KEYS.PROGRAM_RUNNER;
     attachTooltip(labelElement, TOOLTIP_KEYS.PROGRAM_RUNNER);
     this.inputFields.push(labelElement);
   }
+
   private addPrograms(programs: ProgramInfo[]) {
     let selectedProgram: ProgramInfo = null;
 
