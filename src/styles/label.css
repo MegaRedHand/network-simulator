@@ -8,3 +8,7 @@
   text-align: center; /* Aligns the label text to the center */
   overflow: hidden; /* Hides text that doesn't fit */
 }
+
+.label-dark {
+  color: #2b2b2b;
+}

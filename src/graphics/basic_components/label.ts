@@ -6,6 +6,7 @@ export class Label {
   constructor(label: string, tooltip?: string, className?: string) {
     this.labelElement = document.createElement("label");
     this.labelElement.innerHTML = `<strong>${label}</strong>`; // Use innerHTML for consistency
+    this.labelElement.classList.add("label-dark");
 
     if (className) {
       this.labelElement.classList.add(className); // Add optional CSS class
