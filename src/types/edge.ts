@@ -113,20 +113,9 @@ export class Edge extends Graphics {
     RightBar.getInstance().renderInfo(edgeInfo);
   }
 
-  // Method to delete the edge
-  delete() {
-    // Remove the edge from the viewgraph and datagraph
-    const n1 = this.data.from.id;
-    const n2 = this.data.to.id;
-    this.viewgraph.removeEdge(n1, n2);
-    console.log(`Edge ${n1},${n2} deleted.`);
-    this.destroy();
-  }
-
-  destroy(): DataEdge {
+  destroy(): void {
     deselectElement();
     super.destroy();
-    return this.data;
   }
 
   private updatePosition(device1: ViewDevice, device2: ViewDevice) {
