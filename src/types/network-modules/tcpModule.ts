@@ -70,7 +70,7 @@ export class TcpModule {
   }
 
   async listenOn(port: Port) {
-    // TODO
+    return new TcpListener();
   }
 
   registerHandler(port: Port, otherIp: IpAddress, otherPort: Port) {
@@ -141,5 +141,7 @@ export class TcpSocket {
 }
 
 export class TcpListener {
-  async next(): TcpSocket {}
+  async next(): Promise<TcpSocket> {
+    return new TcpSocket(null, 0, null, 0);
+  }
 }

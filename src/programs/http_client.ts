@@ -109,7 +109,7 @@ export class HttpServer extends ProgramBase {
     while (true) {
       const socket = await listener.next();
 
-      serveClient(socket);
+      this.serveClient(socket);
     }
   }
 
