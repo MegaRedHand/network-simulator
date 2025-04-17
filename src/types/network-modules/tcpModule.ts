@@ -179,7 +179,8 @@ export class TcpSocket {
   private dstPort: Port;
 
   private tcpQueue: AsyncQueue<SegmentWithIp>;
-  private closed = false;
+  private readClosed = false;
+  private writeClosed = false;
 
   private readBuffer = new Uint8Array(MAX_BUFFER_SIZE);
   private bufferLength = 0;
@@ -207,7 +208,7 @@ export class TcpSocket {
    */
   async read(buffer: Uint8Array) {
     // While we don't have data, wait for more packets
-    while (this.bufferLength < buffer.length) {
+    while (this.bufferLength < buffer.length && !this.readClosed) {
       const { segment } = await this.tcpQueue.pop();
       // TODO: validate payload
       const data = segment.data;
@@ -220,12 +221,19 @@ export class TcpSocket {
 
       // If segment has FIN, the connection was closed
       if (segment.flags.fin) {
-        this.closed = true;
+        this.readClosed = true;
         break;
       }
     }
     // Copy partially if connection was closed, if not, fill the buffer
     const readLength = Math.min(this.bufferLength, buffer.length);
+    if (readLength === 0) {
+      if (this.readClosed) {
+        console.error("tried to read from a closed socket");
+        return -1;
+      }
+      return 0;
+    }
     // Copy the data to the buffer
     buffer.set(this.readBuffer.subarray(0, readLength));
     this.readBuffer.copyWithin(0, readLength + 1, this.bufferLength);
@@ -234,6 +242,10 @@ export class TcpSocket {
   }
 
   async write(content: Uint8Array) {
+    if (this.writeClosed) {
+      console.error("tried to write to a closed socket");
+      return -1;
+    }
     // TODO: split content in multiple segments
     const contentLength = content.length;
     // TODO: use correct ACK numbers
@@ -247,6 +259,19 @@ export class TcpSocket {
     );
     sendIpPacket(this.srcHost, this.dstHost, segment);
     return contentLength;
+  }
+
+  closeWrite() {
+    this.writeClosed = true;
+    const segment = new TcpSegment(
+      this.srcPort,
+      this.dstPort,
+      0,
+      0,
+      new Flags().withFin().withAck(),
+      new Uint8Array(),
+    );
+    sendIpPacket(this.srcHost, this.dstHost, segment);
   }
 }
 

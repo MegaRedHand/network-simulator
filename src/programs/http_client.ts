@@ -51,10 +51,14 @@ export class HttpClient extends ProgramBase {
     const httpRequest = "GET / HTTP/1.1\r\nHost: " + dstDevice.ip + "\r\n\r\n";
     const content = new TextEncoder().encode(httpRequest);
 
-    // WIP
+    // Write request
     const socket = await this.runner.tcpConnect(this.dstId);
     await socket.write(content);
 
+    // Close connection
+    socket.closeWrite();
+
+    // Read response
     const buffer = new Uint8Array(1024);
     await socket.read(buffer);
   }
@@ -121,12 +125,15 @@ export class HttpServer extends ProgramBase {
 
   async serveClient(socket: TcpSocket) {
     const buffer = new Uint8Array(1024).fill(0);
-    await socket.read(buffer);
+    const readLength = await socket.read(buffer);
+    const readContents = buffer.slice(0, readLength);
 
     // Encode dummy HTTP response
-    // TODO
-    const httpResponse = "GET / HTTP/1.1\r\nHost: \r\n\r\n";
+    const httpResponse = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
     const content = new TextEncoder().encode(httpResponse);
     await socket.write(content);
+
+    // Close connection
+    socket.closeWrite();
   }
 }
