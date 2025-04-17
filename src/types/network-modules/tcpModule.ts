@@ -25,6 +25,7 @@ const MATCH_ALL_KEY = ["*", "*"].toString();
 
 // Port number to start at when auto-assigning ports.
 const STARTING_PORT: Port = 51686;
+const MAX_PORT: Port = 65535;
 
 export class TcpModule {
   private host: ViewHost;
@@ -97,6 +98,9 @@ export class TcpModule {
 
   async listenOn(port: Port) {
     const queue = this.initNewQueue(port);
+    if (!queue) {
+      return null;
+    }
     return new TcpListener(this, this.host, port, queue);
   }
 
@@ -115,7 +119,7 @@ export class TcpModule {
     const key = filter ? [filter.ip, filter.port].toString() : MATCH_ALL_KEY;
     const prevHandler = handlerMap.get(key);
     if (prevHandler) {
-      throw new Error("Handler already registered");
+      return null;
     }
     const queue = new AsyncQueue<SegmentWithIp>();
     handlerMap.set(key, queue);
@@ -127,12 +131,12 @@ export class TcpModule {
   private nextPortNumber: Port = STARTING_PORT;
 
   private getNextPortNumber() {
-    // Just to avoid infinite loop
-    let tries = 100;
+    // To avoid infinite loops
+    let tries = MAX_PORT - STARTING_PORT;
     let port: Port;
     do {
       port = this.nextPortNumber++;
-      if (this.nextPortNumber > 65535) {
+      if (this.nextPortNumber > MAX_PORT) {
         this.nextPortNumber = STARTING_PORT;
       }
     } while (this.tcpQueues.has(port) && tries-- > 0);

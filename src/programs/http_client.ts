@@ -1,14 +1,10 @@
+import { showError } from "../graphics/renderables/alert_manager";
 import { ProgramInfo } from "../graphics/renderables/device_info";
-import { EthernetFrame } from "../packets/ethernet";
-import { IPv4Packet } from "../packets/ip";
-import { Flags, TcpSegment } from "../packets/tcp";
 import { DeviceId } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
 import { Layer } from "../types/layer";
 import { TcpSocket } from "../types/network-modules/tcpModule";
-import { sendViewPacket } from "../types/packet";
 import { ViewHost } from "../types/view-devices";
-import { ViewNetworkDevice } from "../types/view-devices/vNetworkDevice";
 import { ProgramBase } from "./program_base";
 
 export class HttpClient extends ProgramBase {
@@ -76,13 +72,14 @@ export class HttpServer extends ProgramBase {
   private port: number;
 
   protected _parseInputs(inputs: string[]): void {
-    if (inputs.length !== 1) {
+    if (inputs.length !== 0) {
       console.error(
-        "HttpServer requires 1 input. " + inputs.length + " were given.",
+        "HttpServer requires no inputs. " + inputs.length + " were given.",
       );
       return;
     }
-    this.port = parseInt(inputs[0]);
+    // TODO: let users choose port?
+    this.port = 80;
   }
 
   protected _run() {
@@ -104,8 +101,11 @@ export class HttpServer extends ProgramBase {
       return;
     }
 
-    // WIP
-    const listener = await this.runner.tcpListenOn(80);
+    const listener = await this.runner.tcpListenOn(this.port);
+    if (!listener) {
+      showError(`Port ${this.port} already in use`);
+      return;
+    }
 
     while (true) {
       const socket = await listener.next();
@@ -116,7 +116,6 @@ export class HttpServer extends ProgramBase {
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);
-    // programInfo.withDestinationDropdown(viewgraph, srcId, Layer.App);
     return programInfo;
   }
 
@@ -124,7 +123,7 @@ export class HttpServer extends ProgramBase {
     const buffer = new Uint8Array(1024).fill(0);
     await socket.read(buffer);
 
-    // Encode dummy HTTP request
+    // Encode dummy HTTP response
     // TODO
     const httpResponse = "GET / HTTP/1.1\r\nHost: \r\n\r\n";
     const content = new TextEncoder().encode(httpResponse);
