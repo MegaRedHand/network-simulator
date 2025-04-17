@@ -71,6 +71,7 @@ export class ViewGraph {
       connections,
     );
     this.addConnections(connections);
+    device.initialize();
     return device;
   }
 
