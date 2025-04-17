@@ -169,6 +169,8 @@ function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
   sendViewPacket(src.viewgraph, src.id, frame);
 }
 
+const MAX_BUFFER_SIZE = 8192;
+
 export class TcpSocket {
   private srcHost: ViewHost;
   private srcPort: Port;
@@ -177,6 +179,10 @@ export class TcpSocket {
   private dstPort: Port;
 
   private tcpQueue: AsyncQueue<SegmentWithIp>;
+  private closed = false;
+
+  private readBuffer = new Uint8Array(MAX_BUFFER_SIZE);
+  private bufferLength = 0;
 
   constructor(
     srcHost: ViewHost,
@@ -192,12 +198,55 @@ export class TcpSocket {
     this.tcpQueue = tcpQueue;
   }
 
+  /**
+   * Reads data from the connection into the given buffer.
+   * This reads enough data to fill the buffer, but may read
+   * less in case the connection is closed.
+   * @param buffer to copy the contents to
+   * @returns the number of bytes read
+   */
   async read(buffer: Uint8Array) {
-    return 0;
+    // While we don't have data, wait for more packets
+    while (this.bufferLength < buffer.length) {
+      const { segment } = await this.tcpQueue.pop();
+      // TODO: validate payload
+      const data = segment.data;
+      const newLength = this.bufferLength + data.length;
+      if (newLength > MAX_BUFFER_SIZE) {
+        throw new Error("Buffer overflow");
+      }
+      this.readBuffer.set(data, this.bufferLength);
+      this.bufferLength = newLength;
+
+      // If segment has FIN, the connection was closed
+      if (segment.flags.fin) {
+        this.closed = true;
+        break;
+      }
+    }
+    // Copy partially if connection was closed, if not, fill the buffer
+    const readLength = Math.min(this.bufferLength, buffer.length);
+    // Copy the data to the buffer
+    buffer.set(this.readBuffer.subarray(0, readLength));
+    this.readBuffer.copyWithin(0, readLength + 1, this.bufferLength);
+    this.bufferLength -= readLength;
+    return readLength;
   }
 
   async write(content: Uint8Array) {
-    return 0;
+    // TODO: split content in multiple segments
+    const contentLength = content.length;
+    // TODO: use correct ACK numbers
+    const segment = new TcpSegment(
+      this.srcPort,
+      this.dstPort,
+      0,
+      0,
+      new Flags().withAck(),
+      content,
+    );
+    sendIpPacket(this.srcHost, this.dstHost, segment);
+    return contentLength;
   }
 }
 
