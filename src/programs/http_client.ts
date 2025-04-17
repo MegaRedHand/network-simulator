@@ -73,25 +73,26 @@ export class HttpClient extends ProgramBase {
 export class HttpServer extends ProgramBase {
   static readonly PROGRAM_NAME = "Serve HTTP requests";
 
+  private port: number;
+
   protected _parseInputs(inputs: string[]): void {
-    // if (inputs.length !== 1) {
-    //   console.error(
-    //     "HttpServer requires 1 input. " + inputs.length + " were given.",
-    //   );
-    //   return;
-    // }
-    // this.dstId = parseInt(inputs[0]);
+    if (inputs.length !== 1) {
+      console.error(
+        "HttpServer requires 1 input. " + inputs.length + " were given.",
+      );
+      return;
+    }
+    this.port = parseInt(inputs[0]);
   }
 
   protected _run() {
     // This starts the request from the background
     this.serveHttpRequests();
-    this.signalStop();
   }
 
   protected _stop() {
-    // TODO: stop request preemptively?
     // Nothing to do
+    // TODO: stop serving requests
   }
 
   private async serveHttpRequests() {
