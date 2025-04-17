@@ -180,17 +180,17 @@ export class ViewHost extends ViewNetworkDevice {
 
   private tcpModule = new TcpModule(this);
 
-  tcpConnect(dstId: DeviceId) {
+  async tcpConnect(dstId: DeviceId) {
     const dstDevice = this.viewgraph.getDevice(dstId);
     if (!dstDevice) {
       console.error("Destination device not found");
-      return;
+      return null;
     }
     if (!(dstDevice instanceof ViewHost)) {
       console.log("The destination is not a host");
-      return;
+      return null;
     }
-    return this.tcpModule.connect(dstDevice, 80);
+    return await this.tcpModule.connect(dstDevice, 80);
   }
 
   tcpListenOn(port: number) {

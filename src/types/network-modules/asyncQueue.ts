@@ -15,6 +15,7 @@ export class AsyncQueue<T> {
     }
   }
 
+  // TODO: add timeouts
   pop(): Promise<T> {
     if (!this.isEmpty()) {
       return Promise.resolve(this.queue.shift()!);

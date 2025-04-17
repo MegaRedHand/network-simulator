@@ -316,11 +316,8 @@ export class TcpListener {
     }
     sendIpPacket(this.host, dst, ackSegment);
 
-    // TODO: register new queue
-    const queue = this.tcpModule.initNewQueue(this.port, {
-      ip: srcIp,
-      port: segment.sourcePort,
-    });
+    const ipAndPort = { ip: srcIp, port: segment.sourcePort };
+    const queue = this.tcpModule.initNewQueue(this.port, ipAndPort);
 
     return new TcpSocket(this.host, this.port, dst, segment.sourcePort, queue);
   }
