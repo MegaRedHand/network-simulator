@@ -16,7 +16,7 @@ export class AsyncQueue<T> {
   }
 
   pop(): Promise<T> {
-    if (this.isEmpty()) {
+    if (!this.isEmpty()) {
       return Promise.resolve(this.queue.shift()!);
     }
     return new Promise((resolve) => {
