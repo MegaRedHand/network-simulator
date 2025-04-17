@@ -125,28 +125,6 @@ export class ViewGraph {
     return edge;
   }
 
-  hasMultipleVisibleConnections(deviceId: DeviceId): boolean {
-    const neighbors = this.graph.getNeighbors(deviceId);
-    let visibleConnections = 0;
-
-    for (const neighborId of neighbors) {
-      const edge = this.graph.getEdge(deviceId, neighborId);
-      const neighborDevice = this.graph.getVertex(neighborId);
-
-      // check if the edge and neighbor device are visible
-      if (edge?.visible && neighborDevice?.visible) {
-        visibleConnections++;
-      }
-
-      // if more than one visible connection is found, return true
-      if (visibleConnections > 1) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   reAddEdge(edgeData: DataEdge): boolean {
     const data = this.datagraph.reAddEdge(edgeData);
     if (!data) {
@@ -261,30 +239,23 @@ export class ViewGraph {
         return; // Skip if the device does not exist in the graph
       }
 
+      // If the device is visible and not the starting device, add it to the result
       if (currentDevice.visible && currentId !== deviceId) {
-        // If the device is visible and not the starting device, add it to the result
         visibleDevices.push(currentId);
         return; // Stop further traversal from this device
       }
 
-      // Traverse neighbors of the current device2
+      // Traverse neighbors of the current device
       const neighbors = this.graph.getNeighbors(currentId);
       for (const neighborId of neighbors) {
-        const edge = this.graph.getEdge(currentId, neighborId);
-        if (edge?.visible) {
-          // Continue DFS if the edge to the neighbor is visible
-          dfs(neighborId);
-        }
+        dfs(neighborId);
       }
     };
 
     // Start DFS for each visible neighbor of the given device
     const neighbors = this.graph.getNeighbors(deviceId);
     for (const neighborId of neighbors) {
-      const edge = this.graph.getEdge(deviceId, neighborId);
-      if (edge?.visible) {
-        dfs(neighborId);
-      }
+      dfs(neighborId);
     }
 
     return visibleDevices; // Return the list of visible connected device IDs

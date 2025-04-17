@@ -133,18 +133,21 @@ export class Edge extends Graphics {
       return;
     }
 
+    // Check if device1 or device2 are visible or connected to visible devices
     const device1HasVisibleConnections =
       device1.visible ||
-      this.viewgraph.hasMultipleVisibleConnections(device1.id);
+      this.viewgraph.getVisibleConnectedDeviceIds(device1.id).length > 1;
     const device2HasVisibleConnections =
       device2.visible ||
-      this.viewgraph.hasMultipleVisibleConnections(device2.id);
+      this.viewgraph.getVisibleConnectedDeviceIds(device2.id).length > 1;
 
-    // update the visibility of the edge based on the visibility of the devices
+    // Update the visibility of the edge based on the visibility or connections of the devices
     this.visible = device1HasVisibleConnections && device2HasVisibleConnections;
 
     // If the edge is visible, update its position
-    this.refresh();
+    if (this.visible) {
+      this.refresh();
+    }
   }
 
   /**
