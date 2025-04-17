@@ -1,7 +1,6 @@
 import { EthernetFrame } from "../../packets/ethernet";
 import { IpAddress, IpPayload, IPv4Packet } from "../../packets/ip";
 import { Flags, TcpSegment } from "../../packets/tcp";
-import { DeviceId } from "../graphs/datagraph";
 import { sendViewPacket } from "../packet";
 import { ViewHost } from "../view-devices";
 import { ViewNetworkDevice } from "../view-devices/vNetworkDevice";
@@ -61,11 +60,11 @@ export class TcpModule {
   async connect(dstHost: ViewHost, dstPort: Port) {
     const flags = new Flags().withSyn();
     const srcPort: Port = this.getNextPortNumber();
-    // TODO: randomize seq num
+    const seqNum = getInitialSeqNumber();
     const synSegment = new TcpSegment(
       srcPort,
       dstPort,
-      0,
+      seqNum,
       0,
       flags,
       new Uint8Array(),
@@ -146,27 +145,6 @@ export class TcpModule {
     }
     return port;
   }
-}
-
-function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
-  const viewgraph = src.viewgraph;
-
-  // TODO: use MAC and IP of the interfaces used
-  let nextHopMac = dst.mac;
-  const path = viewgraph.getPathBetween(src.id, dst.id);
-  if (!path) return;
-  for (const id of path.slice(1)) {
-    const device = viewgraph.getDevice(id);
-    // if there’s a router in the middle, first send frame to router mac
-    if (device instanceof ViewNetworkDevice) {
-      nextHopMac = device.mac;
-      break;
-    }
-  }
-  const ipPacket = new IPv4Packet(src.ip, dst.ip, payload);
-  const frame = new EthernetFrame(src.mac, nextHopMac, ipPacket);
-
-  sendViewPacket(src.viewgraph, src.id, frame);
 }
 
 const MAX_BUFFER_SIZE = 65535;
@@ -299,11 +277,11 @@ export class TcpListener {
     // TODO: validate segment
 
     // Send SYN-ACK
-    // TODO: randomize seq num
+    const seqNum = getInitialSeqNumber();
     const ackSegment = new TcpSegment(
       this.port,
       segment.sourcePort,
-      0,
+      seqNum,
       segment.sequenceNumber,
       new Flags().withSyn().withAck(),
       new Uint8Array(),
@@ -321,4 +299,29 @@ export class TcpListener {
 
     return new TcpSocket(this.host, this.port, dst, segment.sourcePort, queue);
   }
+}
+
+function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
+  const viewgraph = src.viewgraph;
+
+  // TODO: use MAC and IP of the interfaces used
+  let nextHopMac = dst.mac;
+  const path = viewgraph.getPathBetween(src.id, dst.id);
+  if (!path) return;
+  for (const id of path.slice(1)) {
+    const device = viewgraph.getDevice(id);
+    // if there’s a router in the middle, first send frame to router mac
+    if (device instanceof ViewNetworkDevice) {
+      nextHopMac = device.mac;
+      break;
+    }
+  }
+  const ipPacket = new IPv4Packet(src.ip, dst.ip, payload);
+  const frame = new EthernetFrame(src.mac, nextHopMac, ipPacket);
+
+  sendViewPacket(src.viewgraph, src.id, frame);
+}
+
+function getInitialSeqNumber() {
+  return Math.floor(Math.random() * 0xffffffff);
 }
