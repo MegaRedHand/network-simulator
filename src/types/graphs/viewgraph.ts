@@ -246,6 +246,50 @@ export class ViewGraph {
     return Array.from(edges).map(([, edge]) => edge);
   }
 
+  getVisibleConnectedDeviceIds(deviceId: DeviceId): DeviceId[] {
+    const visited = new Set<DeviceId>(); // Tracks visited devices to avoid cycles
+    const visibleDevices: DeviceId[] = []; // Stores visible connected device IDs
+
+    const dfs = (currentId: DeviceId): void => {
+      if (visited.has(currentId)) {
+        return; // Skip if the device has already been visited
+      }
+      visited.add(currentId); // Mark the current device as visited
+
+      const currentDevice = this.graph.getVertex(currentId);
+      if (!currentDevice) {
+        return; // Skip if the device does not exist in the graph
+      }
+
+      if (currentDevice.visible && currentId !== deviceId) {
+        // If the device is visible and not the starting device, add it to the result
+        visibleDevices.push(currentId);
+        return; // Stop further traversal from this device
+      }
+
+      // Traverse neighbors of the current device2
+      const neighbors = this.graph.getNeighbors(currentId);
+      for (const neighborId of neighbors) {
+        const edge = this.graph.getEdge(currentId, neighborId);
+        if (edge?.visible) {
+          // Continue DFS if the edge to the neighbor is visible
+          dfs(neighborId);
+        }
+      }
+    };
+
+    // Start DFS for each visible neighbor of the given device
+    const neighbors = this.graph.getNeighbors(deviceId);
+    for (const neighborId of neighbors) {
+      const edge = this.graph.getEdge(deviceId, neighborId);
+      if (edge?.visible) {
+        dfs(neighborId);
+      }
+    }
+
+    return visibleDevices; // Return the list of visible connected device IDs
+  }
+
   getAllConnections(): Edge[] {
     return Array.from(this.graph.getAllEdges()).map(([, , edge]) => edge);
   }
