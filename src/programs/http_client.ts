@@ -53,14 +53,22 @@ export class HttpClient extends ProgramBase {
 
     // Write request
     const socket = await this.runner.tcpConnect(this.dstId);
-    await socket.write(content);
+    const wrote = await socket.write(content);
+    if (wrote < 0) {
+      console.error("HttpClient failed to write to socket");
+      return;
+    }
 
     // Close connection
     socket.closeWrite();
 
     // Read response
     const buffer = new Uint8Array(1024);
-    await socket.read(buffer);
+    const readLength = await socket.read(buffer);
+    if (readLength < 0) {
+      console.error("HttpClient failed to read from socket");
+      return;
+    }
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
@@ -127,12 +135,19 @@ export class HttpServer extends ProgramBase {
     const buffer = new Uint8Array(1024).fill(0);
     const readLength = await socket.read(buffer);
     const readContents = buffer.slice(0, readLength);
+    if (readLength < 0) {
+      console.error("HttpServer failed to read from socket");
+      return;
+    }
 
     // Encode dummy HTTP response
     const httpResponse = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
     const content = new TextEncoder().encode(httpResponse);
-    await socket.write(content);
-
+    const wrote = await socket.write(content);
+    if (wrote < 0) {
+      console.error("HttpServer failed to write to socket");
+      return;
+    }
     // Close connection
     socket.closeWrite();
   }
