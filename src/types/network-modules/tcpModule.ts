@@ -77,7 +77,8 @@ export class TcpModule {
     const filter = { ip: dstHost.ip, port: dstPort };
     const tcpQueue = this.initNewQueue(srcPort, filter);
 
-    const responsePacket = await tcpQueue.pop();
+    // TODO: validate response
+    await tcpQueue.pop();
 
     const ackFlags = new Flags().withAck();
 

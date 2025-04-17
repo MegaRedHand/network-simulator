@@ -3,12 +3,7 @@ import { ViewNetworkDevice } from "./vNetworkDevice";
 import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
-import {
-  IpAddress,
-  IpPayload,
-  IPv4Packet,
-  TCP_PROTOCOL_NUMBER,
-} from "../../packets/ip";
+import { IpAddress, IPv4Packet, TCP_PROTOCOL_NUMBER } from "../../packets/ip";
 import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { RightBar } from "../../graphics/right_bar";
 import { Layer } from "../layer";

@@ -126,6 +126,7 @@ export class HttpServer extends ProgramBase {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);
     return programInfo;
@@ -134,11 +135,15 @@ export class HttpServer extends ProgramBase {
   async serveClient(socket: TcpSocket) {
     const buffer = new Uint8Array(1024).fill(0);
     const readLength = await socket.read(buffer);
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const readContents = buffer.slice(0, readLength);
     if (readLength < 0) {
       console.error("HttpServer failed to read from socket");
       return;
     }
+
+    // TODO: validate request
 
     // Encode dummy HTTP response
     const httpResponse = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
