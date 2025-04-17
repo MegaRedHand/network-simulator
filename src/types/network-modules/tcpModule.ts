@@ -13,7 +13,12 @@ interface IpAndPort {
   port: Port;
 }
 
+// Key used in tcpQueues to match all IPs and ports.
+// This is used when no filter is provided.
 const MATCH_ALL_KEY = ["*", "*"].toString();
+
+// Port number to start at when auto-assigning ports.
+const STARTING_PORT: Port = 51686;
 
 export class TcpModule {
   private host: ViewHost;
@@ -48,9 +53,8 @@ export class TcpModule {
 
   async connect(dstHost: ViewHost, dstPort: Port) {
     const flags = new Flags().withSyn();
-    // TODO: use random src port
+    const srcPort: Port = this.getNextPortNumber();
     // TODO: randomize seq num
-    const srcPort: Port = Math.floor(Math.random() * (65535 - 1024) + 1024);
     const synSegment = new TcpSegment(
       srcPort,
       dstPort,
@@ -110,6 +114,27 @@ export class TcpModule {
     const queue = new AsyncQueue<TcpSegment>();
     handlerMap.set(key, queue);
     return queue;
+  }
+
+  // Port number to use for the next connection.
+  // The number is arbitrary
+  private nextPortNumber: Port = STARTING_PORT;
+
+  private getNextPortNumber() {
+    // Just to avoid infinite loop
+    let tries = 100;
+    let port: Port;
+    do {
+      port = this.nextPortNumber++;
+      if (this.nextPortNumber > 65535) {
+        this.nextPortNumber = STARTING_PORT;
+      }
+    } while (this.tcpQueues.has(port) && tries-- > 0);
+
+    if (this.tcpQueues.has(port)) {
+      throw new Error("No available ports");
+    }
+    return port;
   }
 }
 
