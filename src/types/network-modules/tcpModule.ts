@@ -75,7 +75,7 @@ export class TcpModule {
     // Receive SYN-ACK
     // TODO: check packet is valid response
     const filter = { ip: dstHost.ip, port: dstPort };
-    const tcpQueue = this.initQueue(srcPort, filter);
+    const tcpQueue = this.initNewQueue(srcPort, filter);
 
     const responsePacket = await tcpQueue.pop();
 
@@ -96,7 +96,7 @@ export class TcpModule {
   }
 
   async listenOn(port: Port) {
-    const queue = this.initQueue(port);
+    const queue = this.initNewQueue(port);
     return new TcpListener(this, this.host, port, queue);
   }
 
@@ -106,7 +106,7 @@ export class TcpModule {
    * @param filter optional filter for IP and port. If not provided, all IPs and ports are accepted.
    * @returns a promise that resolves with the received TCP segment
    */
-  private initQueue(port: Port, filter?: IpAndPort) {
+  initNewQueue(port: Port, filter?: IpAndPort) {
     let handlerMap = this.tcpQueues.get(port);
     if (!handlerMap) {
       handlerMap = new Map<string, AsyncQueue<SegmentWithIp>>();
@@ -239,7 +239,11 @@ export class TcpListener {
     sendIpPacket(this.host, dst, ackSegment);
 
     // TODO: register new queue
+    const queue = this.tcpModule.initNewQueue(this.port, {
+      ip: srcIp,
+      port: segment.sourcePort,
+    });
 
-    return new TcpSocket(this.host, this.port, dst, segment.sourcePort, null);
+    return new TcpSocket(this.host, this.port, dst, segment.sourcePort, queue);
   }
 }
