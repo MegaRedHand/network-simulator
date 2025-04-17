@@ -121,6 +121,40 @@ export class Edge extends Graphics {
     return this.data;
   }
 
+  updateVisibility(): void {
+    const device1 = this.viewgraph.getDevice(this.data.from.id);
+    const device2 = this.viewgraph.getDevice(this.data.to.id);
+
+    if (!device1 || !device2) {
+      console.warn(
+        `One or both devices for edge ${this.data.from.id} ↔ ${this.data.to.id} are missing.`,
+      );
+      this.visible = false;
+      return;
+    }
+
+    const device1HasVisibleConnections =
+      device1.visible ||
+      this.viewgraph.hasMultipleVisibleConnections(device1.id);
+    const device2HasVisibleConnections =
+      device2.visible ||
+      this.viewgraph.hasMultipleVisibleConnections(device2.id);
+
+    // update the visibility of the edge based on the visibility of the devices
+    this.visible = device1HasVisibleConnections && device2HasVisibleConnections;
+
+    // If the edge is visible, update its position
+    this.refresh();
+  }
+
+  /**
+   * Updates the position of an edge connecting two devices, taking into account their visibility
+   * and dimensions. If a device is visible, the edge will leave a space around the device's center
+   * to account for its size. Otherwise, the edge will connect directly to the device's position.
+   *
+   * @param device1 - The first device (starting point of the edge).
+   * @param device2 - The second device (ending point of the edge).
+   */
   private updatePosition(device1: ViewDevice, device2: ViewDevice) {
     const dx = device2.x - device1.x;
     const dy = device2.y - device1.y;

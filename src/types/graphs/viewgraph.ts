@@ -104,6 +104,7 @@ export class ViewGraph {
       );
       return null;
     }
+
     if (this.graph.hasEdge(device1.id, device2.id)) {
       console.warn(`Edge with ID ${device1.id},${device2.id} already exists.`);
       return this.graph.getEdge(device1.id, device2.id);
@@ -122,6 +123,28 @@ export class ViewGraph {
     this.viewport.addChild(edge);
 
     return edge;
+  }
+
+  hasMultipleVisibleConnections(deviceId: DeviceId): boolean {
+    const neighbors = this.graph.getNeighbors(deviceId);
+    let visibleConnections = 0;
+
+    for (const neighborId of neighbors) {
+      const edge = this.graph.getEdge(deviceId, neighborId);
+      const neighborDevice = this.graph.getVertex(neighborId);
+
+      // check if the edge and neighbor device are visible
+      if (edge?.visible && neighborDevice?.visible) {
+        visibleConnections++;
+      }
+
+      // if more than one visible connection is found, return true
+      if (visibleConnections > 1) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   reAddEdge(edgeData: DataEdge): boolean {
@@ -198,7 +221,7 @@ export class ViewGraph {
     }
 
     for (const [, , edge] of this.graph.getAllEdges()) {
-      edge.refresh();
+      edge.updateVisibility();
     }
 
     // warn Packet Manager that the layer has been changed
