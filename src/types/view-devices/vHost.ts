@@ -23,10 +23,10 @@ import { Texture } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataHost } from "../data-devices";
-import { dropPacket, sendViewPacket } from "../packet";
+import { dropPacket } from "../packet";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
-import { Flags, TcpSegment } from "../../packets/tcp";
+import { TcpSegment } from "../../packets/tcp";
 import { TcpModule } from "../network-modules/tcpModule";
 
 export class ViewHost extends ViewNetworkDevice {
@@ -63,6 +63,9 @@ export class ViewHost extends ViewNetworkDevice {
       ip,
       mask,
     );
+  }
+
+  initialize() {
     this.loadRunningPrograms();
   }
 

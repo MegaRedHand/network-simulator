@@ -169,7 +169,7 @@ function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
   sendViewPacket(src.viewgraph, src.id, frame);
 }
 
-const MAX_BUFFER_SIZE = 8192;
+const MAX_BUFFER_SIZE = 65535;
 
 export class TcpSocket {
   private srcHost: ViewHost;

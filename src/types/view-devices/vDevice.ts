@@ -131,6 +131,12 @@ export abstract class ViewDevice extends Container {
     this.on("tap", this.onClick, this);
   }
 
+  // Some devices require to do some initializations right after the viewgraph
+  // finishes initializing.
+  initialize() {
+    // Do nothing
+  }
+
   updateVisibility() {
     this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());
   }
