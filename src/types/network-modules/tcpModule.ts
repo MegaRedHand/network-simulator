@@ -1,6 +1,7 @@
 import { EthernetFrame } from "../../packets/ethernet";
 import { IpAddress, IpPayload, IPv4Packet } from "../../packets/ip";
 import { Flags, TcpSegment } from "../../packets/tcp";
+import { DeviceId } from "../graphs/datagraph";
 import { sendViewPacket } from "../packet";
 import { ViewHost } from "../view-devices";
 import { ViewNetworkDevice } from "../view-devices/vNetworkDevice";
@@ -11,6 +12,11 @@ type Port = number;
 interface IpAndPort {
   ip: IpAddress;
   port: Port;
+}
+
+interface SegmentWithIp {
+  srcIp: IpAddress;
+  segment: TcpSegment;
 }
 
 // Key used in tcpQueues to match all IPs and ports.
@@ -26,7 +32,7 @@ export class TcpModule {
   // Key is the host port.
   // Value is [dstIp, dstPort] tuple.
   // NOTE: MATCH_ALL_KEY is used to match all IPs and ports.
-  private tcpQueues = new Map<Port, Map<string, AsyncQueue<TcpSegment>>>();
+  private tcpQueues = new Map<Port, Map<string, AsyncQueue<SegmentWithIp>>>();
 
   constructor(host: ViewHost) {
     this.host = host;
@@ -48,7 +54,7 @@ export class TcpModule {
       console.warn("no handler registered");
       return;
     }
-    queue.push(segment);
+    queue.push({ srcIp, segment });
   }
 
   async connect(dstHost: ViewHost, dstPort: Port) {
@@ -91,7 +97,7 @@ export class TcpModule {
 
   async listenOn(port: Port) {
     const queue = this.initQueue(port);
-    return new TcpListener(port, queue);
+    return new TcpListener(this, this.host, port, queue);
   }
 
   /**
@@ -103,7 +109,7 @@ export class TcpModule {
   private initQueue(port: Port, filter?: IpAndPort) {
     let handlerMap = this.tcpQueues.get(port);
     if (!handlerMap) {
-      handlerMap = new Map<string, AsyncQueue<TcpSegment>>();
+      handlerMap = new Map<string, AsyncQueue<SegmentWithIp>>();
       this.tcpQueues.set(port, handlerMap);
     }
     const key = filter ? [filter.ip, filter.port].toString() : MATCH_ALL_KEY;
@@ -111,7 +117,7 @@ export class TcpModule {
     if (prevHandler) {
       throw new Error("Handler already registered");
     }
-    const queue = new AsyncQueue<TcpSegment>();
+    const queue = new AsyncQueue<SegmentWithIp>();
     handlerMap.set(key, queue);
     return queue;
   }
@@ -166,14 +172,14 @@ export class TcpSocket {
   private dstHost: ViewHost;
   private dstPort: Port;
 
-  private tcpQueue: AsyncQueue<TcpSegment>;
+  private tcpQueue: AsyncQueue<SegmentWithIp>;
 
   constructor(
     srcHost: ViewHost,
     srcPort: Port,
     dstHost: ViewHost,
     dstPort: Port,
-    tcpQueue: AsyncQueue<TcpSegment>,
+    tcpQueue: AsyncQueue<SegmentWithIp>,
   ) {
     this.srcHost = srcHost;
     this.dstHost = dstHost;
@@ -192,15 +198,48 @@ export class TcpSocket {
 }
 
 export class TcpListener {
-  private tcpQueue: AsyncQueue<TcpSegment>;
+  private tcpModule: TcpModule;
+  private tcpQueue: AsyncQueue<SegmentWithIp>;
+  private host: ViewHost;
+  private port: Port;
 
-  constructor(port: Port, tcpQueue: AsyncQueue<TcpSegment>) {
+  constructor(
+    tcpModule: TcpModule,
+    host: ViewHost,
+    port: Port,
+    tcpQueue: AsyncQueue<SegmentWithIp>,
+  ) {
+    this.tcpModule = tcpModule;
+    this.host = host;
+    this.port = port;
     this.tcpQueue = tcpQueue;
   }
 
   async next(): Promise<TcpSocket> {
-    const segment = await this.tcpQueue.pop();
-    // TODO: validate segment and start connection
-    return new TcpSocket(null, 0, null, 0, null);
+    const { segment, srcIp } = await this.tcpQueue.pop();
+
+    // TODO: validate segment
+
+    // Send SYN-ACK
+    // TODO: randomize seq num
+    const ackSegment = new TcpSegment(
+      this.port,
+      segment.sourcePort,
+      0,
+      segment.sequenceNumber,
+      new Flags().withSyn().withAck(),
+      new Uint8Array(),
+    );
+    const dst = this.host.viewgraph.getDeviceByIP(srcIp);
+    if (!dst || !(dst instanceof ViewHost)) {
+      console.warn("sender device not found or not a host");
+      // Wait for next packet
+      return this.next();
+    }
+    sendIpPacket(this.host, dst, ackSegment);
+
+    // TODO: register new queue
+
+    return new TcpSocket(this.host, this.port, dst, segment.sourcePort, null);
   }
 }
