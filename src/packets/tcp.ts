@@ -213,7 +213,7 @@ export class TcpSegment implements IpPayload {
 
   // Dummy Method for the moment
   getDetails(layer: Layer) {
-    return { Layer: layer };
+    return { Layer: layer, Raw: this };
   }
 
   // ### IpPayload ###
