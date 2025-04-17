@@ -4,30 +4,46 @@ import { Flags, TcpSegment } from "../../packets/tcp";
 import { sendViewPacket } from "../packet";
 import { ViewHost } from "../view-devices";
 import { ViewNetworkDevice } from "../view-devices/vNetworkDevice";
+import { AsyncQueue } from "./asyncQueue";
 
 type Port = number;
-type SegmentHandler = (segment: TcpSegment) => void;
+
+interface IpAndPort {
+  ip: IpAddress;
+  port: Port;
+}
+
+const MATCH_ALL_KEY = ["*", "*"].toString();
 
 export class TcpModule {
   private host: ViewHost;
 
-  // Key is the [srcPort, dstIp, dstPort] tuple.
-  // Value is something that ties to the read/write methods
-  private segmentHandlers = new Map<Port, Map<string, SegmentHandler>>();
+  // Key is the host port.
+  // Value is [dstIp, dstPort] tuple.
+  // NOTE: MATCH_ALL_KEY is used to match all IPs and ports.
+  private tcpQueues = new Map<Port, Map<string, AsyncQueue<TcpSegment>>>();
 
   constructor(host: ViewHost) {
     this.host = host;
   }
 
   handleSegment(srcIp: IpAddress, segment: TcpSegment) {
-    const handlerMap = this.segmentHandlers.get(segment.destinationPort);
-    if (!handlerMap) {
+    const queueMap = this.tcpQueues.get(segment.destinationPort);
+    if (!queueMap) {
       console.warn("port not in use");
       return;
     }
     const key = [srcIp, segment.sourcePort].toString();
-    const handle = handlerMap.get(key);
-    handle(segment);
+    let queue = queueMap.get(key);
+    if (!queue) {
+      console.debug("defaulting to match-all queue");
+      queue = queueMap.get(MATCH_ALL_KEY);
+    }
+    if (!queue) {
+      console.warn("no handler registered");
+      return;
+    }
+    queue.push(segment);
   }
 
   async connect(dstHost: ViewHost, dstPort: Port) {
@@ -46,14 +62,14 @@ export class TcpModule {
     // Send SYN
     sendIpPacket(this.host, dstHost, synSegment);
 
-    const response = await this.registerHandler(srcPort, dstHost.ip, dstPort);
-
     // Receive SYN-ACK
-    const responsePacket = await response;
+    // TODO: check packet is valid response
+    const filter = { ip: dstHost.ip, port: dstPort };
+    const tcpQueue = this.initQueue(srcPort, filter);
+
+    const responsePacket = await tcpQueue.pop();
 
     const ackFlags = new Flags().withAck();
-
-    // TODO: check packet is valid response
 
     // Send ACK
     const ackSegment = new TcpSegment(
@@ -66,28 +82,34 @@ export class TcpModule {
     );
     sendIpPacket(this.host, dstHost, ackSegment);
 
-    return new TcpSocket(this.host, srcPort, dstHost, dstPort);
+    return new TcpSocket(this.host, srcPort, dstHost, dstPort, tcpQueue);
   }
 
   async listenOn(port: Port) {
-    return new TcpListener();
+    const queue = this.initQueue(port);
+    return new TcpListener(port, queue);
   }
 
-  registerHandler(port: Port, otherIp: IpAddress, otherPort: Port) {
-    let handlerMap = this.segmentHandlers.get(port);
+  /**
+   * Register a handler for TCP segments received on the given port.
+   * @param port port to accept packets in.
+   * @param filter optional filter for IP and port. If not provided, all IPs and ports are accepted.
+   * @returns a promise that resolves with the received TCP segment
+   */
+  private initQueue(port: Port, filter?: IpAndPort) {
+    let handlerMap = this.tcpQueues.get(port);
     if (!handlerMap) {
-      handlerMap = new Map<string, SegmentHandler>();
-      this.segmentHandlers.set(port, handlerMap);
+      handlerMap = new Map<string, AsyncQueue<TcpSegment>>();
+      this.tcpQueues.set(port, handlerMap);
     }
-    const key = [otherIp, otherPort].toString();
-    const handler = handlerMap.get(key);
-    if (handler) {
+    const key = filter ? [filter.ip, filter.port].toString() : MATCH_ALL_KEY;
+    const prevHandler = handlerMap.get(key);
+    if (prevHandler) {
       throw new Error("Handler already registered");
     }
-    const promise = new Promise<TcpSegment>((resolve) => {
-      handlerMap.set(key, resolve);
-    });
-    return promise;
+    const queue = new AsyncQueue<TcpSegment>();
+    handlerMap.set(key, queue);
+    return queue;
   }
 }
 
@@ -119,16 +141,20 @@ export class TcpSocket {
   private dstHost: ViewHost;
   private dstPort: Port;
 
+  private tcpQueue: AsyncQueue<TcpSegment>;
+
   constructor(
     srcHost: ViewHost,
     srcPort: Port,
     dstHost: ViewHost,
     dstPort: Port,
+    tcpQueue: AsyncQueue<TcpSegment>,
   ) {
     this.srcHost = srcHost;
     this.dstHost = dstHost;
     this.srcPort = srcPort;
     this.dstPort = dstPort;
+    this.tcpQueue = tcpQueue;
   }
 
   async read(buffer: Uint8Array) {
@@ -141,7 +167,15 @@ export class TcpSocket {
 }
 
 export class TcpListener {
+  private tcpQueue: AsyncQueue<TcpSegment>;
+
+  constructor(port: Port, tcpQueue: AsyncQueue<TcpSegment>) {
+    this.tcpQueue = tcpQueue;
+  }
+
   async next(): Promise<TcpSocket> {
-    return new TcpSocket(null, 0, null, 0);
+    const segment = await this.tcpQueue.pop();
+    // TODO: validate segment and start connection
+    return new TcpSocket(null, 0, null, 0, null);
   }
 }
