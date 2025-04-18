@@ -1,5 +1,7 @@
 export type VertexId = number;
 
+type FilterFn<Vertex> = (vertexId: VertexId, vertex: Vertex) => boolean;
+
 export interface RemovedVertexData<Vertex, Edge> {
   id: VertexId;
   vertex: Vertex;
@@ -105,6 +107,43 @@ export class Graph<Vertex, Edge> {
   clear() {
     this.vertices.clear();
     this.edges.clear();
+  }
+
+  /**
+   * Travels the graph in a Depth-First Search manner.
+   * @param startId ID of the vertex to start from
+   * @param filter Function to filter vertices during traversal.
+   * If the function returns true, the vertex's neighbors are visited.
+   */
+  dfs(startId: VertexId, filter: FilterFn<Vertex>): void {
+    this.recursiveDfs(startId, filter, new Set<VertexId>());
+  }
+
+  private recursiveDfs(
+    currentId: VertexId,
+    filter: FilterFn<Vertex>,
+    visited: Set<VertexId>,
+  ) {
+    if (visited.has(currentId)) {
+      return; // Avoid cycles
+    }
+    visited.add(currentId);
+
+    const currentDevice = this.getVertex(currentId);
+    if (!currentDevice) {
+      console.warn(`Device not found: ${currentId}`);
+      return; // If the device doesn't exist, stop
+    }
+    if (!filter(currentId, currentDevice)) {
+      return; // If the filter returns false, stop
+    }
+
+    // Explore neighbors recursively
+    this.getNeighbors(currentId)?.forEach((neighborId) => {
+      if (!visited.has(neighborId)) {
+        this.recursiveDfs(neighborId, filter, visited);
+      }
+    });
   }
 }
 
