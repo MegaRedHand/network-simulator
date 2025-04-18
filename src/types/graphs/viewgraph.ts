@@ -261,37 +261,41 @@ export class ViewGraph {
     return visibleDevices; // Return the list of visible connected device IDs
   }
 
-  canReachVisibleDevice(startId: DeviceId, excludeId?: DeviceId): boolean {
+  canReachVisibleDevice(
+    startId: DeviceId,
+    excludeId?: DeviceId,
+  ): Set<DeviceId> {
     const visited = new Set<DeviceId>();
+    const visibleDevices = new Set<DeviceId>();
 
-    const dfs = (currentId: DeviceId): boolean => {
+    const dfs = (currentId: DeviceId): void => {
       if (visited.has(currentId)) {
-        return false; // Avoid cycles
+        return; // Avoid cycles
       }
       visited.add(currentId);
 
       const currentDevice = this.getDevice(currentId);
       if (!currentDevice) {
         console.warn(`Device not found: ${currentId}`);
-        return false; // If the device doesn't exist, stop
+        return; // If the device doesn't exist, stop
       }
 
       if (currentDevice.visible) {
-        return true; // Found a visible device
+        visibleDevices.add(currentId); // Track visible devices found
+        return; // Stop further traversal from this device
       }
 
       // Explore neighbors recursively
       const neighbors = this.graph.getNeighbors(currentId);
       for (const neighborId of neighbors) {
-        if (neighborId !== excludeId && dfs(neighborId)) {
-          return true; // If any neighbor can reach a visible device, return true
+        if (neighborId !== excludeId) {
+          dfs(neighborId);
         }
       }
-
-      return false; // No visible device found in this path
     };
 
-    return dfs(startId);
+    dfs(startId);
+    return visibleDevices; // Return the set of visible devices found
   }
 
   getAllConnections(): Edge[] {

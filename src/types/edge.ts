@@ -133,20 +133,26 @@ export class Edge extends Graphics {
       return;
     }
 
-    // Check if device2 can reach a visible device without passing through device1
-    const device2CanReachVisible = this.viewgraph.canReachVisibleDevice(
+    // Get visible devices reachable from each device
+    const device1VisibleDevices = this.viewgraph.canReachVisibleDevice(
+      device1.id,
+      device2.id,
+    );
+    const device2VisibleDevices = this.viewgraph.canReachVisibleDevice(
       device2.id,
       device1.id,
     );
 
-    // Check if device1 can reach a visible device without passing through device2
-    const device1CanReachVisible = this.viewgraph.canReachVisibleDevice(
-      device1.id,
-      device2.id,
+    // Check if both devices depend on the same visible device
+    const sharedVisibleDevices = [...device1VisibleDevices].filter((id) =>
+      device2VisibleDevices.has(id),
     );
 
-    // Update the visibility of the edge based on the reachability of visible devices
-    this.visible = device2CanReachVisible && device1CanReachVisible;
+    // Update the visibility of the edge
+    this.visible =
+      sharedVisibleDevices.length === 0 &&
+      device1VisibleDevices.size > 0 &&
+      device2VisibleDevices.size > 0;
 
     // If the edge is visible, update its position
     if (this.visible) {
