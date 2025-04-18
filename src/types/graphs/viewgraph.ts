@@ -225,38 +225,18 @@ export class ViewGraph {
   }
 
   getVisibleConnectedDeviceIds(deviceId: DeviceId): DeviceId[] {
-    const visited = new Set<DeviceId>(); // Tracks visited devices to avoid cycles
     const visibleDevices: DeviceId[] = []; // Stores visible connected device IDs
 
-    const dfs = (currentId: DeviceId): void => {
-      if (visited.has(currentId)) {
-        return; // Skip if the device has already been visited
+    const filter = (id: DeviceId, device: ViewDevice): boolean => {
+      // If device is visible, add it to the set and stop traversal
+      if (device.visible && id !== deviceId) {
+        visibleDevices.push(id);
+        return false;
       }
-      visited.add(currentId); // Mark the current device as visited
-
-      const currentDevice = this.graph.getVertex(currentId);
-      if (!currentDevice) {
-        return; // Skip if the device does not exist in the graph
-      }
-
-      // If the device is visible and not the starting device, add it to the result
-      if (currentDevice.visible && currentId !== deviceId) {
-        visibleDevices.push(currentId);
-        return; // Stop further traversal from this device
-      }
-
-      // Traverse neighbors of the current device
-      const neighbors = this.graph.getNeighbors(currentId);
-      for (const neighborId of neighbors) {
-        dfs(neighborId);
-      }
+      return true;
     };
 
-    // Start DFS for each visible neighbor of the given device
-    const neighbors = this.graph.getNeighbors(deviceId);
-    for (const neighborId of neighbors) {
-      dfs(neighborId);
-    }
+    this.graph.dfs(deviceId, filter);
 
     return visibleDevices; // Return the list of visible connected device IDs
   }
@@ -265,36 +245,22 @@ export class ViewGraph {
     startId: DeviceId,
     excludeId?: DeviceId,
   ): Set<DeviceId> {
-    const visited = new Set<DeviceId>();
     const visibleDevices = new Set<DeviceId>();
 
-    const dfs = (currentId: DeviceId): void => {
-      if (visited.has(currentId)) {
-        return; // Avoid cycles
+    const filter = (id: DeviceId, device: ViewDevice): boolean => {
+      // If the device is excluded, skip it and stop traversal
+      if (id === excludeId) {
+        return false;
       }
-      visited.add(currentId);
-
-      const currentDevice = this.getDevice(currentId);
-      if (!currentDevice) {
-        console.warn(`Device not found: ${currentId}`);
-        return; // If the device doesn't exist, stop
+      // If device is visible, add it to the set and stop traversal
+      if (device.visible) {
+        visibleDevices.add(id);
+        return false;
       }
-
-      if (currentDevice.visible) {
-        visibleDevices.add(currentId); // Track visible devices found
-        return; // Stop further traversal from this device
-      }
-
-      // Explore neighbors recursively
-      const neighbors = this.graph.getNeighbors(currentId);
-      for (const neighborId of neighbors) {
-        if (neighborId !== excludeId) {
-          dfs(neighborId);
-        }
-      }
+      return true;
     };
 
-    dfs(startId);
+    this.graph.dfs(startId, filter);
     return visibleDevices; // Return the set of visible devices found
   }
 
