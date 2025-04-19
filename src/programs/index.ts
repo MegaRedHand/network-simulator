@@ -3,7 +3,7 @@ import { DeviceId } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
 import { DummyLinkProgram } from "./dummy_link_program";
 import { EchoServer, SingleEcho } from "./echo_sender";
-import { HttpClient } from "./http_client";
+import { HttpClient, HttpServer } from "./http_client";
 
 export type Pid = number;
 
@@ -65,7 +65,13 @@ type ProgramConstructor = new (
 // - Have a static readonly PROGRAM_NAME property
 // - Have a constructor with the signature (viewgraph, srcId, inputs)
 // - Have a getProgramInfo static method
-const programList = [SingleEcho, EchoServer, HttpClient, DummyLinkProgram];
+const programList = [
+  SingleEcho,
+  EchoServer,
+  HttpClient,
+  HttpServer,
+  DummyLinkProgram,
+];
 
 // Map of program name to program constructor
 const programMap = new Map<string, ProgramConstructor>(

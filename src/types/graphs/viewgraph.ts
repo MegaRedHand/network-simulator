@@ -52,6 +52,9 @@ export class ViewGraph {
     }
     console.debug(allConnections);
     this.addConnections(allConnections);
+    for (const [, device] of this.graph.getAllVertices()) {
+      device.initialize();
+    }
   }
 
   loadDevice(deviceId: DeviceId): ViewDevice {
@@ -68,6 +71,7 @@ export class ViewGraph {
       connections,
     );
     this.addConnections(connections);
+    device.initialize();
     return device;
   }
 
