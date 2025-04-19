@@ -69,9 +69,15 @@ export class Edge extends Graphics {
   drawEdge(startPos: Point, endPos: Point, color: number) {
     this.clear();
 
+    // Draw a colored line
     this.moveTo(startPos.x, startPos.y);
     this.lineTo(endPos.x, endPos.y);
     this.stroke({ width: 4, color });
+
+    // Add a bigger transparent hitbox
+    this.moveTo(startPos.x, startPos.y);
+    this.lineTo(endPos.x, endPos.y);
+    this.stroke({ width: 12, alpha: 0 });
 
     this.zIndex = ZIndexLevels.Edge;
     this.startPos = startPos;
