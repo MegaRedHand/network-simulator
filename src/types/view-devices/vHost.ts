@@ -22,7 +22,11 @@ import { dropPacket } from "../packet";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { TcpSegment } from "../../packets/tcp";
-import { TcpModule } from "../network-modules/tcpModule";
+import {
+  TcpListener,
+  TcpModule,
+  TcpSocket,
+} from "../network-modules/tcpModule";
 
 export class ViewHost extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -175,7 +179,7 @@ export class ViewHost extends ViewNetworkDevice {
 
   private tcpModule = new TcpModule(this);
 
-  async tcpConnect(dstId: DeviceId) {
+  async tcpConnect(dstId: DeviceId): Promise<TcpSocket | null> {
     const dstDevice = this.viewgraph.getDevice(dstId);
     if (!dstDevice) {
       console.error("Destination device not found");
@@ -188,7 +192,7 @@ export class ViewHost extends ViewNetworkDevice {
     return await this.tcpModule.connect(dstDevice, 80);
   }
 
-  tcpListenOn(port: number) {
-    return this.tcpModule.listenOn(port);
+  async tcpListenOn(port: number): Promise<TcpListener | null> {
+    return await this.tcpModule.listenOn(port);
   }
 }

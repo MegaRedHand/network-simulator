@@ -96,7 +96,7 @@ export class TcpModule {
     return new TcpSocket(this.host, srcPort, dstHost, dstPort, tcpQueue);
   }
 
-  async listenOn(port: Port) {
+  async listenOn(port: Port): Promise<TcpListener | null> {
     const queue = this.initNewQueue(port);
     if (!queue) {
       return null;
