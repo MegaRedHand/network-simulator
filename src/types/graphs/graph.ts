@@ -1,6 +1,9 @@
 export type VertexId = number;
 
-type FilterFn<Vertex> = (vertexId: VertexId, vertex: Vertex) => boolean;
+interface DfsOptions<Vertex, Edge> {
+  vertexFilter?: (vertex: Vertex, vertexId: VertexId) => boolean;
+  edgeFilter?: (edge: Edge, id1: VertexId, id2: VertexId) => boolean;
+}
 
 export interface RemovedVertexData<Vertex, Edge> {
   id: VertexId;
@@ -112,16 +115,18 @@ export class Graph<Vertex, Edge> {
   /**
    * Travels the graph in a Depth-First Search manner.
    * @param startId ID of the vertex to start from
-   * @param filter Function to filter vertices during traversal.
-   * If the function returns true, the vertex's neighbors are visited.
+   * @param opts Options for filtering vertices or edges during traversal.
+   * If the function returns true, the vertex's neighbors are visited or the edge is traversed.
    */
-  dfs(startId: VertexId, filter: FilterFn<Vertex>): void {
-    this.recursiveDfs(startId, filter, new Set<VertexId>());
+  dfs(startId: VertexId, opts: DfsOptions<Vertex, Edge>): void {
+    opts.edgeFilter = opts.edgeFilter || (() => true);
+    opts.vertexFilter = opts.vertexFilter || (() => true);
+    this.recursiveDfs(startId, opts, new Set<VertexId>());
   }
 
   private recursiveDfs(
     currentId: VertexId,
-    filter: FilterFn<Vertex>,
+    opts: DfsOptions<Vertex, Edge>,
     visited: Set<VertexId>,
   ) {
     if (visited.has(currentId)) {
@@ -134,16 +139,21 @@ export class Graph<Vertex, Edge> {
       console.warn(`Device not found: ${currentId}`);
       return; // If the device doesn't exist, stop
     }
-    if (!filter(currentId, currentDevice)) {
+    if (!opts.vertexFilter(currentDevice, currentId)) {
       return; // If the filter returns false, stop
     }
 
     // Explore neighbors recursively
-    this.getNeighbors(currentId)?.forEach((neighborId) => {
-      if (!visited.has(neighborId)) {
-        this.recursiveDfs(neighborId, filter, visited);
+    for (const [neighborId, edge] of this.getEdges(currentId)) {
+      // If the neighbor hasn't been visited, we check the edge filter
+      // and visit the neighbor if the filter returns true
+      if (
+        !visited.has(neighborId) &&
+        opts.edgeFilter(edge, currentId, neighborId)
+      ) {
+        this.recursiveDfs(neighborId, opts, visited);
       }
-    });
+    }
   }
 }
 

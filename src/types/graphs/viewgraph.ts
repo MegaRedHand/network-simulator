@@ -227,7 +227,7 @@ export class ViewGraph {
   getVisibleConnectedDeviceIds(deviceId: DeviceId): DeviceId[] {
     const visibleDevices: DeviceId[] = []; // Stores visible connected device IDs
 
-    const filter = (id: DeviceId, device: ViewDevice): boolean => {
+    const vertexFilter = (device: ViewDevice, id: DeviceId): boolean => {
       // If device is visible, add it to the set and stop traversal
       if (device.visible && id !== deviceId) {
         visibleDevices.push(id);
@@ -236,7 +236,7 @@ export class ViewGraph {
       return true;
     };
 
-    this.graph.dfs(deviceId, filter);
+    this.graph.dfs(deviceId, { vertexFilter });
 
     return visibleDevices; // Return the list of visible connected device IDs
   }
@@ -247,7 +247,7 @@ export class ViewGraph {
   ): Set<DeviceId> {
     const visibleDevices = new Set<DeviceId>();
 
-    const filter = (id: DeviceId, device: ViewDevice): boolean => {
+    const vertexFilter = (device: ViewDevice, id: DeviceId): boolean => {
       // If the device is excluded, skip it and stop traversal
       if (id === excludeId) {
         return false;
@@ -260,7 +260,7 @@ export class ViewGraph {
       return true;
     };
 
-    this.graph.dfs(startId, filter);
+    this.graph.dfs(startId, { vertexFilter });
     return visibleDevices; // Return the set of visible devices found
   }
 
