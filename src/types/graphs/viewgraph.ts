@@ -198,8 +198,25 @@ export class ViewGraph {
       device.updateVisibility();
     }
 
+    // Refresh and make all edges visible again
     for (const [, , edge] of this.graph.getAllEdges()) {
-      edge.updateVisibility();
+      edge.refresh();
+      edge.makeVisible();
+    }
+
+    // Iterate until no changes are made
+    for (let i = 0; i < this.graph.getVertexCount(); i++) {
+      let hadChanges = false;
+      // For each iteration, update visibility of all edges.
+      // This takes into account currently visible edges and devices.
+      for (const [, , edge] of this.graph.getAllEdges()) {
+        const previousVisibility = edge.visible;
+        edge.updateVisibility();
+        hadChanges ||= previousVisibility !== edge.visible;
+      }
+      if (!hadChanges) {
+        break;
+      }
     }
 
     // warn Packet Manager that the layer has been changed
@@ -225,77 +242,49 @@ export class ViewGraph {
   }
 
   getVisibleConnectedDeviceIds(deviceId: DeviceId): DeviceId[] {
-    const visited = new Set<DeviceId>(); // Tracks visited devices to avoid cycles
     const visibleDevices: DeviceId[] = []; // Stores visible connected device IDs
 
-    const dfs = (currentId: DeviceId): void => {
-      if (visited.has(currentId)) {
-        return; // Skip if the device has already been visited
+    const vertexFilter = (device: ViewDevice, id: DeviceId): boolean => {
+      // If device is visible, add it to the set and stop traversal
+      if (device.visible && id !== deviceId) {
+        visibleDevices.push(id);
+        return false;
       }
-      visited.add(currentId); // Mark the current device as visited
-
-      const currentDevice = this.graph.getVertex(currentId);
-      if (!currentDevice) {
-        return; // Skip if the device does not exist in the graph
-      }
-
-      // If the device is visible and not the starting device, add it to the result
-      if (currentDevice.visible && currentId !== deviceId) {
-        visibleDevices.push(currentId);
-        return; // Stop further traversal from this device
-      }
-
-      // Traverse neighbors of the current device
-      const neighbors = this.graph.getNeighbors(currentId);
-      for (const neighborId of neighbors) {
-        dfs(neighborId);
-      }
+      return true;
     };
 
-    // Start DFS for each visible neighbor of the given device
-    const neighbors = this.graph.getNeighbors(deviceId);
-    for (const neighborId of neighbors) {
-      dfs(neighborId);
-    }
+    this.graph.dfs(deviceId, { vertexFilter });
 
     return visibleDevices; // Return the list of visible connected device IDs
   }
 
-  canReachVisibleDevice(
-    startId: DeviceId,
-    excludeId?: DeviceId,
-  ): Set<DeviceId> {
-    const visited = new Set<DeviceId>();
+  /**
+   * Checks if a device can reach any visible device, excluding the specified device from traversal.
+   * @param startId ID of the device to check for
+   * @param excludeId ID of a device to be excluded from traversal
+   * @returns True if the device can reach any visible device, otherwise false.
+   */
+  canReachVisibleDevice(startId: DeviceId, excludeId: DeviceId): boolean {
     const visibleDevices = new Set<DeviceId>();
 
-    const dfs = (currentId: DeviceId): void => {
-      if (visited.has(currentId)) {
-        return; // Avoid cycles
+    const vertexFilter = (device: ViewDevice, id: DeviceId): boolean => {
+      // If the device is excluded, skip it and stop traversal
+      if (id === excludeId) {
+        return false;
       }
-      visited.add(currentId);
-
-      const currentDevice = this.getDevice(currentId);
-      if (!currentDevice) {
-        console.warn(`Device not found: ${currentId}`);
-        return; // If the device doesn't exist, stop
+      // If device is visible, add it to the set and stop traversal
+      if (device.visible) {
+        visibleDevices.add(id);
+        return false;
       }
-
-      if (currentDevice.visible) {
-        visibleDevices.add(currentId); // Track visible devices found
-        return; // Stop further traversal from this device
-      }
-
-      // Explore neighbors recursively
-      const neighbors = this.graph.getNeighbors(currentId);
-      for (const neighborId of neighbors) {
-        if (neighborId !== excludeId) {
-          dfs(neighborId);
-        }
-      }
+      return true;
     };
 
-    dfs(startId);
-    return visibleDevices; // Return the set of visible devices found
+    // Avoid invisible edges
+    const edgeFilter = (edge: Edge) => edge.visible;
+
+    this.graph.dfs(startId, { vertexFilter, edgeFilter });
+    return visibleDevices.size > 0;
   }
 
   getAllConnections(): Edge[] {
