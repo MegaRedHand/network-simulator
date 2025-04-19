@@ -24,8 +24,10 @@ export class HttpClient extends ProgramBase {
 
   protected _run() {
     // This starts the request from the background
-    this.sendHttpRequest();
-    this.signalStop();
+    (async () => {
+      await this.sendHttpRequest();
+      this.signalStop();
+    })();
   }
 
   protected _stop() {
@@ -96,7 +98,10 @@ export class HttpServer extends ProgramBase {
 
   protected _run() {
     // This starts the request from the background
-    this.serveHttpRequests();
+    (async () => {
+      await this.serveHttpRequests();
+      this.signalStop();
+    })();
   }
 
   protected _stop() {
