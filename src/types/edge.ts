@@ -68,9 +68,11 @@ export class Edge extends Graphics {
   // Method to draw the line
   drawEdge(startPos: Point, endPos: Point, color: number) {
     this.clear();
+
     this.moveTo(startPos.x, startPos.y);
     this.lineTo(endPos.x, endPos.y);
-    this.stroke({ width: 3, color });
+    this.stroke({ width: 4, color });
+
     this.zIndex = ZIndexLevels.Edge;
     this.startPos = startPos;
     this.endPos = endPos;
