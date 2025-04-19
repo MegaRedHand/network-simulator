@@ -92,12 +92,12 @@ export class ProgramRunnerInfo implements Renderable {
   ): HTMLTableElement {
     const onDelete = (row: number) => {
       const { pid } = runningPrograms[row];
-      const removedProgram = runner.removeRunningProgram(pid);
+      runner.removeRunningProgram(pid);
       runningPrograms = runningPrograms.filter((p) => p.pid !== pid);
       if (runningPrograms.length === 0) {
         this.refreshTable();
       }
-      return removedProgram;
+      return true;
     };
 
     const rows = runningPrograms.map((program) => [
