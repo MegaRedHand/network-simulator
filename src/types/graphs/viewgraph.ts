@@ -258,10 +258,13 @@ export class ViewGraph {
     return visibleDevices; // Return the list of visible connected device IDs
   }
 
-  canReachVisibleDevice(
-    startId: DeviceId,
-    excludeId?: DeviceId,
-  ): Set<DeviceId> {
+  /**
+   * Checks if a device can reach any visible device, excluding the specified device from traversal.
+   * @param startId ID of the device to check for
+   * @param excludeId ID of a device to be excluded from traversal
+   * @returns True if the device can reach any visible device, otherwise false.
+   */
+  canReachVisibleDevice(startId: DeviceId, excludeId: DeviceId): boolean {
     const visibleDevices = new Set<DeviceId>();
 
     const vertexFilter = (device: ViewDevice, id: DeviceId): boolean => {
@@ -281,7 +284,7 @@ export class ViewGraph {
     const edgeFilter = (edge: Edge) => edge.visible;
 
     this.graph.dfs(startId, { vertexFilter, edgeFilter });
-    return visibleDevices; // Return the set of visible devices found
+    return visibleDevices.size > 0;
   }
 
   getAllConnections(): Edge[] {

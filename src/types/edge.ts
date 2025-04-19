@@ -138,18 +138,17 @@ export class Edge extends Graphics {
     }
 
     // Get visible devices reachable from each device
-    const device1VisibleDevices = this.viewgraph.canReachVisibleDevice(
+    const device1CanReachVisibleDevice = this.viewgraph.canReachVisibleDevice(
       device1.id,
       device2.id,
     );
-    const device2VisibleDevices = this.viewgraph.canReachVisibleDevice(
+    const device2CanReachVisibleDevice = this.viewgraph.canReachVisibleDevice(
       device2.id,
       device1.id,
     );
 
     // Update the visibility of the edge
-    this.visible =
-      device1VisibleDevices.size > 0 && device2VisibleDevices.size > 0;
+    this.visible = device1CanReachVisibleDevice && device2CanReachVisibleDevice;
   }
 
   /**
