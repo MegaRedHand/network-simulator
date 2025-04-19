@@ -121,6 +121,10 @@ export class Edge extends Graphics {
     return this.data;
   }
 
+  makeVisible() {
+    this.visible = true;
+  }
+
   updateVisibility(): void {
     const device1 = this.viewgraph.getDevice(this.data.from.id);
     const device2 = this.viewgraph.getDevice(this.data.to.id);
@@ -143,21 +147,9 @@ export class Edge extends Graphics {
       device1.id,
     );
 
-    // Check if both devices depend on the same visible device
-    const sharedVisibleDevices = [...device1VisibleDevices].filter((id) =>
-      device2VisibleDevices.has(id),
-    );
-
     // Update the visibility of the edge
     this.visible =
-      sharedVisibleDevices.length === 0 &&
-      device1VisibleDevices.size > 0 &&
-      device2VisibleDevices.size > 0;
-
-    // If the edge is visible, update its position
-    if (this.visible) {
-      this.refresh();
-    }
+      device1VisibleDevices.size > 0 && device2VisibleDevices.size > 0;
   }
 
   /**

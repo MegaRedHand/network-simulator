@@ -198,8 +198,25 @@ export class ViewGraph {
       device.updateVisibility();
     }
 
+    // Refresh and make all edges visible again
     for (const [, , edge] of this.graph.getAllEdges()) {
-      edge.updateVisibility();
+      edge.refresh();
+      edge.makeVisible();
+    }
+
+    // Iterate until no changes are made
+    for (let i = 0; i < this.graph.getVertexCount(); i++) {
+      let hadChanges = false;
+      // For each iteration, update visibility of all edges.
+      // This takes into account currently visible edges and devices.
+      for (const [, , edge] of this.graph.getAllEdges()) {
+        const previousVisibility = edge.visible;
+        edge.updateVisibility();
+        hadChanges ||= previousVisibility !== edge.visible;
+      }
+      if (!hadChanges) {
+        break;
+      }
     }
 
     // warn Packet Manager that the layer has been changed
@@ -260,7 +277,10 @@ export class ViewGraph {
       return true;
     };
 
-    this.graph.dfs(startId, { vertexFilter });
+    // Avoid invisible edges
+    const edgeFilter = (edge: Edge) => edge.visible;
+
+    this.graph.dfs(startId, { vertexFilter, edgeFilter });
     return visibleDevices; // Return the set of visible devices found
   }
 
