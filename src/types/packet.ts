@@ -28,14 +28,14 @@ import {
 import { PacketInfo } from "../graphics/renderables/packet_info";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
-  IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
-  "ICMP-8": circleGraphicsContext(Colors.Red, 0, 0, 5),
-  "ICMP-0": circleGraphicsContext(Colors.Yellow, 0, 0, 5),
-  EMPTY: circleGraphicsContext(Colors.Grey, 0, 0, 5),
-  HTTP: circleGraphicsContext(Colors.Hazel, 0, 0, 5), // for HTTP
+  IP: circleGraphicsContext(Colors.Green, 5),
+  "ICMP-8": circleGraphicsContext(Colors.Red, 5),
+  "ICMP-0": circleGraphicsContext(Colors.Yellow, 5),
+  EMPTY: circleGraphicsContext(Colors.Grey, 5),
+  HTTP: circleGraphicsContext(Colors.Hazel, 5), // for HTTP
 };
 
-const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
+const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 6);
 
 export interface PacketLocation {
   startId: DeviceId;

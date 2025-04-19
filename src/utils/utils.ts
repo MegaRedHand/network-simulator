@@ -18,13 +18,19 @@ export enum Colors {
 
 export function circleGraphicsContext(
   color: number,
-  x: number,
-  y: number,
   radius: number,
 ): GraphicsContext {
+  const x = 0;
+  const y = 0;
+
   const graphicsCtx = new GraphicsContext();
+  // Draw a circle
   graphicsCtx.circle(x, y, radius);
   graphicsCtx.fill(color);
+
+  // Draw a bigger invisible hit-area
+  graphicsCtx.circle(x, y, radius * 2);
+  graphicsCtx.fill({ alpha: 0 });
   return graphicsCtx;
 }
 
