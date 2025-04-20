@@ -147,10 +147,10 @@ export class TcpSegment implements IpPayload {
   constructor(
     srcPort: number,
     dstPort: number,
-    seqNum: number,
-    ackNum: number,
-    flags: Flags,
-    data: Uint8Array,
+    seqNum: number = 0,
+    ackNum: number = 0,
+    flags: Flags = new Flags(),
+    data: Uint8Array = new Uint8Array(0),
   ) {
     checkUint(srcPort, 16);
     checkUint(dstPort, 16);
@@ -163,6 +163,16 @@ export class TcpSegment implements IpPayload {
     this.acknowledgementNumber = ackNum;
     this.flags = flags;
     this.data = data;
+  }
+
+  withFlags(flags: Flags): TcpSegment {
+    this.flags = flags;
+    return this;
+  }
+
+  withData(data: Uint8Array): TcpSegment {
+    this.data = data;
+    return this;
   }
 
   computeChecksum(): number {
