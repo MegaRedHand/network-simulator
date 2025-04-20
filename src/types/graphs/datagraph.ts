@@ -34,7 +34,6 @@ interface CommonDataNode {
   // TODO: remove this
   mac: string;
   interfaces: NetworkInterfaceData[];
-  arpTable?: [string, string][];
 }
 
 export interface NetworkInterfaceData {
@@ -56,6 +55,7 @@ export interface NetworkDataNode extends CommonDataNode {
   // TODO: remove this
   ip: string;
   mask: string;
+  arpTable: [string, string][];
 }
 
 export interface RouterDataNode extends NetworkDataNode {

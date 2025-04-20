@@ -12,6 +12,7 @@ import { GlobalContext } from "../../context";
 import { sendViewPacket } from "../packet";
 import { DataSwitch } from "../data-devices";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
+import { ArpPacket, ArpRequest } from "../../packets/arp";
 
 export class ViewSwitch extends ViewDevice {
   static DEVICE_TEXTURE: Texture;
@@ -91,15 +92,29 @@ export class ViewSwitch extends ViewDevice {
     const newFrame = new EthernetFrame(
       this.mac,
       frame.destination,
-      frame.payload,
+      frame.payload, // should be a copy
     );
     sendViewPacket(this.viewgraph, this.id, newFrame, nextHopId);
   }
 
   // TODO: change all related senderId features to the receiver interface
   receiveFrame(frame: EthernetFrame, senderId: DeviceId): void {
-    const datagram = frame.payload;
-    if (!(datagram instanceof IPv4Packet)) {
+    if (frame.payload instanceof ArpRequest) {
+      const { sha, spa, tha, tpa } = frame.payload;
+      const connections = this.viewgraph.getConnections(this.id);
+      connections.forEach((edge) => {
+        const packet = new ArpRequest(sha, spa, tpa, tha);
+        const frame = new EthernetFrame(
+          this.mac,
+          MacAddress.broadcastAddress(),
+          packet,
+        );
+        const nextHopId = edge.otherEnd(this.id);
+        if (!nextHopId || nextHopId === senderId) {
+          return;
+        }
+        sendViewPacket(this.viewgraph, this.id, frame, nextHopId);
+      });
       return;
     }
     // Update the switching table with the source MAC address

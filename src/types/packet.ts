@@ -12,7 +12,11 @@ import { ViewGraph } from "./graphs/viewgraph";
 import { Layer, layerIncluded } from "./layer";
 //import { EchoMessage } from "../packets/icmp";
 import { DataGraph, DeviceId } from "./graphs/datagraph";
-import { EthernetFrame, IP_PROTOCOL_TYPE } from "../packets/ethernet";
+import {
+  EthernetFrame,
+  IP_PROTOCOL_TYPE,
+  ARP_PROTOCOL_TYPE,
+} from "../packets/ethernet";
 import {
   ICMP_PROTOCOL_NUMBER,
   IPv4Packet,
@@ -31,8 +35,9 @@ const contextPerPacketType: Record<string, GraphicsContext> = {
   IP: circleGraphicsContext(Colors.Green, 0, 0, 5),
   "ICMP-8": circleGraphicsContext(Colors.Red, 0, 0, 5),
   "ICMP-0": circleGraphicsContext(Colors.Yellow, 0, 0, 5),
-  EMPTY: circleGraphicsContext(Colors.Grey, 0, 0, 5),
   HTTP: circleGraphicsContext(Colors.Hazel, 0, 0, 5), // for HTTP
+  ARP: circleGraphicsContext(Colors.Green, 0, 0, 5),
+  EMPTY: circleGraphicsContext(Colors.Grey, 0, 0, 5),
 };
 
 const highlightedPacketContext = circleGraphicsContext(Colors.Violet, 0, 0, 6);
@@ -64,6 +69,8 @@ function packetContext(frame: EthernetFrame): PacketContext {
       return { type: "HTTP", layer: Layer.App };
     }
   }
+  if (frame.payload.type() === ARP_PROTOCOL_TYPE)
+    return { type: "ARP", layer: Layer.Link };
   return { type: "EMPTY", layer: Layer.Link };
 }
 
@@ -349,7 +356,7 @@ export function sendViewPacket(
       );
     });
   }
-  if (firstEdge === undefined) {
+  if (firstEdge === undefined && !nextHopId) {
     console.warn(
       "El dispositivo de origen no está conectado al destino, a un router o a un switch.",
     );

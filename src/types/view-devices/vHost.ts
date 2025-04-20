@@ -44,6 +44,7 @@ export class ViewHost extends ViewNetworkDevice {
     interfaces: NetworkInterfaceData[],
     ip: IpAddress,
     mask: IpAddress,
+    arpTable: Map<string, string>,
   ) {
     super(
       id,
@@ -55,6 +56,7 @@ export class ViewHost extends ViewNetworkDevice {
       interfaces,
       ip,
       mask,
+      arpTable,
     );
     this.loadRunningPrograms();
   }
@@ -65,7 +67,7 @@ export class ViewHost extends ViewNetworkDevice {
       dropPacket(this.viewgraph, this.id, frame);
       return;
     }
-    this.handlePacket(packet);
+    this.handleDatagram(packet);
   }
 
   showInfo(): void {

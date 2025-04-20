@@ -5,6 +5,7 @@ import { Layer } from "../types/layer";
 export const IP_PROTOCOL_TYPE = 0x0800;
 export const ARP_PROTOCOL_TYPE = 0x0806;
 export const IPV6_PROTOCOL_TYPE = 0x86dd;
+const BROADCAST_ADDRESS: string = "ff:ff:ff:ff:ff:ff";
 
 /// Medium Access Control (MAC) address
 export class MacAddress {
@@ -29,6 +30,15 @@ export class MacAddress {
       octets[i] = octetInt;
     });
     return new this(octets);
+  }
+
+  // Create a broadcast MAC address instance
+  static broadcastAddress(): MacAddress {
+    return MacAddress.parse(BROADCAST_ADDRESS);
+  }
+
+  isBroadcast(): boolean {
+    return this.octets.every((octet) => octet == 0xff);
   }
 
   // Turn to string

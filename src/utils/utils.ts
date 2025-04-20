@@ -7,7 +7,7 @@ export enum Colors {
   Violet = 0x4b0082,
   Burgundy = 0x6d071a, // Bordo
   Lightblue = 0x1e90ff,
-  Green = 0x0000ff,
+  Green = 0x00ff00,
   Red = 0xff0000,
   White = 0xffffff,
   Black = 0x000000,

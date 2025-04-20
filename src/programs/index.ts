@@ -1,7 +1,7 @@
 import { ProgramInfo } from "../graphics/renderables/program_info";
 import { DeviceId } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
-import { DummyLinkProgram } from "./dummy_link_program";
+import { ArpProtocol } from "./arp_protocol";
 import { EchoServer, SingleEcho } from "./echo_sender";
 import { HttpClient } from "./http_client";
 
@@ -65,7 +65,7 @@ type ProgramConstructor = new (
 // - Have a static readonly PROGRAM_NAME property
 // - Have a constructor with the signature (viewgraph, srcId, inputs)
 // - Have a getProgramInfo static method
-const programList = [SingleEcho, EchoServer, HttpClient, DummyLinkProgram];
+const programList = [SingleEcho, EchoServer, HttpClient, ArpProtocol];
 
 // Map of program name to program constructor
 const programMap = new Map<string, ProgramConstructor>(

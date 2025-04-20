@@ -59,6 +59,7 @@ export const TOOLTIP_KEYS = {
   PROGRAM_RUNNER: "Program Runner",
   EDGE_INFORMATION: "Edge Information",
   PACKET_INFORMATION: "Packet Information",
+  IP_REQUEST: "IP to Request",
 } as const;
 
 // Tooltip Content

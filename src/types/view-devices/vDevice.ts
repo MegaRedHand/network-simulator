@@ -61,7 +61,6 @@ export abstract class ViewDevice extends Container {
   ctx: GlobalContext;
 
   mac: MacAddress;
-  arpTable: Map<IpAddress, MacAddress> = new Map<IpAddress, MacAddress>();
   interfaces: NetworkInterface[] = [];
 
   highlightMarker: Graphics | null = null; // Marker to indicate selection
