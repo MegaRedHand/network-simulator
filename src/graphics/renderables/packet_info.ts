@@ -4,6 +4,9 @@ import { Button } from "../basic_components/button";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { BaseInfo } from "./base_info";
 import { ToggleInfo } from "../components/toggle_info";
+import { Layer } from "../../types/layer";
+import { IPv4Packet } from "../../packets/ip";
+import { TcpSegment } from "../../packets/tcp";
 
 export class PacketInfo extends BaseInfo {
   readonly packet: Packet;
@@ -22,16 +25,53 @@ export class PacketInfo extends BaseInfo {
       this.packet.type,
       TOOLTIP_KEYS.PACKET_TYPE,
     );
-    this.information.addField(
-      TOOLTIP_KEYS.SOURCE_MAC_ADDRESS,
-      this.packet.rawPacket.source.toString(),
-      TOOLTIP_KEYS.SOURCE_MAC_ADDRESS,
-    );
-    this.information.addField(
-      TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS,
-      this.packet.rawPacket.destination.toString(),
-      TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS,
-    );
+
+    const layer = this.packet.viewgraph.getLayer();
+    const framePayload = this.packet.rawPacket.payload as IPv4Packet;
+
+    if (layer == Layer.Link) {
+      this.information.addField(
+        TOOLTIP_KEYS.SOURCE_MAC_ADDRESS,
+        this.packet.rawPacket.source.toString(),
+        TOOLTIP_KEYS.SOURCE_MAC_ADDRESS,
+      );
+      this.information.addField(
+        TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS,
+        this.packet.rawPacket.destination.toString(),
+        TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS,
+      );
+    }
+
+    if (layer >= Layer.Network) {
+      this.information.addField(
+        TOOLTIP_KEYS.SOURCE_IP_ADDRESS,
+        framePayload.sourceAddress.toString(),
+        TOOLTIP_KEYS.SOURCE_IP_ADDRESS,
+      );
+      this.information.addField(
+        TOOLTIP_KEYS.DESTINATION_IP_ADDRESS,
+        framePayload.destinationAddress.toString(),
+        TOOLTIP_KEYS.DESTINATION_IP_ADDRESS,
+      );
+    }
+
+    if (layer >= Layer.Transport) {
+      // TODO: This is not very extensible, but it works for now
+      if (framePayload.payload instanceof TcpSegment) {
+        const tcpPayload = framePayload.payload as TcpSegment;
+
+        this.information.addField(
+          TOOLTIP_KEYS.SOURCE_PORT,
+          tcpPayload.sourcePort,
+          TOOLTIP_KEYS.SOURCE_PORT,
+        );
+        this.information.addField(
+          TOOLTIP_KEYS.DESTINATION_PORT,
+          tcpPayload.destinationPort,
+          TOOLTIP_KEYS.DESTINATION_PORT,
+        );
+      }
+    }
   }
 
   protected addCommonButtons(): void {

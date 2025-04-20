@@ -37,7 +37,7 @@ export class DeviceInfo extends BaseInfo {
       connections,
       TOOLTIP_KEYS.CONNECTED_DEVICES,
     );
-    
+
     const layer = this.device.viewgraph.getLayer();
 
     if (layer == Layer.Link) {
