@@ -60,10 +60,18 @@ export class HttpClient extends ProgramBase {
     // Wrap in TCP segment
     const payload = new TcpSegment(srcPort, 80, 0, 0, flags, content);
 
-    // Wrap in IP packet
+    // Wrap in IP datagram
     const ipPacket = new IPv4Packet(srcDevice.ip, dstDevice.ip, payload);
+
+    // Resolve destination MAC address
+    let dstMac = srcDevice.resolveAddress(dstDevice.ip);
+    if (!dstMac) {
+      console.warn(
+        `Device ${this.srcId} couldn't resolve MAC address for device with IP ${dstDevice.ip.toString()}. Program cancelled`,
+      );
+      return;
+    }
     const path = this.viewgraph.getPathBetween(this.srcId, this.dstId);
-    let dstMac = dstDevice.mac;
     if (!path) return;
     for (const id of path.slice(1)) {
       const device = this.viewgraph.getDevice(id);
@@ -73,6 +81,8 @@ export class HttpClient extends ProgramBase {
         break;
       }
     }
+
+    // Wrap in Ethernet frame
     const ethernetFrame = new EthernetFrame(srcDevice.mac, dstMac, ipPacket);
     sendViewPacket(this.viewgraph, this.srcId, ethernetFrame);
   }

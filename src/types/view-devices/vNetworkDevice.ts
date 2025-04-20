@@ -1,5 +1,10 @@
 import { Texture } from "pixi.js";
-import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
+import {
+  ICMP_PROTOCOL_NUMBER,
+  IpAddress,
+  IPv4Packet,
+  TCP_PROTOCOL_NUMBER,
+} from "../../packets/ip";
 import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { ViewDevice } from "./vDevice";
 import { ViewGraph } from "../graphs/viewgraph";
@@ -19,7 +24,6 @@ import { DataNetworkDevice } from "../data-devices";
 export abstract class ViewNetworkDevice extends ViewDevice {
   ip: IpAddress;
   ipMask: IpAddress;
-  arpTable: Map<string, string>;
 
   constructor(
     id: DeviceId,
@@ -36,25 +40,54 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     super(id, texture, viewgraph, ctx, position, mac, interfaces);
     this.ip = ip;
     this.ipMask = ipMask;
-    this.arpTable = arpTable;
   }
 
   abstract receiveDatagram(packet: IPv4Packet): void;
 
   updateArpTable(mac: MacAddress, ip: IpAddress) {
+    console.debug(`Setting ${ip.toString()} resolution to ${mac.toString()}`);
+    this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
+      if (!device) {
+        console.error(`Device with id ${this.id} not found in datagraph`);
+        return;
+      }
+      if (device instanceof DataNetworkDevice) {
+        device.updateArpTable(mac, ip);
+      }
+    });
+  }
+
+  // Me fijo si hay una entrada con la ip address del dispositivo:
+  // (a) Hay una entrada con la ip del dispositivo
+  //     (i) El valor es un string vacio.
+  //         Entonces quiere decir que el usuario borro la entrada manualmente, por lo que deberia
+  //         tomarse como que no hay tal entrada en la arp table, no se puede resolver su direccion ip.
+  //     (ii) El valor es un string no vacio (una direccion mac supuestamente).
+  //          Entonces se modifico su entrada en algun momento, sea por medio de un programa ARP Request
+  //          que ejecuto el usuario o porque el mismo usuario la modifico manualmente. En cualquiera de
+  //          los dos casos se usa esa entrada para resolver la direccion ip.
+  // (b) No hay una entrada con la ip del dispositivo
+  //     El usuario nunca modifico la entrada de la ip, ni manualmente ni con la ejecucion de un
+  //     ARP Request. Se hace de cuenta que la entrada existe pero usando el viewgraph para encontrar el
+  //     device con la ip, y a su vez, encontrar su mac.
+  resolveAddress(ip: IpAddress): MacAddress {
     const dDevice = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!dDevice || !(dDevice instanceof DataNetworkDevice)) {
       console.warn(`Device with id ${this.id} not found in datagraph`);
       return;
     }
     const arpTable = dDevice.arpTable;
-    console.debug(`Setting ${ip.toString()} resolution to ${mac.toString()}`);
-    arpTable.set(ip.toString(), mac.toString());
-    this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
-      if (device instanceof DataNetworkDevice) {
-        device.updateArpTable(mac, ip);
-      }
-    });
+    if (!arpTable.has(ip.toString())) {
+      // As ip addr isn't in the table, then the 'entry' in device table never was modified.
+      // The mac addr of the device that has the ip addr should be returned.
+      const device = this.viewgraph.getDeviceByIP(ip);
+      return device ? device.mac : undefined;
+    }
+    // There is an entry with key=ip.
+    // This means either the entry has the address resolution expected or
+    // the entry has "", then the entry was previously deleted.
+    const mac = arpTable.get(ip.toString());
+    return mac != "" ? MacAddress.parse(mac) : undefined;
   }
 
   // TODO: Most probably it will be different for each type of device
@@ -86,13 +119,16 @@ export abstract class ViewNetworkDevice extends ViewDevice {
         }
         break;
       }
+      case TCP_PROTOCOL_NUMBER: {
+        // For the moment
+        return;
+      }
       default:
         console.warn("Packet's type unrecognized");
     }
   }
 
   handleArpPacket(packet: ArpPacket) {
-    console.debug("Entro a handlear el paquete");
     const { sha, spa, tha, tpa } = packet;
     if (packet.op === ARP_REQUEST_CODE) {
       // NOTE: We don’t take into account htype, ptype, hlen and plen,
@@ -122,7 +158,6 @@ export abstract class ViewNetworkDevice extends ViewDevice {
       !this.mac.equals(frame.destination) &&
       !frame.destination.isBroadcast()
     ) {
-      console.debug("entro aca");
       dropPacket(this.viewgraph, this.id, frame);
       return;
     }

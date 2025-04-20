@@ -7,17 +7,14 @@ import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { RightBar } from "../../graphics/right_bar";
 import { Texture } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
-import { IPv4Packet } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 import { sendViewPacket } from "../packet";
 import { DataSwitch } from "../data-devices";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
-import { ArpPacket, ArpRequest } from "../../packets/arp";
+import { ArpRequest } from "../../packets/arp";
 
 export class ViewSwitch extends ViewDevice {
   static DEVICE_TEXTURE: Texture;
-  //                      would be interface
-  switchingTable: Map<string, DeviceId> = new Map<string, DeviceId>();
 
   static getTexture() {
     if (!ViewSwitch.DEVICE_TEXTURE) {
@@ -60,21 +57,16 @@ export class ViewSwitch extends ViewDevice {
   }
 
   updateSwitchingTable(mac: MacAddress, deviceId: DeviceId): void {
-    const dDevice = this.viewgraph.getDataGraph().getDevice(this.id);
-    if (!dDevice || !(dDevice instanceof DataSwitch)) {
-      console.warn(`Switch with id ${this.id} not found in datagraph`);
-      return;
-    }
-    const switchingTable = dDevice.switchingTable;
-    if (!switchingTable.has(mac.toString())) {
-      console.debug(`Adding ${mac.toString()} to the switching table`);
-      switchingTable.set(mac.toString(), deviceId);
-      this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
-        if (device instanceof DataSwitch) {
-          device.updateSwitchingTable(mac, deviceId);
-        }
-      });
-    }
+    console.debug(`Adding ${mac.toString()} to the switching table`);
+    this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
+      if (!device) {
+        console.error(`Switch with id ${this.id} not found in datagraph`);
+        return;
+      }
+      if (device instanceof DataSwitch) {
+        device.updateSwitchingTable(mac, deviceId);
+      }
+    });
   }
 
   private forwardFrame(
