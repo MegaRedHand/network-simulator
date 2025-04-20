@@ -14,6 +14,7 @@ import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { BaseInfo } from "./base_info";
 import { ProgressBar } from "../basic_components/progress_bar";
 import { LabeledProgressBar } from "../components/labeled_progress_bar";
+import { Layer } from "../../types/layer";
 
 export class DeviceInfo extends BaseInfo {
   readonly device: ViewDevice;
@@ -36,11 +37,16 @@ export class DeviceInfo extends BaseInfo {
       connections,
       TOOLTIP_KEYS.CONNECTED_DEVICES,
     );
-    this.information.addField(
-      TOOLTIP_KEYS.MAC_ADDRESS,
-      mac.toString(),
-      TOOLTIP_KEYS.MAC_ADDRESS,
-    );
+    
+    const layer = this.device.viewgraph.getLayer();
+
+    if (layer == Layer.Link) {
+      this.information.addField(
+        TOOLTIP_KEYS.MAC_ADDRESS,
+        mac.toString(),
+        TOOLTIP_KEYS.MAC_ADDRESS,
+      );
+    }
   }
 
   protected addCommonButtons(): void {
