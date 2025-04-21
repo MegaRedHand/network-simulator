@@ -199,31 +199,60 @@ export class DataGraph {
     const { from, to } = edgeData;
     const n1Id = from.id;
     const n2Id = to.id;
+
     if (n1Id === n2Id) {
       console.warn(
         `Cannot create a connection between the same device (ID ${n1Id}).`,
       );
       return null;
     }
-    if (!this.deviceGraph.hasVertex(n1Id)) {
-      console.warn(`Device with ID ${n1Id} does not exist.`);
+
+    const device1 = this.getDevice(n1Id);
+    const device2 = this.getDevice(n2Id);
+
+    if (!device1 || !device2) {
+      console.warn(`One or both devices do not exist: ${n1Id}, ${n2Id}`);
       return null;
     }
-    if (!this.deviceGraph.hasVertex(n2Id)) {
-      console.warn(`Device with ID ${n2Id} does not exist.`);
-      return null;
+
+    // Check if the interfaces are already in use
+    const isIface1InUse =
+      this.getConnectionsInInterface(n1Id, from.iface)?.length > 0;
+    const isIface2InUse =
+      this.getConnectionsInInterface(n2Id, to.iface)?.length > 0;
+
+    // If interface 1 is in use, find the next free interface
+    if (isIface1InUse) {
+      const nextFreeIface1 = this.getNextFreeInterfaceNumber(device1);
+      if (nextFreeIface1 !== null) {
+        edgeData.from.iface = nextFreeIface1;
+      } else {
+        console.error(`No free interfaces available for device ${n1Id}.`);
+        return null;
+      }
     }
+
+    // If interface 2 is in use, find the next free interface
+    if (isIface2InUse) {
+      const nextFreeIface2 = this.getNextFreeInterfaceNumber(device2);
+      if (nextFreeIface2 !== null) {
+        edgeData.to.iface = nextFreeIface2;
+      } else {
+        console.error(`No free interfaces available for device ${n2Id}.`);
+        return null;
+      }
+    }
+
+    // Add the edge to the graph
     if (this.deviceGraph.hasEdge(n1Id, n2Id)) {
       console.warn(
         `Connection between ID ${n1Id} and ID ${n2Id} already exists.`,
       );
       return null;
     }
+
     this.deviceGraph.setEdge(n1Id, n2Id, edgeData);
 
-    console.log(
-      `Connection created between devices ID: ${n1Id} and ID: ${n2Id}`,
-    );
     this.notifyChanges();
     this.regenerateAllRoutingTables();
     return edgeData;
