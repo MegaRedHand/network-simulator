@@ -1,8 +1,5 @@
 import { ICMP_PROTOCOL_NUMBER, IpPayload, computeIpChecksum } from "./ip";
-import { Layer } from "../types/layer";
 
-const ICMP_WARNING =
-  "ICMP operates directly on top of IP at the Network layer, bypassing the Transport layer (TCP/UDP). This is because ICMP is primarily used for network diagnostics and error reporting, not for end-to-end data transport.";
 
 export const ICMP_REQUEST_TYPE_NUMBER = 8;
 export const ICMP_REPLY_TYPE_NUMBER = 0;
@@ -59,8 +56,6 @@ export abstract class IcmpPacket implements IpPayload {
   getPacketType(): string {
     return `ICMP-${this.type}`;
   }
-
-  abstract getDetails(layer: Layer): Record<string, string | number | object>;
 }
 
 //   0                   1                   2                   3
@@ -101,27 +96,6 @@ class EchoMessage extends IcmpPacket {
       this.sequenceNumber & 0xff,
       ...this.data,
     ]);
-  }
-
-  getDetails(layer: number): Record<string, string | number | object> {
-    if (layer == Layer.Transport) {
-      return {
-        Warning: ICMP_WARNING,
-      };
-    }
-
-    // TODO: If we decide to hide ICMP packets on Application layer, this should be removed
-    if (this.type == 8) {
-      return {
-        Application: "Ping",
-        Task: "Echo Request",
-      };
-    } else {
-      return {
-        Application: "Ping",
-        Task: "Echo Reply",
-      };
-    }
   }
 }
 

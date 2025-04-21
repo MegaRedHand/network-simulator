@@ -130,7 +130,7 @@ export interface IpPayload {
   // Packet protocol name
   getPacketType(): string;
   // Get details of the payload
-  getDetails(layer: Layer): Record<string, string | number | object>;
+  getDetails?(layer: Layer): Record<string, string | number | object>;
 }
 
 // Info taken from the original RFC: https://datatracker.ietf.org/doc/html/rfc791#section-3.1
@@ -267,16 +267,6 @@ export class IPv4Packet implements FramePayload {
   }
 
   getDetails(layer: Layer) {
-    // TODO: Refactor Packet Building Process
-    //
-    // Current Implementation:
-    // - Packet building starts at the Network layer
-    // - Frame payload data is directly included here
-    //
-    // Desired Implementation:
-    // - Move frame-specific data to EthernetFrame class
-    // - Implement packet sending using MAC addresses at device level
-
     if (layer == Layer.Network) {
       return {
         Version: this.version,

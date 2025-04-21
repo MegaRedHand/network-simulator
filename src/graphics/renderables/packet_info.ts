@@ -96,7 +96,7 @@ export class PacketInfo extends BaseInfo {
   private addToggleInfo(): void {
     // Obtener los detalles del paquete
     const packetDetails = this.packet.getPacketDetails(
-      this.packet.belongingLayer,
+      this.packet.viewgraph.getLayer(),
       this.packet.rawPacket,
     );
 
