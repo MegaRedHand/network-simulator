@@ -1,4 +1,11 @@
+import { EthernetFrame } from "../../../packets/ethernet";
+import { IpPayload, IPv4Packet } from "../../../packets/ip";
 import { Flags, TcpSegment } from "../../../packets/tcp";
+import { sendViewPacket } from "../../packet";
+import { ViewHost } from "../../view-devices";
+import { ViewNetworkDevice } from "../../view-devices/vNetworkDevice";
+import { AsyncQueue } from "../asyncQueue";
+import { SegmentWithIp } from "../tcpModule";
 
 // TODO: import
 type Port = number;
@@ -9,10 +16,36 @@ function getInitialSeqNumber() {
   return Math.floor(Math.random() * 0xffffffff);
 }
 
+function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
+  const viewgraph = src.viewgraph;
+
+  // TODO: use MAC and IP of the interfaces used
+  let nextHopMac = dst.mac;
+  const path = viewgraph.getPathBetween(src.id, dst.id);
+  if (!path) return;
+  for (const id of path.slice(1)) {
+    const device = viewgraph.getDevice(id);
+    // if there’s a router in the middle, first send frame to router mac
+    if (device instanceof ViewNetworkDevice) {
+      nextHopMac = device.mac;
+      break;
+    }
+  }
+  const ipPacket = new IPv4Packet(src.ip, dst.ip, payload);
+  const frame = new EthernetFrame(src.mac, nextHopMac, ipPacket);
+
+  sendViewPacket(src.viewgraph, src.id, frame);
+}
+
 // TODO: add overflow checks
-class TcpState {
+export class TcpState {
+  private srcHost: ViewHost;
   private srcPort: Port;
+  private dstHost: ViewHost;
   private dstPort: Port;
+  private tcpQueue: AsyncQueue<SegmentWithIp>;
+  private sendQueue = new AsyncQueue<undefined>();
+  private sendingPackets: Promise<void> | null = null;
 
   // Buffer of data received
   private readBuffer = new BytesBuffer(MAX_BUFFER_SIZE);
@@ -20,7 +53,7 @@ class TcpState {
 
   // Buffer of data to be sent
   private writeBuffer = new BytesBuffer(MAX_BUFFER_SIZE);
-  private writeClosed = false;
+  private writeClosedSeqnum = -1;
 
   // See https://datatracker.ietf.org/doc/html/rfc9293#section-3.3.1
   // SND.UNA
@@ -46,23 +79,26 @@ class TcpState {
   // IRS
   // private initialRecvSeqNum: number;
 
-  private sendSegment: (tcpSegment: TcpSegment) => void;
-
   constructor(
+    srcHost: ViewHost,
     srcPort: Port,
+    dstHost: ViewHost,
     dstPort: Port,
-    sendSegment: (tcpSegment: TcpSegment) => void,
+    tcpQueue: AsyncQueue<SegmentWithIp>,
   ) {
+    this.srcHost = srcHost;
     this.srcPort = srcPort;
+    this.dstHost = dstHost;
     this.dstPort = dstPort;
+    this.tcpQueue = tcpQueue;
+
     this.initialSendSeqNum = getInitialSeqNumber();
-    this.sendSegment = sendSegment;
   }
 
   startConnection() {
     const flags = new Flags().withSyn();
     const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
-    this.sendSegment(segment);
+    sendIpPacket(this.srcHost, this.dstHost, segment);
   }
 
   recvSynAck(segment: TcpSegment) {
@@ -79,7 +115,12 @@ class TcpState {
 
     const ackSegment = this.newSegment(this.sendNext, this.recvNext);
     ackSegment.withFlags(new Flags().withAck());
-    this.sendSegment(ackSegment);
+    sendIpPacket(this.srcHost, this.dstHost, ackSegment);
+
+    // start sending packets
+    if (!this.sendingPackets) {
+      this.sendingPackets = this.mainLoop();
+    }
   }
 
   recvSegment(receivedSegment: TcpSegment) {
@@ -104,7 +145,7 @@ class TcpState {
     if (!receivedSegment.flags.ack) {
       return false;
     }
-    if (!this.recvAck(receivedSegment)) {
+    if (!this.processAck(receivedSegment)) {
       return false;
     }
 
@@ -120,11 +161,20 @@ class TcpState {
       this.readBuffer.write(receivedData);
       this.recvNext = receivedSegment.sequenceNumber + receivedData.length;
       this.recvWindow = MAX_BUFFER_SIZE - this.readBuffer.bytesAvailable();
+      // We should send back an ACK segment
+      this.notifySendPackets();
     }
 
     // If FIN, mark read end as closed
     if (receivedSegment.flags.fin) {
+      // The flag counts as a byte
+      this.recvNext++;
       this.readClosed = true;
+    }
+
+    // start sending packets
+    if (!this.sendingPackets) {
+      this.sendingPackets = this.mainLoop();
     }
     return true;
   }
@@ -134,48 +184,34 @@ class TcpState {
     if (readLength === 0 && this.readClosed) {
       return -1;
     }
+    this.recvWindow = MAX_BUFFER_SIZE - this.readBuffer.bytesAvailable();
     return readLength;
   }
 
   write(input: Uint8Array): number {
-    if (this.writeClosed) {
+    if (this.writeClosedSeqnum >= 0) {
       throw new Error("write closed");
     }
     const writeLength = this.writeBuffer.write(input);
     if (this.sendWindow > 0 && writeLength > 0) {
-      this.sendSegment(this.produceSegment());
+      this.notifySendPackets();
     }
     return writeLength;
   }
 
   closeWrite() {
-    this.writeClosed = true;
+    this.writeClosedSeqnum = this.sendNext;
     const segment = this.newSegment(this.sendNext, this.recvNext).withFlags(
       new Flags().withFin().withAck(),
     );
     this.sendNext++;
-    this.sendSegment(segment);
+    sendIpPacket(this.srcHost, this.dstHost, segment);
   }
 
   // utils
 
   private newSegment(seqNum: number, ackNum: number) {
     return new TcpSegment(this.srcPort, this.dstPort, seqNum, ackNum);
-  }
-
-  private produceSegment() {
-    const segment = this.newSegment(this.sendNext, this.recvNext).withFlags(
-      new Flags().withAck(),
-    );
-
-    if (this.writeBuffer.bytesAvailable() > 0 && this.sendWindow > 0) {
-      const data = new Uint8Array(this.sendWindow);
-      const writeLength = this.writeBuffer.read(data);
-      segment.withData(data.subarray(0, writeLength));
-      this.sendNext += writeLength;
-      this.sendWindow -= writeLength;
-    }
-    return segment;
   }
 
   private isSeqNumValid(segSeq: number, segLen: number) {
@@ -200,7 +236,7 @@ class TcpState {
     return this.recvNext <= n && n < this.recvNext + this.recvWindow;
   }
 
-  private recvAck(segment: TcpSegment) {
+  private processAck(segment: TcpSegment) {
     // From https://datatracker.ietf.org/doc/html/rfc9293#section-3.10.7.4-2.5.2.2.2.3.1
     // If the ACK is for a packet not yet sent, drop it
     if (this.sendNext < segment.acknowledgementNumber) {
@@ -230,11 +266,92 @@ class TcpState {
         this.ackNumForLastWindowUpdate <= segment.acknowledgementNumber)
     );
   }
-}
 
-interface RetransmissionQueueItem {
-  segment: TcpSegment;
-  timeoutPromise: Promise<void>;
+  private notifiedSendPackets = false;
+
+  private notifySendPackets() {
+    if (this.notifiedSendPackets) {
+      return;
+    }
+    this.notifiedSendPackets = true;
+    setTimeout(() => this.sendQueue.push(undefined), 50);
+  }
+
+  private async mainLoop() {
+    const MAX_SEGMENT_SIZE = 1400;
+
+    let recheckPromise = this.sendQueue.pop();
+    let receivedSegmentPromise = this.tcpQueue.pop();
+
+    let retransmitTimeoutId: NodeJS.Timeout | null = null;
+
+    const clearTimer = () => {
+      if (retransmitTimeoutId === null) {
+        return;
+      }
+      clearTimeout(retransmitTimeoutId);
+      retransmitTimeoutId = null;
+    };
+
+    const setTimer = () => {
+      if (retransmitTimeoutId === null) {
+        return;
+      }
+      retransmitTimeoutId = setTimeout(() => {
+        retransmitTimeoutId = null;
+        this.sendNext = this.sendUnacknowledged;
+        this.notifySendPackets();
+      }, RETRANSMIT_TIMEOUT);
+    };
+
+    while (true) {
+      const result = await Promise.race([
+        recheckPromise,
+        receivedSegmentPromise,
+      ]);
+
+      if (result !== undefined) {
+        receivedSegmentPromise = this.tcpQueue.pop();
+        if (!this.recvSegment(result.segment)) {
+          continue;
+        }
+        // If we got a valid segment, we can refresh the timer
+        clearTimer();
+      } else {
+        recheckPromise = this.sendQueue.pop();
+      }
+
+      do {
+        const segment = this.newSegment(this.sendNext, this.recvNext).withFlags(
+          new Flags().withAck(),
+        );
+
+        const sendSize = Math.min(this.sendWindowSize(), MAX_SEGMENT_SIZE);
+        if (sendSize > 0) {
+          const data = new Uint8Array(sendSize);
+          const writeLength = this.writeBuffer.peek(this.sendNext, data);
+
+          if (writeLength > 0) {
+            segment.withData(data.subarray(0, writeLength));
+            this.sendNext += writeLength;
+          }
+        }
+        segment.window = this.recvWindow;
+
+        if (this.sendNext === this.writeClosedSeqnum) {
+          this.sendNext++;
+          segment.flags.withFin();
+        }
+        sendIpPacket(this.srcHost, this.dstHost, segment);
+        // Repeat until we have no more data to send
+      } while (this.writeBuffer.bytesAvailable() > this.sendWindowSize());
+    }
+  }
+
+  private sendWindowSize() {
+    // TODO: add congestion control
+    return this.sendUnacknowledged + this.sendWindow - this.sendNext;
+  }
 }
 
 function sleep(ms?: number): Promise<void> {
@@ -242,29 +359,6 @@ function sleep(ms?: number): Promise<void> {
 }
 
 const RETRANSMIT_TIMEOUT = 60 * 1000;
-
-class RetransmissionQueue {
-  private queue: RetransmissionQueueItem[] = [];
-
-  push(segment: TcpSegment) {
-    const timeoutPromise = sleep(RETRANSMIT_TIMEOUT);
-    // Inserts the segment at the beginning of the queue
-    this.queue.unshift({ segment, timeoutPromise });
-  }
-
-  async pop() {
-    if (this.isEmpty()) {
-      return null;
-    }
-    const item = this.queue.shift();
-    await item.timeoutPromise;
-    return item.segment;
-  }
-
-  isEmpty() {
-    return this.queue.length === 0;
-  }
-}
 
 class BytesBuffer {
   private buffer: Uint8Array;
@@ -275,14 +369,29 @@ class BytesBuffer {
     this.length = 0;
   }
 
-  read(output: Uint8Array): number {
-    const readLength = Math.min(this.length, output.length);
+  peek(offset: number, output: Uint8Array): number {
+    if (offset > this.length) {
+      return 0;
+    }
+    const readLength = Math.min(this.length - offset, output.length);
     if (readLength == 0) {
       return 0;
     }
-    output.set(this.buffer.subarray(0, readLength));
-    this.buffer.copyWithin(0, readLength, this.length);
-    this.length -= readLength;
+    output.set(this.buffer.subarray(offset, readLength + offset));
+    return readLength;
+  }
+
+  shift(offset: number) {
+    if (offset > this.length) {
+      throw new Error("offset is greater than length");
+    }
+    this.buffer.copyWithin(0, offset, this.length);
+    this.length -= offset;
+  }
+
+  read(output: Uint8Array): number {
+    const readLength = this.peek(0, output);
+    this.shift(readLength);
     return readLength;
   }
 

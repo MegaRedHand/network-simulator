@@ -5,6 +5,7 @@ import { sendViewPacket } from "../packet";
 import { ViewHost } from "../view-devices";
 import { ViewNetworkDevice } from "../view-devices/vNetworkDevice";
 import { AsyncQueue } from "./asyncQueue";
+import { TcpState } from "./tcp/tcpState";
 
 type Port = number;
 
@@ -13,7 +14,7 @@ interface IpAndPort {
   port: Port;
 }
 
-interface SegmentWithIp {
+export interface SegmentWithIp {
   srcIp: IpAddress;
   segment: TcpSegment;
 }
@@ -58,35 +59,30 @@ export class TcpModule {
   }
 
   async connect(dstHost: ViewHost, dstPort: Port) {
-    const flags = new Flags().withSyn();
     const srcPort: Port = this.getNextPortNumber();
-    const seqNum = getInitialSeqNumber();
-    const synSegment = new TcpSegment(srcPort, dstPort, seqNum, 0, flags);
-    // Send SYN
-    sendIpPacket(this.host, dstHost, synSegment);
-
-    // Receive SYN-ACK
-    // TODO: check packet is valid response
     const filter = { ip: dstHost.ip, port: dstPort };
     const tcpQueue = this.initNewQueue(srcPort, filter);
 
-    // TODO: validate response
-    await tcpQueue.pop();
-
-    const ackFlags = new Flags().withAck();
-
-    // Send ACK
-    const ackSegment = new TcpSegment(
+    const tcpState = new TcpState(
+      this.host,
       srcPort,
+      dstHost,
       dstPort,
-      0,
-      0,
-      ackFlags,
-      new Uint8Array(),
+      tcpQueue,
     );
-    sendIpPacket(this.host, dstHost, ackSegment);
 
-    return new TcpSocket(this.host, srcPort, dstHost, dstPort, tcpQueue);
+    const skt = new TcpSocket(tcpState);
+
+    // Retry on failure
+    for (let i = 0; i < 3; i++) {
+      tcpState.startConnection();
+      const response = await tcpQueue.pop();
+      const ok = tcpState.recvSynAck(response.segment);
+      if (ok) {
+        return skt;
+      }
+    }
+    return null;
   }
 
   async listenOn(port: Port): Promise<TcpListener | null> {
@@ -144,31 +140,10 @@ export class TcpModule {
 const MAX_BUFFER_SIZE = 0xffff;
 
 export class TcpSocket {
-  private srcHost: ViewHost;
-  private srcPort: Port;
+  private tcpState: TcpState;
 
-  private dstHost: ViewHost;
-  private dstPort: Port;
-
-  private tcpQueue: AsyncQueue<SegmentWithIp>;
-  private readClosed = false;
-  private writeClosed = false;
-
-  private readBuffer = new Uint8Array(MAX_BUFFER_SIZE);
-  private bufferLength = 0;
-
-  constructor(
-    srcHost: ViewHost,
-    srcPort: Port,
-    dstHost: ViewHost,
-    dstPort: Port,
-    tcpQueue: AsyncQueue<SegmentWithIp>,
-  ) {
-    this.srcHost = srcHost;
-    this.dstHost = dstHost;
-    this.srcPort = srcPort;
-    this.dstPort = dstPort;
-    this.tcpQueue = tcpQueue;
+  constructor(tcpState: TcpState) {
+    this.tcpState = tcpState;
   }
 
   /**
@@ -179,71 +154,15 @@ export class TcpSocket {
    * @returns the number of bytes read
    */
   async read(buffer: Uint8Array) {
-    // While we don't have data, wait for more packets
-    while (this.bufferLength < buffer.length && !this.readClosed) {
-      const { segment } = await this.tcpQueue.pop();
-      // TODO: validate payload
-      const data = segment.data;
-      const newLength = this.bufferLength + data.length;
-      if (newLength > MAX_BUFFER_SIZE) {
-        throw new Error("Buffer overflow");
-      }
-      this.readBuffer.set(data, this.bufferLength);
-      this.bufferLength = newLength;
-
-      // If segment has FIN, the connection was closed
-      if (segment.flags.fin) {
-        this.readClosed = true;
-        break;
-      }
-    }
-    // Copy partially if connection was closed, if not, fill the buffer
-    const readLength = Math.min(this.bufferLength, buffer.length);
-    if (readLength === 0) {
-      if (this.readClosed) {
-        console.error("tried to read from a closed socket");
-        return -1;
-      }
-      return 0;
-    }
-    // Copy the data to the buffer
-    buffer.set(this.readBuffer.subarray(0, readLength));
-    this.readBuffer.copyWithin(0, readLength + 1, this.bufferLength);
-    this.bufferLength -= readLength;
-    return readLength;
+    return this.tcpState.read(buffer);
   }
 
   async write(content: Uint8Array) {
-    if (this.writeClosed) {
-      console.error("tried to write to a closed socket");
-      return -1;
-    }
-    // TODO: split content in multiple segments
-    const contentLength = content.length;
-    // TODO: use correct ACK numbers
-    const segment = new TcpSegment(
-      this.srcPort,
-      this.dstPort,
-      0,
-      0,
-      new Flags().withAck(),
-      content,
-    );
-    sendIpPacket(this.srcHost, this.dstHost, segment);
-    return contentLength;
+    return this.tcpState.write(content);
   }
 
   closeWrite() {
-    this.writeClosed = true;
-    const segment = new TcpSegment(
-      this.srcPort,
-      this.dstPort,
-      0,
-      0,
-      new Flags().withFin().withAck(),
-      new Uint8Array(),
-    );
-    sendIpPacket(this.srcHost, this.dstHost, segment);
+    this.tcpState.closeWrite();
   }
 }
 
@@ -268,7 +187,22 @@ export class TcpListener {
   async next(): Promise<TcpSocket> {
     const { segment, srcIp } = await this.tcpQueue.pop();
 
-    // TODO: validate segment
+    const dst = this.host.viewgraph.getDeviceByIP(srcIp);
+    if (!dst || !(dst instanceof ViewHost)) {
+      console.warn("sender device not found or not a host");
+      // Wait for next packet
+      return this.next();
+    }
+    const ipAndPort = { ip: srcIp, port: segment.sourcePort };
+    const queue = this.tcpModule.initNewQueue(this.port, ipAndPort);
+
+    const tcpState = new TcpState(
+      this.host,
+      this.port,
+      dst,
+      segment.sourcePort,
+      queue,
+    );
 
     // Send SYN-ACK
     const seqNum = getInitialSeqNumber();
@@ -280,18 +214,9 @@ export class TcpListener {
       new Flags().withSyn().withAck(),
       new Uint8Array(),
     );
-    const dst = this.host.viewgraph.getDeviceByIP(srcIp);
-    if (!dst || !(dst instanceof ViewHost)) {
-      console.warn("sender device not found or not a host");
-      // Wait for next packet
-      return this.next();
-    }
     sendIpPacket(this.host, dst, ackSegment);
 
-    const ipAndPort = { ip: srcIp, port: segment.sourcePort };
-    const queue = this.tcpModule.initNewQueue(this.port, ipAndPort);
-
-    return new TcpSocket(this.host, this.port, dst, segment.sourcePort, queue);
+    return new TcpSocket(tcpState);
   }
 }
 
