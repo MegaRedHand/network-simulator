@@ -274,7 +274,6 @@ export class IPv4Packet implements FramePayload {
         "Type of Service": this.typeOfService,
         "Total Length": this.totalLength,
         Identification: this.identification,
-        Flags: this.flags,
         "Fragment Offset": this.fragmentOffset,
         "Time to Live": this.timeToLive,
         Protocol: this.protocol,

@@ -148,8 +148,8 @@ export class EthernetFrame {
   getDetails(layer: Layer) {
     if (layer == Layer.Link) {
       return {
-        "Destination MAC": this.destination.toString(),
         "Source MAC": this.source.toString(),
+        "Destination MAC": this.destination.toString(),
         EtherType: this.type.toString(),
       };
     } else {

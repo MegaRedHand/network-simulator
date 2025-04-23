@@ -212,26 +212,23 @@ export class TcpSegment implements IpPayload {
   }
 
   getDetails(layer: Layer) {
-    console.log("TCP segment details Layer", layer);
     if (layer == Layer.Transport) {
       return {
         "Seq Number": this.sequenceNumber,
         "Ack Number": this.acknowledgementNumber,
         "Window Size": this.window,
-        Flags: {
-          urg: this.flags.urg ? 1 : 0,
-          ack: this.flags.ack ? 1 : 0,
-          psh: this.flags.psh ? 1 : 0,
-          rst: this.flags.rst ? 1 : 0,
-          syn: this.flags.syn ? 1 : 0,
-          fin: this.flags.fin ? 1 : 0,
+        tcp_flags: {
+          Urg: this.flags.urg,
+          Ack: this.flags.ack,
+          Psh: this.flags.psh,
+          Rst: this.flags.rst,
+          Syn: this.flags.syn,
+          Fin: this.flags.fin,
         },
+        Payload: this.data,
       };
     } else if (layer == Layer.App) {
-      const decodedData = new TextDecoder("utf-8").decode(this.data);
-      return {
-        "Decoded": decodedData,
-        "Data": this.data};
+      return { Request: new TextDecoder("utf-8").decode(this.data) };
     }
   }
 

@@ -1,6 +1,4 @@
 import { ICMP_PROTOCOL_NUMBER, IpPayload, computeIpChecksum } from "./ip";
-
-
 export const ICMP_REQUEST_TYPE_NUMBER = 8;
 export const ICMP_REPLY_TYPE_NUMBER = 0;
 
