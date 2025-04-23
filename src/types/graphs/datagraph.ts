@@ -165,7 +165,7 @@ export class DataGraph {
     const { id, vertex, edges } = removedData;
     this.deviceGraph.setVertex(id, vertex);
     edges.forEach((edge) => {
-      this.deviceGraph.setEdge(edge.from.id, edge.to.id, edge);
+      this.reAddEdge(edge);
     });
     this.notifyChanges();
     return id;
