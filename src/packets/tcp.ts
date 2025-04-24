@@ -5,6 +5,9 @@ import {
   TCP_PROTOCOL_NUMBER,
 } from "./ip";
 import { Layer } from "../types/layer";
+import { Ports } from "./ip";
+
+export const TCP_FLAGS_KEY = "tcp_flags";
 
 export class Flags {
   // Urgent Pointer field significant
@@ -217,7 +220,7 @@ export class TcpSegment implements IpPayload {
         "Seq Number": this.sequenceNumber,
         "Ack Number": this.acknowledgementNumber,
         "Window Size": this.window,
-        tcp_flags: {
+        TCP_FLAGS_KEY: {
           Urg: this.flags.urg,
           Ack: this.flags.ack,
           Psh: this.flags.psh,
@@ -232,7 +235,12 @@ export class TcpSegment implements IpPayload {
     }
   }
 
-  // ### IpPayload ###
+  getPorts(): Ports {
+    return {
+      sourcePort: this.sourcePort,
+      destinationPort: this.destinationPort,
+    };
+  }
 }
 
 function checkUint(n: number, numBits: number): void {

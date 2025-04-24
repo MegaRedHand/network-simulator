@@ -6,7 +6,6 @@ import { BaseInfo } from "./base_info";
 import { ToggleInfo } from "../components/toggle_info";
 import { Layer } from "../../types/layer";
 import { IPv4Packet } from "../../packets/ip";
-import { TcpSegment } from "../../packets/tcp";
 
 export class PacketInfo extends BaseInfo {
   readonly packet: Packet;
@@ -56,18 +55,16 @@ export class PacketInfo extends BaseInfo {
     }
 
     if (layer >= Layer.Transport) {
-      // TODO: This is not very extensible, but it works for now
-      if (framePayload.payload instanceof TcpSegment) {
-        const tcpPayload = framePayload.payload as TcpSegment;
-
+      const ports = framePayload.payload.getPorts();
+      if (ports) {
         this.information.addField(
           TOOLTIP_KEYS.SOURCE_PORT,
-          tcpPayload.sourcePort,
+          ports.sourcePort,
           TOOLTIP_KEYS.SOURCE_PORT,
         );
         this.information.addField(
           TOOLTIP_KEYS.DESTINATION_PORT,
-          tcpPayload.destinationPort,
+          ports.destinationPort,
           TOOLTIP_KEYS.DESTINATION_PORT,
         );
       }

@@ -1,6 +1,7 @@
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { attachTooltip } from "../renderables/tooltip_manager";
 import { Table } from "./table";
+import { Flags, TCP_FLAGS_KEY } from "../../packets/tcp";
 
 export interface InfoField {
   key: string;
@@ -59,31 +60,9 @@ export class TextInfo {
   private createListItem(field: InfoField): HTMLLIElement {
     const { key, value, tooltip } = field;
 
-    if (key === "tcp_flags") {
-      // TODO: Use a Flag interface, this is a temporary solution
-      if (
-        typeof value === "object" &&
-        value !== null &&
-        "Urg" in value &&
-        "Ack" in value &&
-        "Psh" in value &&
-        "Rst" in value &&
-        "Syn" in value &&
-        "Fin" in value
-      ) {
-        return this.createFlagsElement(
-          value as {
-            Urg: number;
-            Ack: number;
-            Psh: number;
-            Rst: number;
-            Syn: number;
-            Fin: number;
-          },
-        );
-      } else {
-        throw new Error("Invalid value type for TCP Flags");
-      }
+    if (key === TCP_FLAGS_KEY) {
+      const flags = value as Flags;
+      return this.createFlagsElement(flags, tooltip);
     } else if (typeof value === "object" && value !== null) {
       return this.createPayloadElement(key, value, tooltip);
     } else {
@@ -166,17 +145,7 @@ export class TextInfo {
    * @param tooltip Optional tooltip for the flags element
    * @returns HTMLLIElement containing the flags table
    */
-  createFlagsElement(
-    flags: {
-      Urg: number;
-      Ack: number;
-      Psh: number;
-      Rst: number;
-      Syn: number;
-      Fin: number;
-    },
-    tooltip?: string,
-  ): HTMLLIElement {
+  createFlagsElement(flags: Flags, tooltip?: string): HTMLLIElement {
     // Create list item container
     const listItem = document.createElement("li");
     listItem.classList.add(CSS_CLASSES.DETAIL_ITEM);
@@ -198,14 +167,12 @@ export class TextInfo {
     const valueRow: string[] = [];
 
     Object.entries(flags).forEach(([, value]) => {
-      const isSet = value === 1;
-      statusRow.push(isSet ? "✓" : "✗");
+      statusRow.push(value ? "✓" : "✗");
       valueRow.push(value ? "1" : "0");
     });
 
     // Create headers for the table
-    // TODO: Use a Flag interface, this is a temporary solution
-    const headers = Object.keys(flags).map((flag) => flag.toUpperCase());
+    const headers = Object.keys(flags);
 
     // Create the table using the Table class
     const flagsTable = new Table({

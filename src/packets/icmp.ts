@@ -1,4 +1,9 @@
-import { ICMP_PROTOCOL_NUMBER, IpPayload, computeIpChecksum } from "./ip";
+import {
+  ICMP_PROTOCOL_NUMBER,
+  IpPayload,
+  computeIpChecksum,
+  Ports,
+} from "./ip";
 export const ICMP_REQUEST_TYPE_NUMBER = 8;
 export const ICMP_REPLY_TYPE_NUMBER = 0;
 
@@ -53,6 +58,10 @@ export abstract class IcmpPacket implements IpPayload {
 
   getPacketType(): string {
     return `ICMP-${this.type}`;
+  }
+
+  getPorts(): Ports {
+    return null;
   }
 }
 
