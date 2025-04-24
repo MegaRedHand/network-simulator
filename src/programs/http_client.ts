@@ -139,7 +139,7 @@ export class HttpServer extends ProgramBase {
 
   async serveClient(socket: TcpSocket) {
     const buffer = new Uint8Array(1024).fill(0);
-    const readLength = await socket.read(buffer);
+    const readLength = await socket.readAll(buffer);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const readContents = buffer.slice(0, readLength);

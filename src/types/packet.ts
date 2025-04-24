@@ -10,7 +10,6 @@ import { RightBar } from "../graphics/right_bar";
 import { Position } from "./common";
 import { ViewGraph } from "./graphs/viewgraph";
 import { Layer, layerIncluded } from "./layer";
-//import { EchoMessage } from "../packets/icmp";
 import { DataGraph, DeviceId } from "./graphs/datagraph";
 import { EthernetFrame, IP_PROTOCOL_TYPE } from "../packets/ethernet";
 import {
@@ -101,8 +100,8 @@ export class Packet extends Graphics {
     this.cursor = "pointer";
     this.on("click", this.onClick, this);
     this.on("tap", this.onClick, this);
-    // register in Packet Manger
-    ctx.getViewGraph().getPacketManager().registerPacket(this);
+    // register in Packet Manager
+    viewgraph.getPacketManager().registerPacket(this);
   }
 
   setProgress(progress: number) {

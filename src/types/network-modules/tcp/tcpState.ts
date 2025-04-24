@@ -56,10 +56,12 @@ export class TcpState {
   private dstPort: Port;
   private tcpQueue: AsyncQueue<SegmentWithIp>;
   private sendQueue = new AsyncQueue<undefined>();
-  private sendingPackets: Promise<void> | null = null;
+  private connectionQueue = new AsyncQueue<undefined>();
+  private retransmissionQueue = new RetransmissionQueue();
 
   // Buffer of data received
   private readBuffer = new BytesBuffer(MAX_BUFFER_SIZE);
+  private readChannel = new AsyncQueue<number>();
   private readClosed = false;
 
   // Buffer of data to be sent
@@ -107,17 +109,11 @@ export class TcpState {
 
     this.tcpQueue = tcpQueue;
 
-    // Handle incoming segments in background
-    (async () => {
-      while (true) {
-        const { segment } = await this.tcpQueue.pop();
-        this.handleSegment(segment);
-      }
-    })();
+    this.mainLoop();
   }
 
   // Open active connection
-  connect() {
+  async connect() {
     // Initialize the TCB
     this.initialSendSeqNum = getInitialSeqNumber();
     this.sendNext = this.initialSendSeqNum + 1;
@@ -130,16 +126,28 @@ export class TcpState {
 
     // Move to SYN_SENT state
     this.state = TcpStateEnum.SYN_SENT;
+    await this.connectionQueue.pop();
   }
 
   // Accept passive connection
   accept(synSegment: TcpSegment) {
+    if (!synSegment.flags.syn) {
+      return false;
+    }
     // Initialize the TCB
     this.initialSendSeqNum = getInitialSeqNumber();
     this.sendNext = this.initialSendSeqNum + 1;
     this.sendUnacknowledged = this.initialSendSeqNum;
 
-    this.handleSegment(synSegment);
+    this.state = TcpStateEnum.SYN_RECEIVED;
+    this.recvNext = synSegment.sequenceNumber + 1;
+    this.initialRecvSeqNum = synSegment.sequenceNumber;
+
+    // Send a SYN-ACK
+    const flags = new Flags().withSyn().withAck();
+    const segment = this.newSegment(this.initialSendSeqNum, this.recvNext);
+    sendIpPacket(this.srcHost, this.dstHost, segment.withFlags(flags));
+    return true;
   }
 
   startConnection() {
@@ -163,18 +171,13 @@ export class TcpState {
     const ackSegment = this.newSegment(this.sendNext, this.recvNext);
     ackSegment.withFlags(new Flags().withAck());
     sendIpPacket(this.srcHost, this.dstHost, ackSegment);
-
-    // start sending packets
-    if (!this.sendingPackets) {
-      this.sendingPackets = this.mainLoop();
-    }
   }
 
   private handleSegment(segment: TcpSegment) {
     // Sanity check: ports match with expected
     if (
-      segment.destinationPort !== this.dstPort ||
-      segment.sourcePort !== this.srcPort
+      segment.sourcePort !== this.dstPort ||
+      segment.destinationPort !== this.srcPort
     ) {
       throw new Error("segment not for this socket");
     }
@@ -214,6 +217,7 @@ export class TcpState {
           // It's a valid SYN-ACK
           // Process the segment normally
           this.state = TcpStateEnum.ESTABLISHED;
+          this.connectionQueue.push(undefined);
           return this.handleSegmentData(segment);
         } else {
           // It's a SYN
@@ -251,13 +255,13 @@ export class TcpState {
     }
     if (this.state === TcpStateEnum.SYN_RECEIVED) {
       if (!this.isAckValid(segment.acknowledgementNumber)) {
-        // TODO: send a RST
         this.newSegment(segment.acknowledgementNumber, 0).withFlags(
           new Flags().withRst(),
         );
         return false;
       }
       this.state = TcpStateEnum.ESTABLISHED;
+      this.connectionQueue.push(undefined);
       this.sendWindow = segment.window;
       this.seqNumForLastWindowUpdate = segment.sequenceNumber;
       this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
@@ -271,7 +275,9 @@ export class TcpState {
       if (segment.acknowledgementNumber <= this.sendUnacknowledged) {
         // Ignore the ACK
       } else if (segment.acknowledgementNumber > this.sendNext) {
-        // TODO: send an ACK
+        this.newSegment(this.sendNext, this.recvNext).withFlags(
+          new Flags().withAck(),
+        );
         return false;
       } else {
         this.sendUnacknowledged = segment.acknowledgementNumber;
@@ -295,7 +301,10 @@ export class TcpState {
     if (flags.fin) {
       this.recvNext++;
       this.readClosed = true;
-      // TODO: send an ACK
+      this.readChannel.push(0);
+      this.newSegment(this.sendNext, this.recvNext).withFlags(
+        new Flags().withAck(),
+      );
     }
 
     return true;
@@ -313,6 +322,7 @@ export class TcpState {
       throw new Error("buffer overflow");
     }
     this.readBuffer.write(receivedData);
+    this.readChannel.push(receivedData.length);
     this.recvNext = segment.sequenceNumber + receivedData.length;
     this.recvWindow = MAX_BUFFER_SIZE - this.readBuffer.bytesAvailable();
     // We should send back an ACK segment
@@ -323,11 +333,17 @@ export class TcpState {
       // The flag counts as a byte
       this.recvNext++;
       this.readClosed = true;
+      this.readChannel.push(0);
     }
     return true;
   }
 
-  read(output: Uint8Array): number {
+  async read(output: Uint8Array): Promise<number> {
+    // Wait for there to be data in the read buffer
+    while (this.readBuffer.isEmpty() && !this.readClosed) {
+      await this.readChannel.pop();
+    }
+    // Consume the data and return it
     const readLength = this.readBuffer.read(output);
     if (readLength === 0 && this.readClosed) {
       return -1;
@@ -348,12 +364,9 @@ export class TcpState {
   }
 
   closeWrite() {
-    this.writeClosedSeqnum = this.sendNext;
-    const segment = this.newSegment(this.sendNext, this.recvNext).withFlags(
-      new Flags().withFin().withAck(),
-    );
-    this.sendNext++;
-    sendIpPacket(this.srcHost, this.dstHost, segment);
+    this.writeClosedSeqnum =
+      this.sendUnacknowledged + this.writeBuffer.bytesAvailable();
+    this.notifySendPackets();
   }
 
   // utils
@@ -438,43 +451,27 @@ export class TcpState {
 
     let recheckPromise = this.sendQueue.pop();
     let receivedSegmentPromise = this.tcpQueue.pop();
-
-    let retransmitTimeoutId: NodeJS.Timeout | null = null;
-
-    const clearTimer = () => {
-      if (retransmitTimeoutId === null) {
-        return;
-      }
-      clearTimeout(retransmitTimeoutId);
-      retransmitTimeoutId = null;
-    };
-
-    const setTimer = () => {
-      if (retransmitTimeoutId === null) {
-        return;
-      }
-      retransmitTimeoutId = setTimeout(() => {
-        retransmitTimeoutId = null;
-        this.sendNext = this.sendUnacknowledged;
-        this.notifySendPackets();
-      }, RETRANSMIT_TIMEOUT);
-    };
+    let retransmitPromise = this.retransmissionQueue.pop();
 
     while (true) {
       const result = await Promise.race([
         recheckPromise,
         receivedSegmentPromise,
+        retransmitPromise,
       ]);
 
-      if (result !== undefined) {
-        receivedSegmentPromise = this.tcpQueue.pop();
-        if (!this.handleSegment(result.segment)) {
-          continue;
-        }
-        // If we got a valid segment, we can refresh the timer
-        clearTimer();
-      } else {
+      if (result === undefined) {
         recheckPromise = this.sendQueue.pop();
+      } else if ("segment" in result) {
+        receivedSegmentPromise = this.tcpQueue.pop();
+        if (this.handleSegment(result.segment)) {
+          this.retransmissionQueue.ack(this.recvNext);
+        }
+        continue;
+      } else if ("seqNum" in result) {
+        retransmitPromise = this.retransmissionQueue.pop();
+        this.sendPacket(result.seqNum, result.size);
+        continue;
       }
 
       do {
@@ -485,7 +482,8 @@ export class TcpState {
         const sendSize = Math.min(this.sendWindowSize(), MAX_SEGMENT_SIZE);
         if (sendSize > 0) {
           const data = new Uint8Array(sendSize);
-          const writeLength = this.writeBuffer.peek(this.sendNext, data);
+          const offset = this.sendNext - this.sendUnacknowledged;
+          const writeLength = this.writeBuffer.peek(offset, data);
 
           if (writeLength > 0) {
             segment.withData(data.subarray(0, writeLength));
@@ -499,9 +497,34 @@ export class TcpState {
           segment.flags.withFin();
         }
         sendIpPacket(this.srcHost, this.dstHost, segment);
+        this.retransmissionQueue.push(
+          segment.sequenceNumber,
+          segment.data.length,
+        );
         // Repeat until we have no more data to send
       } while (this.writeBuffer.bytesAvailable() > this.sendWindowSize());
     }
+  }
+
+  private sendPacket(seqNum: number, size: number) {
+    const segment = this.newSegment(seqNum, this.recvNext).withFlags(
+      new Flags().withAck(),
+    );
+
+    const data = new Uint8Array(size);
+    const offset = seqNum - this.sendUnacknowledged;
+    const writeLength = this.writeBuffer.peek(offset, data);
+
+    if (writeLength > 0) {
+      segment.withData(data.subarray(0, writeLength));
+    }
+    segment.window = this.recvWindow;
+
+    if (seqNum + size === this.writeClosedSeqnum) {
+      segment.flags.withFin();
+    }
+    this.retransmissionQueue.push(segment.sequenceNumber, segment.data.length);
+    sendIpPacket(this.srcHost, this.dstHost, segment);
   }
 
   private sendWindowSize() {
@@ -510,11 +533,42 @@ export class TcpState {
   }
 }
 
-function sleep(ms?: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+const RETRANSMIT_TIMEOUT = 60 * 1000;
+
+interface RetransmissionQueueItem {
+  seqNum: number;
+  size: number;
 }
 
-const RETRANSMIT_TIMEOUT = 60 * 1000;
+class RetransmissionQueue {
+  private timeoutQueue: [RetransmissionQueueItem, NodeJS.Timeout][] = [];
+  private itemQueue: AsyncQueue<RetransmissionQueueItem> = new AsyncQueue();
+
+  push(seqNum: number, size: number) {
+    const item = {
+      seqNum,
+      size,
+    };
+    const timeoutId = setTimeout(() => {
+      this.itemQueue.push(item);
+    }, RETRANSMIT_TIMEOUT);
+    this.timeoutQueue.push([item, timeoutId]);
+  }
+
+  async pop() {
+    return await this.itemQueue.pop();
+  }
+
+  ack(ackNum: number) {
+    this.timeoutQueue = this.timeoutQueue.filter(([item, timeoutId]) => {
+      if (item.seqNum < ackNum || item.seqNum + item.size <= ackNum) {
+        clearTimeout(timeoutId);
+        return false;
+      }
+      return true;
+    });
+  }
+}
 
 class BytesBuffer {
   private buffer: Uint8Array;

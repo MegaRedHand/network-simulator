@@ -70,19 +70,9 @@ export class TcpModule {
       dstPort,
       tcpQueue,
     );
+    await tcpState.connect();
 
-    const skt = new TcpSocket(tcpState);
-
-    // Retry on failure
-    for (let i = 0; i < 3; i++) {
-      tcpState.startConnection();
-      const response = await tcpQueue.pop();
-      const ok = tcpState.recvSynAck(response.segment);
-      if (ok) {
-        return skt;
-      }
-    }
-    return null;
+    return new TcpSocket(tcpState);
   }
 
   async listenOn(port: Port): Promise<TcpListener | null> {
@@ -148,13 +138,32 @@ export class TcpSocket {
 
   /**
    * Reads data from the connection into the given buffer.
-   * This reads enough data to fill the buffer, but may read
-   * less in case the connection is closed.
+   * This waits until there's a non-zero amount available,
+   * or the connection is closed.
    * @param buffer to copy the contents to
    * @returns the number of bytes read
    */
   async read(buffer: Uint8Array) {
     return this.tcpState.read(buffer);
+  }
+
+  /**
+   * Reads data from the connection into the given buffer.
+   * This reads enough data to fill the buffer, but may read
+   * less in case the connection is closed.
+   * @param buffer to copy the contents to
+   * @returns the number of bytes read
+   */
+  async readAll(buffer: Uint8Array) {
+    let bytesRead = 0;
+    while (bytesRead < buffer.length) {
+      const read = await this.tcpState.read(buffer.subarray(bytesRead));
+      if (read === 0) {
+        break;
+      }
+      bytesRead += read;
+    }
+    return bytesRead;
   }
 
   async write(content: Uint8Array) {
@@ -203,44 +212,11 @@ export class TcpListener {
       segment.sourcePort,
       queue,
     );
-
-    // Send SYN-ACK
-    const seqNum = getInitialSeqNumber();
-    const ackSegment = new TcpSegment(
-      this.port,
-      segment.sourcePort,
-      seqNum,
-      segment.sequenceNumber,
-      new Flags().withSyn().withAck(),
-      new Uint8Array(),
-    );
-    sendIpPacket(this.host, dst, ackSegment);
+    // TODO
+    if (!tcpState.accept(segment)) {
+      return this.next();
+    }
 
     return new TcpSocket(tcpState);
   }
-}
-
-function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
-  const viewgraph = src.viewgraph;
-
-  // TODO: use MAC and IP of the interfaces used
-  let nextHopMac = dst.mac;
-  const path = viewgraph.getPathBetween(src.id, dst.id);
-  if (!path) return;
-  for (const id of path.slice(1)) {
-    const device = viewgraph.getDevice(id);
-    // if there’s a router in the middle, first send frame to router mac
-    if (device instanceof ViewNetworkDevice) {
-      nextHopMac = device.mac;
-      break;
-    }
-  }
-  const ipPacket = new IPv4Packet(src.ip, dst.ip, payload);
-  const frame = new EthernetFrame(src.mac, nextHopMac, ipPacket);
-
-  sendViewPacket(src.viewgraph, src.id, frame);
-}
-
-function getInitialSeqNumber() {
-  return Math.floor(Math.random() * 0xffffffff);
 }
