@@ -220,7 +220,7 @@ export class TcpSegment implements IpPayload {
         "Seq Number": this.sequenceNumber,
         "Ack Number": this.acknowledgementNumber,
         "Window Size": this.window,
-        TCP_FLAGS_KEY: {
+        [TCP_FLAGS_KEY]: {
           Urg: this.flags.urg,
           Ack: this.flags.ack,
           Psh: this.flags.psh,
