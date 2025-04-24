@@ -15,6 +15,6 @@ export const ALERT_MESSAGES = {
   ROUTING_TABLE_REGENERATED: "Routing table regenerated successfully.",
   LAYER_CHANGED:
     "Layer changed successfully. Programs that do not belong to the selected layer will be hidden but will continue running.",
-  GRAPH_LOADED_SUCCESSFULLY: "network loaded successfully.",
+  GRAPH_LOADED_SUCCESSFULLY: "Network loaded successfully.",
   FAILED_TO_LOAD_GRAPH: "Failed to load the network.",
 };
