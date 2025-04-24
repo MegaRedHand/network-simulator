@@ -9,6 +9,9 @@ import { Ports } from "./ip";
 
 export const TCP_FLAGS_KEY = "tcp_flags";
 
+// 2 bytes number
+export type Port = number;
+
 export class Flags {
   // Urgent Pointer field significant
   public urg = false;
@@ -92,10 +95,10 @@ export class TcpSegment implements IpPayload {
   //
   // 2 bytes
   // The source port number.
-  sourcePort: number;
+  sourcePort: Port;
   // 2 bytes
   // The destination port number.
-  destinationPort: number;
+  destinationPort: Port;
   // 4 bytes
   // The sequence number of the first data octet in this segment (except
   // when SYN is present). If SYN is present the sequence number is the

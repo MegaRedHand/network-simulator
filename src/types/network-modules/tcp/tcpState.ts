@@ -1,14 +1,25 @@
 import { EthernetFrame } from "../../../packets/ethernet";
 import { IpPayload, IPv4Packet } from "../../../packets/ip";
-import { Flags, TcpSegment } from "../../../packets/tcp";
+import { Flags, Port, TcpSegment } from "../../../packets/tcp";
 import { sendViewPacket } from "../../packet";
 import { ViewHost } from "../../view-devices";
 import { ViewNetworkDevice } from "../../view-devices/vNetworkDevice";
 import { AsyncQueue } from "../asyncQueue";
 import { SegmentWithIp } from "../tcpModule";
 
-// TODO: import
-type Port = number;
+enum TcpStateEnum {
+  // CLOSED = 0,
+  // LISTEN = 1,
+  SYN_SENT = 2,
+  SYN_RECEIVED = 3,
+  ESTABLISHED = 4,
+  FIN_WAIT_1 = 5,
+  FIN_WAIT_2 = 6,
+  CLOSE_WAIT = 7,
+  CLOSING = 8,
+  LAST_ACK = 9,
+  TIME_WAIT = 10,
+}
 
 const MAX_BUFFER_SIZE = 0xffff;
 
@@ -55,13 +66,16 @@ export class TcpState {
   private writeBuffer = new BytesBuffer(MAX_BUFFER_SIZE);
   private writeClosedSeqnum = -1;
 
+  private state: TcpStateEnum;
+
+  // TCP state variables
   // See https://datatracker.ietf.org/doc/html/rfc9293#section-3.3.1
   // SND.UNA
   private sendUnacknowledged: number;
   // SND.NXT
   private sendNext: number;
   // SND.WND
-  private sendWindow: number;
+  private sendWindow = MAX_BUFFER_SIZE;
   // SND.UP
   // private sendUrgentPointer: number;
   // SND.WL1
@@ -69,7 +83,7 @@ export class TcpState {
   // SND.WL2
   private ackNumForLastWindowUpdate: number;
   // ISS
-  private initialSendSeqNum;
+  private initialSendSeqNum: number;
 
   // RCV.NXT
   private recvNext: number;
@@ -77,7 +91,7 @@ export class TcpState {
   private recvWindow = MAX_BUFFER_SIZE;
 
   // IRS
-  // private initialRecvSeqNum: number;
+  private initialRecvSeqNum: number;
 
   constructor(
     srcHost: ViewHost,
@@ -90,9 +104,42 @@ export class TcpState {
     this.srcPort = srcPort;
     this.dstHost = dstHost;
     this.dstPort = dstPort;
+
     this.tcpQueue = tcpQueue;
 
+    // Handle incoming segments in background
+    (async () => {
+      while (true) {
+        const { segment } = await this.tcpQueue.pop();
+        this.handleSegment(segment);
+      }
+    })();
+  }
+
+  // Open active connection
+  connect() {
+    // Initialize the TCB
     this.initialSendSeqNum = getInitialSeqNumber();
+    this.sendNext = this.initialSendSeqNum + 1;
+    this.sendUnacknowledged = this.initialSendSeqNum;
+
+    // Send a SYN
+    const flags = new Flags().withSyn();
+    const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
+    sendIpPacket(this.srcHost, this.dstHost, segment);
+
+    // Move to SYN_SENT state
+    this.state = TcpStateEnum.SYN_SENT;
+  }
+
+  // Accept passive connection
+  accept(synSegment: TcpSegment) {
+    // Initialize the TCB
+    this.initialSendSeqNum = getInitialSeqNumber();
+    this.sendNext = this.initialSendSeqNum + 1;
+    this.sendUnacknowledged = this.initialSendSeqNum;
+
+    this.handleSegment(synSegment);
   }
 
   startConnection() {
@@ -123,58 +170,159 @@ export class TcpState {
     }
   }
 
-  recvSegment(receivedSegment: TcpSegment) {
+  private handleSegment(segment: TcpSegment) {
     // Sanity check: ports match with expected
     if (
-      receivedSegment.destinationPort !== this.dstPort ||
-      receivedSegment.sourcePort !== this.srcPort
+      segment.destinationPort !== this.dstPort ||
+      segment.sourcePort !== this.srcPort
     ) {
       throw new Error("segment not for this socket");
     }
+    const { flags } = segment;
+    if (this.state === TcpStateEnum.SYN_SENT) {
+      // First, check the ACK bit
+      if (flags.ack) {
+        const ack = segment.acknowledgementNumber;
+        if (ack <= this.initialSendSeqNum || ack > this.sendNext) {
+          if (flags.rst) {
+            return false;
+          }
+          this.newSegment(ack, 0).withFlags(new Flags().withRst());
+          return false;
+        }
+        // Try to process ACK
+        if (!this.isAckValid(segment.acknowledgementNumber)) {
+          return false;
+        }
+      }
+      if (flags.rst) {
+        // TODO: handle gracefully
+        if (flags.ack) {
+          // drop the segment, enter CLOSED state, delete TCB, and return
+          throw new Error("error: connection reset");
+        } else {
+          return false;
+        }
+      }
+      if (flags.syn) {
+        this.recvNext = segment.sequenceNumber + 1;
+        this.initialRecvSeqNum = segment.sequenceNumber;
+        if (flags.ack) {
+          this.sendUnacknowledged = segment.acknowledgementNumber;
+        }
+        if (flags.ack) {
+          // It's a valid SYN-ACK
+          // Process the segment normally
+          this.state = TcpStateEnum.ESTABLISHED;
+          return this.handleSegmentData(segment);
+        } else {
+          // It's a SYN
+          if (segment.data.length > 0) {
+            throw new Error("SYN segment with data not supported");
+          }
+          this.sendWindow = segment.window;
+          this.seqNumForLastWindowUpdate = segment.sequenceNumber;
+          this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
+          // Send SYN-ACK
+          this.newSegment(this.initialSendSeqNum, this.recvNext).withFlags(
+            new Flags().withSyn().withAck(),
+          );
+          this.state = TcpStateEnum.SYN_RECEIVED;
+        }
+      }
+      return flags.rst || flags.syn;
+    }
     // Check the sequence number is valid
-    const segSeq = receivedSegment.sequenceNumber;
-    const segLen = receivedSegment.data.length;
+    const segSeq = segment.sequenceNumber;
+    const segLen = segment.data.length;
     if (!this.isSeqNumValid(segSeq, segLen)) {
       return false;
     }
 
-    // TODO: check RST flag
+    // TODO: handle RST or SYN flags
+    if (flags.rst || flags.syn) {
+      // TODO: handle this gracefully
+      throw new Error("error: RST bit set");
+    }
 
-    // For now this only accepts ACK segments.
-    // 3WHS are handled outside of this function
-    if (!receivedSegment.flags.ack) {
+    // If the ACK bit is off, drop the segment.
+    if (!flags.ack) {
       return false;
     }
-    if (!this.processAck(receivedSegment)) {
-      return false;
+    if (this.state === TcpStateEnum.SYN_RECEIVED) {
+      if (!this.isAckValid(segment.acknowledgementNumber)) {
+        // TODO: send a RST
+        this.newSegment(segment.acknowledgementNumber, 0).withFlags(
+          new Flags().withRst(),
+        );
+        return false;
+      }
+      this.state = TcpStateEnum.ESTABLISHED;
+      this.sendWindow = segment.window;
+      this.seqNumForLastWindowUpdate = segment.sequenceNumber;
+      this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
+    } else if (
+      this.state === TcpStateEnum.ESTABLISHED ||
+      this.state === TcpStateEnum.FIN_WAIT_1 ||
+      this.state === TcpStateEnum.FIN_WAIT_2 ||
+      this.state === TcpStateEnum.CLOSE_WAIT ||
+      this.state === TcpStateEnum.CLOSING
+    ) {
+      if (segment.acknowledgementNumber <= this.sendUnacknowledged) {
+        // Ignore the ACK
+      } else if (segment.acknowledgementNumber > this.sendNext) {
+        // TODO: send an ACK
+        return false;
+      } else {
+        this.sendUnacknowledged = segment.acknowledgementNumber;
+      }
+      if (!this.processAck(segment)) {
+        return false;
+      }
+
+      if (this.state === TcpStateEnum.FIN_WAIT_1) {
+        if (this.sendUnacknowledged === this.writeClosedSeqnum) {
+          this.state = TcpStateEnum.FIN_WAIT_2;
+        }
+      }
     }
 
     // Process the segment data
-    // NOTE: for simplicity, we ignore cases where RCV.NXT != SEG.SEQ
-    if (receivedSegment.sequenceNumber === this.recvNext) {
-      let receivedData = receivedSegment.data;
-      // NOTE: for simplicity, we ignore cases where the data is only partially
-      // inside the window
-      if (receivedData.length > this.recvWindow) {
-        throw new Error("buffer overflow");
-      }
-      this.readBuffer.write(receivedData);
-      this.recvNext = receivedSegment.sequenceNumber + receivedData.length;
-      this.recvWindow = MAX_BUFFER_SIZE - this.readBuffer.bytesAvailable();
-      // We should send back an ACK segment
-      this.notifySendPackets();
+    if (!this.handleSegmentData(segment)) {
+      return false;
     }
 
+    if (flags.fin) {
+      this.recvNext++;
+      this.readClosed = true;
+      // TODO: send an ACK
+    }
+
+    return true;
+  }
+
+  private handleSegmentData(segment: TcpSegment) {
+    // NOTE: for simplicity, we ignore cases where RCV.NXT != SEG.SEQ
+    if (segment.sequenceNumber !== this.recvNext) {
+      return false;
+    }
+    let receivedData = segment.data;
+    // NOTE: for simplicity, we ignore cases where the data is only partially
+    // inside the window
+    if (receivedData.length > this.recvWindow) {
+      throw new Error("buffer overflow");
+    }
+    this.readBuffer.write(receivedData);
+    this.recvNext = segment.sequenceNumber + receivedData.length;
+    this.recvWindow = MAX_BUFFER_SIZE - this.readBuffer.bytesAvailable();
+    // We should send back an ACK segment
+    this.notifySendPackets();
+
     // If FIN, mark read end as closed
-    if (receivedSegment.flags.fin) {
+    if (segment.flags.fin) {
       // The flag counts as a byte
       this.recvNext++;
       this.readClosed = true;
-    }
-
-    // start sending packets
-    if (!this.sendingPackets) {
-      this.sendingPackets = this.mainLoop();
     }
     return true;
   }
@@ -236,6 +384,10 @@ export class TcpState {
     return this.recvNext <= n && n < this.recvNext + this.recvWindow;
   }
 
+  private isAckValid(ackNum: number) {
+    return this.sendUnacknowledged < ackNum && ackNum <= this.sendNext;
+  }
+
   private processAck(segment: TcpSegment) {
     // From https://datatracker.ietf.org/doc/html/rfc9293#section-3.10.7.4-2.5.2.2.2.3.1
     // If the ACK is for a packet not yet sent, drop it
@@ -243,7 +395,10 @@ export class TcpState {
       return false;
     }
     // If SND.UNA < SEG.ACK =< SND.NXT, set SND.UNA <- SEG.ACK
-    if (this.sendUnacknowledged <= segment.acknowledgementNumber) {
+    if (
+      this.sendUnacknowledged === undefined ||
+      this.sendUnacknowledged <= segment.acknowledgementNumber
+    ) {
       this.sendUnacknowledged = segment.acknowledgementNumber;
       if (this.isSegmentNewer(segment)) {
         // set SND.WND <- SEG.WND, set SND.WL1 <- SEG.SEQ, and set SND.WL2 <- SEG.ACK.
@@ -261,6 +416,7 @@ export class TcpState {
     //
     // SND.WL1 < SEG.SEQ or (SND.WL1 = SEG.SEQ and SND.WL2 =< SEG.ACK)
     return (
+      this.seqNumForLastWindowUpdate === undefined ||
       this.seqNumForLastWindowUpdate < segment.sequenceNumber ||
       (this.seqNumForLastWindowUpdate === segment.sequenceNumber &&
         this.ackNumForLastWindowUpdate <= segment.acknowledgementNumber)
@@ -312,7 +468,7 @@ export class TcpState {
 
       if (result !== undefined) {
         receivedSegmentPromise = this.tcpQueue.pop();
-        if (!this.recvSegment(result.segment)) {
+        if (!this.handleSegment(result.segment)) {
           continue;
         }
         // If we got a valid segment, we can refresh the timer
