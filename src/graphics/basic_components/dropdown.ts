@@ -35,7 +35,17 @@ export class Dropdown {
         CSS_CLASSES.OPTIONS_CONTAINER_NOT_PUSH,
       );
     }
+
     this.initializeDropdown();
+
+    // Handle all outside interactions to close the dropdown
+    ["click", "dragstart", "touchstart", "tap"].forEach((eventType) => {
+      document.addEventListener(eventType, (event) => {
+        if (!this.container.contains(event.target as Node)) {
+          this.close();
+        }
+      });
+    });
   }
 
   private initializeDropdown(): void {
@@ -134,6 +144,10 @@ export class Dropdown {
     this.selected.textContent = option.text;
     this.selectedValue = option.value;
     this.optionsContainer.classList.remove(CSS_CLASSES.SHOW); // Ensure the dropdown is closed
+  }
+
+  private close(): void {
+    this.optionsContainer.classList.remove(CSS_CLASSES.SHOW);
   }
 
   // Public method to render the dropdown
