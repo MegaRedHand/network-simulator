@@ -158,7 +158,7 @@ export class TcpSocket {
     let bytesRead = 0;
     while (bytesRead < buffer.length) {
       const read = await this.tcpState.read(buffer.subarray(bytesRead));
-      if (read === 0) {
+      if (read === -1) {
         break;
       }
       bytesRead += read;
