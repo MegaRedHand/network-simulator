@@ -1,9 +1,6 @@
-import { EthernetFrame } from "../../packets/ethernet";
-import { IpAddress, IpPayload, IPv4Packet } from "../../packets/ip";
-import { Flags, TcpSegment } from "../../packets/tcp";
-import { sendViewPacket } from "../packet";
+import { IpAddress } from "../../packets/ip";
+import { TcpSegment } from "../../packets/tcp";
 import { ViewHost } from "../view-devices";
-import { ViewNetworkDevice } from "../view-devices/vNetworkDevice";
 import { AsyncQueue } from "./asyncQueue";
 import { TcpState } from "./tcp/tcpState";
 
@@ -126,8 +123,6 @@ export class TcpModule {
     return port;
   }
 }
-
-const MAX_BUFFER_SIZE = 0xffff;
 
 export class TcpSocket {
   private tcpState: TcpState;

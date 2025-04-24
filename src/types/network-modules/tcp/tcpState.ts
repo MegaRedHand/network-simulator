@@ -315,7 +315,7 @@ export class TcpState {
     if (segment.sequenceNumber !== this.recvNext) {
       return false;
     }
-    let receivedData = segment.data;
+    const receivedData = segment.data;
     // NOTE: for simplicity, we ignore cases where the data is only partially
     // inside the window
     if (receivedData.length > this.recvWindow) {
@@ -542,7 +542,7 @@ interface RetransmissionQueueItem {
 
 class RetransmissionQueue {
   private timeoutQueue: [RetransmissionQueueItem, NodeJS.Timeout][] = [];
-  private itemQueue: AsyncQueue<RetransmissionQueueItem> = new AsyncQueue();
+  private itemQueue = new AsyncQueue<RetransmissionQueueItem>();
 
   push(seqNum: number, size: number) {
     const item = {

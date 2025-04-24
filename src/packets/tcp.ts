@@ -150,8 +150,8 @@ export class TcpSegment implements IpPayload {
   constructor(
     srcPort: number,
     dstPort: number,
-    seqNum: number = 0,
-    ackNum: number = 0,
+    seqNum = 0,
+    ackNum = 0,
     flags: Flags = new Flags(),
     data: Uint8Array = new Uint8Array(0),
   ) {
