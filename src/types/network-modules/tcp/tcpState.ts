@@ -50,7 +50,8 @@ function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
   sendViewPacket(src.viewgraph, src.id, frame);
 }
 
-// TODO: add overflow checks
+const u32_MODULUS = 0x100000000;
+
 export class TcpState {
   private srcHost: ViewHost;
   private srcPort: Port;
@@ -120,7 +121,7 @@ export class TcpState {
   async connect() {
     // Initialize the TCB
     this.initialSendSeqNum = getInitialSeqNumber();
-    this.sendNext = this.initialSendSeqNum + 1;
+    this.sendNext = (this.initialSendSeqNum + 1) % u32_MODULUS;
     this.sendUnacknowledged = this.initialSendSeqNum;
 
     // Send a SYN
@@ -140,11 +141,11 @@ export class TcpState {
     }
     // Initialize the TCB
     this.initialSendSeqNum = getInitialSeqNumber();
-    this.sendNext = this.initialSendSeqNum + 1;
+    this.sendNext = (this.initialSendSeqNum + 1) % u32_MODULUS;
     this.sendUnacknowledged = this.initialSendSeqNum;
 
     this.state = TcpStateEnum.SYN_RECEIVED;
-    this.recvNext = synSegment.sequenceNumber + 1;
+    this.recvNext = (synSegment.sequenceNumber + 1) % u32_MODULUS;
     this.initialRecvSeqNum = synSegment.sequenceNumber;
 
     // Send a SYN-ACK
@@ -164,11 +165,14 @@ export class TcpState {
     if (!segment.flags.syn || !segment.flags.ack) {
       return false;
     }
-    if (segment.acknowledgementNumber !== this.initialSendSeqNum + 1) {
+    if (
+      segment.acknowledgementNumber !==
+      (this.initialSendSeqNum + 1) % u32_MODULUS
+    ) {
       return false;
     }
-    this.recvNext = segment.sequenceNumber + 1;
-    // this.initialRecvSeqNum = segment.sequenceNumber;
+    this.recvNext = (segment.sequenceNumber + 1) % u32_MODULUS;
+    this.initialRecvSeqNum = segment.sequenceNumber;
     this.sendNext = segment.acknowledgementNumber;
     this.sendWindow = segment.window;
 
@@ -212,7 +216,7 @@ export class TcpState {
         }
       }
       if (flags.syn) {
-        this.recvNext = segment.sequenceNumber + 1;
+        this.recvNext = (segment.sequenceNumber + 1) % u32_MODULUS;
         this.initialRecvSeqNum = segment.sequenceNumber;
         if (flags.ack) {
           this.sendUnacknowledged = segment.acknowledgementNumber;
@@ -303,7 +307,7 @@ export class TcpState {
     }
 
     if (flags.fin) {
-      this.recvNext++;
+      this.recvNext = (this.recvNext + 1) % u32_MODULUS;
       this.readClosed = true;
       this.readChannel.push(0);
       this.newSegment(this.sendNext, this.recvNext).withFlags(
@@ -333,7 +337,8 @@ export class TcpState {
     }
     this.readBuffer.write(receivedData);
     this.readChannel.push(receivedData.length);
-    this.recvNext = segment.sequenceNumber + receivedData.length;
+    this.recvNext =
+      (segment.sequenceNumber + receivedData.length) % u32_MODULUS;
     this.recvWindow = MAX_BUFFER_SIZE - this.readBuffer.bytesAvailable();
     // We should send back an ACK segment
     this.notifySendPackets();
@@ -341,7 +346,7 @@ export class TcpState {
     // If FIN, mark read end as closed
     if (segment.flags.fin) {
       // The flag counts as a byte
-      this.recvNext++;
+      this.recvNext = (this.recvNext + 1) % u32_MODULUS;
       this.readClosed = true;
       this.readChannel.push(0);
     }
@@ -375,7 +380,8 @@ export class TcpState {
 
   closeWrite() {
     this.writeClosedSeqnum =
-      this.sendUnacknowledged + this.writeBuffer.bytesAvailable();
+      (this.sendUnacknowledged + this.writeBuffer.bytesAvailable()) %
+      u32_MODULUS;
     this.notifySendPackets();
   }
 
@@ -398,16 +404,23 @@ export class TcpState {
     } else {
       return (
         this.isInReceiveWindow(segSeq) ||
-        this.isInReceiveWindow(segSeq + segLen - 1)
+        this.isInReceiveWindow((segSeq + segLen - 1) % u32_MODULUS)
       );
     }
   }
 
   private isInReceiveWindow(n: number) {
-    return this.recvNext <= n && n < this.recvNext + this.recvWindow;
+    const recvWindowHigh = (this.recvNext + this.recvWindow) % u32_MODULUS;
+    if (recvWindowHigh < this.recvNext) {
+      return this.recvNext <= n || n < recvWindowHigh;
+    }
+    return this.recvNext <= n && n < recvWindowHigh;
   }
 
   private isAckValid(ackNum: number) {
+    if (this.sendNext < this.sendUnacknowledged) {
+      return this.sendUnacknowledged < ackNum || ackNum <= this.sendNext;
+    }
     return this.sendUnacknowledged < ackNum && ackNum <= this.sendNext;
   }
 
@@ -463,7 +476,7 @@ export class TcpState {
     let receivedSegmentPromise = this.tcpQueue.pop();
     let retransmitPromise = this.retransmissionQueue.pop();
 
-    while (true) {
+    while (!this.readClosed || this.writeClosedSeqnum === -1) {
       const result = await Promise.race([
         recheckPromise,
         receivedSegmentPromise,
@@ -494,18 +507,20 @@ export class TcpState {
         const sendSize = Math.min(this.sendWindowSize(), MAX_SEGMENT_SIZE);
         if (sendSize > 0) {
           const data = new Uint8Array(sendSize);
-          const offset = this.sendNext - this.sendUnacknowledged;
+          const offset =
+            (u32_MODULUS + this.sendNext - this.sendUnacknowledged) %
+            u32_MODULUS;
           const writeLength = this.writeBuffer.peek(offset, data);
 
           if (writeLength > 0) {
             segment.withData(data.subarray(0, writeLength));
-            this.sendNext += writeLength;
+            this.sendNext = (this.sendNext + writeLength) % u32_MODULUS;
           }
         }
         segment.window = this.recvWindow;
 
         if (this.sendNext === this.writeClosedSeqnum) {
-          this.sendNext++;
+          this.sendNext = (this.sendNext + 1) % u32_MODULUS;
           segment.flags.withFin();
         }
         sendIpPacket(this.srcHost, this.dstHost, segment);
@@ -524,7 +539,8 @@ export class TcpState {
     );
 
     const data = new Uint8Array(size);
-    const offset = seqNum - this.sendUnacknowledged;
+    const offset =
+      (u32_MODULUS + seqNum - this.sendUnacknowledged) % u32_MODULUS;
     const writeLength = this.writeBuffer.peek(offset, data);
 
     if (writeLength > 0) {
@@ -532,7 +548,7 @@ export class TcpState {
     }
     segment.window = this.recvWindow;
 
-    if (seqNum + size === this.writeClosedSeqnum) {
+    if ((seqNum + size) % u32_MODULUS === this.writeClosedSeqnum) {
       segment.flags.withFin();
     }
     this.retransmissionQueue.push(segment.sequenceNumber, segment.data.length);
@@ -541,7 +557,9 @@ export class TcpState {
 
   private sendWindowSize() {
     // TODO: add congestion control
-    return this.sendUnacknowledged + this.sendWindow - this.sendNext;
+    return (
+      (this.sendUnacknowledged + this.sendWindow - this.sendNext) % u32_MODULUS
+    );
   }
 }
 
@@ -585,7 +603,10 @@ class RetransmissionQueue {
 
   ack(ackNum: number) {
     this.timeoutQueue = this.timeoutQueue.filter(([item, tick]) => {
-      if (item.seqNum < ackNum || item.seqNum + item.size <= ackNum) {
+      if (
+        item.seqNum < ackNum ||
+        (item.seqNum + item.size) % u32_MODULUS <= ackNum
+      ) {
         Ticker.shared.remove(tick, this);
         return false;
       }
