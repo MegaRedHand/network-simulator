@@ -1,3 +1,4 @@
+import { Ticker } from "pixi.js";
 import { EthernetFrame } from "../../../packets/ethernet";
 import { IpPayload, IPv4Packet } from "../../../packets/ip";
 import { Flags, Port, TcpSegment } from "../../../packets/tcp";
@@ -6,6 +7,7 @@ import { ViewHost } from "../../view-devices";
 import { ViewNetworkDevice } from "../../view-devices/vNetworkDevice";
 import { AsyncQueue } from "../asyncQueue";
 import { SegmentWithIp } from "../tcpModule";
+import { GlobalContext } from "../../../context";
 
 enum TcpStateEnum {
   // CLOSED = 0,
@@ -57,7 +59,7 @@ export class TcpState {
   private tcpQueue: AsyncQueue<SegmentWithIp>;
   private sendQueue = new AsyncQueue<undefined>();
   private connectionQueue = new AsyncQueue<undefined>();
-  private retransmissionQueue = new RetransmissionQueue();
+  private retransmissionQueue: RetransmissionQueue;
 
   // Buffer of data received
   private readBuffer = new BytesBuffer(MAX_BUFFER_SIZE);
@@ -108,6 +110,8 @@ export class TcpState {
     this.dstPort = dstPort;
 
     this.tcpQueue = tcpQueue;
+
+    this.retransmissionQueue = new RetransmissionQueue(this.srcHost.ctx);
 
     this.mainLoop();
   }
@@ -443,7 +447,7 @@ export class TcpState {
       return;
     }
     this.notifiedSendPackets = true;
-    setTimeout(() => this.sendQueue.push(undefined), 50);
+    setTimeout(() => this.sendQueue.push(undefined), 5);
   }
 
   private async mainLoop() {
@@ -533,7 +537,7 @@ export class TcpState {
   }
 }
 
-const RETRANSMIT_TIMEOUT = 60 * 1000;
+const RETRANSMIT_TIMEOUT = 15 * 1000;
 
 interface RetransmissionQueueItem {
   seqNum: number;
@@ -541,18 +545,30 @@ interface RetransmissionQueueItem {
 }
 
 class RetransmissionQueue {
-  private timeoutQueue: [RetransmissionQueueItem, NodeJS.Timeout][] = [];
+  private timeoutQueue: [RetransmissionQueueItem, (t: Ticker) => void][] = [];
   private itemQueue = new AsyncQueue<RetransmissionQueueItem>();
+
+  private ctx: GlobalContext;
+
+  constructor(ctx: GlobalContext) {
+    this.ctx = ctx;
+  }
 
   push(seqNum: number, size: number) {
     const item = {
       seqNum,
       size,
     };
-    const timeoutId = setTimeout(() => {
-      this.itemQueue.push(item);
-    }, RETRANSMIT_TIMEOUT);
-    this.timeoutQueue.push([item, timeoutId]);
+    let progress = 0;
+    const tick = (ticker: Ticker) => {
+      progress += ticker.elapsedMS * this.ctx.getCurrentSpeed();
+      if (progress >= RETRANSMIT_TIMEOUT) {
+        this.itemQueue.push(item);
+        Ticker.shared.remove(tick, this);
+      }
+    };
+    Ticker.shared.add(tick, this);
+    this.timeoutQueue.push([item, tick]);
   }
 
   async pop() {
@@ -560,9 +576,9 @@ class RetransmissionQueue {
   }
 
   ack(ackNum: number) {
-    this.timeoutQueue = this.timeoutQueue.filter(([item, timeoutId]) => {
+    this.timeoutQueue = this.timeoutQueue.filter(([item, tick]) => {
       if (item.seqNum < ackNum || item.seqNum + item.size <= ackNum) {
-        clearTimeout(timeoutId);
+        Ticker.shared.remove(tick, this);
         return false;
       }
       return true;
