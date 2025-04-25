@@ -153,10 +153,8 @@ export class TextInfo {
     // Create key element
     const keyElement = document.createElement("span");
     keyElement.textContent = "TCP Flags";
-    keyElement.classList.add(CSS_CLASSES.DETAIL_KEY);
+    keyElement.classList.add(CSS_CLASSES.DETAIL_KEY, CSS_CLASSES.TCP_FLAG_HEADER);
     keyElement.style.display = CSS_CLASSES.BLOCK;
-    keyElement.style.textAlign = "center";
-    keyElement.style.marginBottom = "8px";
 
     if (tooltip) {
       attachTooltip(keyElement, tooltip);

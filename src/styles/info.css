@@ -105,3 +105,9 @@
   font-weight: bold;
   color: #dc3545;
 }
+
+.tcp-flag-header {
+  display: block;
+  text-align: center;
+  margin-bottom: 8px;
+}

@@ -77,6 +77,7 @@ export const CSS_CLASSES = {
   INFO_CONTAINER: "info-container",
   TCP_FLAG_ACTIVE: "tcp-flag-active",
   TCP_FLAG_INACTIVE: "tcp-flag-inactive",
+  TCP_FLAG_HEADER: "tcp-flag-header",
 
   // Layer Selector
   LAYER_SELECTOR_CONTAINER: "layer-selector-container",
