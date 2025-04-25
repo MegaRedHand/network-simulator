@@ -7,17 +7,25 @@ import { Colors, ZIndexLevels } from "../utils/utils";
 import { Packet } from "./packet";
 import { EdgeInfo } from "../graphics/renderables/edge_info";
 import { DataEdge, DeviceId } from "./graphs/datagraph";
+import { MacAddress } from "../packets/ethernet";
 
 export class Edge extends Graphics {
-  data: DataEdge;
+  private _data: DataEdge;
   private startPos: Point;
   private endPos: Point;
 
   viewgraph: ViewGraph;
 
+  // This is to always have the same data as the datagraph
+  get data(): DataEdge {
+    return this.viewgraph
+      .getDataGraph()
+      .getConnection(this._data.from.id, this._data.to.id);
+  }
+
   constructor(viewgraph: ViewGraph, edgeData: DataEdge) {
     super();
-    this.data = edgeData;
+    this._data = edgeData;
     this.viewgraph = viewgraph;
 
     this.eventMode = "static";
@@ -105,20 +113,9 @@ export class Edge extends Graphics {
     RightBar.getInstance().renderInfo(edgeInfo);
   }
 
-  // Method to delete the edge
-  delete() {
-    // Remove the edge from the viewgraph and datagraph
-    const n1 = this.data.from.id;
-    const n2 = this.data.to.id;
-    this.viewgraph.removeEdge(n1, n2);
-    console.log(`Edge ${n1},${n2} deleted.`);
-    this.destroy();
-  }
-
-  destroy(): DataEdge {
+  destroy(): void {
     deselectElement();
     super.destroy();
-    return this.data;
   }
 
   makeVisible() {
@@ -190,5 +187,40 @@ export class Edge extends Graphics {
     );
 
     this.drawEdge(newStartPos, newEndPos, Colors.Lightblue);
+  }
+
+  setInterface(deviceId: DeviceId, iface: number) {
+    if (this.data.from.id === deviceId) {
+      this.data.from.iface = iface;
+    } else {
+      this.data.to.iface = iface;
+    }
+    this.viewgraph.getDataGraph().regenerateAllRoutingTables();
+  }
+
+  setInterfaceMac(deviceId: DeviceId, mac: string): void {
+    let iface;
+    if (this.data.from.id === deviceId) {
+      iface = this.data.from.iface;
+    } else {
+      iface = this.data.to.iface;
+    }
+    const device = this.viewgraph.getDataGraph().getDevice(deviceId);
+
+    if (!device) {
+      console.error(`Device with ID ${deviceId} not found.`);
+      return;
+    }
+    device.interfaces[iface].mac = MacAddress.parse(mac);
+    console.log(
+      `Updated MAC address for device ${deviceId}, interface ${iface}: ${mac}`,
+    );
+  }
+
+  getDeviceFreeIfaces(deviceId: DeviceId): number[] {
+    const freeIfaces = this.viewgraph
+      .getDataGraph()
+      .getFreeInterfaces(deviceId);
+    return freeIfaces;
   }
 }

@@ -5,6 +5,7 @@ import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { Button } from "../basic_components/button";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { BaseInfo } from "./base_info";
+import { Dropdown } from "../basic_components/dropdown";
 
 export class EdgeInfo extends BaseInfo {
   readonly edge: Edge;
@@ -13,6 +14,7 @@ export class EdgeInfo extends BaseInfo {
     super(TOOLTIP_KEYS.EDGE_INFORMATION);
     this.edge = edge;
     this.addCommonInfoFields();
+    this.addInterfaceDropdowns();
   }
 
   protected addCommonInfoFields(): void {
@@ -82,5 +84,63 @@ export class EdgeInfo extends BaseInfo {
 
     // Add the button to the inputFields array
     this.inputFields.push(deleteEdgeButton.toHTML());
+  }
+
+  protected addInterfaceDropdowns(): void {
+    const from = this.edge.data.from.id;
+    const to = this.edge.data.to.id;
+
+    // Dropdown for selecting the interface for "from" device
+    const fromIfaceDropdown = new Dropdown({
+      label: `Interface (Device ${from})`,
+      tooltip: TOOLTIP_KEYS.IFACE_EDITOR,
+      options: [
+        {
+          value: this.edge.data.from.iface.toString(),
+          text: `eth${this.edge.data.from.iface}`,
+        },
+        ...this.edge
+          .getDeviceFreeIfaces(from)
+          .filter((iface) => iface !== this.edge.data.from.iface)
+          .map((iface) => ({ value: iface.toString(), text: `eth${iface}` })),
+      ],
+      default_text: "Iface",
+      onchange: (value) => {
+        const iface = parseInt(value, 10);
+        this.edge.setInterface(from, iface);
+        console.log(`Updated interface for device ${from}: eth${iface}`);
+        this.edge.showInfo();
+      },
+    });
+
+    fromIfaceDropdown.setValue(this.edge.data.from.iface.toString());
+
+    // Dropdown for selecting the interface for "to" device
+    const toIfaceDropdown = new Dropdown({
+      label: `Interface (Device ${to})`,
+      tooltip: TOOLTIP_KEYS.IFACE_EDITOR,
+      options: [
+        {
+          value: this.edge.data.to.iface.toString(),
+          text: `eth${this.edge.data.to.iface}`,
+        },
+        ...this.edge
+          .getDeviceFreeIfaces(to)
+          .filter((iface) => iface !== this.edge.data.to.iface)
+          .map((iface) => ({ value: iface.toString(), text: `eth${iface}` })),
+      ],
+      default_text: "Iface",
+      onchange: (value) => {
+        const iface = parseInt(value, 10);
+        this.edge.setInterface(to, iface);
+        console.log(`Updated interface for device ${to}: eth${iface}`);
+        this.edge.showInfo();
+      },
+    });
+
+    toIfaceDropdown.setValue(this.edge.data.to.iface.toString());
+
+    // Add the dropdowns to the inputFields array
+    this.inputFields.push(fromIfaceDropdown.toHTML(), toIfaceDropdown.toHTML());
   }
 }
