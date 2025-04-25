@@ -372,7 +372,7 @@ export class TcpState {
       throw new Error("write closed");
     }
     const writeLength = this.writeBuffer.write(input);
-    if (this.sendWindow > 0 && writeLength > 0) {
+    if (this.sendWindowSize() > 0 && writeLength > 0) {
       this.notifySendPackets();
     }
     return writeLength;
