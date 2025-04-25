@@ -1,13 +1,13 @@
 .right-bar-table {
-  display: block; /* Hace que la tabla sea un bloque para manejar el scroll */
-  overflow-x: auto; /* Habilita el scroll horizontal */
-  width: 100%; /* Hace que la tabla ocupe todo el ancho disponible */
+  display: table; /* Cambiado a table para mejor comportamiento de columnas */
+  width: 100%; /* Ocupa todo el ancho disponible */
   border-collapse: collapse; /* Elimina espacios entre bordes */
   font-size: 1rem; /* Tamaño de fuente legible */
   text-align: center; /* Centra el texto en las celdas */
   border-radius: 1rem; /* Bordes redondeados */
   box-shadow: 0 0.5vh 1vh rgba(0, 0, 0, 0.1); /* Sombra para profundidad */
-  table-layout: fixed; /* Fija el ancho de las columnas */
+  table-layout: auto; /* Cambiado a auto para ancho dinámico de columnas */
+  overflow-x: auto; /* Mantiene el scroll horizontal si es necesario */
   clip-path: inset(
     0 round 1rem
   ); /* Recorta el área del scroll respetando el border-radius */
@@ -27,7 +27,7 @@
   padding: 1vh; /* Adds spacing inside header cells */
   border: 0.2vh solid #ddd; /* Adds subtle borders */
   text-align: center; /* Centers text */
-  width: 33%; /* Distributes column width evenly */
+  /* Eliminado el width fijo del 33% */
   box-sizing: border-box; /* Ensures width includes padding and borders */
 }
 
@@ -51,4 +51,10 @@
 
 .right-bar-table tr:nth-child(odd) {
   background-color: #fff; /* White for odd rows */
+}
+
+/* Para asegurar que el contenedor de la tabla permita scroll horizontal */
+.right-bar-table-container {
+  overflow-x: auto;
+  border-radius: 1rem;
 }

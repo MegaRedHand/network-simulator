@@ -6,6 +6,11 @@ export const ICMP_PROTOCOL_NUMBER = 1;
 export const TCP_PROTOCOL_NUMBER = 6;
 export const UDP_PROTOCOL_NUMBER = 17;
 
+export interface Ports {
+  sourcePort: number;
+  destinationPort: number;
+}
+
 export class EmptyPayload implements IpPayload {
   byteLength() {
     return 0;
@@ -23,6 +28,10 @@ export class EmptyPayload implements IpPayload {
 
   getDetails() {
     return {};
+  }
+
+  getPorts(): Ports {
+    return null;
   }
 }
 
@@ -130,7 +139,9 @@ export interface IpPayload {
   // Packet protocol name
   getPacketType(): string;
   // Get details of the payload
-  getDetails(layer: Layer): Record<string, string | number | object>;
+  getDetails?(layer: Layer): Record<string, string | number | object>;
+  // Get ports of the payload (if any)
+  getPorts(): Ports;
 }
 
 // Info taken from the original RFC: https://datatracker.ietf.org/doc/html/rfc791#section-3.1
@@ -267,16 +278,6 @@ export class IPv4Packet implements FramePayload {
   }
 
   getDetails(layer: Layer) {
-    // TODO: Refactor Packet Building Process
-    //
-    // Current Implementation:
-    // - Packet building starts at the Network layer
-    // - Frame payload data is directly included here
-    //
-    // Desired Implementation:
-    // - Move frame-specific data to EthernetFrame class
-    // - Implement packet sending using MAC addresses at device level
-
     if (layer == Layer.Network) {
       return {
         Version: this.version,
@@ -284,7 +285,6 @@ export class IPv4Packet implements FramePayload {
         "Type of Service": this.typeOfService,
         "Total Length": this.totalLength,
         Identification: this.identification,
-        Flags: this.flags,
         "Fragment Offset": this.fragmentOffset,
         "Time to Live": this.timeToLive,
         Protocol: this.protocol,

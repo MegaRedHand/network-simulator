@@ -51,6 +51,10 @@ export const TOOLTIP_KEYS = {
   PACKET_TYPE: "Packet Type",
   SOURCE_MAC_ADDRESS: "Source MAC Address",
   DESTINATION_MAC_ADDRESS: "Destination MAC Address",
+  SOURCE_IP_ADDRESS: "Source IP Address",
+  DESTINATION_IP_ADDRESS: "Destination IP Address",
+  SOURCE_PORT: "Source Port",
+  DESTINATION_PORT: "Destination Port",
   DISCARD_PACKET_BUTTON: "Discard Packet",
   PACKET_QUEUE_USAGE: "Packet Queue Usage",
   EDGE_CONNECTED_DEVICES: "edge Connected Devices",
@@ -154,6 +158,14 @@ export const TOOLTIP_CONTENT = {
     "The MAC address of the device that sent the packet. This address is used to identify the source device in the network.",
   [TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS]:
     "The MAC address of the device that is the intended recipient of the packet. This address is used to identify the destination device in the network.",
+  [TOOLTIP_KEYS.SOURCE_IP_ADDRESS]:
+    "The IP address of the device that sent the packet. This address is used to identify the source device in the network.",
+  [TOOLTIP_KEYS.DESTINATION_IP_ADDRESS]:
+    "The IP address of the device that is the intended recipient of the packet. This address is used to identify the destination device in the network.",
+  [TOOLTIP_KEYS.SOURCE_PORT]:
+    "The source port number used by the sending device. This number is used to identify the specific application or service on the source device.",
+  [TOOLTIP_KEYS.DESTINATION_PORT]:
+    "The destination port number used by the receiving device. This number is used to identify the specific application or service on the destination device.",
   [TOOLTIP_KEYS.DISCARD_PACKET_BUTTON]:
     "Discard the selected packet. This action will remove the packet from the network simulation without processing it.",
   [TOOLTIP_KEYS.PACKET_QUEUE_USAGE]:
