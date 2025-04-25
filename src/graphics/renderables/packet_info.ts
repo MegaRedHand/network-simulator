@@ -4,6 +4,8 @@ import { Button } from "../basic_components/button";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { BaseInfo } from "./base_info";
 import { ToggleInfo } from "../components/toggle_info";
+import { Layer } from "../../types/layer";
+import { IPv4Packet } from "../../packets/ip";
 
 export class PacketInfo extends BaseInfo {
   readonly packet: Packet;
@@ -22,16 +24,51 @@ export class PacketInfo extends BaseInfo {
       this.packet.type,
       TOOLTIP_KEYS.PACKET_TYPE,
     );
-    this.information.addField(
-      TOOLTIP_KEYS.SOURCE_MAC_ADDRESS,
-      this.packet.rawPacket.source.toString(),
-      TOOLTIP_KEYS.SOURCE_MAC_ADDRESS,
-    );
-    this.information.addField(
-      TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS,
-      this.packet.rawPacket.destination.toString(),
-      TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS,
-    );
+
+    const layer = this.packet.viewgraph.getLayer();
+    const framePayload = this.packet.rawPacket.payload as IPv4Packet;
+
+    if (layer == Layer.Link) {
+      this.information.addField(
+        TOOLTIP_KEYS.SOURCE_MAC_ADDRESS,
+        this.packet.rawPacket.source.toString(),
+        TOOLTIP_KEYS.SOURCE_MAC_ADDRESS,
+      );
+      this.information.addField(
+        TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS,
+        this.packet.rawPacket.destination.toString(),
+        TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS,
+      );
+    }
+
+    if (layer >= Layer.Network) {
+      this.information.addField(
+        TOOLTIP_KEYS.SOURCE_IP_ADDRESS,
+        framePayload.sourceAddress.toString(),
+        TOOLTIP_KEYS.SOURCE_IP_ADDRESS,
+      );
+      this.information.addField(
+        TOOLTIP_KEYS.DESTINATION_IP_ADDRESS,
+        framePayload.destinationAddress.toString(),
+        TOOLTIP_KEYS.DESTINATION_IP_ADDRESS,
+      );
+    }
+
+    if (layer >= Layer.Transport) {
+      const ports = framePayload.payload.getPorts();
+      if (ports) {
+        this.information.addField(
+          TOOLTIP_KEYS.SOURCE_PORT,
+          ports.sourcePort,
+          TOOLTIP_KEYS.SOURCE_PORT,
+        );
+        this.information.addField(
+          TOOLTIP_KEYS.DESTINATION_PORT,
+          ports.destinationPort,
+          TOOLTIP_KEYS.DESTINATION_PORT,
+        );
+      }
+    }
   }
 
   protected addCommonButtons(): void {
@@ -56,7 +93,7 @@ export class PacketInfo extends BaseInfo {
   private addToggleInfo(): void {
     // Obtener los detalles del paquete
     const packetDetails = this.packet.getPacketDetails(
-      this.packet.belongingLayer,
+      this.packet.viewgraph.getLayer(),
       this.packet.rawPacket,
     );
 

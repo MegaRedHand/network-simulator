@@ -5,6 +5,9 @@ import {
   TCP_PROTOCOL_NUMBER,
 } from "./ip";
 import { Layer } from "../types/layer";
+import { Ports } from "./ip";
+
+export const TCP_FLAGS_KEY = "tcp_flags";
 
 export class Flags {
   // Urgent Pointer field significant
@@ -211,12 +214,33 @@ export class TcpSegment implements IpPayload {
     return "TCP";
   }
 
-  // Dummy Method for the moment
   getDetails(layer: Layer) {
-    return { Layer: layer, Raw: this };
+    if (layer == Layer.Transport) {
+      return {
+        "Seq Number": this.sequenceNumber,
+        "Ack Number": this.acknowledgementNumber,
+        "Window Size": this.window,
+        [TCP_FLAGS_KEY]: {
+          Urg: this.flags.urg,
+          Ack: this.flags.ack,
+          Psh: this.flags.psh,
+          Rst: this.flags.rst,
+          Syn: this.flags.syn,
+          Fin: this.flags.fin,
+        },
+        Payload: this.data,
+      };
+    } else if (layer == Layer.App) {
+      return { Request: new TextDecoder("utf-8").decode(this.data) };
+    }
   }
 
-  // ### IpPayload ###
+  getPorts(): Ports {
+    return {
+      sourcePort: this.sourcePort,
+      destinationPort: this.destinationPort,
+    };
+  }
 }
 
 function checkUint(n: number, numBits: number): void {

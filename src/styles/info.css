@@ -94,3 +94,20 @@
   max-width: 100%; /* Prevents it from exceeding the container */
   display: block;
 }
+
+/* TCP Flags Table Styles */
+.tcp-flag-active {
+  font-weight: bold;
+  color: #28a745;
+}
+
+.tcp-flag-inactive {
+  font-weight: bold;
+  color: #dc3545;
+}
+
+.tcp-flag-header {
+  display: block;
+  text-align: center;
+  margin-bottom: 8px;
+}
