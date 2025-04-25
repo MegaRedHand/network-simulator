@@ -27,9 +27,7 @@ export class DeviceInfo extends BaseInfo {
 
   protected addCommonInfoFields(): void {
     const { id, mac } = this.device;
-    const connections = this.device.viewgraph
-      .getConnections(id)
-      .map((edge) => edge.otherEnd(id));
+    const connections = this.device.viewgraph.getVisibleConnectedDeviceIds(id);
 
     this.information.addField(TOOLTIP_KEYS.ID, id.toString(), TOOLTIP_KEYS.ID);
     this.information.addListField(
