@@ -2,7 +2,7 @@ import { Ticker } from "pixi.js";
 import { EthernetFrame } from "../../../packets/ethernet";
 import { IpPayload, IPv4Packet } from "../../../packets/ip";
 import { Flags, Port, TcpSegment } from "../../../packets/tcp";
-import { sendViewPacket } from "../../packet";
+import { dropPacket, sendViewPacket } from "../../packet";
 import { ViewHost } from "../../view-devices";
 import { ViewNetworkDevice } from "../../view-devices/vNetworkDevice";
 import { AsyncQueue } from "../asyncQueue";
@@ -314,6 +314,12 @@ export class TcpState {
     return true;
   }
 
+  private dropSegment(segment: TcpSegment) {
+    const packet = new IPv4Packet(this.srcHost.ip, this.dstHost.ip, segment);
+    const frame = new EthernetFrame(this.srcHost.mac, this.dstHost.mac, packet);
+    dropPacket(this.srcHost.viewgraph, this.srcHost.id, frame);
+  }
+
   private handleSegmentData(segment: TcpSegment) {
     // NOTE: for simplicity, we ignore cases where RCV.NXT != SEG.SEQ
     if (segment.sequenceNumber !== this.recvNext) {
@@ -470,6 +476,8 @@ export class TcpState {
         receivedSegmentPromise = this.tcpQueue.pop();
         if (this.handleSegment(result.segment)) {
           this.retransmissionQueue.ack(this.recvNext);
+        } else {
+          this.dropSegment(result.segment);
         }
         continue;
       } else if ("seqNum" in result) {
