@@ -219,8 +219,8 @@ export class TcpListener {
       segment.sourcePort,
       queue,
     );
-    // TODO
     if (!tcpState.accept(segment)) {
+      this.tcpModule.closeQueue(this.port, ipAndPort);
       return this.next();
     }
 
