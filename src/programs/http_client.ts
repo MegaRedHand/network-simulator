@@ -3,7 +3,8 @@ import { ProgramInfo } from "../graphics/renderables/device_info";
 import { DeviceId } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
 import { Layer } from "../types/layer";
-import { TcpSocket } from "../types/network-modules/tcpModule";
+import { AsyncQueue } from "../types/network-modules/asyncQueue";
+import { TcpListener, TcpSocket } from "../types/network-modules/tcpModule";
 import { ViewHost } from "../types/view-devices";
 import { ProgramBase } from "./program_base";
 
@@ -85,6 +86,8 @@ export class HttpServer extends ProgramBase {
 
   private port: number;
 
+  private stopChannel = new AsyncQueue<"stop">();
+
   protected _parseInputs(inputs: string[]): void {
     if (inputs.length !== 0) {
       console.error(
@@ -105,8 +108,7 @@ export class HttpServer extends ProgramBase {
   }
 
   protected _stop() {
-    // Nothing to do
-    // TODO: stop serving requests
+    this.stopChannel.push("stop");
   }
 
   private async serveHttpRequests() {
@@ -124,11 +126,17 @@ export class HttpServer extends ProgramBase {
       return;
     }
 
+    let stopPromise = this.stopChannel.pop();
+
     while (true) {
-      const socket = await listener.next();
+      const socket = await Promise.race([stopPromise, listener.next()]);
+      if (socket === "stop") {
+        break;
+      }
 
       this.serveClient(socket);
     }
+    listener.close();
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
