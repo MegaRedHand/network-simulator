@@ -361,7 +361,8 @@ export class ViewGraph {
     // Remove connection in DataGraph
     this.datagraph.removeConnection(n1Id, n2Id);
 
-    return this._removeEdge(n1Id, n2Id);
+    this._removeEdge(n1Id, n2Id);
+    return datagraphEdge;
   }
 
   /**
@@ -383,7 +384,7 @@ export class ViewGraph {
     console.log(
       `Edge with ID ${n1Id},${n2Id} successfully removed from ViewGraph.`,
     );
-    return edge.destroy();
+    edge.destroy();
   }
 
   getViewport() {
