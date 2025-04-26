@@ -232,7 +232,11 @@ export class TcpState {
           // Process the segment normally
           this.state = TcpStateEnum.ESTABLISHED;
           this.connectionQueue.push(undefined);
-          return this.handleSegmentData(segment);
+          if (!this.handleSegmentData(segment)) {
+            console.debug("Segment data processing failed");
+            return false;
+          }
+          return true;
         } else {
           // It's a SYN
           if (segment.data.length > 0) {
@@ -341,7 +345,10 @@ export class TcpState {
 
   private handleSegmentData(segment: TcpSegment) {
     // NOTE: for simplicity, we ignore cases where RCV.NXT != SEG.SEQ
-    if (segment.sequenceNumber !== this.recvNext) {
+    const seqNum = segment.flags.syn
+      ? (segment.sequenceNumber + 1) % u32_MODULUS
+      : segment.sequenceNumber;
+    if (seqNum !== this.recvNext) {
       return false;
     }
     const receivedData = segment.data;
@@ -352,8 +359,7 @@ export class TcpState {
     }
     this.readBuffer.write(receivedData);
     this.readChannel.push(receivedData.length);
-    this.recvNext =
-      (segment.sequenceNumber + receivedData.length) % u32_MODULUS;
+    this.recvNext = (seqNum + receivedData.length) % u32_MODULUS;
     this.recvWindow = MAX_BUFFER_SIZE - this.readBuffer.bytesAvailable();
     // We should send back an ACK segment
     this.notifySendPackets();
@@ -499,6 +505,7 @@ export class TcpState {
         if (this.handleSegment(result.segment)) {
           this.retransmissionQueue.ack(this.recvNext);
         } else {
+          console.log("Dropping segment");
           this.dropSegment(result.segment);
         }
         continue;
