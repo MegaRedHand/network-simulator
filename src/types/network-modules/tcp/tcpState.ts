@@ -196,13 +196,16 @@ export class TcpState {
         const ack = segment.acknowledgementNumber;
         if (ack <= this.initialSendSeqNum || ack > this.sendNext) {
           if (flags.rst) {
+            console.debug("Invalid SYN_SENT ACK with RST");
             return false;
           }
+          console.debug("Invalid SYN_SENT ACK, sending RST");
           this.newSegment(ack, 0).withFlags(new Flags().withRst());
           return false;
         }
         // Try to process ACK
         if (!this.isAckValid(segment.acknowledgementNumber)) {
+          console.debug("Invalid SYN_SENT ACK");
           return false;
         }
       }
@@ -212,6 +215,7 @@ export class TcpState {
           // drop the segment, enter CLOSED state, delete TCB, and return
           throw new Error("error: connection reset");
         } else {
+          console.debug("SYN_SENT RST without ACK, dropping segment");
           return false;
         }
       }
@@ -242,12 +246,17 @@ export class TcpState {
           this.state = TcpStateEnum.SYN_RECEIVED;
         }
       }
-      return flags.rst || flags.syn;
+      if (!(flags.rst || flags.syn)) {
+        console.debug("SYN_SENT segment without SYN or RST");
+        return false;
+      }
+      return true;
     }
     // Check the sequence number is valid
     const segSeq = segment.sequenceNumber;
     const segLen = segment.data.length;
     if (!this.isSeqNumValid(segSeq, segLen)) {
+      console.debug("Sequence number not valid");
       return false;
     }
 
@@ -259,10 +268,12 @@ export class TcpState {
 
     // If the ACK bit is off, drop the segment.
     if (!flags.ack) {
+      console.debug("ACK bit is off, dropping segment");
       return false;
     }
     if (this.state === TcpStateEnum.SYN_RECEIVED) {
       if (!this.isAckValid(segment.acknowledgementNumber)) {
+        console.debug("ACK invalid, dropping segment");
         this.newSegment(segment.acknowledgementNumber, 0).withFlags(
           new Flags().withRst(),
         );
@@ -283,6 +294,7 @@ export class TcpState {
       if (segment.acknowledgementNumber <= this.sendUnacknowledged) {
         // Ignore the ACK
       } else if (segment.acknowledgementNumber > this.sendNext) {
+        console.debug("ACK for future segment, dropping segment");
         this.newSegment(this.sendNext, this.recvNext).withFlags(
           new Flags().withAck(),
         );
@@ -291,6 +303,7 @@ export class TcpState {
         this.sendUnacknowledged = segment.acknowledgementNumber;
       }
       if (!this.processAck(segment)) {
+        console.debug("ACK processing failed, dropping segment");
         return false;
       }
 
@@ -303,6 +316,7 @@ export class TcpState {
 
     // Process the segment data
     if (!this.handleSegmentData(segment)) {
+      console.debug("Segment data processing failed, dropping segment");
       return false;
     }
 
