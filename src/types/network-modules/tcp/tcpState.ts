@@ -310,9 +310,7 @@ export class TcpState {
       this.recvNext = (this.recvNext + 1) % u32_MODULUS;
       this.readClosed = true;
       this.readChannel.push(0);
-      this.newSegment(this.sendNext, this.recvNext).withFlags(
-        new Flags().withAck(),
-      );
+      this.notifySendPackets();
     }
 
     return true;
@@ -342,14 +340,6 @@ export class TcpState {
     this.recvWindow = MAX_BUFFER_SIZE - this.readBuffer.bytesAvailable();
     // We should send back an ACK segment
     this.notifySendPackets();
-
-    // If FIN, mark read end as closed
-    if (segment.flags.fin) {
-      // The flag counts as a byte
-      this.recvNext = (this.recvNext + 1) % u32_MODULUS;
-      this.readClosed = true;
-      this.readChannel.push(0);
-    }
     return true;
   }
 
@@ -485,6 +475,7 @@ export class TcpState {
 
       if (result === undefined) {
         recheckPromise = this.sendQueue.pop();
+        this.notifiedSendPackets = false;
       } else if ("segment" in result) {
         receivedSegmentPromise = this.tcpQueue.pop();
         if (this.handleSegment(result.segment)) {
