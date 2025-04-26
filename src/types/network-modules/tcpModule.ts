@@ -103,7 +103,7 @@ export class TcpModule {
   }
 
   closeQueue(port: Port, filter?: IpAndPort) {
-    let handlerMap = this.tcpQueues.get(port);
+    const handlerMap = this.tcpQueues.get(port);
     if (!handlerMap) {
       return;
     }

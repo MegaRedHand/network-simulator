@@ -4,7 +4,7 @@ import { DeviceId } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
 import { Layer } from "../types/layer";
 import { AsyncQueue } from "../types/network-modules/asyncQueue";
-import { TcpListener, TcpSocket } from "../types/network-modules/tcpModule";
+import { TcpSocket } from "../types/network-modules/tcpModule";
 import { ViewHost } from "../types/view-devices";
 import { ProgramBase } from "./program_base";
 
@@ -126,7 +126,7 @@ export class HttpServer extends ProgramBase {
       return;
     }
 
-    let stopPromise = this.stopChannel.pop();
+    const stopPromise = this.stopChannel.pop();
 
     while (true) {
       const socket = await Promise.race([stopPromise, listener.next()]);
