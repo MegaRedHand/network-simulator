@@ -286,7 +286,8 @@ export class TcpState {
       this.sendWindow = segment.window;
       this.seqNumForLastWindowUpdate = segment.sequenceNumber;
       this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
-    } else if (
+    }
+    if (
       this.state === TcpStateEnum.ESTABLISHED ||
       this.state === TcpStateEnum.FIN_WAIT_1 ||
       this.state === TcpStateEnum.FIN_WAIT_2 ||
@@ -430,7 +431,7 @@ export class TcpState {
     return this.sendUnacknowledged < ackNum && ackNum <= this.sendNext;
   }
 
-  private processAck(segment: TcpSegment) {
+  private processAck(segment: TcpSegment): boolean {
     // From https://datatracker.ietf.org/doc/html/rfc9293#section-3.10.7.4-2.5.2.2.2.3.1
     // If the ACK is for a packet not yet sent, drop it
     if (this.sendNext < segment.acknowledgementNumber) {
@@ -449,6 +450,7 @@ export class TcpState {
         this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
       }
     }
+    return true;
   }
 
   private isSegmentNewer(segment: TcpSegment): boolean {
