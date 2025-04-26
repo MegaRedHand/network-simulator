@@ -26,7 +26,9 @@ enum TcpStateEnum {
 const MAX_BUFFER_SIZE = 0xffff;
 
 function getInitialSeqNumber() {
-  return Math.floor(Math.random() * 0xffffffff);
+  // For random seqnums use:
+  // return Math.floor(Math.random() * 0xffffffff);
+  return 0;
 }
 
 function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
