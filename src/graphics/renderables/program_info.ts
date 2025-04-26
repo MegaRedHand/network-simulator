@@ -1,5 +1,6 @@
 import { DeviceId } from "../../types/graphs/datagraph";
 import { ViewGraph } from "../../types/graphs/viewgraph";
+import { Layer, layerIncluded } from "../../types/layer";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { Dropdown } from "../basic_components/dropdown";
 import { Renderable } from "./base_info";
@@ -13,8 +14,19 @@ export class ProgramInfo implements Renderable {
     this.name = name;
   }
 
-  withDestinationDropdown(viewgraph: ViewGraph, srcId: DeviceId) {
-    this.withDropdown(TOOLTIP_KEYS.DESTINATION, otherDevices(viewgraph, srcId));
+  withDestinationDropdown(
+    viewgraph: ViewGraph,
+    srcId: DeviceId,
+    layer?: Layer,
+  ) {
+    let devices = otherDevices(viewgraph, srcId);
+    if (layer) {
+      devices = devices.filter((device) => {
+        const deviceLayer = viewgraph.getDevice(device.id)?.getLayer();
+        return layerIncluded(deviceLayer, layer);
+      });
+    }
+    this.withDropdown(TOOLTIP_KEYS.DESTINATION, devices);
   }
 
   withDropdown(name: string, options: { value: string; text: string }[]) {
@@ -48,5 +60,5 @@ function otherDevices(viewgraph: ViewGraph, srcId: DeviceId) {
   return viewgraph
     .getLayerDeviceIds()
     .filter((id) => id !== srcId)
-    .map((id) => ({ value: id.toString(), text: `Device ${id}` }));
+    .map((id) => ({ value: id.toString(), text: `Device ${id}`, id }));
 }

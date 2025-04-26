@@ -3,7 +3,7 @@ import { ViewNetworkDevice } from "./vNetworkDevice";
 import { ViewGraph } from "../graphs/viewgraph";
 import PcImage from "../../assets/pc.svg";
 import { Position } from "../common";
-import { IpAddress, IPv4Packet } from "../../packets/ip";
+import { IpAddress, IPv4Packet, TCP_PROTOCOL_NUMBER } from "../../packets/ip";
 import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { RightBar } from "../../graphics/right_bar";
 import { Layer } from "../layer";
@@ -21,6 +21,12 @@ import { DataHost } from "../data-devices";
 import { dropPacket } from "../packet";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
+import { TcpSegment } from "../../packets/tcp";
+import {
+  TcpListener,
+  TcpModule,
+  TcpSocket,
+} from "../network-modules/tcpModule";
 
 export class ViewHost extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -56,13 +62,22 @@ export class ViewHost extends ViewNetworkDevice {
       ip,
       mask,
     );
+  }
+
+  initialize() {
     this.loadRunningPrograms();
   }
 
   receiveDatagram(packet: IPv4Packet): void {
     if (!this.ip.equals(packet.destinationAddress)) {
+      // TODO: improve this
       const frame = new EthernetFrame(this.mac, this.mac, packet);
       dropPacket(this.viewgraph, this.id, frame);
+      return;
+    }
+    if (packet.payload.protocol() === TCP_PROTOCOL_NUMBER) {
+      const segment = packet.payload as TcpSegment;
+      this.tcpModule.handleSegment(packet.sourceAddress, segment);
       return;
     }
     this.handlePacket(packet);
@@ -158,5 +173,26 @@ export class ViewHost extends ViewNetworkDevice {
     super.destroy();
     this.runningPrograms.forEach((program) => program.stop());
     this.runningPrograms.clear();
+  }
+
+  // TCP
+
+  private tcpModule = new TcpModule(this);
+
+  async tcpConnect(dstId: DeviceId): Promise<TcpSocket | null> {
+    const dstDevice = this.viewgraph.getDevice(dstId);
+    if (!dstDevice) {
+      console.error("Destination device not found");
+      return null;
+    }
+    if (!(dstDevice instanceof ViewHost)) {
+      console.log("The destination is not a host");
+      return null;
+    }
+    return await this.tcpModule.connect(dstDevice, 80);
+  }
+
+  async tcpListenOn(port: number): Promise<TcpListener | null> {
+    return await this.tcpModule.listenOn(port);
   }
 }
