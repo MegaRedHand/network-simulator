@@ -173,8 +173,15 @@ export class TcpSocket {
     return bytesRead;
   }
 
+  /**
+   * Writes data from the given buffer into the connection.
+   * This returns immediately, unless the connection is closed
+   * or the underlying buffer is full.
+   * @param buffer to copy the contents from
+   * @returns the number of bytes written
+   */
   async write(content: Uint8Array) {
-    return this.tcpState.write(content);
+    return await this.tcpState.write(content);
   }
 
   closeWrite() {

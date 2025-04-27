@@ -71,6 +71,7 @@ export class TcpState {
 
   // Buffer of data to be sent
   private writeBuffer = new BytesBuffer(MAX_BUFFER_SIZE);
+  private writeChannel = new AsyncQueue<number>();
   private writeClosedSeqnum = -1;
 
   private state: TcpStateEnum;
@@ -380,15 +381,24 @@ export class TcpState {
     return readLength;
   }
 
-  write(input: Uint8Array): number {
+  async write(input: Uint8Array): Promise<number> {
     if (this.writeClosedSeqnum >= 0) {
       throw new Error("write closed");
     }
-    const writeLength = this.writeBuffer.write(input);
-    if (this.sendWindowSize() > 0 && writeLength > 0) {
-      this.notifySendPackets();
+    let totalWrote = 0;
+    while (totalWrote < input.length) {
+      const writeLength = this.writeBuffer.write(input.subarray(totalWrote));
+      if (writeLength === 0) {
+        // Buffer is full, wait for space
+        await this.writeChannel.pop();
+      } else {
+        totalWrote += writeLength;
+        if (this.sendWindowSize() > 0) {
+          this.notifySendPackets();
+        }
+      }
     }
-    return writeLength;
+    return totalWrote;
   }
 
   closeWrite() {
@@ -504,8 +514,8 @@ export class TcpState {
         receivedSegmentPromise = this.tcpQueue.pop();
         if (this.handleSegment(result.segment)) {
           this.retransmissionQueue.ack(this.recvNext);
+          this.writeChannel.push(0);
         } else {
-          console.log("Dropping segment");
           this.dropSegment(result.segment);
         }
         continue;
@@ -544,8 +554,12 @@ export class TcpState {
           segment.sequenceNumber,
           segment.data.length,
         );
-        // Repeat until we have no more data to send
-      } while (this.writeBuffer.bytesAvailable() > this.sendWindowSize());
+        // Repeat until we have no more data to send, or the window is full
+      } while (
+        this.writeBuffer.bytesAvailable() >
+          this.sendNext - this.sendUnacknowledged &&
+        this.sendWindowSize() > 0
+      );
     }
   }
 
@@ -667,13 +681,14 @@ class BytesBuffer {
   }
 
   write(data: Uint8Array): number {
-    const newLength = this.length + data.length;
-    if (newLength > this.buffer.length) {
+    if (this.length === this.buffer.length) {
       return 0;
     }
-    this.buffer.set(data, this.length);
+    const newLength = Math.min(this.buffer.length, this.length + data.length);
+    const dataSlice = data.subarray(0, newLength - this.length);
+    this.buffer.set(dataSlice, this.length);
     this.length = newLength;
-    return data.length;
+    return dataSlice.length;
   }
 
   bytesAvailable() {

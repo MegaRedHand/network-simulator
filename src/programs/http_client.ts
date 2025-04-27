@@ -8,11 +8,11 @@ import { TcpSocket } from "../types/network-modules/tcpModule";
 import { ViewHost } from "../types/view-devices";
 import { ProgramBase } from "./program_base";
 
-const RESOURCE_MAP = {
-  "/small": generateResource(1024),
-  "/medium": generateResource(102400),
-  "/large": generateResource(10485760),
-};
+const RESOURCE_MAP = new Map([
+  ["/small", generateResource(1024)],
+  ["/medium", generateResource(102400)],
+  ["/large", generateResource(10485760)],
+]);
 
 function generateResource(size: number): Uint8Array {
   const resource = new Uint8Array(size);
@@ -188,13 +188,31 @@ export class HttpServer extends ProgramBase {
       return;
     }
 
-    // TODO: validate request
+    const requestContents = new TextDecoder().decode(readContents);
+    const matches = requestContents.match(/GET (.+) HTTP\/1.1/);
+    if (!matches || matches.length < 2) {
+      console.error("HttpServer failed to parse request");
+      return;
+    }
+    const resourceContents = RESOURCE_MAP.get(matches[1]);
+    if (!resourceContents) {
+      console.error("HttpServer failed to find requested resource");
+      return;
+    }
 
     // Encode dummy HTTP response
-    const httpResponse = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
+    const httpResponse =
+      "HTTP/1.1 200 OK\r\nContent-Length: " +
+      resourceContents.length +
+      "\r\n\r\n";
     const content = new TextEncoder().encode(httpResponse);
     const wrote = await socket.write(content);
-    if (wrote < 0) {
+    if (wrote <= 0) {
+      console.error("HttpServer failed to write to socket");
+      return;
+    }
+    const wrote2 = await socket.write(resourceContents);
+    if (wrote2 <= 0) {
       console.error("HttpServer failed to write to socket");
       return;
     }
