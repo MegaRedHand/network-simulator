@@ -100,7 +100,6 @@ export class EthernetFrame {
   type: number;
   // 46-1500 bytes
   // If the payload is smaller than 46 bytes, it is padded.
-  // TODO: make this an interface
   // The payload
   payload: FramePayload;
   // 4 bytes
