@@ -8,19 +8,35 @@ import { TcpSocket } from "../types/network-modules/tcpModule";
 import { ViewHost } from "../types/view-devices";
 import { ProgramBase } from "./program_base";
 
+const RESOURCE_MAP = {
+  "/small": generateResource(1024),
+  "/medium": generateResource(102400),
+  "/large": generateResource(10485760),
+};
+
+function generateResource(size: number): Uint8Array {
+  const resource = new Uint8Array(size);
+  for (let i = 0; i < size; i++) {
+    resource[i] = Math.floor(Math.random() * 256);
+  }
+  return resource;
+}
+
 export class HttpClient extends ProgramBase {
   static readonly PROGRAM_NAME = "Send HTTP request";
 
   private dstId: DeviceId;
+  private resource: string;
 
   protected _parseInputs(inputs: string[]): void {
-    if (inputs.length !== 1) {
+    if (inputs.length !== 2) {
       console.error(
-        "HttpClient requires 1 input. " + inputs.length + " were given.",
+        "HttpClient requires 2 input. " + inputs.length + " were given.",
       );
       return;
     }
     this.dstId = parseInt(inputs[0]);
+    this.resource = inputs[1];
   }
 
   protected _run() {
@@ -50,13 +66,15 @@ export class HttpClient extends ProgramBase {
       return;
     }
 
-    // Encode dummy HTTP request
-    const httpRequest = "GET / HTTP/1.1\r\nHost: " + dstDevice.ip + "\r\n\r\n";
-    const content = new TextEncoder().encode(httpRequest);
+    // Encode HTTP request
+    const httpRequest = getContentRequest(
+      this.runner.ip.toString(),
+      this.resource,
+    );
 
     // Write request
     const socket = await this.runner.tcpConnect(this.dstId);
-    const wrote = await socket.write(content);
+    const wrote = await socket.write(httpRequest);
     if (wrote < 0) {
       console.error("HttpClient failed to write to socket");
       return;
@@ -75,10 +93,24 @@ export class HttpClient extends ProgramBase {
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
+    const sizeOptions = [
+      { value: "/small", text: "1 KB" },
+      { value: "/medium", text: "100 KB" },
+      { value: "/large", text: "10 MB" },
+    ];
+
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);
     programInfo.withDestinationDropdown(viewgraph, srcId, Layer.App);
+    programInfo.withDropdown("Size of requested resource", sizeOptions);
     return programInfo;
   }
+}
+
+function getContentRequest(host: string, resource: string): Uint8Array {
+  const httpRequest =
+    "GET " + resource + " HTTP/1.1\r\nHost: " + host + "\r\n\r\n";
+  const content = new TextEncoder().encode(httpRequest);
+  return content;
 }
 
 export class HttpServer extends ProgramBase {
