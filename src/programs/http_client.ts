@@ -85,10 +85,15 @@ export class HttpClient extends ProgramBase {
 
     // Read response
     const buffer = new Uint8Array(1024);
-    const readLength = await socket.readAll(buffer);
-    if (readLength < 0) {
-      console.error("HttpClient failed to read from socket");
-      return;
+    const expectedLength = RESOURCE_MAP.get(this.resource)!.length;
+    let totalRead = 0;
+    while (totalRead < expectedLength) {
+      const readLength = await socket.read(buffer);
+      if (readLength < 0) {
+        console.error("HttpClient failed to read from socket");
+        return;
+      }
+      totalRead += readLength;
     }
   }
 

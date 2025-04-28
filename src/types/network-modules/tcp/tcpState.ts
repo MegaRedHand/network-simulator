@@ -490,7 +490,7 @@ export class TcpState {
       return;
     }
     this.notifiedSendPackets = true;
-    setTimeout(() => this.sendQueue.push(undefined), 5);
+    setTimeout(() => this.sendQueue.push(undefined), 15);
   }
 
   private async mainLoop() {
@@ -525,41 +525,41 @@ export class TcpState {
         continue;
       }
 
-      do {
-        const segment = this.newSegment(this.sendNext, this.recvNext).withFlags(
-          new Flags().withAck(),
-        );
-
-        const sendSize = Math.min(this.sendWindowSize(), MAX_SEGMENT_SIZE);
-        if (sendSize > 0) {
-          const data = new Uint8Array(sendSize);
-          const offset =
-            (u32_MODULUS + this.sendNext - this.sendUnacknowledged) %
-            u32_MODULUS;
-          const writeLength = this.writeBuffer.peek(offset, data);
-
-          if (writeLength > 0) {
-            segment.withData(data.subarray(0, writeLength));
-            this.sendNext = (this.sendNext + writeLength) % u32_MODULUS;
-          }
-        }
-        segment.window = this.recvWindow;
-
-        if (this.sendNext === this.writeClosedSeqnum) {
-          this.sendNext = (this.sendNext + 1) % u32_MODULUS;
-          segment.flags.withFin();
-        }
-        sendIpPacket(this.srcHost, this.dstHost, segment);
-        this.retransmissionQueue.push(
-          segment.sequenceNumber,
-          segment.data.length,
-        );
-        // Repeat until we have no more data to send, or the window is full
-      } while (
-        this.writeBuffer.bytesAvailable() >
-          this.sendNext - this.sendUnacknowledged &&
-        this.sendWindowSize() > 0
+      const segment = this.newSegment(this.sendNext, this.recvNext).withFlags(
+        new Flags().withAck(),
       );
+
+      const sendSize = Math.min(this.sendWindowSize(), MAX_SEGMENT_SIZE);
+      if (sendSize > 0) {
+        const data = new Uint8Array(sendSize);
+        const offset =
+          (u32_MODULUS + this.sendNext - this.sendUnacknowledged) % u32_MODULUS;
+        const writeLength = this.writeBuffer.peek(offset, data);
+
+        if (writeLength > 0) {
+          segment.withData(data.subarray(0, writeLength));
+          this.sendNext = (this.sendNext + writeLength) % u32_MODULUS;
+        }
+      }
+      segment.window = this.recvWindow;
+
+      if (this.sendNext === this.writeClosedSeqnum) {
+        this.sendNext = (this.sendNext + 1) % u32_MODULUS;
+        segment.flags.withFin();
+      }
+      sendIpPacket(this.srcHost, this.dstHost, segment);
+      this.retransmissionQueue.push(
+        segment.sequenceNumber,
+        segment.data.length,
+      );
+      // Repeat until we have no more data to send, or the window is full
+      const bytesInFlight = this.sendNext - this.sendUnacknowledged;
+      if (
+        this.writeBuffer.bytesAvailable() > bytesInFlight &&
+        this.sendWindowSize() > 0
+      ) {
+        this.notifySendPackets();
+      }
     }
   }
 
