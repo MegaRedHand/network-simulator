@@ -17,4 +17,6 @@ export const ALERT_MESSAGES = {
     "Layer changed successfully. Programs that do not belong to the selected layer will be hidden but will continue running.",
   GRAPH_LOADED_SUCCESSFULLY: "network loaded successfully.",
   FAILED_TO_LOAD_GRAPH: "Failed to load the network.",
+  ARP_TABLE_REGENERATED: "ARP table regenerated successfully.",
+  ARP_TABLE_REGENERATE_FAILED: "Failed to regenerate ARP table.",
 };

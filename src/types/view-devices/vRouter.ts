@@ -109,6 +109,8 @@ export class ViewRouter extends ViewNetworkDevice {
 
     info.addRoutingTable(this.viewgraph, this.id);
 
+    info.addARPTable(this.viewgraph, this.id);
+
     RightBar.getInstance().renderInfo(info);
   }
 

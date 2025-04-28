@@ -79,7 +79,10 @@ export class ViewHost extends ViewNetworkDevice {
       this.ip.octets.join("."),
       TOOLTIP_KEYS.IP_ADDRESS,
     );
+
     info.addProgramRunner(this, programList);
+
+    info.addARPTable(this.viewgraph, this.id);
     RightBar.getInstance().renderInfo(info);
   }
 

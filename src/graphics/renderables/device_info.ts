@@ -14,6 +14,7 @@ import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { BaseInfo } from "./base_info";
 import { ProgressBar } from "../basic_components/progress_bar";
 import { LabeledProgressBar } from "../components/labeled_progress_bar";
+import { ArpTable } from "./arp_table";
 
 export class DeviceInfo extends BaseInfo {
   readonly device: ViewDevice;
@@ -135,6 +136,20 @@ export class DeviceInfo extends BaseInfo {
       subscribe,
     );
     this.inputFields.push(labeledProgressBar.toHTML());
+  }
+
+  addARPTable(viewgraph: ViewGraph, deviceId: number): void {
+    const entries = viewgraph.getArpTable(deviceId);
+
+    const rows = entries.map((entry) => [entry.ip, entry.mac]);
+
+    const arpTable = new ArpTable({
+      rows,
+      viewgraph,
+      deviceId,
+    });
+
+    this.inputFields.push(arpTable.toHTML());
   }
 }
 

@@ -70,6 +70,14 @@ export abstract class ViewNetworkDevice extends ViewDevice {
   //     El usuario nunca modifico la entrada de la ip, ni manualmente ni con la ejecucion de un
   //     ARP Request. Se hace de cuenta que la entrada existe pero usando el viewgraph para encontrar el
   //     device con la ip, y a su vez, encontrar su mac.
+  //
+
+  // d1           no mostrar   mostrar con valores de tabla     mostrar usando viewgraph
+  // arpTableD1 = {ip1: "",      ip2: mac2,                                               }
+
+  //    IP   |   MAC   |  refresh
+  //   ip1   |   mac1  |   borrar
+  //   ip2   |   mac2  |   borrar
   resolveAddress(ip: IpAddress): MacAddress {
     const dDevice = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!dDevice || !(dDevice instanceof DataNetworkDevice)) {
