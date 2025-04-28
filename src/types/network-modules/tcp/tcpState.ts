@@ -24,6 +24,8 @@ enum TcpStateEnum {
 }
 
 const MAX_BUFFER_SIZE = 0xffff;
+const MAX_SEGMENT_SIZE = 1400;
+const u32_MODULUS = 0x100000000; // 2^32
 
 function getInitialSeqNumber() {
   // For random seqnums use:
@@ -51,8 +53,6 @@ function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
 
   sendViewPacket(src.viewgraph, src.id, frame);
 }
-
-const u32_MODULUS = 0x100000000;
 
 export class TcpState {
   private srcHost: ViewHost;
@@ -100,6 +100,8 @@ export class TcpState {
 
   // IRS
   private initialRecvSeqNum: number;
+
+  private cwnd = MAX_SEGMENT_SIZE;
 
   constructor(
     srcHost: ViewHost,
@@ -494,8 +496,6 @@ export class TcpState {
   }
 
   private async mainLoop() {
-    const MAX_SEGMENT_SIZE = 1400;
-
     let recheckPromise = this.sendQueue.pop();
     let receivedSegmentPromise = this.tcpQueue.pop();
     let retransmitPromise = this.retransmissionQueue.pop();
@@ -587,9 +587,12 @@ export class TcpState {
 
   private sendWindowSize() {
     // TODO: add congestion control
-    return (
-      (this.sendUnacknowledged + this.sendWindow - this.sendNext) % u32_MODULUS
-    );
+    const rwnd = this.sendWindow;
+    const cwnd = this.cwnd;
+
+    const windowSize = Math.min(rwnd, cwnd);
+    const bytesInFlight = this.sendNext - this.sendUnacknowledged;
+    return (windowSize - bytesInFlight) % u32_MODULUS;
   }
 }
 
