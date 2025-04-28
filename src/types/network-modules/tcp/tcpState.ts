@@ -101,7 +101,9 @@ export class TcpState {
   // IRS
   private initialRecvSeqNum: number;
 
+  private sshthreshold = -1;
   private cwnd = MAX_SEGMENT_SIZE;
+  private dupAckCount = 0;
 
   constructor(
     srcHost: ViewHost,
@@ -311,10 +313,15 @@ export class TcpState {
         return false;
       } else {
         this.sendUnacknowledged = segment.acknowledgementNumber;
+        this.cwnd += MAX_SEGMENT_SIZE;
       }
-      if (!this.processAck(segment)) {
-        console.debug("ACK processing failed, dropping segment");
-        return false;
+
+      // If SND.UNA < SEG.ACK =< SND.NXT, set SND.UNA <- SEG.ACK
+      if (this.isSegmentNewer(segment)) {
+        // set SND.WND <- SEG.WND, set SND.WL1 <- SEG.SEQ, and set SND.WL2 <- SEG.ACK.
+        this.sendWindow = segment.window;
+        this.seqNumForLastWindowUpdate = segment.sequenceNumber;
+        this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
       }
 
       if (this.state === TcpStateEnum.FIN_WAIT_1) {
@@ -447,28 +454,6 @@ export class TcpState {
       return this.sendUnacknowledged < ackNum || ackNum <= this.sendNext;
     }
     return this.sendUnacknowledged < ackNum && ackNum <= this.sendNext;
-  }
-
-  private processAck(segment: TcpSegment): boolean {
-    // From https://datatracker.ietf.org/doc/html/rfc9293#section-3.10.7.4-2.5.2.2.2.3.1
-    // If the ACK is for a packet not yet sent, drop it
-    if (this.sendNext < segment.acknowledgementNumber) {
-      return false;
-    }
-    // If SND.UNA < SEG.ACK =< SND.NXT, set SND.UNA <- SEG.ACK
-    if (
-      this.sendUnacknowledged === undefined ||
-      this.sendUnacknowledged <= segment.acknowledgementNumber
-    ) {
-      this.sendUnacknowledged = segment.acknowledgementNumber;
-      if (this.isSegmentNewer(segment)) {
-        // set SND.WND <- SEG.WND, set SND.WL1 <- SEG.SEQ, and set SND.WL2 <- SEG.ACK.
-        this.sendWindow = segment.window;
-        this.seqNumForLastWindowUpdate = segment.sequenceNumber;
-        this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
-      }
-    }
-    return true;
   }
 
   private isSegmentNewer(segment: TcpSegment): boolean {
