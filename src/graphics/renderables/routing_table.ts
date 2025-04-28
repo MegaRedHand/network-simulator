@@ -43,7 +43,7 @@ export class RoutingTable {
       headers: headers,
       fieldsPerRow: ROUTER_CONSTANTS.TABLE_FIELDS_PER_ROW,
       rows: props.rows,
-      editableColumns: [false, true, true, false], // Make the last column non-editable
+      editableColumns: [true, true, true, false], // Make the last column non-editable
       onEdit: onEdit,
       onDelete: onDelete,
       tableClasses: [CSS_CLASSES.RIGHT_BAR_TABLE],
