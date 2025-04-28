@@ -19,4 +19,6 @@ export const ALERT_MESSAGES = {
   FAILED_TO_LOAD_GRAPH: "Failed to load the network.",
   ARP_TABLE_REGENERATED: "ARP table regenerated successfully.",
   ARP_TABLE_REGENERATE_FAILED: "Failed to regenerate ARP table.",
+  INVALID_MAC:
+    "Invalid MAC address format. Expected format: XX:XX:XX:XX:XX:XX.",
 };

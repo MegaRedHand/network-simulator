@@ -554,7 +554,7 @@ export class DataGraph {
     return newTable;
   }
 
-  saveManualChange(
+  saveRTManualChange(
     routerId: DeviceId,
     visibleRowIndex: number, // Este es el índice en la UI
     colIndex: number,
@@ -775,6 +775,31 @@ export class DataGraph {
     device.arpTable = new Map<string, string>();
 
     console.log(`ARP table cleared for device ID ${deviceId}`);
+
+    // Notificar los cambios
+    this.notifyChanges();
+  }
+
+  SaveARPTManualChange(deviceId: DeviceId, ip: string, mac: string): void {
+    const device = this.getDevice(deviceId);
+    if (!device || !(device instanceof DataNetworkDevice)) {
+      console.warn(`Device with ID ${deviceId} is not a network device.`);
+      return;
+    }
+
+    console.log(
+      `Updating ARP table entry for IP ${ip} with MAC ${mac} on device ID ${deviceId}`,
+    );
+
+    // Validar si la IP es válida
+    if (!ip || !mac) {
+      console.warn("Invalid IP or MAC address provided.");
+      return;
+    }
+
+    // Actualizar o agregar la entrada en la tabla ARP
+    device.arpTable.set(ip, mac);
+    console.log(`Updated ARP table entry: IP=${ip}, MAC=${mac}`);
 
     // Notificar los cambios
     this.notifyChanges();

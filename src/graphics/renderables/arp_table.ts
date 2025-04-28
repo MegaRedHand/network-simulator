@@ -23,7 +23,7 @@ export class ArpTable {
     this.container = document.createElement("div");
     this.container.className = CSS_CLASSES.ROUTING_TABLE_CONTAINER;
 
-    const { onRegenerate, onDelete } = this.setArpTableCallbacks();
+    const { onEdit, onRegenerate, onDelete } = this.setArpTableCallbacks();
 
     // Create the regenerate button
     const regenerateButton = this.createRegenerateButton(onRegenerate);
@@ -38,7 +38,8 @@ export class ArpTable {
       headers: headers,
       fieldsPerRow: 2, // IP and MAC
       rows: props.rows,
-      editableColumns: [false, false], // Make all columns non-editable
+      editableColumns: [false, true], // Make all columns non-editable
+      onEdit: onEdit,
       onDelete: onDelete,
       tableClasses: [CSS_CLASSES.RIGHT_BAR_TABLE],
     });
@@ -136,6 +137,49 @@ export class ArpTable {
       this.OnRegenerate();
     };
 
-    return { onRegenerate, onDelete };
+    const onEdit = (row: number, _col: number, newValue: string) => {
+      const isValidMac = isValidMAC(newValue);
+
+      if (!isValidMac) {
+        console.warn(`Invalid value: ${newValue}`);
+        return false;
+      }
+
+      // Obtener la tabla ARP actual
+      const arpTable = this.props.viewgraph
+        .getDataGraph()
+        .getArpTable(this.props.deviceId);
+
+      // Validar que el índice es válido
+      if (row < 0 || row >= arpTable.length) {
+        console.warn(`Invalid row index: ${row}`);
+        return false;
+      }
+
+      // Obtener la IP correspondiente a la fila
+      const ip = arpTable[row].ip;
+
+      // Update the ARP table entry
+      this.props.viewgraph
+        .getDataGraph()
+        .SaveARPTManualChange(this.props.deviceId, ip, newValue);
+
+      return true;
+    };
+
+    return { onEdit, onRegenerate, onDelete };
   }
+}
+
+function isValidMAC(mac: string): boolean {
+  // Expresión regular para validar direcciones MAC en formato estándar (XX:XX:XX:XX:XX:XX)
+  const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+
+  const result = macRegex.test(mac);
+  // Verificar si la dirección MAC coincide con el formato esperado
+  if (!result) {
+    showError(ALERT_MESSAGES.INVALID_MAC);
+  }
+
+  return result;
 }
