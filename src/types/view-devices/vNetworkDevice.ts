@@ -35,7 +35,6 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     interfaces: NetworkInterfaceData[],
     ip: IpAddress,
     ipMask: IpAddress,
-    arpTable: Map<string, string>,
   ) {
     super(id, texture, viewgraph, ctx, position, mac, interfaces);
     this.ip = ip;

@@ -5,7 +5,7 @@ import { Layer } from "../types/layer";
 export const IP_PROTOCOL_TYPE = 0x0800;
 export const ARP_PROTOCOL_TYPE = 0x0806;
 export const IPV6_PROTOCOL_TYPE = 0x86dd;
-const BROADCAST_ADDRESS: string = "ff:ff:ff:ff:ff:ff";
+const BROADCAST_ADDRESS = "ff:ff:ff:ff:ff:ff";
 
 /// Medium Access Control (MAC) address
 export class MacAddress {

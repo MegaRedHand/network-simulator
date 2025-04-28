@@ -1,7 +1,6 @@
 import { DeviceId } from "../../types/graphs/datagraph";
 import { ViewGraph } from "../../types/graphs/viewgraph";
 import { DeviceType } from "../../types/view-devices/vDevice";
-import { ViewNetworkDevice } from "../../types/view-devices/vNetworkDevice";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { Dropdown } from "../basic_components/dropdown";
 import { Renderable } from "./base_info";
