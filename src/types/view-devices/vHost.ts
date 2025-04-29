@@ -80,6 +80,8 @@ export class ViewHost extends ViewNetworkDevice {
 
     info.addProgramRunner(this, programList);
 
+    info.addDivider();
+
     info.addARPTable(this.viewgraph, this.id);
     RightBar.getInstance().renderInfo(info);
   }

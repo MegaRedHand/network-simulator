@@ -93,6 +93,8 @@ export class DeviceInfo extends BaseInfo {
     });
 
     this.inputFields.push(routingTable.toHTML());
+
+    this.addDivider();
   }
 
   addEmptySpace(): void {
@@ -114,6 +116,7 @@ export class DeviceInfo extends BaseInfo {
       parameters,
     );
     this.inputFields.push(parameterEditor.toHTML());
+    this.addDivider();
   }
 
   /**
