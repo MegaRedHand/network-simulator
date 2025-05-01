@@ -24,7 +24,7 @@ enum TcpStateEnum {
 }
 
 const MAX_BUFFER_SIZE = 0xffff;
-const MAX_SEGMENT_SIZE = 1400;
+const MAX_SEGMENT_SIZE = 1460;
 const u32_MODULUS = 0x100000000; // 2^32
 
 function getInitialSeqNumber() {
@@ -101,9 +101,7 @@ export class TcpState {
   // IRS
   private initialRecvSeqNum: number;
 
-  private sshthreshold = -1;
-  private cwnd = MAX_SEGMENT_SIZE;
-  private dupAckCount = 0;
+  private congestionControl: CongestionControl = new CongestionControl();
 
   constructor(
     srcHost: ViewHost,
@@ -303,7 +301,12 @@ export class TcpState {
       this.state === TcpStateEnum.CLOSE_WAIT ||
       this.state === TcpStateEnum.CLOSING
     ) {
-      if (segment.acknowledgementNumber <= this.sendUnacknowledged) {
+      if (segment.acknowledgementNumber === this.sendUnacknowledged) {
+        // Duplicate ACK
+        if (!this.congestionControl.notifyDupAck()) {
+          // TODO: Retransmit missing segment
+        }
+      } else if (segment.acknowledgementNumber < this.sendUnacknowledged) {
         // Ignore the ACK
       } else if (segment.acknowledgementNumber > this.sendNext) {
         console.debug("ACK for future segment, dropping segment");
@@ -312,8 +315,15 @@ export class TcpState {
         );
         return false;
       } else {
+        const acknowledgedBytes =
+          (u32_MODULUS +
+            segment.acknowledgementNumber -
+            this.sendUnacknowledged) %
+          u32_MODULUS;
+        this.congestionControl.notifyAck(acknowledgedBytes);
         this.sendUnacknowledged = segment.acknowledgementNumber;
-        this.cwnd += MAX_SEGMENT_SIZE;
+        // Transmit new segments
+        this.notifySendPackets();
       }
 
       // If SND.UNA < SEG.ACK =< SND.NXT, set SND.UNA <- SEG.ACK
@@ -506,7 +516,9 @@ export class TcpState {
         continue;
       } else if ("seqNum" in result) {
         retransmitPromise = this.retransmissionQueue.pop();
+        // Retransmit the segment
         this.sendPacket(result.seqNum, result.size);
+        this.congestionControl.notifyTimeout();
         continue;
       }
 
@@ -573,7 +585,7 @@ export class TcpState {
   private sendWindowSize() {
     // TODO: add congestion control
     const rwnd = this.sendWindow;
-    const cwnd = this.cwnd;
+    const cwnd = this.congestionControl.getCwnd();
 
     const windowSize = Math.min(rwnd, cwnd);
     const bytesInFlight = this.sendNext - this.sendUnacknowledged;
@@ -685,5 +697,114 @@ class BytesBuffer {
 
   isEmpty() {
     return this.bytesAvailable() === 0;
+  }
+}
+
+type CongestionControlStateBehavior =
+  | SlowStart
+  | CongestionAvoidance
+  | FastRecovery;
+
+class CongestionControl {
+  private state: CongestionControlState;
+  private stateBehavior: CongestionControlStateBehavior;
+
+  constructor() {
+    this.state = {
+      cwnd: 1 * MAX_SEGMENT_SIZE,
+      ssthresh: Infinity,
+      dupAckCount: 0,
+    };
+    this.stateBehavior = new SlowStart();
+  }
+
+  getCwnd(): number {
+    return this.state.cwnd;
+  }
+
+  notifyDupAck(): boolean {
+    this.stateBehavior.handleAck(this.state, 0);
+    return this.state.dupAckCount === 3;
+  }
+
+  notifyAck(byteCount: number) {
+    this.stateBehavior.handleAck(this.state, byteCount);
+  }
+
+  notifyTimeout() {
+    this.state.ssthresh = Math.floor(this.state.cwnd / 2);
+    this.state.cwnd = 1 * MAX_SEGMENT_SIZE;
+    this.state.dupAckCount = 0;
+
+    this.stateBehavior = new SlowStart();
+  }
+}
+
+interface CongestionControlState {
+  // The congestion window size, as a number of MSS
+  cwnd: number;
+  // The slow start threshold
+  ssthresh: number;
+  // The number of duplicate ACKs received
+  dupAckCount: number;
+}
+
+class SlowStart {
+  handleAck(
+    state: CongestionControlState,
+    byteCount: number,
+  ): CongestionControlStateBehavior {
+    if (byteCount === 0) {
+      // Duplicate ACK
+      state.dupAckCount++;
+      if (state.dupAckCount === 3) {
+        return this;
+      }
+      state.ssthresh = Math.floor(state.cwnd / 2);
+      state.cwnd = state.ssthresh + 3 * MAX_SEGMENT_SIZE;
+      return new FastRecovery();
+    }
+    state.dupAckCount = 0;
+    state.cwnd += byteCount;
+    if (state.cwnd >= state.ssthresh) {
+      return new CongestionAvoidance();
+    }
+    return this;
+  }
+}
+
+class CongestionAvoidance {
+  handleAck(
+    state: CongestionControlState,
+    byteCount: number,
+  ): CongestionControlStateBehavior {
+    if (byteCount === 0) {
+      // Duplicate ACK
+      state.dupAckCount++;
+      if (state.dupAckCount === 3) {
+        return this;
+      }
+      state.ssthresh = Math.floor(state.cwnd / 2);
+      state.cwnd = state.ssthresh + 3 * MAX_SEGMENT_SIZE;
+      return new FastRecovery();
+    }
+    state.dupAckCount = 0;
+    state.cwnd += (byteCount * MAX_SEGMENT_SIZE) / state.cwnd;
+    return this;
+  }
+}
+
+class FastRecovery {
+  handleAck(
+    state: CongestionControlState,
+    byteCount: number,
+  ): CongestionControlStateBehavior {
+    if (byteCount === 0) {
+      // Duplicate ACK
+      state.cwnd += MAX_SEGMENT_SIZE;
+      return this;
+    }
+    state.cwnd = state.ssthresh;
+    return new CongestionAvoidance();
   }
 }
