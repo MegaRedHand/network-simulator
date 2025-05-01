@@ -304,7 +304,7 @@ export class TcpState {
       if (segment.acknowledgementNumber === this.sendUnacknowledged) {
         // Duplicate ACK
         if (!this.congestionControl.notifyDupAck()) {
-          // TODO: Retransmit missing segment
+          this.retransmissionQueue.retransmitFirstSegment();
         }
       } else if (segment.acknowledgementNumber < this.sendUnacknowledged) {
         // Ignore the ACK
@@ -642,6 +642,22 @@ class RetransmissionQueue {
       }
       return true;
     });
+  }
+
+  retransmitFirstSegment() {
+    if (this.timeoutQueue.length === 0) {
+      return;
+    }
+    let firstSegmentItem = this.timeoutQueue[0];
+    this.timeoutQueue.forEach((element) => {
+      if (element[0].seqNum < firstSegmentItem[0].seqNum) {
+        firstSegmentItem = element;
+      }
+    });
+    // Remove the segment from the queue
+    this.ack(firstSegmentItem[0].seqNum + 1);
+    // Mark the segment for retransmission
+    this.itemQueue.push(firstSegmentItem[0]);
   }
 }
 
