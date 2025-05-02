@@ -102,6 +102,7 @@ export class TcpState {
   // IRS
   private initialRecvSeqNum: number;
 
+  private rttEstimator: RTTEstimator;
   private congestionControl = new CongestionControl();
 
   constructor(
@@ -120,6 +121,7 @@ export class TcpState {
     this.tcpQueue = tcpQueue;
 
     this.retransmissionQueue = new RetransmissionQueue(this.srcHost.ctx);
+    this.rttEstimator = new RTTEstimator(this.srcHost.ctx);
 
     this.mainLoop();
   }
@@ -135,6 +137,8 @@ export class TcpState {
     const flags = new Flags().withSyn();
     const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
     sendIpPacket(this.srcHost, this.dstHost, segment);
+
+    this.rttEstimator.startMeasurement(this.initialSendSeqNum);
 
     // Move to SYN_SENT state
     this.state = TcpStateEnum.SYN_SENT;
@@ -159,15 +163,18 @@ export class TcpState {
     const flags = new Flags().withSyn().withAck();
     const segment = this.newSegment(this.initialSendSeqNum, this.recvNext);
     sendIpPacket(this.srcHost, this.dstHost, segment.withFlags(flags));
+    this.rttEstimator.startMeasurement(this.initialSendSeqNum);
     return true;
   }
 
+  // TODO: remove unused
   startConnection() {
     const flags = new Flags().withSyn();
     const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
     sendIpPacket(this.srcHost, this.dstHost, segment);
   }
 
+  // TODO: remove unused
   recvSynAck(segment: TcpSegment) {
     if (!segment.flags.syn || !segment.flags.ack) {
       return false;
@@ -328,6 +335,7 @@ export class TcpState {
           u32_MODULUS;
         this.congestionControl.notifyAck(acknowledgedBytes);
         this.sendUnacknowledged = segment.acknowledgementNumber;
+        this.rttEstimator.finishMeasurement(segment.acknowledgementNumber);
         // Transmit new segments
         this.notifySendPackets();
       }
@@ -526,7 +534,7 @@ export class TcpState {
       } else if ("seqNum" in result) {
         retransmitPromise = this.retransmissionQueue.pop();
         // Retransmit the segment
-        this.sendPacket(result.seqNum, result.size);
+        this.resendPacket(result.seqNum, result.size);
         this.congestionControl.notifyTimeout();
         continue;
       }
@@ -553,6 +561,7 @@ export class TcpState {
         this.sendNext = (this.sendNext + 1) % u32_MODULUS;
         segment.flags.withFin();
       }
+      this.rttEstimator.startMeasurement(segment.sequenceNumber);
       sendIpPacket(this.srcHost, this.dstHost, segment);
       this.retransmissionQueue.push(
         segment.sequenceNumber,
@@ -569,7 +578,7 @@ export class TcpState {
     }
   }
 
-  private sendPacket(seqNum: number, size: number) {
+  private resendPacket(seqNum: number, size: number) {
     const segment = this.newSegment(seqNum, this.recvNext).withFlags(
       new Flags().withAck(),
     );
@@ -589,6 +598,7 @@ export class TcpState {
     }
     this.retransmissionQueue.push(segment.sequenceNumber, segment.data.length);
     sendIpPacket(this.srcHost, this.dstHost, segment);
+    this.rttEstimator.discardMeasurement(segment.sequenceNumber);
   }
 
   private retransmitFirstSegment() {
@@ -598,7 +608,7 @@ export class TcpState {
       return;
     }
     // Resend packet
-    this.sendPacket(item.seqNum, item.size);
+    this.resendPacket(item.seqNum, item.size);
   }
 
   private sendWindowSize() {
@@ -844,5 +854,81 @@ class FastRecovery {
     state.cwnd = state.ssthresh;
     console.log("Fast recovery finished. Switching to Congestion Avoidance");
     return new CongestionAvoidance();
+  }
+}
+
+// Weight for the latest RTT sample when estimating the RTT.
+// The recommended value is 1/8
+const RTT_SAMPLE_WEIGHT = 0.125;
+// Weight for the latest sample when estimating the deviation.
+// The recommended value is 1/4
+const DEV_SAMPLE_WEIGHT = 0.25;
+
+class RTTEstimator {
+  private ctx: GlobalContext;
+  // Estimated Round Trip Time
+  // Initially set to 60 seconds
+  private estimatedRTT = 60 * 1000;
+  private devRTT = 0;
+
+  private measuring = false;
+  private currentSample = {
+    seqNum: 0,
+    rtt: 0,
+  };
+
+  constructor(ctx: GlobalContext) {
+    this.ctx = ctx;
+  }
+
+  getRtt() {
+    return this.estimatedRTT + 4 * this.devRTT;
+  }
+
+  startMeasurement(seqNum: number) {
+    if (this.measuring) {
+      return;
+    }
+    // Start measuring the RTT for the segment
+    this.currentSample.rtt = 0;
+    this.currentSample.seqNum = seqNum;
+    this.measuring = true;
+    Ticker.shared.add(this.measureTick, this);
+  }
+
+  finishMeasurement(ackNum: number) {
+    if (!this.measuring || ackNum < this.currentSample.seqNum) {
+      // Ignore the ACK
+      return;
+    }
+    // Stop measuring the RTT for the segment
+    this.measuring = false;
+    Ticker.shared.remove(this.measureTick, this);
+
+    // Update the estimated RTT and deviation
+    const sampleRTT = this.currentSample.rtt;
+
+    this.estimatedRTT =
+      (1 - RTT_SAMPLE_WEIGHT) * this.estimatedRTT +
+      RTT_SAMPLE_WEIGHT * sampleRTT;
+
+    this.devRTT =
+      (1 - DEV_SAMPLE_WEIGHT) * this.devRTT +
+      DEV_SAMPLE_WEIGHT * Math.abs(sampleRTT - this.estimatedRTT);
+  }
+
+  discardMeasurement(seqNum: number) {
+    if (!this.measuring || seqNum !== this.currentSample.seqNum) {
+      return;
+    }
+    // Stop measuring the RTT for the segment
+    this.measuring = false;
+    Ticker.shared.remove(this.measureTick, this);
+  }
+
+  private measureTick(ticker: Ticker) {
+    // Update the current sample's RTT
+    // NOTE: we do this to account for the simulation's speed
+    this.currentSample.rtt += ticker.elapsedMS * this.ctx.getCurrentSpeed();
   }
 }
