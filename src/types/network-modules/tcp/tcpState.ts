@@ -120,8 +120,11 @@ export class TcpState {
 
     this.tcpQueue = tcpQueue;
 
-    this.retransmissionQueue = new RetransmissionQueue(this.srcHost.ctx);
     this.rttEstimator = new RTTEstimator(this.srcHost.ctx);
+    this.retransmissionQueue = new RetransmissionQueue(
+      this.srcHost.ctx,
+      this.rttEstimator,
+    );
 
     this.mainLoop();
   }
@@ -622,8 +625,6 @@ export class TcpState {
   }
 }
 
-const RETRANSMIT_TIMEOUT = 60 * 1000;
-
 interface RetransmissionQueueItem {
   seqNum: number;
   size: number;
@@ -634,9 +635,11 @@ class RetransmissionQueue {
   private itemQueue = new AsyncQueue<RetransmissionQueueItem>();
 
   private ctx: GlobalContext;
+  private rttEstimator: RTTEstimator;
 
-  constructor(ctx: GlobalContext) {
+  constructor(ctx: GlobalContext, rttEstimator: RTTEstimator) {
     this.ctx = ctx;
+    this.rttEstimator = rttEstimator;
   }
 
   push(seqNum: number, size: number) {
@@ -644,7 +647,7 @@ class RetransmissionQueue {
     let progress = 0;
     const tick = (ticker: Ticker) => {
       progress += ticker.elapsedMS * this.ctx.getCurrentSpeed();
-      if (progress >= RETRANSMIT_TIMEOUT) {
+      if (progress >= this.rttEstimator.getRtt()) {
         this.itemQueue.push(item);
         Ticker.shared.remove(tick, this);
       }
