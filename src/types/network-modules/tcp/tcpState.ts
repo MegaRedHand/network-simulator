@@ -55,6 +55,7 @@ function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
 }
 
 export class TcpState {
+  private ctx: GlobalContext;
   private srcHost: ViewHost;
   private srcPort: Port;
   private dstHost: ViewHost;
@@ -101,7 +102,7 @@ export class TcpState {
   // IRS
   private initialRecvSeqNum: number;
 
-  private congestionControl: CongestionControl = new CongestionControl();
+  private congestionControl = new CongestionControl();
 
   constructor(
     srcHost: ViewHost,
@@ -110,6 +111,7 @@ export class TcpState {
     dstPort: Port,
     tcpQueue: AsyncQueue<SegmentWithIp>,
   ) {
+    this.ctx = srcHost.ctx;
     this.srcHost = srcHost;
     this.srcPort = srcPort;
     this.dstHost = dstHost;
@@ -301,12 +303,16 @@ export class TcpState {
       this.state === TcpStateEnum.CLOSE_WAIT ||
       this.state === TcpStateEnum.CLOSING
     ) {
-      if (segment.acknowledgementNumber === this.sendUnacknowledged) {
-        // Duplicate ACK
-        if (!this.congestionControl.notifyDupAck()) {
-          this.retransmissionQueue.retransmitFirstSegment();
+      if (segment.acknowledgementNumber <= this.sendUnacknowledged) {
+        if (
+          segment.acknowledgementNumber === this.sendUnacknowledged &&
+          segment.acknowledgementNumber !== this.writeClosedSeqnum + 1
+        ) {
+          // Duplicate ACK
+          if (!this.congestionControl.notifyDupAck()) {
+            this.retransmitFirstSegment();
+          }
         }
-      } else if (segment.acknowledgementNumber < this.sendUnacknowledged) {
         // Ignore the ACK
       } else if (segment.acknowledgementNumber > this.sendNext) {
         console.debug("ACK for future segment, dropping segment");
@@ -487,7 +493,10 @@ export class TcpState {
       return;
     }
     this.notifiedSendPackets = true;
-    setTimeout(() => this.sendQueue.push(undefined), 15);
+    setTimeout(
+      () => this.sendQueue.push(undefined),
+      150 * this.ctx.getCurrentSpeed(),
+    );
   }
 
   private async mainLoop() {
@@ -582,6 +591,16 @@ export class TcpState {
     sendIpPacket(this.srcHost, this.dstHost, segment);
   }
 
+  private retransmitFirstSegment() {
+    // Remove item from the queue
+    const item = this.retransmissionQueue.getFirstSegment();
+    if (!item) {
+      return;
+    }
+    // Resend packet
+    this.sendPacket(item.seqNum, item.size);
+  }
+
   private sendWindowSize() {
     // TODO: add congestion control
     const rwnd = this.sendWindow;
@@ -593,7 +612,7 @@ export class TcpState {
   }
 }
 
-const RETRANSMIT_TIMEOUT = 15 * 1000;
+const RETRANSMIT_TIMEOUT = 60 * 1000;
 
 interface RetransmissionQueueItem {
   seqNum: number;
@@ -611,10 +630,7 @@ class RetransmissionQueue {
   }
 
   push(seqNum: number, size: number) {
-    const item = {
-      seqNum,
-      size,
-    };
+    const item = { seqNum, size };
     let progress = 0;
     const tick = (ticker: Ticker) => {
       progress += ticker.elapsedMS * this.ctx.getCurrentSpeed();
@@ -644,7 +660,7 @@ class RetransmissionQueue {
     });
   }
 
-  retransmitFirstSegment() {
+  getFirstSegment() {
     if (this.timeoutQueue.length === 0) {
       return;
     }
@@ -656,8 +672,7 @@ class RetransmissionQueue {
     });
     // Remove the segment from the queue
     this.ack(firstSegmentItem[0].seqNum + 1);
-    // Mark the segment for retransmission
-    this.itemQueue.push(firstSegmentItem[0]);
+    return firstSegmentItem[0];
   }
 }
 
@@ -752,6 +767,7 @@ class CongestionControl {
     this.state.cwnd = 1 * MAX_SEGMENT_SIZE;
     this.state.dupAckCount = 0;
 
+    console.log("TCP Timeout. Switching to Slow Start");
     this.stateBehavior = new SlowStart();
   }
 }
@@ -778,11 +794,15 @@ class SlowStart {
       }
       state.ssthresh = Math.floor(state.cwnd / 2);
       state.cwnd = state.ssthresh + 3 * MAX_SEGMENT_SIZE;
+      console.log("Triple duplicate ACK received. Switching to Fast Recovery");
       return new FastRecovery();
     }
     state.dupAckCount = 0;
     state.cwnd += byteCount;
     if (state.cwnd >= state.ssthresh) {
+      console.log(
+        "Reached the Slow Start Threshold. Switching to Congestion Avoidance",
+      );
       return new CongestionAvoidance();
     }
     return this;
@@ -802,6 +822,7 @@ class CongestionAvoidance {
       }
       state.ssthresh = Math.floor(state.cwnd / 2);
       state.cwnd = state.ssthresh + 3 * MAX_SEGMENT_SIZE;
+      console.log("Triple duplicate ACK received. Switching to Fast Recovery");
       return new FastRecovery();
     }
     state.dupAckCount = 0;
@@ -821,6 +842,7 @@ class FastRecovery {
       return this;
     }
     state.cwnd = state.ssthresh;
+    console.log("Fast recovery finished. Switching to Congestion Avoidance");
     return new CongestionAvoidance();
   }
 }
