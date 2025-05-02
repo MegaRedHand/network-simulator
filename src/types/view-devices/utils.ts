@@ -20,12 +20,10 @@ export function createViewDevice(
 
   let ip: IpAddress;
   let mask: IpAddress;
-  let arpTable: Map<string, string>;
 
   if (isNetworkNode(deviceInfo)) {
     ip = IpAddress.parse(deviceInfo.ip);
     mask = IpAddress.parse(deviceInfo.mask);
-    arpTable = new Map<string, string>(deviceInfo.arpTable);
   }
 
   let packetQueueSize: number;
@@ -48,7 +46,6 @@ export function createViewDevice(
         interfaces,
         ip,
         mask,
-        arpTable,
         packetQueueSize,
         timePerByte,
       );
@@ -62,7 +59,6 @@ export function createViewDevice(
         interfaces,
         ip,
         mask,
-        arpTable,
       );
     case DeviceType.Switch:
       return new ViewSwitch(id, viewgraph, ctx, position, mac, interfaces);

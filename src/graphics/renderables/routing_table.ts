@@ -124,7 +124,9 @@ export class RoutingTable {
       else if (col === ROUTER_CONSTANTS.INTERFACE_COL_INDEX)
         isValid = isValidInterface(newValue);
       if (isValid) {
-        viewgraph.getDataGraph().saveManualChange(deviceId, row, col, newValue);
+        viewgraph
+          .getDataGraph()
+          .saveRTManualChange(deviceId, row, col, newValue);
         showSuccess(ALERT_MESSAGES.ROUTING_TABLE_UPDATED);
       }
       return isValid;

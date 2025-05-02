@@ -31,7 +31,6 @@ export class DataSwitch extends DataDevice {
     };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private forwardFrame(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     frame: EthernetFrame,

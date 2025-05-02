@@ -91,6 +91,7 @@ export abstract class ArpPacket implements FramePayload {
     return `ARP-${this.type}`;
   }
 
+  // eslint-disable-next-line
   getDetails(layer: number): Record<string, string | number | object> {
     return {
       HTYPE: this.htype,

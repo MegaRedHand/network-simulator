@@ -21,6 +21,20 @@ export abstract class DataNetworkDevice extends DataDevice {
     this.arpTable.set(ip.toString(), mac.toString());
   }
 
+  resolveAddress(ip: IpAddress): MacAddress {
+    if (!this.arpTable.has(ip.toString())) {
+      // As ip addr isn't in the table, then the 'entry' in device table never was modified.
+      // The mac addr of the device that has the ip addr should be returned.
+      const device = this.datagraph.getDeviceByIP(ip);
+      return device ? device.mac : undefined;
+    }
+    // There is an entry with key=ip.
+    // This means either the entry has the address resolution expected or
+    // the entry has "", then the entry was previously deleted.
+    const mac = this.arpTable.get(ip.toString());
+    return mac != "" ? MacAddress.parse(mac) : undefined;
+  }
+
   getDataNode(): NetworkDataNode {
     return {
       ...super.getDataNode(),

@@ -42,7 +42,6 @@ export class ViewRouter extends ViewNetworkDevice {
     interfaces: NetworkInterfaceData[],
     ip: IpAddress,
     mask: IpAddress,
-    arpTable: Map<string, string>,
     packetQueueSize: number = ROUTER_CONSTANTS.PACKET_QUEUE_MAX_SIZE,
     timePerByte: number = ROUTER_CONSTANTS.PROCESSING_SPEED,
   ) {
@@ -56,7 +55,6 @@ export class ViewRouter extends ViewNetworkDevice {
       interfaces,
       ip,
       mask,
-      arpTable,
     );
     this.packetQueueSize = packetQueueSize;
     this.packetQueue = new PacketQueue(this.packetQueueSize);
@@ -108,6 +106,8 @@ export class ViewRouter extends ViewNetworkDevice {
     );
 
     info.addRoutingTable(this.viewgraph, this.id);
+
+    info.addARPTable(this.viewgraph, this.id);
 
     RightBar.getInstance().renderInfo(info);
   }
