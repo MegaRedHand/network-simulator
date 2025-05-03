@@ -331,16 +331,7 @@ export class TcpState {
         );
         return false;
       } else {
-        const acknowledgedBytes =
-          (u32_MODULUS +
-            segment.acknowledgementNumber -
-            this.sendUnacknowledged) %
-          u32_MODULUS;
-        this.congestionControl.notifyAck(acknowledgedBytes);
-        this.sendUnacknowledged = segment.acknowledgementNumber;
-        this.rttEstimator.finishMeasurement(segment.acknowledgementNumber);
-        // Transmit new segments
-        this.notifySendPackets();
+        this.processAck(segment);
       }
 
       // If SND.UNA < SEG.ACK =< SND.NXT, set SND.UNA <- SEG.ACK
@@ -497,6 +488,35 @@ export class TcpState {
     );
   }
 
+  private processAck(segment: TcpSegment) {
+    const ackNum = segment.acknowledgementNumber;
+    // Don't count the FIN or SYN bytes
+    const finByte =
+      (ackNum === this.writeClosedSeqnum + 1 ? 1 : 0) +
+      (ackNum === this.initialSendSeqNum + 1 ? 1 : 0);
+
+    const acknowledgedBytes =
+      (u32_MODULUS + ackNum - this.sendUnacknowledged - finByte) % u32_MODULUS;
+
+    if (acknowledgedBytes === 0) {
+      return;
+    }
+
+    // Remove ACKed bytes from queue
+    this.retransmissionQueue.ack(ackNum);
+    this.writeBuffer.shift(acknowledgedBytes);
+    this.writeChannel.push(0);
+
+    // Notify Congestion Control module
+    this.congestionControl.notifyAck(acknowledgedBytes);
+    this.sendUnacknowledged = ackNum;
+    // Update RTT estimations
+    this.rttEstimator.finishMeasurement(ackNum);
+
+    // Transmit new segments
+    this.notifySendPackets();
+  }
+
   private notifiedSendPackets = false;
 
   private notifySendPackets() {
@@ -527,10 +547,7 @@ export class TcpState {
         this.notifiedSendPackets = false;
       } else if ("segment" in result) {
         receivedSegmentPromise = this.tcpQueue.pop();
-        if (this.handleSegment(result.segment)) {
-          this.retransmissionQueue.ack(this.recvNext);
-          this.writeChannel.push(0);
-        } else {
+        if (!this.handleSegment(result.segment)) {
           this.dropSegment(result.segment);
         }
         continue;
@@ -870,8 +887,8 @@ const DEV_SAMPLE_WEIGHT = 0.25;
 class RTTEstimator {
   private ctx: GlobalContext;
   // Estimated Round Trip Time
-  // Initially set to 60 seconds
-  private estimatedRTT = 60 * 1000;
+  // Initially set to 20 seconds
+  private estimatedRTT = 20 * 1000;
   private devRTT = 0;
 
   private measuring = false;
