@@ -579,7 +579,7 @@ export class TcpState {
   }
 }
 
-const RETRANSMIT_TIMEOUT = 15 * 1000;
+const RETRANSMIT_TIMEOUT = 60 * 1000;
 
 interface RetransmissionQueueItem {
   seqNum: number;
