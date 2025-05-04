@@ -1,5 +1,7 @@
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { attachTooltip } from "../renderables/tooltip_manager";
+import { Table } from "./table";
+import { Flags, TCP_FLAGS_KEY } from "../../packets/tcp";
 
 export interface InfoField {
   key: string;
@@ -58,7 +60,10 @@ export class TextInfo {
   private createListItem(field: InfoField): HTMLLIElement {
     const { key, value, tooltip } = field;
 
-    if (typeof value === "object" && value !== null) {
+    if (key === TCP_FLAGS_KEY) {
+      const flags = value as Flags;
+      return this.createFlagsElement(flags, tooltip);
+    } else if (typeof value === "object" && value !== null) {
       return this.createPayloadElement(key, value, tooltip);
     } else {
       return this.createDetailElement(key, value as string, tooltip);
@@ -130,6 +135,79 @@ export class TextInfo {
     container.appendChild(keyElement);
     container.appendChild(valueElement);
     listItem.appendChild(container);
+
+    return listItem;
+  }
+
+  /**
+   * Creates a TCP flags display element with ticks and crosses using the Table class
+   * @param flags An object containing the TCP flag values
+   * @param tooltip Optional tooltip for the flags element
+   * @returns HTMLLIElement containing the flags table
+   */
+  createFlagsElement(flags: Flags, tooltip?: string): HTMLLIElement {
+    // Create list item container
+    const listItem = document.createElement("li");
+    listItem.classList.add(CSS_CLASSES.DETAIL_ITEM);
+
+    // Create key element
+    const keyElement = document.createElement("span");
+    keyElement.textContent = "TCP Flags";
+    keyElement.classList.add(
+      CSS_CLASSES.DETAIL_KEY,
+      CSS_CLASSES.TCP_FLAG_HEADER,
+    );
+    keyElement.style.display = CSS_CLASSES.BLOCK;
+
+    if (tooltip) {
+      attachTooltip(keyElement, tooltip);
+    }
+
+    // Create rows for the table
+    const statusRow: string[] = [];
+    const valueRow: string[] = [];
+
+    Object.entries(flags).forEach(([, value]) => {
+      statusRow.push(value ? "✓" : "✗");
+      valueRow.push(value ? "1" : "0");
+    });
+
+    // Create headers for the table
+    const headers = Object.keys(flags);
+
+    // Create the table using the Table class
+    const flagsTable = new Table({
+      headers: headers.reduce(
+        (acc, header) => {
+          acc[header] = header;
+          return acc;
+        },
+        {} as Record<string, string>,
+      ),
+      fieldsPerRow: Object.keys(flags).length,
+      rows: [statusRow, valueRow],
+      tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE],
+    });
+
+    // Get the table element
+    const tableElement = flagsTable.toHTML();
+
+    // Apply custom styling to the status row cells (ticks and crosses)
+    const tbody = tableElement.querySelector("tbody");
+    if (tbody && tbody.rows.length > 0) {
+      const statusCells = tbody.rows[0].cells;
+      for (const cell of statusCells) {
+        if (cell.textContent === "✓") {
+          cell.classList.add(CSS_CLASSES.TCP_FLAG_ACTIVE);
+        } else {
+          cell.classList.add(CSS_CLASSES.TCP_FLAG_INACTIVE);
+        }
+      }
+    }
+
+    // Append elements to list item
+    listItem.appendChild(keyElement);
+    listItem.appendChild(tableElement);
 
     return listItem;
   }

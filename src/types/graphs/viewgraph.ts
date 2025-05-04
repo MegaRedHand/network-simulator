@@ -52,6 +52,9 @@ export class ViewGraph {
     }
     console.debug(allConnections);
     this.addConnections(allConnections);
+    for (const [, device] of this.graph.getAllVertices()) {
+      device.initialize();
+    }
   }
 
   loadDevice(deviceId: DeviceId): ViewDevice {
@@ -68,6 +71,7 @@ export class ViewGraph {
       connections,
     );
     this.addConnections(connections);
+    device.initialize();
     return device;
   }
 
@@ -104,6 +108,7 @@ export class ViewGraph {
       );
       return null;
     }
+
     if (this.graph.hasEdge(device1.id, device2.id)) {
       console.warn(`Edge with ID ${device1.id},${device2.id} already exists.`);
       return this.graph.getEdge(device1.id, device2.id);
@@ -197,8 +202,25 @@ export class ViewGraph {
       device.updateVisibility();
     }
 
+    // Refresh and make all edges visible again
     for (const [, , edge] of this.graph.getAllEdges()) {
       edge.refresh();
+      edge.makeVisible();
+    }
+
+    // Iterate until no changes are made
+    for (let i = 0; i < this.graph.getVertexCount(); i++) {
+      let hadChanges = false;
+      // For each iteration, update visibility of all edges.
+      // This takes into account currently visible edges and devices.
+      for (const [, , edge] of this.graph.getAllEdges()) {
+        const previousVisibility = edge.visible;
+        edge.updateVisibility();
+        hadChanges ||= previousVisibility !== edge.visible;
+      }
+      if (!hadChanges) {
+        break;
+      }
     }
 
     // warn Packet Manager that the layer has been changed
@@ -221,6 +243,52 @@ export class ViewGraph {
       return [];
     }
     return Array.from(edges).map(([, edge]) => edge);
+  }
+
+  getVisibleConnectedDeviceIds(deviceId: DeviceId): DeviceId[] {
+    const visibleDevices: DeviceId[] = []; // Stores visible connected device IDs
+
+    const vertexFilter = (device: ViewDevice, id: DeviceId): boolean => {
+      // If device is visible, add it to the set and stop traversal
+      if (device.visible && id !== deviceId) {
+        visibleDevices.push(id);
+        return false;
+      }
+      return true;
+    };
+
+    this.graph.dfs(deviceId, { vertexFilter });
+
+    return visibleDevices; // Return the list of visible connected device IDs
+  }
+
+  /**
+   * Checks if a device can reach any visible device, excluding the specified device from traversal.
+   * @param startId ID of the device to check for
+   * @param excludeId ID of a device to be excluded from traversal
+   * @returns True if the device can reach any visible device, otherwise false.
+   */
+  canReachVisibleDevice(startId: DeviceId, excludeId: DeviceId): boolean {
+    const visibleDevices = new Set<DeviceId>();
+
+    const vertexFilter = (device: ViewDevice, id: DeviceId): boolean => {
+      // If the device is excluded, skip it and stop traversal
+      if (id === excludeId) {
+        return false;
+      }
+      // If device is visible, add it to the set and stop traversal
+      if (device.visible) {
+        visibleDevices.add(id);
+        return false;
+      }
+      return true;
+    };
+
+    // Avoid invisible edges
+    const edgeFilter = (edge: Edge) => edge.visible;
+
+    this.graph.dfs(startId, { vertexFilter, edgeFilter });
+    return visibleDevices.size > 0;
   }
 
   getAllConnections(): Edge[] {
@@ -297,7 +365,8 @@ export class ViewGraph {
     // Remove connection in DataGraph
     this.datagraph.removeConnection(n1Id, n2Id);
 
-    return this._removeEdge(n1Id, n2Id);
+    this._removeEdge(n1Id, n2Id);
+    return datagraphEdge;
   }
 
   /**
@@ -319,7 +388,7 @@ export class ViewGraph {
     console.log(
       `Edge with ID ${n1Id},${n2Id} successfully removed from ViewGraph.`,
     );
-    return edge.destroy();
+    edge.destroy();
   }
 
   getViewport() {

@@ -7,17 +7,25 @@ import { Colors, ZIndexLevels } from "../utils/utils";
 import { Packet } from "./packet";
 import { EdgeInfo } from "../graphics/renderables/edge_info";
 import { DataEdge, DeviceId } from "./graphs/datagraph";
+import { MacAddress } from "../packets/ethernet";
 
 export class Edge extends Graphics {
-  data: DataEdge;
+  private _data: DataEdge;
   private startPos: Point;
   private endPos: Point;
 
   viewgraph: ViewGraph;
 
+  // This is to always have the same data as the datagraph
+  get data(): DataEdge {
+    return this.viewgraph
+      .getDataGraph()
+      .getConnection(this._data.from.id, this._data.to.id);
+  }
+
   constructor(viewgraph: ViewGraph, edgeData: DataEdge) {
     super();
-    this.data = edgeData;
+    this._data = edgeData;
     this.viewgraph = viewgraph;
 
     this.eventMode = "static";
@@ -68,9 +76,17 @@ export class Edge extends Graphics {
   // Method to draw the line
   drawEdge(startPos: Point, endPos: Point, color: number) {
     this.clear();
+
+    // Draw a colored line
     this.moveTo(startPos.x, startPos.y);
     this.lineTo(endPos.x, endPos.y);
-    this.stroke({ width: 3, color });
+    this.stroke({ width: 4, color });
+
+    // Add a bigger transparent hitbox
+    this.moveTo(startPos.x, startPos.y);
+    this.lineTo(endPos.x, endPos.y);
+    this.stroke({ width: 12, alpha: 0 });
+
     this.zIndex = ZIndexLevels.Edge;
     this.startPos = startPos;
     this.endPos = endPos;
@@ -105,22 +121,49 @@ export class Edge extends Graphics {
     RightBar.getInstance().renderInfo(edgeInfo);
   }
 
-  // Method to delete the edge
-  delete() {
-    // Remove the edge from the viewgraph and datagraph
-    const n1 = this.data.from.id;
-    const n2 = this.data.to.id;
-    this.viewgraph.removeEdge(n1, n2);
-    console.log(`Edge ${n1},${n2} deleted.`);
-    this.destroy();
-  }
-
-  destroy(): DataEdge {
+  destroy(): void {
     deselectElement();
     super.destroy();
-    return this.data;
   }
 
+  makeVisible() {
+    this.visible = true;
+  }
+
+  updateVisibility(): void {
+    const device1 = this.viewgraph.getDevice(this.data.from.id);
+    const device2 = this.viewgraph.getDevice(this.data.to.id);
+
+    if (!device1 || !device2) {
+      console.warn(
+        `One or both devices for edge ${this.data.from.id} ↔ ${this.data.to.id} are missing.`,
+      );
+      this.visible = false;
+      return;
+    }
+
+    // Get visible devices reachable from each device
+    const device1CanReachVisibleDevice = this.viewgraph.canReachVisibleDevice(
+      device1.id,
+      device2.id,
+    );
+    const device2CanReachVisibleDevice = this.viewgraph.canReachVisibleDevice(
+      device2.id,
+      device1.id,
+    );
+
+    // Update the visibility of the edge
+    this.visible = device1CanReachVisibleDevice && device2CanReachVisibleDevice;
+  }
+
+  /**
+   * Updates the position of an edge connecting two devices, taking into account their visibility
+   * and dimensions. If a device is visible, the edge will leave a space around the device's center
+   * to account for its size. Otherwise, the edge will connect directly to the device's position.
+   *
+   * @param device1 - The first device (starting point of the edge).
+   * @param device2 - The second device (ending point of the edge).
+   */
   private updatePosition(device1: ViewDevice, device2: ViewDevice) {
     const dx = device2.x - device1.x;
     const dy = device2.y - device1.y;
@@ -152,5 +195,40 @@ export class Edge extends Graphics {
     );
 
     this.drawEdge(newStartPos, newEndPos, Colors.Lightblue);
+  }
+
+  setInterface(deviceId: DeviceId, iface: number) {
+    if (this.data.from.id === deviceId) {
+      this.data.from.iface = iface;
+    } else {
+      this.data.to.iface = iface;
+    }
+    this.viewgraph.getDataGraph().regenerateAllRoutingTables();
+  }
+
+  setInterfaceMac(deviceId: DeviceId, mac: string): void {
+    let iface;
+    if (this.data.from.id === deviceId) {
+      iface = this.data.from.iface;
+    } else {
+      iface = this.data.to.iface;
+    }
+    const device = this.viewgraph.getDataGraph().getDevice(deviceId);
+
+    if (!device) {
+      console.error(`Device with ID ${deviceId} not found.`);
+      return;
+    }
+    device.interfaces[iface].mac = MacAddress.parse(mac);
+    console.log(
+      `Updated MAC address for device ${deviceId}, interface ${iface}: ${mac}`,
+    );
+  }
+
+  getDeviceFreeIfaces(deviceId: DeviceId): number[] {
+    const freeIfaces = this.viewgraph
+      .getDataGraph()
+      .getFreeInterfaces(deviceId);
+    return freeIfaces;
   }
 }

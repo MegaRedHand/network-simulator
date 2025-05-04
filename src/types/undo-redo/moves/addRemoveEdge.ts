@@ -79,7 +79,7 @@ export abstract class AddRemoveEdgeMove extends BaseMove {
     const n1 = this.state.connectedNodes.n1;
     const n2 = this.state.connectedNodes.n2;
     const edgeData = viewgraph.removeEdge(n1, n2);
-
+    console.log("Edge data", edgeData);
     if (!edgeData) {
       return false;
     }

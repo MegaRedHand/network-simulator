@@ -1,6 +1,7 @@
 import { Program } from ".";
 import { DeviceId } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
+import { ViewHost } from "../types/view-devices";
 
 /**
  * Base class for all programs.
@@ -9,12 +10,22 @@ import { ViewGraph } from "../types/graphs/viewgraph";
 export abstract class ProgramBase implements Program {
   protected viewgraph: ViewGraph;
   protected srcId: DeviceId;
+  protected runner: ViewHost;
 
   private _signalStop?: () => void;
 
   constructor(viewgraph: ViewGraph, srcId: DeviceId, inputs: string[]) {
     this.viewgraph = viewgraph;
     this.srcId = srcId;
+    const runner = viewgraph.getDevice(srcId);
+    // Sanity checks
+    if (!runner) {
+      throw new Error(`Device ${srcId} not found in the viewgraph`);
+    }
+    if (!(runner instanceof ViewHost)) {
+      throw new Error(`Device ${srcId} is not a host`);
+    }
+    this.runner = runner;
 
     this._parseInputs(inputs);
   }
