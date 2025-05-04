@@ -57,7 +57,7 @@ export class TcpModule {
     queue.push({ srcIp, segment });
   }
 
-  async connect(dstHost: ViewHost, dstPort: Port) {
+  async connect(dstHost: ViewHost, dstPort: Port): Promise<TcpSocket | null> {
     const flags = new Flags().withSyn();
     const srcPort: Port = this.getNextPortNumber();
     const seqNum = getInitialSeqNumber();
@@ -70,7 +70,12 @@ export class TcpModule {
       new Uint8Array(),
     );
     // Send SYN
-    sendIpPacket(this.host, dstHost, synSegment);
+    if (!sendIpPacket(this.host, dstHost, synSegment)) {
+      console.warn(
+        `Device ${this.host.id} couldn't send SYN to device with IP ${dstHost.ip.toString()}. Program cancelled`,
+      );
+      return null;
+    }
 
     // Receive SYN-ACK
     // TODO: check packet is valid response
@@ -91,6 +96,7 @@ export class TcpModule {
       ackFlags,
       new Uint8Array(),
     );
+    // TODO: check what happens if the destination host is not reachable
     sendIpPacket(this.host, dstHost, ackSegment);
 
     return new TcpSocket(this.host, srcPort, dstHost, dstPort, tcpQueue);
@@ -236,6 +242,7 @@ export class TcpSocket {
       new Flags().withAck(),
       content,
     );
+    // TODO: check what happens if the destination host is not reachable
     sendIpPacket(this.srcHost, this.dstHost, segment);
     return contentLength;
   }
@@ -250,6 +257,7 @@ export class TcpSocket {
       new Flags().withFin().withAck(),
       new Uint8Array(),
     );
+    // TODO: check what happens if the destination host is not reachable
     sendIpPacket(this.srcHost, this.dstHost, segment);
   }
 }
@@ -293,6 +301,7 @@ export class TcpListener {
       // Wait for next packet
       return this.next();
     }
+    // TODO: check what happens if the destination host is not reachable
     sendIpPacket(this.host, dst, ackSegment);
 
     const ipAndPort = { ip: srcIp, port: segment.sourcePort };
@@ -302,11 +311,22 @@ export class TcpListener {
   }
 }
 
-function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
+function sendIpPacket(
+  src: ViewHost,
+  dst: ViewHost,
+  payload: IpPayload,
+): boolean {
   const viewgraph = src.viewgraph;
 
   // TODO: use MAC and IP of the interfaces used
-  let nextHopMac = dst.mac;
+  // Resolve destination MAC address
+  let nextHopMac = src.resolveAddress(dst.ip);
+  if (!nextHopMac) {
+    console.warn(
+      `Device ${src.id} couldn't resolve MAC address for device with IP ${dst.ip.toString()}. Program cancelled`,
+    );
+    return false;
+  }
   const path = viewgraph.getPathBetween(src.id, dst.id);
   if (!path) return;
   for (const id of path.slice(1)) {
@@ -321,6 +341,7 @@ function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
   const frame = new EthernetFrame(src.mac, nextHopMac, ipPacket);
 
   sendViewPacket(src.viewgraph, src.id, frame);
+  return true;
 }
 
 function getInitialSeqNumber() {
