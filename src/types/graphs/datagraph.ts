@@ -759,10 +759,9 @@ export class DataGraph {
     const arpTable: { ip: string; mac: string }[] = [];
 
     for (const [currId, currDevice] of this.getDevices()) {
-      if (!(currDevice instanceof DataNetworkDevice)) {
+      if (currId === id || !(currDevice instanceof DataNetworkDevice)) {
         continue;
       }
-      console.log(`Device ID: ${currId}`);
       // Resolver la dirección MAC para la IP del dispositivo actual
       const mac = device.resolveAddress(currDevice.ip);
       if (mac) {
