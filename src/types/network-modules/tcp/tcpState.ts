@@ -888,7 +888,7 @@ class RTTEstimator {
   private ctx: GlobalContext;
   // Estimated Round Trip Time
   // Initially set to 20 seconds
-  private estimatedRTT = 20 * 1000;
+  private estimatedRTT = 60 * 1000;
   private devRTT = 0;
 
   private measuring = false;
