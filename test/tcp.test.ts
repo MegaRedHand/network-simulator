@@ -1,4 +1,4 @@
-import { IpAddress, TCP_PROTOCOL_NUMBER } from "../src/packets/ip";
+import { IpAddress } from "../src/packets/ip";
 import { Flags, TcpSegment } from "../src/packets/tcp";
 
 describe("TCP module", () => {
