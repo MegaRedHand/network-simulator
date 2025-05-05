@@ -3,6 +3,7 @@ import { ProgramInfo } from "../graphics/renderables/device_info";
 import { DeviceId } from "../types/graphs/datagraph";
 import { ViewGraph } from "../types/graphs/viewgraph";
 import { Layer } from "../types/layer";
+import { AsyncQueue } from "../types/network-modules/asyncQueue";
 import { TcpSocket } from "../types/network-modules/tcpModule";
 import { ViewHost } from "../types/view-devices";
 import { ProgramBase } from "./program_base";
@@ -56,7 +57,9 @@ export class HttpClient extends ProgramBase {
     // Write request
     const socket = await this.runner.tcpConnect(this.dstId);
     if (!socket) {
-      console.error("HttpClient failed to connect to socket");
+      console.warn(
+        "HttpClient failed to connect to socket. Program cancelled.",
+      );
       return;
     }
     const wrote = await socket.write(content);
@@ -70,7 +73,7 @@ export class HttpClient extends ProgramBase {
 
     // Read response
     const buffer = new Uint8Array(1024);
-    const readLength = await socket.read(buffer);
+    const readLength = await socket.readAll(buffer);
     if (readLength < 0) {
       console.error("HttpClient failed to read from socket");
       return;
@@ -88,6 +91,8 @@ export class HttpServer extends ProgramBase {
   static readonly PROGRAM_NAME = "Serve HTTP requests";
 
   private port: number;
+
+  private stopChannel = new AsyncQueue<"stop">();
 
   protected _parseInputs(inputs: string[]): void {
     if (inputs.length !== 0) {
@@ -109,8 +114,7 @@ export class HttpServer extends ProgramBase {
   }
 
   protected _stop() {
-    // Nothing to do
-    // TODO: stop serving requests
+    this.stopChannel.push("stop");
   }
 
   private async serveHttpRequests() {
@@ -128,11 +132,17 @@ export class HttpServer extends ProgramBase {
       return;
     }
 
+    const stopPromise = this.stopChannel.pop();
+
     while (true) {
-      const socket = await listener.next();
+      const socket = await Promise.race([stopPromise, listener.next()]);
+      if (socket === "stop") {
+        break;
+      }
 
       this.serveClient(socket);
     }
+    listener.close();
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -143,7 +153,7 @@ export class HttpServer extends ProgramBase {
 
   async serveClient(socket: TcpSocket) {
     const buffer = new Uint8Array(1024).fill(0);
-    const readLength = await socket.read(buffer);
+    const readLength = await socket.readAll(buffer);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const readContents = buffer.slice(0, readLength);

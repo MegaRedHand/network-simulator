@@ -191,7 +191,7 @@ export class ViewHost extends ViewNetworkDevice {
       return null;
     }
     if (!(dstDevice instanceof ViewHost)) {
-      console.log("The destination is not a host");
+      console.warn("The destination is not a host");
       return null;
     }
     return await this.tcpModule.connect(dstDevice, 80);
