@@ -56,27 +56,6 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     });
   }
 
-  // Me fijo si hay una entrada con la ip address del dispositivo:
-  // (a) Hay una entrada con la ip del dispositivo
-  //     (i) El valor es un string vacio.
-  //         Entonces quiere decir que el usuario borro la entrada manualmente, por lo que deberia
-  //         tomarse como que no hay tal entrada en la arp table, no se puede resolver su direccion ip.
-  //     (ii) El valor es un string no vacio (una direccion mac supuestamente).
-  //          Entonces se modifico su entrada en algun momento, sea por medio de un programa ARP Request
-  //          que ejecuto el usuario o porque el mismo usuario la modifico manualmente. En cualquiera de
-  //          los dos casos se usa esa entrada para resolver la direccion ip.
-  // (b) No hay una entrada con la ip del dispositivo
-  //     El usuario nunca modifico la entrada de la ip, ni manualmente ni con la ejecucion de un
-  //     ARP Request. Se hace de cuenta que la entrada existe pero usando el viewgraph para encontrar el
-  //     device con la ip, y a su vez, encontrar su mac.
-  //
-
-  // d1           no mostrar   mostrar con valores de tabla     mostrar usando viewgraph
-  // arpTableD1 = {ip1: "",      ip2: mac2,                                               }
-
-  //    IP   |   MAC   |  refresh
-  //   ip1   |   mac1  |   borrar
-  //   ip2   |   mac2  |   borrar
   resolveAddress(ip: IpAddress): MacAddress {
     const dDevice = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!dDevice || !(dDevice instanceof DataNetworkDevice)) {

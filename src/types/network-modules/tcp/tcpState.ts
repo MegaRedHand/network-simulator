@@ -142,7 +142,6 @@ export class TcpState {
     // Send a SYN
     const flags = new Flags().withSyn();
     const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
-    // sendIpPacket(this.srcHost, this.dstHost, segment);
     if (!sendIpPacket(this.srcHost, this.dstHost, segment)) {
       console.warn(
         `Device ${this.srcHost.id} couldn't send SYN to device with IP ${this.dstHost.ip.toString()}.`,
@@ -173,6 +172,7 @@ export class TcpState {
     // Send a SYN-ACK
     const flags = new Flags().withSyn().withAck();
     const segment = this.newSegment(this.initialSendSeqNum, this.recvNext);
+    // TODO: check what to do in case the packet couldn't be sent
     sendIpPacket(this.srcHost, this.dstHost, segment.withFlags(flags));
     return true;
   }
@@ -180,6 +180,7 @@ export class TcpState {
   startConnection() {
     const flags = new Flags().withSyn();
     const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
+    // TODO: check what to do in case the packet couldn't be sent
     sendIpPacket(this.srcHost, this.dstHost, segment);
   }
 
@@ -200,6 +201,7 @@ export class TcpState {
 
     const ackSegment = this.newSegment(this.sendNext, this.recvNext);
     ackSegment.withFlags(new Flags().withAck());
+    // TODO: check what to do in case the packet couldn't be sent
     sendIpPacket(this.srcHost, this.dstHost, ackSegment);
   }
 
@@ -559,6 +561,7 @@ export class TcpState {
           this.sendNext = (this.sendNext + 1) % u32_MODULUS;
           segment.flags.withFin();
         }
+        // TODO: check what to do in case the packet couldn't be sent
         sendIpPacket(this.srcHost, this.dstHost, segment);
         this.retransmissionQueue.push(
           segment.sequenceNumber,
@@ -588,6 +591,7 @@ export class TcpState {
       segment.flags.withFin();
     }
     this.retransmissionQueue.push(segment.sequenceNumber, segment.data.length);
+    // TODO: check what to do in case the packet couldn't be sent
     sendIpPacket(this.srcHost, this.dstHost, segment);
   }
 
