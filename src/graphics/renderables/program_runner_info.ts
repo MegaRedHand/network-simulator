@@ -118,7 +118,7 @@ export class ProgramRunnerInfo implements Renderable {
       fieldsPerRow: maxRowLength,
       rows,
       onDelete,
-      tableClasses: [CSS_CLASSES.RIGHT_BAR_TABLE], // CSS class for the table
+      tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE], // CSS class for the table
     });
 
     return table.toHTML();
