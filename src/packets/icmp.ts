@@ -104,6 +104,16 @@ class EchoMessage extends IcmpPacket {
       ...this.data,
     ]);
   }
+
+  getPayload(): Record<string, string | number | object> {
+    return {
+      Type: this.type,
+      Code: this.code,
+      Identifier: this.identifier,
+      SequenceNumber: this.sequenceNumber,
+      Data: this.data,
+    };
+  }
 }
 
 export class EchoRequest extends EchoMessage {
