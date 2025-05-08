@@ -23,6 +23,7 @@ export const CSS_CLASSES = {
   TABLE: "table-base",
   TCP_FLAGS_TABLE: "tcp-flags-table",
   ROUTER_TABLE: "router-table",
+  ARP_TABLE: "arp-table",
   RIGHT_BAR_TABLE: "right-bar-table",
   TOGGLE_TABLE: "toggle-table",
   TABLE_WRAPPER: "table-wrapper",

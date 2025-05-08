@@ -65,3 +65,25 @@
 .router-table th {
   width: 33%;
 }
+
+/* ARP TABLE specific styles */
+.arp-table {
+  width: 100%; 
+  table-layout: fixed; 
+}
+
+/* Define consistent column widths for ARP table */
+.arp-table th:nth-child(1), 
+.arp-table td:nth-child(1) {
+  width: 33%;
+}
+
+.arp-table th:nth-child(2), 
+.arp-table td:nth-child(2) {
+  width: 57%;
+}
+
+.arp-table th:nth-child(3), 
+.arp-table td:nth-child(3) {
+  width: 10%; /* Ensure consistent width for remove button column */
+}

@@ -41,7 +41,7 @@ export class ArpTable {
       editableColumns: [false, true], // Make all columns non-editable
       onEdit: onEdit,
       onDelete: onDelete,
-      tableClasses: [CSS_CLASSES.RIGHT_BAR_TABLE],
+      tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE, CSS_CLASSES.ARP_TABLE],
     });
 
     this.toggleButton = new ToggleButton({
