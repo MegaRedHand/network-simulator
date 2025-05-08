@@ -83,7 +83,6 @@ export class ProgramRunnerInfo implements Renderable {
   private addRunningProgramsList() {
     this.runningProgramsTable = this.generateProgramsTable();
     this.inputFields.push(this.runningProgramsTable);
-    this.inputFields.push(document.createElement("br"));
   }
 
   private createProgramsTable(

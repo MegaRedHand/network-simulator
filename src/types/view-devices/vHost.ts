@@ -80,7 +80,7 @@ export class ViewHost extends ViewNetworkDevice {
       this.tcpModule.handleSegment(packet.sourceAddress, segment);
       return;
     }
-    this.handlePacket(packet);
+    this.handleDatagram(packet);
   }
 
   showInfo(): void {
@@ -92,7 +92,12 @@ export class ViewHost extends ViewNetworkDevice {
       this.ip.octets.join("."),
       TOOLTIP_KEYS.IP_ADDRESS,
     );
+
     info.addProgramRunner(this, programList);
+
+    info.addDivider();
+
+    info.addARPTable(this.viewgraph, this.id);
     RightBar.getInstance().renderInfo(info);
   }
 
@@ -186,7 +191,7 @@ export class ViewHost extends ViewNetworkDevice {
       return null;
     }
     if (!(dstDevice instanceof ViewHost)) {
-      console.log("The destination is not a host");
+      console.warn("The destination is not a host");
       return null;
     }
     return await this.tcpModule.connect(dstDevice, 80);

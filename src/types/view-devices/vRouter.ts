@@ -107,6 +107,8 @@ export class ViewRouter extends ViewNetworkDevice {
 
     info.addRoutingTable(this.viewgraph, this.id);
 
+    info.addARPTable(this.viewgraph, this.id);
+
     RightBar.getInstance().renderInfo(info);
   }
 
@@ -173,7 +175,7 @@ export class ViewRouter extends ViewNetworkDevice {
 
   receiveDatagram(datagram: IPv4Packet) {
     if (this.ip.equals(datagram.destinationAddress)) {
-      this.handlePacket(datagram);
+      this.handleDatagram(datagram);
       return;
     }
     this.addPacketToQueue(datagram);

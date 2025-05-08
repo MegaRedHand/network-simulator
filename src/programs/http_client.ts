@@ -56,6 +56,12 @@ export class HttpClient extends ProgramBase {
 
     // Write request
     const socket = await this.runner.tcpConnect(this.dstId);
+    if (!socket) {
+      console.warn(
+        "HttpClient failed to connect to socket. Program cancelled.",
+      );
+      return;
+    }
     const wrote = await socket.write(content);
     if (wrote < 0) {
       console.error("HttpClient failed to write to socket");
