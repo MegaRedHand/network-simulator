@@ -20,14 +20,9 @@ export const CSS_CLASSES = {
   RIGHT_BAR_START_BUTTON: "right-bar-start-button",
 
   // Table
+  TABLE_CONTAINER: "right-bar-table-container",
   TABLE: "table",
   RIGHT_BAR_TABLE: "right-bar-table",
-  TOGGLE_TABLE: "toggle-table",
-  TABLE_WRAPPER: "table-wrapper",
-  EDITABLE_CELL: "editable-cell",
-
-  // Routing Table
-  ROUTING_TABLE_CONTAINER: "routing-table-container",
 
   // Dropdown
   DROPDOWN_CONTAINER: "dropdown-container",

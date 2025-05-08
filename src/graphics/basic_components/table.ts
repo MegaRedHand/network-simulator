@@ -30,7 +30,7 @@ export class Table {
 
     // Create a wrapper for the table
     const wrapper = document.createElement("div");
-    wrapper.classList.add("right-bar-table-container");
+    wrapper.classList.add(CSS_CLASSES.TABLE_CONTAINER);
     wrapper.appendChild(this.table);
 
     this.tableWrapper = wrapper;
