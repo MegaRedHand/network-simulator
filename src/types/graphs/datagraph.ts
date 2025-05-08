@@ -825,7 +825,7 @@ export class DataGraph {
     this.notifyChanges();
   }
 
-  SaveARPTManualChange(deviceId: DeviceId, ip: string, mac: string): void {
+  saveARPTManualChange(deviceId: DeviceId, ip: string, mac: string): void {
     const device = this.getDevice(deviceId);
     if (!device || !(device instanceof DataNetworkDevice)) {
       console.warn(`Device with ID ${deviceId} is not a network device.`);

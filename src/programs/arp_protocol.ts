@@ -38,20 +38,13 @@ export class ArpProtocol extends ProgramBase {
   }
 
   protected _run() {
-    if (this.dstIp) {
-      this.sendRequest();
-    } else {
-      console.warn("ARP request does not have a destination Ip address");
-    }
+    this.sendRequest();
     this.signalStop();
   }
 
   private sendRequest() {
     const srcDevice = this.viewgraph.getDevice(this.srcId);
-    if (
-      !(srcDevice instanceof ViewNetworkDevice)
-      //   !(dstDevice instanceof ViewNetworkDevice)
-    ) {
+    if (!(srcDevice instanceof ViewNetworkDevice)) {
       console.log(
         "At least one device between source and destination is not a network device",
       );
@@ -86,21 +79,5 @@ export class ArpProtocol extends ProgramBase {
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);
     programInfo.withDestinationIpDropdown(viewgraph, srcId);
     return programInfo;
-  }
-
-  static getProgramName(): string {
-    return this.PROGRAM_NAME;
-  }
-
-  static getProgramDescription(): string {
-    return "Sends a dummy packet every X ms";
-  }
-
-  static getProgramInputs(): string[] {
-    return ["Delay in ms"];
-  }
-
-  static getProgramOutputs(): string[] {
-    return ["Dummy packet"];
   }
 }

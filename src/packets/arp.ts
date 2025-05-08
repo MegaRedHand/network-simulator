@@ -8,7 +8,7 @@ const IPv4_PLEN = 4;
 export const ARP_REQUEST_CODE = 1;
 export const ARP_REPLY_CODE = 2;
 
-// Struture based on RFC 826: https://www.rfc-editor.org/rfc/rfc826.html
+// Structure based on RFC 826: https://www.rfc-editor.org/rfc/rfc826.html
 export abstract class ArpPacket implements FramePayload {
   // NOTE: We consider the protocol will only use MacAddress and IpAddress
 

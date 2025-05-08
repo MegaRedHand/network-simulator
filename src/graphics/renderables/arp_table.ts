@@ -162,7 +162,7 @@ export class ArpTable {
       // Update the ARP table entry
       this.props.viewgraph
         .getDataGraph()
-        .SaveARPTManualChange(this.props.deviceId, ip, newValue);
+        .saveARPTManualChange(this.props.deviceId, ip, newValue);
 
       return true;
     };
