@@ -55,7 +55,7 @@ export class TcpModule {
     queue.push({ srcIp, segment });
   }
 
-  async connect(dstHost: ViewHost, dstPort: Port) {
+  async connect(dstHost: ViewHost, dstPort: Port): Promise<TcpSocket | null> {
     const srcPort: Port = this.getNextPortNumber();
     const filter = { ip: dstHost.ip, port: dstPort };
     const tcpQueue = this.initNewQueue(srcPort, filter);
@@ -67,7 +67,9 @@ export class TcpModule {
       dstPort,
       tcpQueue,
     );
-    await tcpState.connect();
+    if (!(await tcpState.connect())) {
+      return null;
+    }
 
     return new TcpSocket(tcpState);
   }
