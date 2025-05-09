@@ -15,7 +15,7 @@ export interface TableOptions {
 export class Table {
   private table: HTMLTableElement;
   private tbody: HTMLTableSectionElement;
-  tableWrapper: HTMLDivElement;
+  private tableWrapper: HTMLDivElement;
 
   constructor(private options: TableOptions) {
     this.table = document.createElement("table");
