@@ -138,7 +138,7 @@ export abstract class ViewNetworkDevice extends ViewDevice {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  receiveFrame(frame: EthernetFrame, _: DeviceId): void {
+  receiveFrame(frame: EthernetFrame, _: number): void {
     if (
       !this.mac.equals(frame.destination) &&
       !frame.destination.isBroadcast()
