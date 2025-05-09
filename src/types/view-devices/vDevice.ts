@@ -54,6 +54,7 @@ export function layerFromType(type: DeviceType) {
 
 export abstract class ViewDevice extends Container {
   private sprite: Sprite;
+  private tooltip: Text | null = null; // Tooltip como un Text de PIXI.js
 
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
@@ -133,6 +134,48 @@ export abstract class ViewDevice extends Container {
   // finishes initializing.
   initialize() {
     // Do nothing
+  }
+
+  /**
+   * Displays a tooltip with the provided message.
+   */
+  showTooltip(message: string) {
+    if (!this.tooltip) {
+      const textStyle = new TextStyle({
+        fontSize: 12,
+        fill: Colors.Black,
+        align: "center",
+        fontWeight: "bold",
+      });
+
+      this.tooltip = new Text({ text: message, style: textStyle });
+      this.tooltip.anchor.set(0.5); // Center the text
+      this.tooltip.y = -this.height / 2 - 10; // Position above the device
+      this.addChild(this.tooltip); // Add the tooltip as a child
+    }
+
+    this.tooltip.text = message; // Update the tooltip message
+    this.tooltip.visible = true; // Show the tooltip
+  }
+
+  /**
+   * Hides the tooltip.
+   */
+  hideTooltip() {
+    if (this.tooltip) {
+      this.tooltip.visible = false; // Hide the tooltip
+    }
+  }
+
+  /**
+   * Removes the tooltip from the device.
+   */
+  removeTooltip() {
+    if (this.tooltip) {
+      this.removeChild(this.tooltip); // Remove the tooltip from the sprite
+      this.tooltip.destroy(); // Free memory
+      this.tooltip = null;
+    }
   }
 
   updateVisibility() {
@@ -267,6 +310,7 @@ export abstract class ViewDevice extends Container {
 
   destroy() {
     deselectElement();
+    this.removeTooltip(); // Remove the tooltip if it exists
     super.destroy();
   }
 }
