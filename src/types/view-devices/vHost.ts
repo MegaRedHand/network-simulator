@@ -180,6 +180,16 @@ export class ViewHost extends ViewNetworkDevice {
     this.runningPrograms.clear();
   }
 
+  getTooltipDetails(layer: Layer): string {
+    if (layer >= Layer.Network) {
+      // If we are in the network layer or below, show only the IP
+      return `IP: ${this.ip.octets.join(".")}`;
+    } else {
+      // If we are in the upper layer, show both IP and MAC
+      return `IP: ${this.ip.octets.join(".")}\nMAC: ${this.mac.toString()}`;
+    }
+  }
+
   // TCP
 
   private tcpModule = new TcpModule(this);

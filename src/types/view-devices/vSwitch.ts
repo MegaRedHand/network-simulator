@@ -56,6 +56,11 @@ export class ViewSwitch extends ViewDevice {
     return DeviceType.Switch;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getTooltipDetails(_layer: Layer): string {
+    return `MAC: ${this.mac.toString()}`;
+  }
+
   updateSwitchingTable(mac: MacAddress, deviceId: DeviceId): void {
     console.debug(`Adding ${mac.toString()} to the switching table`);
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {

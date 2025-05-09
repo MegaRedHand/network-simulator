@@ -124,6 +124,9 @@ export abstract class ViewDevice extends Container {
     // Add device ID label using the helper function
     this.addDeviceIdLabel();
 
+    // Set up tooltip behavior
+    this.setupHoverTooltip();
+
     this.on("pointerdown", this.onPointerDown, this);
     this.on("click", this.onClick, this);
     // NOTE: this is "click" for mobile devices
@@ -136,10 +139,29 @@ export abstract class ViewDevice extends Container {
     // Do nothing
   }
 
+  // Tooltip setup
+  private setupHoverTooltip() {
+    this.on("mouseover", () => {
+      const currentLayer = this.ctx.getCurrentLayer(); // Get the current layer from the context
+      const tooltipMessage = this.getTooltipDetails(currentLayer); // Generate the tooltip message
+      this.showTooltip(tooltipMessage); // Show the tooltip
+    });
+
+    this.on("mouseout", () => {
+      this.hideTooltip(); // Hide the tooltip
+    });
+  }
+
+  /**
+   * Abstract method to get tooltip details based on the layer.
+   * Must be implemented by derived classes.
+   */
+  abstract getTooltipDetails(layer: Layer): string;
+
   /**
    * Displays a tooltip with the provided message.
    */
-  showTooltip(message: string) {
+  protected showTooltip(message: string) {
     if (!this.tooltip) {
       const textStyle = new TextStyle({
         fontSize: 12,
@@ -150,7 +172,8 @@ export abstract class ViewDevice extends Container {
 
       this.tooltip = new Text({ text: message, style: textStyle });
       this.tooltip.anchor.set(0.5); // Center the text
-      this.tooltip.y = -this.height / 2 - 10; // Position above the device
+      const idTextY = this.height * 0.8; // Position of the ID label
+      this.tooltip.y = idTextY + 20; // Tooltip is 20px below the ID label
       this.addChild(this.tooltip); // Add the tooltip as a child
     }
 
@@ -161,7 +184,7 @@ export abstract class ViewDevice extends Container {
   /**
    * Hides the tooltip.
    */
-  hideTooltip() {
+  protected hideTooltip() {
     if (this.tooltip) {
       this.tooltip.visible = false; // Hide the tooltip
     }
@@ -170,7 +193,7 @@ export abstract class ViewDevice extends Container {
   /**
    * Removes the tooltip from the device.
    */
-  removeTooltip() {
+  protected removeTooltip() {
     if (this.tooltip) {
       this.removeChild(this.tooltip); // Remove the tooltip from the sprite
       this.tooltip.destroy(); // Free memory
