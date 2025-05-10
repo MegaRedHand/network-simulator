@@ -169,6 +169,16 @@ export class ArpTable {
 
     return { onEdit, onRegenerate, onDelete };
   }
+
+  refreshTable(): void {
+    const updatedEntries = this.props.viewgraph
+      .getDataGraph()
+      .getArpTable(this.props.deviceId);
+
+    const updatedRows = updatedEntries.map((entry) => [entry.ip, entry.mac]);
+
+    this.updateRows(updatedRows);
+  }
 }
 
 function isValidMAC(mac: string): boolean {

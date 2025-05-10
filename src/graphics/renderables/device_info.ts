@@ -16,6 +16,7 @@ import { ProgressBar } from "../basic_components/progress_bar";
 import { LabeledProgressBar } from "../components/labeled_progress_bar";
 import { ArpTable } from "./arp_table";
 import { Layer } from "../../types/layer";
+import { DataNetworkDevice } from "../../types/data-devices";
 
 export class DeviceInfo extends BaseInfo {
   readonly device: ViewDevice;
@@ -157,6 +158,18 @@ export class DeviceInfo extends BaseInfo {
     });
 
     this.inputFields.push(arpTable.toHTML());
+
+    const dataDevice = viewgraph.getDataGraph().getDevice(deviceId);
+
+    if (dataDevice instanceof DataNetworkDevice) {
+      // Suscribe to ARP table changes
+      dataDevice.setArpTableChangeListener(() => {
+        // update the ARP table in the UI
+        arpTable.refreshTable();
+      });
+    } else {
+      console.warn(`Device with ID ${deviceId} is not a DataNetworkDevice.`);
+    }
   }
 }
 
