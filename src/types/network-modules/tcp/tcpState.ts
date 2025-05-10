@@ -185,8 +185,10 @@ export class TcpState {
     // Send a SYN-ACK
     const flags = new Flags().withSyn().withAck();
     const segment = this.newSegment(this.initialSendSeqNum, this.recvNext);
-    // TODO: check what to do in case the packet couldn't be sent
-    sendIpPacket(this.srcHost, this.dstHost, segment.withFlags(flags));
+
+    if (!sendIpPacket(this.srcHost, this.dstHost, segment.withFlags(flags))) {
+      return false;
+    }
     this.rttEstimator.startMeasurement(this.initialSendSeqNum);
     return true;
   }
@@ -578,9 +580,11 @@ export class TcpState {
         this.sendNext = (this.sendNext + 1) % u32_MODULUS;
         segment.flags.withFin();
       }
-      this.rttEstimator.startMeasurement(segment.sequenceNumber);
-      // TODO: check what to do in case the packet couldn't be sent
-      sendIpPacket(this.srcHost, this.dstHost, segment);
+
+      // Ignore failed sends
+      if (sendIpPacket(this.srcHost, this.dstHost, segment)) {
+        this.rttEstimator.startMeasurement(segment.sequenceNumber);
+      }
       this.retransmissionQueue.push(
         segment.sequenceNumber,
         segment.data.length,
@@ -615,9 +619,10 @@ export class TcpState {
       segment.flags.withFin();
     }
     this.retransmissionQueue.push(segment.sequenceNumber, segment.data.length);
-    // TODO: check what to do in case the packet couldn't be sent
-    sendIpPacket(this.srcHost, this.dstHost, segment);
-    this.rttEstimator.discardMeasurement(segment.sequenceNumber);
+    // Ignore failed sends
+    if (sendIpPacket(this.srcHost, this.dstHost, segment)) {
+      this.rttEstimator.discardMeasurement(segment.sequenceNumber);
+    }
   }
 
   private retransmitFirstSegment() {
@@ -631,7 +636,6 @@ export class TcpState {
   }
 
   private sendWindowSize() {
-    // TODO: add congestion control
     const rwnd = this.sendWindow;
     const cwnd = this.congestionControl.getCwnd();
 
