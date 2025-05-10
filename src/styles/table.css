@@ -1,60 +1,89 @@
-.right-bar-table {
-  display: table; /* Cambiado a table para mejor comportamiento de columnas */
-  width: 100%; /* Ocupa todo el ancho disponible */
-  border-collapse: collapse; /* Elimina espacios entre bordes */
-  font-size: 1rem; /* Tamaño de fuente legible */
-  text-align: center; /* Centra el texto en las celdas */
-  border-radius: 1rem; /* Bordes redondeados */
-  box-shadow: 0 0.5vh 1vh rgba(0, 0, 0, 0.1); /* Sombra para profundidad */
-  table-layout: auto; /* Cambiado a auto para ancho dinámico de columnas */
-  overflow-x: auto; /* Mantiene el scroll horizontal si es necesario */
-  clip-path: inset(
-    0 round 1rem
-  ); /* Recorta el área del scroll respetando el border-radius */
+/* Common styles for both tables */
+.table-base {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+  text-align: center;
+  border-radius: 1rem;
+  box-shadow: 0 0.5vh 1vh rgba(0, 0, 0, 0.1);
+  clip-path: inset(0 round 1rem);
+  overflow-x: auto;
 }
 
-/* Ensures columns do not overflow */
-.right-bar-table th,
-.right-bar-table td {
-  word-wrap: break-word; /* Wraps long words */
-  overflow-wrap: break-word; /* Ensures proper text wrapping */
-  white-space: normal; /* Allows text to wrap naturally */
+/* Common cell styles */
+.table-base th,
+.table-base td {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  padding: 1vh;
+  border: 0.2vh solid #ddd;
+  text-align: center;
 }
 
-.right-bar-table th {
-  background-color: #333; /* Dark background for contrast */
-  color: white; /* White text for readability */
-  padding: 1vh; /* Adds spacing inside header cells */
-  border: 0.2vh solid #ddd; /* Adds subtle borders */
-  text-align: center; /* Centers text */
-  /* Eliminado el width fijo del 33% */
-  box-sizing: border-box; /* Ensures width includes padding and borders */
+.table-base th {
+  background-color: #333;
+  color: white;
+  box-sizing: border-box;
 }
 
-.right-bar-table td {
-  padding: 1vh; /* Adds spacing inside table cells */
-  border: 0.2vh solid #ddd; /* Adds subtle borders */
-  text-align: center; /* Centers text */
-  transition: background-color 0.3s ease-in-out; /* Smooth hover effect */
+.table-base td {
+  transition: background-color 0.3s ease-in-out;
 }
 
-/* Hover effect for table cells */
-.right-bar-table td:hover {
-  background-color: #f0f0f0; /* Light gray on hover */
-  cursor: pointer; /* Indicates interactivity */
+.table-base td:hover {
+  background-color: #f0f0f0;
+  cursor: pointer;
 }
 
-/* Alternating row colors for better readability */
-.right-bar-table tr:nth-child(even) {
-  background-color: #f9f9f9; /* Light gray for even rows */
+/* TCP FLAGS TABLE specific styles */
+.tcp-flags-table {
+  display: table;
+  table-layout: auto;
 }
 
-.right-bar-table tr:nth-child(odd) {
-  background-color: #fff; /* White for odd rows */
+.tcp-flags-table tr:nth-child(even) {
+  background-color: #f9f9f9;
 }
 
-/* Para asegurar que el contenedor de la tabla permita scroll horizontal */
-.right-bar-table-container {
+.tcp-flags-table tr:nth-child(odd) {
+  background-color: #fff;
+}
+
+/* TCP table container for proper scrolling */
+.tcp-flags-table-container {
   overflow-x: auto;
   border-radius: 1rem;
+}
+
+/* ROUTER TABLE specific styles */
+.router-table {
+  display: block;
+  table-layout: fixed;
+}
+
+.router-table th {
+  width: 33%;
+}
+
+/* ARP TABLE specific styles */
+.arp-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Define consistent column widths for ARP table */
+.arp-table th:nth-child(1),
+.arp-table td:nth-child(1) {
+  width: 33%;
+}
+
+.arp-table th:nth-child(2),
+.arp-table td:nth-child(2) {
+  width: 57%;
+}
+
+.arp-table th:nth-child(3),
+.arp-table td:nth-child(3) {
+  width: 10%; /* Ensure consistent width for remove button column */
 }

@@ -48,6 +48,12 @@ export class MacAddress {
       .join(":");
   }
 
+  toCompressedString(): string {
+    return Array.from(this.octets)
+      .map((byte) => (byte === 0 ? "" : byte.toString(16).padStart(2, "0")))
+      .join(":");
+  }
+
   // Check if two MAC addresses are equal.
   equals(other: MacAddress): boolean {
     return this.octets.every((octet, index) => octet === other.octets[index]);
