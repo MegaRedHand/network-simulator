@@ -18,7 +18,6 @@ import { RightBar } from "../../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../../utils/utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
-import { IpAddress } from "../../packets/ip";
 import {
   DeviceId,
   NetworkInterfaceData,
@@ -61,7 +60,6 @@ export abstract class ViewDevice extends Container {
   ctx: GlobalContext;
 
   mac: MacAddress;
-  arpTable: Map<IpAddress, MacAddress> = new Map<IpAddress, MacAddress>();
   interfaces: NetworkInterface[] = [];
 
   highlightMarker: Graphics | null = null; // Marker to indicate selection

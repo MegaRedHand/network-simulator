@@ -34,7 +34,6 @@ interface CommonDataNode {
   // TODO: remove this
   mac: string;
   interfaces: NetworkInterfaceData[];
-  arpTable?: [string, string][];
 }
 
 export interface NetworkInterfaceData {
@@ -56,6 +55,7 @@ export interface NetworkDataNode extends CommonDataNode {
   // TODO: remove this
   ip: string;
   mask: string;
+  arpTable: [string, string][];
 }
 
 export interface RouterDataNode extends NetworkDataNode {
@@ -600,7 +600,7 @@ export class DataGraph {
     return newTable;
   }
 
-  saveManualChange(
+  saveRTManualChange(
     routerId: DeviceId,
     visibleRowIndex: number, // Este es el índice en la UI
     colIndex: number,
@@ -747,5 +747,106 @@ export class DataGraph {
 
     // Remove any deleted entries
     return device.routingTable.filter((entry) => !entry.deleted);
+  }
+
+  getArpTable(id: DeviceId): { ip: string; mac: string }[] {
+    const device = this.getDevice(id);
+    if (!device || !(device instanceof DataNetworkDevice)) {
+      return [];
+    }
+
+    // Crear la tabla ARP en el formato deseado
+    const arpTable: { ip: string; mac: string }[] = [];
+
+    for (const [currId, currDevice] of this.getDevices()) {
+      if (currId === id || !(currDevice instanceof DataNetworkDevice)) {
+        continue;
+      }
+      // Resolver la dirección MAC para la IP del dispositivo actual
+      const mac = device.resolveAddress(currDevice.ip);
+      if (mac) {
+        arpTable.push({
+          ip: currDevice.ip.toString(),
+          mac: mac.toString(),
+        });
+      }
+    }
+
+    return arpTable;
+  }
+
+  removeArpTableEntry(deviceId: DeviceId, ip: string): void {
+    const device = this.getDevice(deviceId);
+    if (!device || !(device instanceof DataNetworkDevice)) {
+      console.warn(`Device with ID ${deviceId} is not a network device.`);
+      return;
+    }
+
+    console.log(
+      `Attempting to remove ARP table entry for IP ${ip} on device ID ${deviceId}`,
+    );
+    console.log(`Current ARP table:`, device.arpTable);
+
+    // Validar si la IP existe en la tabla ARP
+    if (!device.arpTable.has(ip)) {
+      console.warn(
+        `IP ${ip} not found in ARP table. Creating a new entry with an empty MAC.`,
+      );
+      device.arpTable.set(ip, ""); // Crear una nueva entrada con MAC vacía
+      console.log(`Created new ARP table entry: IP=${ip}, MAC=""`);
+    } else {
+      // Actualizar la dirección MAC a un string vacío
+      const mac = device.arpTable.get(ip);
+      console.log(`Clearing MAC address for IP: ${ip}, current MAC: ${mac}`);
+      device.arpTable.set(ip, ""); // Actualizar la entrada existente
+      console.log(`Updated ARP table entry: IP=${ip}, MAC=""`);
+    }
+
+    // Notificar los cambios
+    console.log(`Notifying changes after ARP table update.`);
+    this.notifyChanges();
+  }
+
+  clearArpTable(deviceId: DeviceId): void {
+    const device = this.getDevice(deviceId);
+    if (!device || !(device instanceof DataNetworkDevice)) {
+      console.warn(`Device with ID ${deviceId} is not a network device.`);
+      return;
+    }
+
+    console.log(`Clearing ARP table for device ID ${deviceId}`);
+
+    // Establecer un Map vacío para limpiar la tabla ARP
+    device.arpTable = new Map<string, string>();
+
+    console.log(`ARP table cleared for device ID ${deviceId}`);
+
+    // Notificar los cambios
+    this.notifyChanges();
+  }
+
+  saveARPTManualChange(deviceId: DeviceId, ip: string, mac: string): void {
+    const device = this.getDevice(deviceId);
+    if (!device || !(device instanceof DataNetworkDevice)) {
+      console.warn(`Device with ID ${deviceId} is not a network device.`);
+      return;
+    }
+
+    console.log(
+      `Updating ARP table entry for IP ${ip} with MAC ${mac} on device ID ${deviceId}`,
+    );
+
+    // Validar si la IP es válida
+    if (!ip || !mac) {
+      console.warn("Invalid IP or MAC address provided.");
+      return;
+    }
+
+    // Actualizar o agregar la entrada en la tabla ARP
+    device.arpTable.set(ip, mac);
+    console.log(`Updated ARP table entry: IP=${ip}, MAC=${mac}`);
+
+    // Notificar los cambios
+    this.notifyChanges();
   }
 }

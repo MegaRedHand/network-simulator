@@ -132,7 +132,7 @@ function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType): DataNode {
     return { x, y, type, mac, interfaces, switchingTable: [] };
   }
   const { ip, mask } = ctx.getNextIp();
-  return { x, y, type, mac, ip, mask, interfaces };
+  return { x, y, type, mac, ip, mask, interfaces, arpTable: [] };
 }
 
 // Function to add a device at the center of the viewport

@@ -7,16 +7,14 @@ import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { RightBar } from "../../graphics/right_bar";
 import { Texture } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
-import { IPv4Packet } from "../../packets/ip";
 import { GlobalContext } from "../../context";
 import { sendViewPacket } from "../packet";
 import { DataSwitch } from "../data-devices";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
+import { ArpRequest } from "../../packets/arp";
 
 export class ViewSwitch extends ViewDevice {
   static DEVICE_TEXTURE: Texture;
-  //                      would be interface
-  switchingTable: Map<string, DeviceId> = new Map<string, DeviceId>();
 
   static getTexture() {
     if (!ViewSwitch.DEVICE_TEXTURE) {
@@ -59,21 +57,16 @@ export class ViewSwitch extends ViewDevice {
   }
 
   updateSwitchingTable(mac: MacAddress, deviceId: DeviceId): void {
-    const dDevice = this.viewgraph.getDataGraph().getDevice(this.id);
-    if (!dDevice || !(dDevice instanceof DataSwitch)) {
-      console.warn(`Switch with id ${this.id} not found in datagraph`);
-      return;
-    }
-    const switchingTable = dDevice.switchingTable;
-    if (!switchingTable.has(mac.toString())) {
-      console.debug(`Adding ${mac.toString()} to the switching table`);
-      switchingTable.set(mac.toString(), deviceId);
-      this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
-        if (device instanceof DataSwitch) {
-          device.updateSwitchingTable(mac, deviceId);
-        }
-      });
-    }
+    console.debug(`Adding ${mac.toString()} to the switching table`);
+    this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
+      if (!device) {
+        console.error(`Switch with id ${this.id} not found in datagraph`);
+        return;
+      }
+      if (device instanceof DataSwitch) {
+        device.updateSwitchingTable(mac, deviceId);
+      }
+    });
   }
 
   private forwardFrame(
@@ -91,15 +84,29 @@ export class ViewSwitch extends ViewDevice {
     const newFrame = new EthernetFrame(
       this.mac,
       frame.destination,
-      frame.payload,
+      frame.payload, // should be a copy
     );
     sendViewPacket(this.viewgraph, this.id, newFrame, nextHopId);
   }
 
   // TODO: change all related senderId features to the receiver interface
   receiveFrame(frame: EthernetFrame, senderId: DeviceId): void {
-    const datagram = frame.payload;
-    if (!(datagram instanceof IPv4Packet)) {
+    if (frame.payload instanceof ArpRequest) {
+      const { sha, spa, tha, tpa } = frame.payload;
+      const connections = this.viewgraph.getConnections(this.id);
+      connections.forEach((edge) => {
+        const packet = new ArpRequest(sha, spa, tpa, tha);
+        const frame = new EthernetFrame(
+          this.mac,
+          MacAddress.broadcastAddress(),
+          packet,
+        );
+        const nextHopId = edge.otherEnd(this.id);
+        if (!nextHopId || nextHopId === senderId) {
+          return;
+        }
+        sendViewPacket(this.viewgraph, this.id, frame, nextHopId);
+      });
       return;
     }
     // Update the switching table with the source MAC address

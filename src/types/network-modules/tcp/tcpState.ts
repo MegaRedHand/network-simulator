@@ -33,11 +33,23 @@ function getInitialSeqNumber() {
   return 0;
 }
 
-function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
+function sendIpPacket(
+  src: ViewHost,
+  dst: ViewHost,
+  payload: IpPayload,
+): boolean {
   const viewgraph = src.viewgraph;
 
   // TODO: use MAC and IP of the interfaces used
-  let nextHopMac = dst.mac;
+  // Resolve destination MAC address
+  let nextHopMac = src.resolveAddress(dst.ip);
+  if (!nextHopMac) {
+    console.warn(
+      `Device ${src.id} couldn't resolve MAC address for device with IP ${dst.ip.toString()}. Program cancelled`,
+    );
+    return false;
+  }
+
   const path = viewgraph.getPathBetween(src.id, dst.id);
   if (!path) return;
   for (const id of path.slice(1)) {
@@ -52,6 +64,7 @@ function sendIpPacket(src: ViewHost, dst: ViewHost, payload: IpPayload) {
   const frame = new EthernetFrame(src.mac, nextHopMac, ipPacket);
 
   sendViewPacket(src.viewgraph, src.id, frame);
+  return true;
 }
 
 export class TcpState {
@@ -130,7 +143,7 @@ export class TcpState {
   }
 
   // Open active connection
-  async connect() {
+  async connect(): Promise<boolean> {
     // Initialize the TCB
     this.initialSendSeqNum = getInitialSeqNumber();
     this.sendNext = (this.initialSendSeqNum + 1) % u32_MODULUS;
@@ -139,13 +152,19 @@ export class TcpState {
     // Send a SYN
     const flags = new Flags().withSyn();
     const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
-    sendIpPacket(this.srcHost, this.dstHost, segment);
+    if (!sendIpPacket(this.srcHost, this.dstHost, segment)) {
+      console.warn(
+        `Device ${this.srcHost.id} couldn't send SYN to device with IP ${this.dstHost.ip.toString()}.`,
+      );
+      return false;
+    }
 
     this.rttEstimator.startMeasurement(this.initialSendSeqNum);
 
     // Move to SYN_SENT state
     this.state = TcpStateEnum.SYN_SENT;
     await this.connectionQueue.pop();
+    return true;
   }
 
   // Accept passive connection
@@ -165,6 +184,7 @@ export class TcpState {
     // Send a SYN-ACK
     const flags = new Flags().withSyn().withAck();
     const segment = this.newSegment(this.initialSendSeqNum, this.recvNext);
+    // TODO: check what to do in case the packet couldn't be sent
     sendIpPacket(this.srcHost, this.dstHost, segment.withFlags(flags));
     this.rttEstimator.startMeasurement(this.initialSendSeqNum);
     return true;
@@ -174,6 +194,7 @@ export class TcpState {
   startConnection() {
     const flags = new Flags().withSyn();
     const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
+    // TODO: check what to do in case the packet couldn't be sent
     sendIpPacket(this.srcHost, this.dstHost, segment);
   }
 
@@ -195,6 +216,7 @@ export class TcpState {
 
     const ackSegment = this.newSegment(this.sendNext, this.recvNext);
     ackSegment.withFlags(new Flags().withAck());
+    // TODO: check what to do in case the packet couldn't be sent
     sendIpPacket(this.srcHost, this.dstHost, ackSegment);
   }
 
@@ -582,6 +604,7 @@ export class TcpState {
         segment.flags.withFin();
       }
       this.rttEstimator.startMeasurement(segment.sequenceNumber);
+      // TODO: check what to do in case the packet couldn't be sent
       sendIpPacket(this.srcHost, this.dstHost, segment);
       this.retransmissionQueue.push(
         segment.sequenceNumber,
@@ -617,6 +640,7 @@ export class TcpState {
       segment.flags.withFin();
     }
     this.retransmissionQueue.push(segment.sequenceNumber, segment.data.length);
+    // TODO: check what to do in case the packet couldn't be sent
     sendIpPacket(this.srcHost, this.dstHost, segment);
     this.rttEstimator.discardMeasurement(segment.sequenceNumber);
   }
