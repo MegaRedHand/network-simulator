@@ -87,6 +87,7 @@ export class TcpState {
   private writeBuffer = new BytesBuffer(MAX_BUFFER_SIZE);
   private writeChannel = new AsyncQueue<number>();
   private writeClosedSeqnum = -1;
+  private writeClosed = false;
 
   private state: TcpStateEnum;
 
@@ -517,6 +518,10 @@ export class TcpState {
       (ackNum === this.writeClosedSeqnum + 1 ? 1 : 0) +
       (ackNum === this.initialSendSeqNum + 1 ? 1 : 0);
 
+    if (ackNum === this.writeClosedSeqnum + 1) {
+      this.writeClosed = true;
+    }
+
     const acknowledgedBytes =
       (u32_MODULUS + ackNum - this.sendUnacknowledged - finByte) % u32_MODULUS;
 
@@ -548,7 +553,7 @@ export class TcpState {
     this.notifiedSendPackets = true;
     setTimeout(
       () => this.sendQueue.push(undefined),
-      150 * this.ctx.getCurrentSpeed(),
+      10 * this.ctx.getCurrentSpeed(),
     );
   }
 
@@ -557,7 +562,7 @@ export class TcpState {
     let receivedSegmentPromise = this.tcpQueue.pop();
     let retransmitPromise = this.retransmissionQueue.pop();
 
-    while (!this.readClosed || this.writeClosedSeqnum === -1) {
+    while (!this.readClosed || !this.writeClosed) {
       const result = await Promise.race([
         recheckPromise,
         receivedSegmentPromise,
