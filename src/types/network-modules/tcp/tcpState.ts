@@ -191,36 +191,6 @@ export class TcpState {
     return true;
   }
 
-  // TODO: remove unused
-  startConnection() {
-    const flags = new Flags().withSyn();
-    const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
-    // TODO: check what to do in case the packet couldn't be sent
-    sendIpPacket(this.srcHost, this.dstHost, segment);
-  }
-
-  // TODO: remove unused
-  recvSynAck(segment: TcpSegment) {
-    if (!segment.flags.syn || !segment.flags.ack) {
-      return false;
-    }
-    if (
-      segment.acknowledgementNumber !==
-      (this.initialSendSeqNum + 1) % u32_MODULUS
-    ) {
-      return false;
-    }
-    this.recvNext = (segment.sequenceNumber + 1) % u32_MODULUS;
-    this.initialRecvSeqNum = segment.sequenceNumber;
-    this.sendNext = segment.acknowledgementNumber;
-    this.sendWindow = segment.window;
-
-    const ackSegment = this.newSegment(this.sendNext, this.recvNext);
-    ackSegment.withFlags(new Flags().withAck());
-    // TODO: check what to do in case the packet couldn't be sent
-    sendIpPacket(this.srcHost, this.dstHost, ackSegment);
-  }
-
   private handleSegment(segment: TcpSegment) {
     // Sanity check: ports match with expected
     if (
