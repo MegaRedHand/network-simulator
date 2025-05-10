@@ -7,6 +7,7 @@ export abstract class DataNetworkDevice extends DataDevice {
   ip: IpAddress;
   ipMask: IpAddress;
   arpTable: Map<string, string>;
+  private arpTableChangeListener: (() => void) | null = null;
 
   constructor(graphData: NetworkDataNode, datagraph: DataGraph) {
     super(graphData, datagraph);
@@ -17,8 +18,21 @@ export abstract class DataNetworkDevice extends DataDevice {
 
   abstract receiveDatagram(datagram: IPv4Packet): void;
 
-  updateArpTable(mac: MacAddress, ip: IpAddress) {
+  /**
+   * Update the ARP table and notify the listener.
+   */
+  updateArpTable(mac: MacAddress, ip: IpAddress): void {
     this.arpTable.set(ip.toString(), mac.toString());
+    if (this.arpTableChangeListener) {
+      this.arpTableChangeListener(); // Notify the listener
+    }
+  }
+
+  /**
+   * Set the listener for ARP table changes.
+   */
+  setArpTableChangeListener(listener: () => void): void {
+    this.arpTableChangeListener = listener;
   }
 
   resolveAddress(ip: IpAddress): MacAddress {
