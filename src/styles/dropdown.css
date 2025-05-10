@@ -6,25 +6,23 @@
 }
 
 .selected-option {
-  background-color: #2b2b2b; /* Dark background */
+  background-color: #2b2b2b; /* Dark background to match dropdown */
   border: none; /* No border */
   color: white; /* White text */
-  padding: 1vh 2vw; /* Spacing similar to a button */
+  padding: 1vh 2vw; /* Same padding as right-bar-toggle-button */
   text-align: center; /* Center text */
-  text-decoration: none; /* No underline */
   display: block; /* Ensures full width */
   font-size: 1rem; /* Font size */
   margin: 1vh 0; /* Vertical spacing */
   cursor: pointer; /* Changes cursor to pointer */
-  height: 2rem; /* Altura consistente con la Speed Wheel */
   border-radius: 0.5rem; /* Rounded corners */
   width: 100%; /* Full width */
   box-sizing: border-box; /* Includes padding and borders in width */
   transition:
     background-color 0.3s ease,
-    transform 0.2s ease; /* Smooth effect */
+    transform 0.2s ease; /* Smooth hover effect */
   font-family: Arial, sans-serif; /* Ensures consistent font family */
-  min-width: 180px; /* Minimum width */
+  position: relative;
 }
 
 .selected-option:hover {
