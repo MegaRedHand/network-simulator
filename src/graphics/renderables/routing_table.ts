@@ -46,7 +46,11 @@ export class RoutingTable {
       editableColumns: [false, true, true, false], // Make the last column non-editable
       onEdit: onEdit,
       onDelete: onDelete,
-      tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE,CSS_CLASSES.ROUTER_TABLE],
+      tableClasses: [
+        CSS_CLASSES.TABLE,
+        CSS_CLASSES.RIGHT_BAR_TABLE,
+        CSS_CLASSES.ROUTER_TABLE,
+      ],
     });
 
     this.toggleButton = new ToggleButton({

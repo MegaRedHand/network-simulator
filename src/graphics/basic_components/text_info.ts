@@ -3,13 +3,12 @@ import { attachTooltip } from "../renderables/tooltip_manager";
 import { Table } from "./table";
 import { Flags, TCP_FLAGS_KEY } from "../../packets/tcp";
 
-
 const FLAGS_DATA = {
-  tick:"✓",
-  cross:"✗",
+  tick: "✓",
+  cross: "✗",
   tick_data: "1",
   cross_data: "0",
-}
+};
 
 export interface InfoField {
   key: string;
@@ -194,7 +193,11 @@ export class TextInfo {
       ),
       fieldsPerRow: Object.keys(flags).length,
       rows: [statusRow, valueRow],
-      tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE ,CSS_CLASSES.TCP_FLAGS_TABLE],
+      tableClasses: [
+        CSS_CLASSES.TABLE,
+        CSS_CLASSES.RIGHT_BAR_TABLE,
+        CSS_CLASSES.TCP_FLAGS_TABLE,
+      ],
     });
 
     // Get the table element
