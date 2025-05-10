@@ -652,7 +652,7 @@ export class TcpState {
 
   private retransmitFirstSegment() {
     // Remove item from the queue
-    const item = this.retransmissionQueue.getFirstSegment();
+    const item = this.retransmissionQueue.popFirstSegment();
     if (!item) {
       return;
     }
@@ -677,8 +677,9 @@ interface RetransmissionQueueItem {
 }
 
 class RetransmissionQueue {
-  private timeoutQueue: [RetransmissionQueueItem, (t: Ticker) => void][] = [];
-  private itemQueue = new AsyncQueue<RetransmissionQueueItem>();
+  private timeoutQueue = new AsyncQueue<undefined>();
+  private timeoutTick: (t: Ticker) => void = null;
+  private itemQueue: RetransmissionQueueItem[] = [];
 
   private ctx: GlobalContext;
   private rttEstimator: RTTEstimator;
@@ -690,48 +691,70 @@ class RetransmissionQueue {
 
   push(seqNum: number, size: number) {
     const item = { seqNum, size };
+    this.itemQueue.push(item);
+    this.itemQueue.sort((a, b) => a.seqNum - b.seqNum);
+
+    if (!this.timeoutTick) {
+      this.startTimer();
+    }
+  }
+
+  /**
+   * Waits for the timeout to expire and returns the first item in the queue.
+   * @returns the first item in the queue
+   */
+  async pop() {
+    await this.timeoutQueue.pop();
+    const firstItem = this.itemQueue.shift();
+    if (this.itemQueue.length > 0) {
+      this.startTimer();
+    }
+    return firstItem;
+  }
+
+  ack(ackNum: number) {
+    this.itemQueue = this.itemQueue.filter((item) => {
+      return !(
+        item.seqNum < ackNum ||
+        (item.seqNum + item.size) % u32_MODULUS <= ackNum
+      );
+    });
+    if (this.itemQueue.length === 0) {
+      this.stopTimer();
+    }
+  }
+
+  popFirstSegment() {
+    if (this.itemQueue.length === 0) {
+      return;
+    }
+    const firstSegmentItem = this.itemQueue[0];
+    // Remove the segment from the queue
+    this.ack(firstSegmentItem.seqNum + 1);
+    return firstSegmentItem;
+  }
+
+  private startTimer() {
+    if (this.timeoutTick) {
+      return;
+    }
     let progress = 0;
     const tick = (ticker: Ticker) => {
       progress += ticker.elapsedMS * this.ctx.getCurrentSpeed();
       if (progress >= this.rttEstimator.getRtt()) {
-        this.itemQueue.push(item);
-        Ticker.shared.remove(tick, this);
+        this.timeoutQueue.push(undefined);
+        this.stopTimer();
       }
     };
-    Ticker.shared.add(tick, this);
-    this.timeoutQueue.push([item, tick]);
+    this.timeoutTick = tick;
+    Ticker.shared.add(this.timeoutTick, this);
   }
 
-  async pop() {
-    return await this.itemQueue.pop();
-  }
-
-  ack(ackNum: number) {
-    this.timeoutQueue = this.timeoutQueue.filter(([item, tick]) => {
-      if (
-        item.seqNum < ackNum ||
-        (item.seqNum + item.size) % u32_MODULUS <= ackNum
-      ) {
-        Ticker.shared.remove(tick, this);
-        return false;
-      }
-      return true;
-    });
-  }
-
-  getFirstSegment() {
-    if (this.timeoutQueue.length === 0) {
-      return;
+  private stopTimer() {
+    if (this.timeoutTick) {
+      Ticker.shared.remove(this.timeoutTick, this);
+      this.timeoutTick = null;
     }
-    let firstSegmentItem = this.timeoutQueue[0];
-    this.timeoutQueue.forEach((element) => {
-      if (element[0].seqNum < firstSegmentItem[0].seqNum) {
-        firstSegmentItem = element;
-      }
-    });
-    // Remove the segment from the queue
-    this.ack(firstSegmentItem[0].seqNum + 1);
-    return firstSegmentItem[0];
   }
 }
 
