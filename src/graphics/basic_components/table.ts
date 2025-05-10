@@ -15,6 +15,7 @@ export interface TableOptions {
 export class Table {
   private table: HTMLTableElement;
   private tbody: HTMLTableSectionElement;
+  private tableWrapper: HTMLDivElement;
 
   constructor(private options: TableOptions) {
     this.table = document.createElement("table");
@@ -26,6 +27,13 @@ export class Table {
     }
 
     this.initializeTable();
+
+    // Create a wrapper for the table
+    const wrapper = document.createElement("div");
+    wrapper.classList.add(CSS_CLASSES.TABLE_CONTAINER);
+    wrapper.appendChild(this.table);
+
+    this.tableWrapper = wrapper;
   }
 
   private initializeTable(): void {
@@ -187,7 +195,7 @@ export class Table {
     this.tbody.innerHTML = ""; // Clear all rows from tbody
   }
 
-  toHTML(): HTMLTableElement {
-    return this.table;
+  toHTML(): HTMLElement {
+    return this.tableWrapper;
   }
 }
