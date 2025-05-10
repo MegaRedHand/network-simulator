@@ -190,7 +190,17 @@ export class Packet extends Graphics {
     if (!newStartDevice) {
       return;
     }
-    newStartDevice.receiveFrame(this.rawPacket, this.currStart);
+
+    const edge = this.viewgraph.getEdge(this.currStart, this.currEnd);
+    if (!edge) {
+      console.warn(
+        `No edge connected devices ${this.currStart} and ${this.currEnd}`,
+      );
+      return;
+    }
+
+    const iface = edge.getDeviceInterface(this.currEnd);
+    newStartDevice.receiveFrame(this.rawPacket, iface);
   }
 
   traverseEdge(startId: DeviceId, endId: DeviceId): void {
@@ -328,41 +338,54 @@ export function sendViewPacket(
   viewgraph: ViewGraph,
   srcId: DeviceId,
   rawPacket: EthernetFrame,
-  nextHopId?: DeviceId,
+  sendingIface?: DeviceId,
 ) {
   const srcMac = rawPacket.source;
   const dstMac = rawPacket.destination;
   console.debug(
     `Sending frame from ${srcMac.toString()} to ${dstMac.toString()}`,
   );
-  const originConnections = viewgraph.getConnections(srcId);
-  if (originConnections.length === 0) {
-    console.warn("El dispositivo de origen no tiene conexiones.");
-    return;
-  }
-  let firstEdge = originConnections.find((edge) => {
-    const otherId = edge.otherEnd(srcId);
-    const otherDevice = viewgraph.getDevice(otherId);
-    return otherDevice.mac.equals(dstMac);
-  });
-  if (firstEdge === undefined) {
-    const datagraph = viewgraph.getDataGraph();
-    firstEdge = originConnections.find((edge) => {
+  if (!sendingIface) {
+    const originConnections = viewgraph.getConnections(srcId);
+    if (originConnections.length === 0) {
+      console.warn("El dispositivo de origen no tiene conexiones.");
+      return;
+    }
+    let firstEdge = originConnections.find((edge) => {
       const otherId = edge.otherEnd(srcId);
-      const otherDevice = datagraph.getDevice(otherId);
-      return (
-        otherDevice instanceof DataRouter || otherDevice instanceof DataSwitch
+      const otherDevice = viewgraph.getDevice(otherId);
+      return otherDevice.mac.equals(dstMac);
+    });
+    if (firstEdge === undefined) {
+      const datagraph = viewgraph.getDataGraph();
+      firstEdge = originConnections.find((edge) => {
+        const otherId = edge.otherEnd(srcId);
+        const otherDevice = datagraph.getDevice(otherId);
+        return (
+          otherDevice instanceof DataRouter || otherDevice instanceof DataSwitch
+        );
+      });
+    }
+    if (firstEdge === undefined) {
+      console.warn(
+        "El dispositivo de origen no está conectado al destino, a un router o a un switch.",
       );
+      return;
+    }
+    const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket);
+    packet.traverseEdge(srcId, firstEdge.otherEnd(srcId));
+  } else {
+    viewgraph.getConnections(srcId).forEach((edge) => {
+      const dataEdge = edge.getData();
+      const iface =
+        dataEdge.from.id === srcId ? dataEdge.from.iface : dataEdge.to.iface;
+      if (iface === sendingIface) {
+        const nextHopId = edge.otherEnd(srcId);
+        const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket);
+        packet.traverseEdge(srcId, nextHopId);
+      }
     });
   }
-  if (firstEdge === undefined && !nextHopId) {
-    console.warn(
-      "El dispositivo de origen no está conectado al destino, a un router o a un switch.",
-    );
-    return;
-  }
-  const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket);
-  packet.traverseEdge(srcId, nextHopId ? nextHopId : firstEdge.otherEnd(srcId));
 }
 
 export function dropPacket(

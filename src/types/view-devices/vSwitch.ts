@@ -3,7 +3,11 @@ import { Layer } from "../layer";
 import { ViewGraph } from "../graphs/viewgraph";
 import SwitchImage from "../../assets/switch.svg";
 import { Position } from "../common";
-import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
+import {
+  DeviceId,
+  getNumberOfInterfaces,
+  NetworkInterfaceData,
+} from "../graphs/datagraph";
 import { RightBar } from "../../graphics/right_bar";
 import { Texture } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
@@ -56,7 +60,7 @@ export class ViewSwitch extends ViewDevice {
     return DeviceType.Switch;
   }
 
-  updateSwitchingTable(mac: MacAddress, deviceId: DeviceId): void {
+  updateSwitchingTable(mac: MacAddress, iface: number): void {
     console.debug(`Adding ${mac.toString()} to the switching table`);
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
       if (!device) {
@@ -64,17 +68,17 @@ export class ViewSwitch extends ViewDevice {
         return;
       }
       if (device instanceof DataSwitch) {
-        device.updateSwitchingTable(mac, deviceId);
+        device.updateSwitchingTable(mac, iface);
       }
     });
   }
 
   private forwardFrame(
     frame: EthernetFrame,
-    nextHopId: DeviceId, // will be the interface where to send the packet
-    senderId: DeviceId, // will be the interface where the packet came from
+    sendingIface: number, // will be the interface where to send the packet
+    senderId: number, // will be the interface where the packet came from
   ) {
-    if (nextHopId === senderId) {
+    if (sendingIface === senderId) {
       // Packet would be sent to the interface where it came, discard it
       return;
     }
@@ -86,11 +90,12 @@ export class ViewSwitch extends ViewDevice {
       frame.destination,
       frame.payload, // should be a copy
     );
-    sendViewPacket(this.viewgraph, this.id, newFrame, nextHopId);
+    sendViewPacket(this.viewgraph, this.id, newFrame, sendingIface);
   }
 
   // TODO: change all related senderId features to the receiver interface
-  receiveFrame(frame: EthernetFrame, senderId: DeviceId): void {
+  receiveFrame(frame: EthernetFrame, iface: DeviceId): void {
+    // WARNING: Hay que cambiar a interfaces aca!!!!!!!
     if (frame.payload instanceof ArpRequest) {
       const { sha, spa, tha, tpa } = frame.payload;
       const connections = this.viewgraph.getConnections(this.id);
@@ -102,7 +107,7 @@ export class ViewSwitch extends ViewDevice {
           packet,
         );
         const nextHopId = edge.otherEnd(this.id);
-        if (!nextHopId || nextHopId === senderId) {
+        if (!nextHopId || nextHopId === iface) {
           return;
         }
         sendViewPacket(this.viewgraph, this.id, frame, nextHopId);
@@ -110,7 +115,7 @@ export class ViewSwitch extends ViewDevice {
       return;
     }
     // Update the switching table with the source MAC address
-    this.updateSwitchingTable(frame.source, senderId);
+    this.updateSwitchingTable(frame.source, iface);
 
     // If the destination MAC address is in the switching table, send the frame
     // to the corresponding device
@@ -122,15 +127,16 @@ export class ViewSwitch extends ViewDevice {
       return;
     }
     const switchingTable = dDevice.switchingTable;
-    const nextHops: DeviceId[] = switchingTable.has(
+    const sendingIfaces: DeviceId[] = switchingTable.has(
       frame.destination.toString(),
     )
       ? [switchingTable.get(frame.destination.toString())]
-      : this.viewgraph
-          .getConnections(this.id)
-          .map((edge) => edge.otherEnd(this.id));
-    nextHops.forEach((nextHopId) => {
-      this.forwardFrame(frame, nextHopId, senderId);
-    });
+      : Array.from(
+          { length: getNumberOfInterfaces(this.getType()) },
+          (_, i) => i,
+        );
+    sendingIfaces.forEach((sendingIface) =>
+      this.forwardFrame(frame, sendingIface, iface),
+    );
   }
 }

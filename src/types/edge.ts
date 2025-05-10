@@ -73,6 +73,13 @@ export class Edge extends Graphics {
     return this.data;
   }
 
+  getDeviceInterface(id: DeviceId) {
+    if (!(id === this.data.from.id || id === this.data.to.id)) {
+      return;
+    }
+    return this.data.from.id === id ? this.data.from.iface : this.data.to.iface;
+  }
+
   // Method to draw the line
   drawEdge(startPos: Point, endPos: Point, color: number) {
     this.clear();

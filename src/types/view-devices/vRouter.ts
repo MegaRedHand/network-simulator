@@ -206,27 +206,13 @@ export class ViewRouter extends ViewNetworkDevice {
     //       network device to receive the packet (or its interface), and
     //       finally, call sendViewPacket, who would send the packet to all
     //       devices connected with the interface.
-    const devices = this.routePacket(datagram);
+    const iface = this.routePacket(datagram);
 
-    if (!devices || devices.length === 0) {
-      // dummy values
-      const frame = new EthernetFrame(this.mac, this.mac, datagram);
-      dropPacket(this.viewgraph, this.id, frame);
-      return;
-    }
-
-    // TODO: Simulates the mapping of the packet's destination MAC address to the next network device in the path.
-    // This could either be the final destination of the packet or an intermediate device along the route.
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
-    if (!dstDevice) {
-      console.warn(
-        `Device with ip ${datagram.destinationAddress.toString()} not found in viewgraph`,
-      );
-      return;
-    }
-    const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
+    // TODO: use arp table here?
     let dstMac = dstDevice.mac;
-    if (!path) return;
+
+    const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
     for (const id of path.slice(1)) {
       const device = this.viewgraph.getDevice(id);
       // if there’s a router in the middle, first send frame to router mac
@@ -235,10 +221,41 @@ export class ViewRouter extends ViewNetworkDevice {
         break;
       }
     }
-    for (const nextHopId of devices) {
-      const newFrame = new EthernetFrame(this.mac, dstMac, datagram);
-      sendViewPacket(this.viewgraph, this.id, newFrame, nextHopId);
-    }
+
+    const newFrame = new EthernetFrame(this.mac, dstMac, datagram);
+    sendViewPacket(this.viewgraph, this.id, newFrame, iface);
+
+    // if (!devices || devices.length === 0) {
+    //   // dummy values
+    //   const frame = new EthernetFrame(this.mac, this.mac, datagram);
+    //   dropPacket(this.viewgraph, this.id, frame);
+    //   return;
+    // }
+
+    // // TODO: Simulates the mapping of the packet's destination MAC address to the next network device in the path.
+    // // This could either be the final destination of the packet or an intermediate device along the route.
+    // const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
+    // if (!dstDevice) {
+    //   console.warn(
+    //     `Device with ip ${datagram.destinationAddress.toString()} not found in viewgraph`,
+    //   );
+    //   return;
+    // }
+    // const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
+    // let dstMac = dstDevice.mac;
+    // if (!path) return;
+    // for (const id of path.slice(1)) {
+    //   const device = this.viewgraph.getDevice(id);
+    //   // if there’s a router in the middle, first send frame to router mac
+    //   if (device instanceof ViewNetworkDevice) {
+    //     dstMac = device.mac;
+    //     break;
+    //   }
+    // }
+    // for (const nextHopId of devices) {
+    //   const newFrame = new EthernetFrame(this.mac, dstMac, datagram);
+    //   sendViewPacket(this.viewgraph, this.id, newFrame, nextHopId);
+    // }
 
     if (this.packetQueue.isEmpty()) {
       this.stopPacketProcessor();
@@ -266,8 +283,10 @@ export class ViewRouter extends ViewNetworkDevice {
     return this.packetQueue.dequeue();
   }
 
-  // TODO: Should retreive only the iface
-  routePacket(datagram: IPv4Packet): DeviceId[] {
+  routePacket(datagram: IPv4Packet): number {
+    console.debug(
+      `Device ${this.id} va a rutear el datagram con origen ${datagram.sourceAddress.toString()} y destino ${datagram.destinationAddress.toString()}`,
+    );
     const device = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!device || !(device instanceof DataRouter)) {
       return;
@@ -285,19 +304,20 @@ export class ViewRouter extends ViewNetworkDevice {
 
     if (!result) {
       console.warn("No route found for", datagram.destinationAddress);
-      return [];
+      return undefined;
     }
 
-    const devices = this.viewgraph
-      .getDataGraph()
-      .getConnectionsInInterface(this.id, result.iface);
+    return result.iface;
+    // const devices = this.viewgraph
+    //   .getDataGraph()
+    //   .getConnectionsInInterface(this.id, result.iface);
 
-    if (!devices) {
-      console.error("Current device doesn't exist!", this.id);
-      return [];
-    }
+    // if (!devices) {
+    //   console.error("Current device doesn't exist!", this.id);
+    //   return [];
+    // }
 
-    return devices;
+    // return devices;
   }
 }
 
