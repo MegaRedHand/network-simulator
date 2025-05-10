@@ -41,7 +41,11 @@ export class ArpTable {
       editableColumns: [false, true], // Make all columns non-editable
       onEdit: onEdit,
       onDelete: onDelete,
-      tableClasses: [CSS_CLASSES.RIGHT_BAR_TABLE],
+      tableClasses: [
+        CSS_CLASSES.TABLE,
+        CSS_CLASSES.RIGHT_BAR_TABLE,
+        CSS_CLASSES.ARP_TABLE,
+      ],
     });
 
     this.toggleButton = new ToggleButton({
@@ -168,6 +172,16 @@ export class ArpTable {
     };
 
     return { onEdit, onRegenerate, onDelete };
+  }
+
+  refreshTable(): void {
+    const updatedEntries = this.props.viewgraph
+      .getDataGraph()
+      .getArpTable(this.props.deviceId);
+
+    const updatedRows = updatedEntries.map((entry) => [entry.ip, entry.mac]);
+
+    this.updateRows(updatedRows);
   }
 }
 
