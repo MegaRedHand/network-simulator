@@ -26,7 +26,7 @@ enum TcpStateEnum {
 enum ProcessingResult {
   SUCCESS = 0,
   DISCARD = 1,
-  IGNORE = 2,
+  POSTPONE = 2,
 }
 
 const MAX_BUFFER_SIZE = 0xffff;
@@ -84,7 +84,7 @@ export class TcpState {
   private connectionQueue = new AsyncQueue<undefined>();
   private retransmissionQueue: RetransmissionQueue;
 
-  private recvQueue: TcpSegment[] = [];
+  private recvQueue = new ReceivedSegmentsQueue();
 
   // Buffer of data received
   private readBuffer = new BytesBuffer(MAX_BUFFER_SIZE);
@@ -250,7 +250,7 @@ export class TcpState {
           // Process the segment normally
           this.state = TcpStateEnum.ESTABLISHED;
           this.connectionQueue.push(undefined);
-          if (!this.handleSegmentData(segment)) {
+          if (this.handleSegmentData(segment) !== ProcessingResult.SUCCESS) {
             console.debug("Segment data processing failed");
             return ProcessingResult.DISCARD;
           }
@@ -353,9 +353,13 @@ export class TcpState {
     }
 
     // Process the segment data
-    if (!this.handleSegmentData(segment)) {
+    const result = this.handleSegmentData(segment);
+    if (result === ProcessingResult.DISCARD) {
       console.debug("Segment data processing failed, dropping segment");
-      return ProcessingResult.DISCARD;
+      return result;
+    } else if (result === ProcessingResult.POSTPONE) {
+      console.debug("Segment data processing postponed");
+      return result;
     }
 
     if (flags.fin) {
@@ -374,15 +378,16 @@ export class TcpState {
     dropPacket(this.srcHost.viewgraph, this.srcHost.id, frame);
   }
 
-  private handleSegmentData(segment: TcpSegment) {
-    // NOTE: for simplicity, we ignore cases where RCV.NXT != SEG.SEQ
+  private handleSegmentData(segment: TcpSegment): ProcessingResult {
     const seqNum = segment.flags.syn
       ? (segment.sequenceNumber + 1) % u32_MODULUS
       : segment.sequenceNumber;
-    if (seqNum !== this.recvNext) {
-      this.recvQueue.push(segment);
-      this.recvQueue.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-      return false;
+    if (seqNum > this.recvNext) {
+      // Postpone the segment
+      return ProcessingResult.POSTPONE;
+    } else if (seqNum < this.recvNext) {
+      // Drop the segment
+      return ProcessingResult.DISCARD;
     }
     const receivedData = segment.data;
     // NOTE: for simplicity, we ignore cases where the data is only partially
@@ -396,7 +401,7 @@ export class TcpState {
     this.recvWindow = MAX_BUFFER_SIZE - this.readBuffer.bytesAvailable();
     // We should send back an ACK segment
     this.notifySendPackets();
-    return true;
+    return ProcessingResult.SUCCESS;
   }
 
   async read(output: Uint8Array): Promise<number> {
@@ -556,8 +561,36 @@ export class TcpState {
         this.notifiedSendPackets = false;
       } else if ("segment" in result) {
         receivedSegmentPromise = this.tcpQueue.pop();
-        if (!this.handleSegment(result.segment)) {
-          this.dropSegment(result.segment);
+        let segment = result.segment;
+
+        let processingResult = this.handleSegment(segment);
+
+        if (processingResult === ProcessingResult.DISCARD) {
+          this.dropSegment(segment);
+          continue;
+        }
+
+        while (
+          processingResult !== ProcessingResult.POSTPONE &&
+          !this.recvQueue.isEmpty()
+        ) {
+          segment = this.recvQueue.dequeue();
+          processingResult = this.handleSegment(segment);
+          if (processingResult === ProcessingResult.DISCARD) {
+            this.dropSegment(segment);
+          }
+        }
+
+        if (processingResult === ProcessingResult.POSTPONE) {
+          // Enqueue the segment for later processing
+          this.recvQueue.enqueue(segment);
+        }
+
+        if (processingResult === ProcessingResult.POSTPONE) {
+          // Enqueue the segment for later processing
+          this.recvQueue.enqueue(segment);
+        } else if (processingResult === ProcessingResult.DISCARD) {
+          this.dropSegment(segment);
         }
         continue;
       } else if ("seqNum" in result) {
@@ -986,5 +1019,22 @@ class RTTEstimator {
     // Update the current sample's RTT
     // NOTE: we do this to account for the simulation's speed
     this.currentSample.rtt += ticker.elapsedMS * this.ctx.getCurrentSpeed();
+  }
+}
+
+class ReceivedSegmentsQueue {
+  private queue: TcpSegment[] = [];
+
+  enqueue(segment: TcpSegment) {
+    this.queue.push(segment);
+    this.queue.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+  }
+
+  dequeue(): TcpSegment | undefined {
+    return this.queue.shift();
+  }
+
+  isEmpty() {
+    return this.queue.length === 0;
   }
 }
