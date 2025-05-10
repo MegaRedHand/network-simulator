@@ -186,7 +186,7 @@ export class ViewHost extends ViewNetworkDevice {
       return `IP: ${this.ip.octets.join(".")}`;
     } else {
       // If we are in the upper layer, show both IP and MAC
-      return `IP: ${this.ip.octets.join(".")}\nMAC: ${this.mac.toString()}`;
+      return `IP: ${this.ip.octets.join(".")}\nMAC: ${this.mac.toCompressedString()}`;
     }
   }
 
