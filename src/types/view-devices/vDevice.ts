@@ -54,6 +54,7 @@ export function layerFromType(type: DeviceType) {
 
 export abstract class ViewDevice extends Container {
   private sprite: Sprite;
+  private tooltip: Text | null = null; // Tooltip como un Text de PIXI.js
 
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
@@ -123,6 +124,9 @@ export abstract class ViewDevice extends Container {
     // Add device ID label using the helper function
     this.addDeviceIdLabel();
 
+    // Set up tooltip behavior
+    this.setupHoverTooltip();
+
     this.on("pointerdown", this.onPointerDown, this);
     this.on("click", this.onClick, this);
     // NOTE: this is "click" for mobile devices
@@ -133,6 +137,68 @@ export abstract class ViewDevice extends Container {
   // finishes initializing.
   initialize() {
     // Do nothing
+  }
+
+  // Tooltip setup
+  private setupHoverTooltip() {
+    this.on("mouseover", () => {
+      const currentLayer = this.ctx.getCurrentLayer(); // Get the current layer from the context
+      const tooltipMessage = this.getTooltipDetails(currentLayer); // Generate the tooltip message
+      this.showTooltip(tooltipMessage); // Show the tooltip
+    });
+
+    this.on("mouseout", () => {
+      this.hideTooltip(); // Hide the tooltip
+    });
+  }
+
+  /**
+   * Abstract method to get tooltip details based on the layer.
+   * Must be implemented by derived classes.
+   */
+  abstract getTooltipDetails(layer: Layer): string;
+
+  /**
+   * Displays a tooltip with the provided message.
+   */
+  protected showTooltip(message: string) {
+    if (!this.tooltip) {
+      const textStyle = new TextStyle({
+        fontSize: 12,
+        fill: Colors.Black,
+        align: "center",
+        fontWeight: "bold",
+      });
+
+      this.tooltip = new Text({ text: message, style: textStyle });
+      this.tooltip.anchor.set(0.5); // Center the text
+      const idTextY = this.height * 0.8; // Position of the ID label
+      this.tooltip.y = idTextY + 20; // Tooltip is 20px below the ID label
+      this.addChild(this.tooltip); // Add the tooltip as a child
+    }
+
+    this.tooltip.text = message; // Update the tooltip message
+    this.tooltip.visible = true; // Show the tooltip
+  }
+
+  /**
+   * Hides the tooltip.
+   */
+  protected hideTooltip() {
+    if (this.tooltip) {
+      this.tooltip.visible = false; // Hide the tooltip
+    }
+  }
+
+  /**
+   * Removes the tooltip from the device.
+   */
+  protected removeTooltip() {
+    if (this.tooltip) {
+      this.removeChild(this.tooltip); // Remove the tooltip from the sprite
+      this.tooltip.destroy(); // Free memory
+      this.tooltip = null;
+    }
   }
 
   updateVisibility() {
@@ -267,6 +333,7 @@ export abstract class ViewDevice extends Container {
 
   destroy() {
     deselectElement();
+    this.removeTooltip(); // Remove the tooltip if it exists
     super.destroy();
   }
 }
