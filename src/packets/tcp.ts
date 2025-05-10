@@ -254,6 +254,10 @@ export class TcpSegment implements IpPayload {
       destinationPort: this.destinationPort,
     };
   }
+
+  getPayload(): string {
+    return "TCP";
+  }
 }
 
 function checkUint(n: number, numBits: number): void {
