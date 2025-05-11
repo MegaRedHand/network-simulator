@@ -38,7 +38,7 @@ export class ArpTable {
       headers: headers,
       fieldsPerRow: 2, // IP and MAC
       rows: props.rows,
-      editableColumns: [false, true], // Make all columns non-editable
+      editableColumns: [false, true],
       onEdit: onEdit,
       onDelete: onDelete,
       tableClasses: [
