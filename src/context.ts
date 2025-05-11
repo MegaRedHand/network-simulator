@@ -203,19 +203,19 @@ export class GlobalContext {
     console.log(this.datagraph);
   }
 
-  public change_select_color(color: number) {
+  setSelectColor(color: number) {
     this.selectColor = color;
   }
 
-  public get_select_color() {
+  getSelectColor() {
     return this.selectColor;
   }
 
-  public change_enable_tooltips(enabled: boolean) {
+  setEnableTooltips(enabled: boolean) {
     this.tooltipsEnabled = enabled;
   }
 
-  public get_enable_tooltips() {
+  getEnableTooltips() {
     return this.tooltipsEnabled;
   }
 }
