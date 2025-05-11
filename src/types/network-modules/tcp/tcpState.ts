@@ -845,7 +845,7 @@ class SlowStart {
     if (byteCount === 0) {
       // Duplicate ACK
       state.dupAckCount++;
-      if (state.dupAckCount === 3) {
+      if (state.dupAckCount !== 3) {
         return this;
       }
       state.ssthresh = Math.floor(state.cwnd / 2);
@@ -873,7 +873,7 @@ class CongestionAvoidance {
     if (byteCount === 0) {
       // Duplicate ACK
       state.dupAckCount++;
-      if (state.dupAckCount === 3) {
+      if (state.dupAckCount !== 3) {
         return this;
       }
       state.ssthresh = Math.floor(state.cwnd / 2);
