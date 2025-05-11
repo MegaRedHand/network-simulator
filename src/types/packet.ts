@@ -2,7 +2,9 @@ import {
   FederatedPointerEvent,
   Graphics,
   GraphicsContext,
+  TextStyle,
   Ticker,
+  Text,
 } from "pixi.js";
 import { deselectElement, isSelected, selectElement } from "./viewportManager";
 import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils/utils";
@@ -84,6 +86,7 @@ export class Packet extends Graphics {
   rawPacket: EthernetFrame;
   ctx: GlobalContext;
   belongingLayer: Layer;
+  private tooltip: Text | null = null;
 
   constructor(
     ctx: GlobalContext,
@@ -105,6 +108,7 @@ export class Packet extends Graphics {
     this.ctx = ctx;
     this.interactive = true;
     this.cursor = "pointer";
+    this.setupHoverTooltip();
     this.on("click", this.onClick, this);
     this.on("tap", this.onClick, this);
     // register in Packet Manager
@@ -318,7 +322,51 @@ export class Packet extends Graphics {
 
     // Deregister packet from PacketManager
     this.ctx.getViewGraph().getPacketManager().deregisterPacket(this.packetId);
+    this.removeTooltip();
     this.destroy();
+  }
+
+  private setupHoverTooltip() {
+    this.on("mouseover", () => {
+      this.showTooltip(this.type);
+    });
+
+    this.on("mouseout", () => {
+      this.hideTooltip();
+    });
+  }
+
+  private showTooltip(message: string) {
+    if (!this.tooltip) {
+      const textStyle = new TextStyle({
+        fontSize: 12,
+        fill: Colors.Black,
+        align: "center",
+        fontWeight: "bold",
+      });
+
+      this.tooltip = new Text({ text: message, style: textStyle });
+      this.tooltip.anchor.set(0.5);
+      this.tooltip.y = -15;
+      this.addChild(this.tooltip);
+    }
+
+    this.tooltip.text = message;
+    this.tooltip.visible = true;
+  }
+
+  private hideTooltip() {
+    if (this.tooltip) {
+      this.tooltip.visible = false;
+    }
+  }
+
+  private removeTooltip() {
+    if (this.tooltip) {
+      this.removeChild(this.tooltip);
+      this.tooltip.destroy();
+      this.tooltip = null;
+    }
   }
 }
 
