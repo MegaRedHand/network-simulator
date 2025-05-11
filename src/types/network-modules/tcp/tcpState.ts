@@ -837,21 +837,27 @@ interface CongestionControlState {
   dupAckCount: number;
 }
 
+function handleDupAck(
+  state: CongestionControlState,
+  currentState: CongestionControlStateBehavior,
+) {
+  state.dupAckCount++;
+  if (state.dupAckCount !== 3) {
+    return currentState;
+  }
+  state.ssthresh = Math.floor(state.cwnd / 2);
+  state.cwnd = state.ssthresh + 3 * MAX_SEGMENT_SIZE;
+  console.log("Triple duplicate ACK received. Switching to Fast Recovery");
+  return new FastRecovery();
+}
+
 class SlowStart {
   handleAck(
     state: CongestionControlState,
     byteCount: number,
   ): CongestionControlStateBehavior {
     if (byteCount === 0) {
-      // Duplicate ACK
-      state.dupAckCount++;
-      if (state.dupAckCount !== 3) {
-        return this;
-      }
-      state.ssthresh = Math.floor(state.cwnd / 2);
-      state.cwnd = state.ssthresh + 3 * MAX_SEGMENT_SIZE;
-      console.log("Triple duplicate ACK received. Switching to Fast Recovery");
-      return new FastRecovery();
+      return handleDupAck(state, this);
     }
     state.dupAckCount = 0;
     state.cwnd += byteCount;
@@ -871,15 +877,7 @@ class CongestionAvoidance {
     byteCount: number,
   ): CongestionControlStateBehavior {
     if (byteCount === 0) {
-      // Duplicate ACK
-      state.dupAckCount++;
-      if (state.dupAckCount !== 3) {
-        return this;
-      }
-      state.ssthresh = Math.floor(state.cwnd / 2);
-      state.cwnd = state.ssthresh + 3 * MAX_SEGMENT_SIZE;
-      console.log("Triple duplicate ACK received. Switching to Fast Recovery");
-      return new FastRecovery();
+      return handleDupAck(state, this);
     }
     state.dupAckCount = 0;
     state.cwnd += (byteCount * MAX_SEGMENT_SIZE) / state.cwnd;
