@@ -387,6 +387,8 @@ export class TcpState {
       ? (segment.sequenceNumber + 1) % u32_MODULUS
       : segment.sequenceNumber;
     if (seqNum > this.recvNext) {
+      // Send a possibly duplicate ACK
+      this.notifySendPackets();
       // Postpone the segment
       return ProcessingResult.POSTPONE;
     } else if (seqNum < this.recvNext) {
