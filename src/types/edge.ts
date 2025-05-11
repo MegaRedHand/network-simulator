@@ -1,4 +1,4 @@
-import { Graphics, Point } from "pixi.js";
+import { Graphics, Point, TextStyle, Text } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
 import { ViewDevice } from "./view-devices/index"; // Import the Device class
 import { deselectElement, selectElement } from "./viewportManager";
@@ -13,6 +13,8 @@ export class Edge extends Graphics {
   private _data: DataEdge;
   private startPos: Point;
   private endPos: Point;
+  private startTooltip: Text | null = null; // Tooltip para el extremo inicial
+  private endTooltip: Text | null = null; // Tooltip para el extremo final
 
   viewgraph: ViewGraph;
 
@@ -31,6 +33,7 @@ export class Edge extends Graphics {
     this.eventMode = "static";
     this.interactive = true;
     this.cursor = "pointer";
+    this.setupHoverTooltip();
     this.on("click", () => selectElement(this));
     // NOTE: this is "click" for mobile devices
     this.on("tap", () => selectElement(this));
@@ -38,9 +41,112 @@ export class Edge extends Graphics {
     this.refresh();
   }
 
-  /**
-   * Recomputes the edge's position based on the connected devices.
-   */
+  private setupHoverTooltip() {
+    this.on("mouseover", () => {
+      this.showTooltips();
+    });
+
+    this.on("mouseout", () => {
+      this.hideTooltips();
+    });
+  }
+
+  private showTooltips() {
+    const startIface = this.data.from.iface;
+    const endIface = this.data.to.iface;
+
+    if (!this.startTooltip) {
+      const textStyle = new TextStyle({
+        fontSize: 12,
+        fill: Colors.Black,
+        align: "center",
+        fontWeight: "bold",
+      });
+
+      this.startTooltip = new Text({
+        text: `eth${startIface}`,
+        style: textStyle,
+      });
+      this.startTooltip.anchor.set(0.5);
+      this.addChild(this.startTooltip);
+    }
+
+    if (!this.endTooltip) {
+      const textStyle = new TextStyle({
+        fontSize: 12,
+        fill: Colors.Black,
+        align: "center",
+        fontWeight: "bold",
+      });
+
+      this.endTooltip = new Text({ text: `eth${endIface}`, style: textStyle });
+      this.endTooltip.anchor.set(0.5);
+      this.addChild(this.endTooltip);
+    }
+
+    // Actualiza las posiciones de los tooltips
+    this.updateTooltipPositions();
+  }
+
+  private updateTooltipPositions() {
+    const offsetX = 20; // Desplazamiento en el eje X para alejarlo del dispositivo
+    const offsetY = -10; // Desplazamiento en el eje Y para acercarlo más a la Edge
+
+    // Determina si el extremo inicial está a la izquierda o derecha del extremo final
+    const isStartLeft = this.startPos.x < this.endPos.x;
+
+    // Verifica la visibilidad del dispositivo inicial
+    const device1 = this.viewgraph.getDevice(this.data.from.id);
+    if (this.startTooltip) {
+      if (device1 && device1.visible) {
+        // Si el dispositivo inicial es visible, actualiza la posición del tooltip
+        this.startTooltip.x =
+          this.startPos.x + (isStartLeft ? offsetX : -offsetX);
+        this.startTooltip.y = this.startPos.y + offsetY;
+        this.startTooltip.visible = true;
+      } else {
+        // Si no es visible, oculta el tooltip
+        this.startTooltip.visible = false;
+      }
+    }
+
+    // Verifica la visibilidad del dispositivo final
+    const device2 = this.viewgraph.getDevice(this.data.to.id);
+    if (this.endTooltip) {
+      if (device2 && device2.visible) {
+        // Si el dispositivo final es visible, actualiza la posición del tooltip
+        this.endTooltip.x = this.endPos.x + (isStartLeft ? -offsetX : offsetX);
+        this.endTooltip.y = this.endPos.y + offsetY;
+        this.endTooltip.visible = true;
+      } else {
+        // Si no es visible, oculta el tooltip
+        this.endTooltip.visible = false;
+      }
+    }
+  }
+
+  private hideTooltips() {
+    if (this.startTooltip) {
+      this.startTooltip.visible = false;
+    }
+    if (this.endTooltip) {
+      this.endTooltip.visible = false;
+    }
+  }
+
+  private removeTooltips() {
+    if (this.startTooltip) {
+      this.removeChild(this.startTooltip);
+      this.startTooltip.destroy();
+      this.startTooltip = null;
+    }
+    if (this.endTooltip) {
+      this.removeChild(this.endTooltip);
+      this.endTooltip.destroy();
+      this.endTooltip = null;
+    }
+  }
+
   refresh() {
     const n1 = this.data.from.id;
     const n2 = this.data.to.id;
