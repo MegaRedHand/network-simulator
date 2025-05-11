@@ -25,8 +25,11 @@ export class GlobalContext {
   private saveIntervalId: NodeJS.Timeout | null = null;
   private ipGenerator: IpAddressGenerator;
   private macGenerator: MacAddressGenerator;
+
+  // Settings
   private selectColor: number;
   private tooltipsEnabled: boolean;
+  private useTcpReno: boolean;
 
   constructor(viewport: Viewport) {
     this.selectColor = Colors.Violet;
@@ -217,5 +220,13 @@ export class GlobalContext {
 
   getEnableTooltips() {
     return this.tooltipsEnabled;
+  }
+
+  setUseTcpReno(enabled: boolean) {
+    this.useTcpReno = enabled;
+  }
+
+  getUseTcpReno() {
+    return this.useTcpReno;
   }
 }
