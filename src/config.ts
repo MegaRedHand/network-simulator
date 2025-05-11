@@ -229,13 +229,13 @@ export class ConfigModal {
     // Save the temp color as the actual selected color
     if (this.tempColor != this.selectedColor) {
       this.selectedColor = this.tempColor;
-      this.ctx.change_select_color(this.selectedColor);
+      this.ctx.setSelectColor(this.selectedColor);
     }
 
     // Save the tooltips setting
     if (this.enableTooltipsSwitch) {
       this.enableTooltips = this.tempEnableTooltips; // Save the temporary value
-      this.ctx.change_enable_tooltips(this.enableTooltips); // Update the GlobalContext
+      this.ctx.setEnableTooltips(this.enableTooltips); // Update the GlobalContext
       updateTooltipsState(); // Update tooltips state in the app
     }
 
