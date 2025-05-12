@@ -37,7 +37,7 @@ export class ArpTable {
       headers: headers,
       fieldsPerRow: 2, // IP and MAC
       rows: props.rows,
-      editableColumns: [false, true], // Make all columns non-editable
+      editableColumns: [false, true], // Make the MAC address column editable
       onEdit: onEdit,
       onDelete: onDelete,
       tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE],
@@ -167,6 +167,16 @@ export class ArpTable {
     };
 
     return { onEdit, onRegenerate, onDelete };
+  }
+
+  refreshTable(): void {
+    const updatedEntries = this.props.viewgraph
+      .getDataGraph()
+      .getArpTable(this.props.deviceId);
+
+    const updatedRows = updatedEntries.map((entry) => [entry.ip, entry.mac]);
+
+    this.updateRows(updatedRows);
   }
 }
 
