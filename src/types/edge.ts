@@ -1,4 +1,4 @@
-import { Graphics, Point, TextStyle, Text } from "pixi.js";
+import { Graphics, Point, Text } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
 import { ViewDevice } from "./view-devices/index"; // Import the Device class
 import { deselectElement, selectElement } from "./viewportManager";
@@ -8,6 +8,11 @@ import { Packet } from "./packet";
 import { EdgeInfo } from "../graphics/renderables/edge_info";
 import { DataEdge, DeviceId } from "./graphs/datagraph";
 import { MacAddress } from "../packets/ethernet";
+import {
+  hideTooltip,
+  removeTooltip,
+  showTooltip,
+} from "../graphics/renderables/canvas_tooltip_manager";
 
 export class Edge extends Graphics {
   private _data: DataEdge;
@@ -39,112 +44,6 @@ export class Edge extends Graphics {
     this.on("tap", () => selectElement(this));
 
     this.refresh();
-  }
-
-  private setupHoverTooltip() {
-    this.on("mouseover", () => {
-      this.showTooltips();
-    });
-
-    this.on("mouseout", () => {
-      this.hideTooltips();
-    });
-  }
-
-  private showTooltips() {
-    const startIface = this.data.from.iface;
-    const endIface = this.data.to.iface;
-
-    if (!this.startTooltip) {
-      const textStyle = new TextStyle({
-        fontSize: 12,
-        fill: Colors.Black,
-        align: "center",
-        fontWeight: "bold",
-      });
-
-      this.startTooltip = new Text({
-        text: `eth${startIface}`,
-        style: textStyle,
-      });
-      this.startTooltip.anchor.set(0.5);
-      this.addChild(this.startTooltip);
-    }
-
-    if (!this.endTooltip) {
-      const textStyle = new TextStyle({
-        fontSize: 12,
-        fill: Colors.Black,
-        align: "center",
-        fontWeight: "bold",
-      });
-
-      this.endTooltip = new Text({ text: `eth${endIface}`, style: textStyle });
-      this.endTooltip.anchor.set(0.5);
-      this.addChild(this.endTooltip);
-    }
-
-    // Actualiza las posiciones de los tooltips
-    this.updateTooltipPositions();
-  }
-
-  private updateTooltipPositions() {
-    const offsetX = 20; // Desplazamiento en el eje X para alejarlo del dispositivo
-    const offsetY = -10; // Desplazamiento en el eje Y para acercarlo más a la Edge
-
-    // Determina si el extremo inicial está a la izquierda o derecha del extremo final
-    const isStartLeft = this.startPos.x < this.endPos.x;
-
-    // Verifica la visibilidad del dispositivo inicial
-    const device1 = this.viewgraph.getDevice(this.data.from.id);
-    if (this.startTooltip) {
-      if (device1 && device1.visible) {
-        // Si el dispositivo inicial es visible, actualiza la posición del tooltip
-        this.startTooltip.x =
-          this.startPos.x + (isStartLeft ? offsetX : -offsetX);
-        this.startTooltip.y = this.startPos.y + offsetY;
-        this.startTooltip.visible = true;
-      } else {
-        // Si no es visible, oculta el tooltip
-        this.startTooltip.visible = false;
-      }
-    }
-
-    // Verifica la visibilidad del dispositivo final
-    const device2 = this.viewgraph.getDevice(this.data.to.id);
-    if (this.endTooltip) {
-      if (device2 && device2.visible) {
-        // Si el dispositivo final es visible, actualiza la posición del tooltip
-        this.endTooltip.x = this.endPos.x + (isStartLeft ? -offsetX : offsetX);
-        this.endTooltip.y = this.endPos.y + offsetY;
-        this.endTooltip.visible = true;
-      } else {
-        // Si no es visible, oculta el tooltip
-        this.endTooltip.visible = false;
-      }
-    }
-  }
-
-  private hideTooltips() {
-    if (this.startTooltip) {
-      this.startTooltip.visible = false;
-    }
-    if (this.endTooltip) {
-      this.endTooltip.visible = false;
-    }
-  }
-
-  private removeTooltips() {
-    if (this.startTooltip) {
-      this.removeChild(this.startTooltip);
-      this.startTooltip.destroy();
-      this.startTooltip = null;
-    }
-    if (this.endTooltip) {
-      this.removeChild(this.endTooltip);
-      this.endTooltip.destroy();
-      this.endTooltip = null;
-    }
   }
 
   refresh() {
@@ -229,6 +128,7 @@ export class Edge extends Graphics {
 
   destroy(): void {
     deselectElement();
+    this.removeTooltips();
     super.destroy();
   }
 
@@ -336,5 +236,87 @@ export class Edge extends Graphics {
       .getDataGraph()
       .getFreeInterfaces(deviceId);
     return freeIfaces;
+  }
+
+  private setupHoverTooltip() {
+    this.on("mouseover", () => {
+      this.showTooltips();
+      this.fixTooltipPositions(); // fixes the tooltip positions
+    });
+
+    this.on("mouseout", () => {
+      this.hideTooltips();
+    });
+  }
+
+  private showTooltips() {
+    const startIface = this.data.from.iface;
+    const endIface = this.data.to.iface;
+
+    const offsetX = 20;
+    const offsetY = -10;
+
+    this.startTooltip = showTooltip(
+      this,
+      `eth${startIface}`,
+      this.startPos.x + offsetX,
+      this.startPos.y + offsetY,
+      this.startTooltip,
+    );
+
+    this.endTooltip = showTooltip(
+      this,
+      `eth${endIface}`,
+      this.endPos.x - offsetX,
+      this.endPos.y + offsetY,
+      this.endTooltip,
+    );
+  }
+
+  private fixTooltipPositions() {
+    const offsetX = 20; // Offset on the X-axis to move it away from the device
+    const offsetY = -10; // Offset on the Y-axis to bring it closer to the Edge
+
+    // Determine if the start point is to the left or right of the end point
+    const isStartLeft = this.startPos.x < this.endPos.x;
+
+    // Check the visibility of the starting device
+    const device1 = this.viewgraph.getDevice(this.data.from.id);
+    if (this.startTooltip) {
+      if (device1 && device1.visible) {
+        // If the starting device is visible, update the tooltip position
+        this.startTooltip.x =
+          this.startPos.x + (isStartLeft ? offsetX : -offsetX);
+        this.startTooltip.y = this.startPos.y + offsetY;
+        this.startTooltip.visible = true;
+      } else {
+        // If not visible, hide the tooltip
+        this.startTooltip.visible = false;
+      }
+    }
+
+    // Check the visibility of the ending device
+    const device2 = this.viewgraph.getDevice(this.data.to.id);
+    if (this.endTooltip) {
+      if (device2 && device2.visible) {
+        // If the ending device is visible, update the tooltip position
+        this.endTooltip.x = this.endPos.x + (isStartLeft ? -offsetX : offsetX);
+        this.endTooltip.y = this.endPos.y + offsetY;
+        this.endTooltip.visible = true;
+      } else {
+        // If not visible, hide the tooltip
+        this.endTooltip.visible = false;
+      }
+    }
+  }
+
+  private hideTooltips() {
+    hideTooltip(this.startTooltip);
+    hideTooltip(this.endTooltip);
+  }
+
+  private removeTooltips() {
+    this.startTooltip = removeTooltip(this, this.startTooltip);
+    this.endTooltip = removeTooltip(this, this.endTooltip);
   }
 }

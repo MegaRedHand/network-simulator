@@ -2,7 +2,6 @@ import {
   FederatedPointerEvent,
   Graphics,
   GraphicsContext,
-  TextStyle,
   Ticker,
   Text,
 } from "pixi.js";
@@ -31,6 +30,11 @@ import {
   IcmpPacket,
 } from "../packets/icmp";
 import { PacketInfo } from "../graphics/renderables/packet_info";
+import {
+  hideTooltip,
+  removeTooltip,
+  showTooltip,
+} from "../graphics/renderables/canvas_tooltip_manager";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   HTTP: circleGraphicsContext(Colors.Hazel, 5), // for HTTP
@@ -86,7 +90,7 @@ export class Packet extends Graphics {
   rawPacket: EthernetFrame;
   ctx: GlobalContext;
   belongingLayer: Layer;
-  private tooltip: Text | null = null;
+  tooltip: Text | null = null;
 
   constructor(
     ctx: GlobalContext,
@@ -322,51 +326,18 @@ export class Packet extends Graphics {
 
     // Deregister packet from PacketManager
     this.ctx.getViewGraph().getPacketManager().deregisterPacket(this.packetId);
-    this.removeTooltip();
+    removeTooltip(this, this.tooltip);
     this.destroy();
   }
 
   private setupHoverTooltip() {
     this.on("mouseover", () => {
-      this.showTooltip(this.type);
+      this.tooltip = showTooltip(this, this.type, 0, -15, this.tooltip);
     });
 
     this.on("mouseout", () => {
-      this.hideTooltip();
+      hideTooltip(this.tooltip);
     });
-  }
-
-  private showTooltip(message: string) {
-    if (!this.tooltip) {
-      const textStyle = new TextStyle({
-        fontSize: 12,
-        fill: Colors.Black,
-        align: "center",
-        fontWeight: "bold",
-      });
-
-      this.tooltip = new Text({ text: message, style: textStyle });
-      this.tooltip.anchor.set(0.5);
-      this.tooltip.y = -15;
-      this.addChild(this.tooltip);
-    }
-
-    this.tooltip.text = message;
-    this.tooltip.visible = true;
-  }
-
-  private hideTooltip() {
-    if (this.tooltip) {
-      this.tooltip.visible = false;
-    }
-  }
-
-  private removeTooltip() {
-    if (this.tooltip) {
-      this.removeChild(this.tooltip);
-      this.tooltip.destroy();
-      this.tooltip = null;
-    }
   }
 }
 
