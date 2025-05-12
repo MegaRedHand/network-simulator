@@ -25,5 +25,9 @@ export const ALERT_MESSAGES = {
   SWITCHING_TABLE_REGENERATED: "Switching table regenerated successfully.",
   SWITCHING_TABLE_REGENERATE_FAILED: "Failed to regenerate switching table.",
   INVALID_PORT:
-    "Invalid port number. Expected format: XX where XX is a number between 0 and 65535.",
+    "Invalid port number. Expected format: XX where XX is a positive number",
+  INEXISTENT_PORT: (deviceId: string) =>
+    `Port ${deviceId} does not exist. Please verify the switching table.`,
+  NON_NEIGHBOR_PORT: (deviceId: string) =>
+    `Port ${deviceId} is not a neighbor. Please verify the switching table.`,
 };

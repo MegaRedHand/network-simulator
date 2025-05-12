@@ -178,9 +178,9 @@ export class SwitchingTable {
 }
 
 function isValidPortNumber(port: string): boolean {
-  // verify if the port is a number between 0 and 65535
+  // verify if the port is a number
   const portNumber = parseInt(port, 10);
-  const isValid = !isNaN(portNumber) && portNumber > 0 && portNumber <= 65535;
+  const isValid = !isNaN(portNumber) && portNumber > 0;
 
   if (!isValid) {
     showError(ALERT_MESSAGES.INVALID_PORT);

@@ -29,6 +29,8 @@ import {
   IcmpPacket,
 } from "../packets/icmp";
 import { PacketInfo } from "../graphics/renderables/packet_info";
+import { showWarning } from "../graphics/renderables/alert_manager";
+import { ALERT_MESSAGES } from "../utils/constants/alert_constants";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   HTTP: circleGraphicsContext(Colors.Hazel, 5), // for HTTP
@@ -355,6 +357,27 @@ export function sendViewPacket(
       );
     });
   }
+
+  if (nextHopId) {
+    const nextHopDevice = viewgraph.getDevice(nextHopId);
+
+    // Verify if the next hop is a valid device
+    if (!nextHopDevice) {
+      showWarning(ALERT_MESSAGES.INEXISTENT_PORT(nextHopId.toString()));
+      return;
+    }
+
+    // Verify if the next hop is a valid connection
+    const isNeighbor = viewgraph
+      .getConnections(srcId)
+      .some((edge) => edge.otherEnd(srcId) === nextHopId);
+
+    if (!isNeighbor) {
+      showWarning(ALERT_MESSAGES.NON_NEIGHBOR_PORT(nextHopId.toString()));
+      return;
+    }
+  }
+
   if (firstEdge === undefined && !nextHopId) {
     console.warn(
       "El dispositivo de origen no está conectado al destino, a un router o a un switch.",
