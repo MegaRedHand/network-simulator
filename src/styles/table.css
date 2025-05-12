@@ -1,59 +1,56 @@
-/* Common styles for both tables */
-.table-base {
+/* CONTAINER that allows horizontal scroll if needed */
+.right-bar-table-container {
+  overflow-x: auto;
+  display: block;
+  border-radius: 1rem;
   width: 100%;
+}
+
+/* TABLE that adapts: fills 100% if it fits, but can expand beyond */
+.right-bar-table {
+  min-width: 100%; /* At least fills the container */
+  width: max-content; /* Expands to fit content if needed */
   border-collapse: collapse;
   font-size: 1rem;
   text-align: center;
   border-radius: 1rem;
   box-shadow: 0 0.5vh 1vh rgba(0, 0, 0, 0.1);
   clip-path: inset(0 round 1rem);
-  overflow-x: auto;
 }
 
-/* Common cell styles */
-.table-base th,
-.table-base td {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  white-space: normal;
-  padding: 1vh;
-  border: 0.2vh solid #ddd;
-  text-align: center;
-}
-
-.table-base th {
+/* TABLE HEADER */
+.right-bar-table th {
   background-color: #333;
   color: white;
+  padding: 1vh;
+  border: 0.2vh solid #ddd;
   box-sizing: border-box;
+  white-space: nowrap; /* Prevents line breaks in headers */
 }
 
-.table-base td {
+/* TABLE CELLS */
+.right-bar-table td {
+  padding: 1vh;
+  border: 0.2vh solid #ddd;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  white-space: nowrap; /* Prevents breaking key content */
   transition: background-color 0.3s ease-in-out;
 }
 
-.table-base td:hover {
+/* HOVER effect for cells */
+.right-bar-table td:hover {
   background-color: #f0f0f0;
   cursor: pointer;
 }
 
-/* TCP FLAGS TABLE specific styles */
-.tcp-flags-table {
-  display: table;
-  table-layout: auto;
-}
-
-.tcp-flags-table tr:nth-child(even) {
+/* ALTERNATE ROW COLORS */
+.right-bar-table tr:nth-child(even) {
   background-color: #f9f9f9;
 }
 
-.tcp-flags-table tr:nth-child(odd) {
+.right-bar-table tr:nth-child(odd) {
   background-color: #fff;
-}
-
-/* TCP table container for proper scrolling */
-.tcp-flags-table-container {
-  overflow-x: auto;
-  border-radius: 1rem;
 }
 
 /* ROUTER TABLE specific styles */

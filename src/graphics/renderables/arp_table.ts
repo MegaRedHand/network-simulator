@@ -21,7 +21,6 @@ export class ArpTable {
 
   constructor(private props: ArpTableProps) {
     this.container = document.createElement("div");
-    this.container.className = CSS_CLASSES.ROUTING_TABLE_CONTAINER;
 
     const { onEdit, onRegenerate, onDelete } = this.setArpTableCallbacks();
 
@@ -38,14 +37,10 @@ export class ArpTable {
       headers: headers,
       fieldsPerRow: 2, // IP and MAC
       rows: props.rows,
-      editableColumns: [false, true],
+      editableColumns: [false, true], // Make the MAC address column editable
       onEdit: onEdit,
       onDelete: onDelete,
-      tableClasses: [
-        CSS_CLASSES.TABLE,
-        CSS_CLASSES.RIGHT_BAR_TABLE,
-        CSS_CLASSES.ARP_TABLE,
-      ],
+      tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE],
     });
 
     this.toggleButton = new ToggleButton({
