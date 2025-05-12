@@ -66,6 +66,8 @@ export const TOOLTIP_KEYS = {
   IP_REQUEST: "IP to Request",
   ARP_TABLE: "ARP Table",
   IFACE_EDITOR: "iface-editor",
+  PORT: "Port",
+  SWITCHING_TABLE: "Switching Table",
 } as const;
 
 // Tooltip Content
@@ -188,4 +190,8 @@ export const TOOLTIP_CONTENT = {
     "The ARP (Address Resolution Protocol) table maps IP addresses to MAC addresses. It is used to resolve the hardware address of a device in the same local network.",
   [TOOLTIP_KEYS.IFACE_EDITOR]:
     "Modify the network interface used by this device.",
+  [TOOLTIP_KEYS.PORT]:
+    "The port in the switching table refers to the physical or logical interface on the switch where a device is connected. It is used to forward frames to the correct destination based on the MAC address.",
+  [TOOLTIP_KEYS.SWITCHING_TABLE]:
+    "The switching table is a data structure used by switches to map MAC addresses to specific ports. It helps the switch determine where to forward incoming frames based on their destination MAC address.",
 } as const;

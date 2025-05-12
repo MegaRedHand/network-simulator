@@ -21,4 +21,9 @@ export const ALERT_MESSAGES = {
   ARP_TABLE_REGENERATE_FAILED: "Failed to regenerate ARP table.",
   INVALID_MAC:
     "Invalid MAC address format. Expected format: XX:XX:XX:XX:XX:XX.",
+  SWITCHING_TABLE_CLEARED: "Switching table cleared successfully.",
+  SWITCHING_TABLE_REGENERATED: "Switching table regenerated successfully.",
+  SWITCHING_TABLE_REGENERATE_FAILED: "Failed to regenerate switching table.",
+  INVALID_PORT:
+    "Invalid port number. Expected format: XX where XX is a number between 0 and 65535.",
 };
