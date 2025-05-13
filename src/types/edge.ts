@@ -1,4 +1,4 @@
-import { Graphics, Point } from "pixi.js";
+import { Graphics, Point, Text } from "pixi.js";
 import { ViewGraph } from "./graphs/viewgraph";
 import { ViewDevice } from "./view-devices/index"; // Import the Device class
 import { deselectElement, selectElement } from "./viewportManager";
@@ -9,12 +9,19 @@ import { EdgeInfo } from "../graphics/renderables/edge_info";
 import { DataEdge, DeviceId } from "./graphs/datagraph";
 import { MacAddress } from "../packets/ethernet";
 import { MultiEdgeInfo } from "../graphics/renderables/multi_edge_info";
+import {
+  hideTooltip,
+  removeTooltip,
+  showTooltip,
+} from "../graphics/renderables/canvas_tooltip_manager";
 
 export class Edge extends Graphics {
   private _data: DataEdge;
   private startPos: Point;
   private endPos: Point;
   private highlightedEdges: Edge[] = [];
+  private startTooltip: Text | null = null; // Tooltip para el extremo inicial
+  private endTooltip: Text | null = null; // Tooltip para el extremo final
 
   viewgraph: ViewGraph;
 
@@ -33,6 +40,7 @@ export class Edge extends Graphics {
     this.eventMode = "static";
     this.interactive = true;
     this.cursor = "pointer";
+    this.setupHoverTooltip();
     this.on("click", () => selectElement(this));
     // NOTE: this is "click" for mobile devices
     this.on("tap", () => selectElement(this));
@@ -40,9 +48,6 @@ export class Edge extends Graphics {
     this.refresh();
   }
 
-  /**
-   * Recomputes the edge's position based on the connected devices.
-   */
   refresh() {
     const n1 = this.data.from.id;
     const n2 = this.data.to.id;
@@ -136,6 +141,7 @@ export class Edge extends Graphics {
 
   destroy(): void {
     deselectElement();
+    this.removeTooltips();
     super.destroy();
   }
 
@@ -247,5 +253,87 @@ export class Edge extends Graphics {
       .getDataGraph()
       .getFreeInterfaces(deviceId);
     return freeIfaces;
+  }
+
+  private setupHoverTooltip() {
+    this.on("mouseover", () => {
+      this.showTooltips();
+      this.fixTooltipPositions(); // fixes the tooltip positions
+    });
+
+    this.on("mouseout", () => {
+      this.hideTooltips();
+    });
+  }
+
+  private showTooltips() {
+    const startIface = this.data.from.iface;
+    const endIface = this.data.to.iface;
+
+    const offsetX = 20;
+    const offsetY = -10;
+
+    this.startTooltip = showTooltip(
+      this,
+      `eth${startIface}`,
+      this.startPos.x + offsetX,
+      this.startPos.y + offsetY,
+      this.startTooltip,
+    );
+
+    this.endTooltip = showTooltip(
+      this,
+      `eth${endIface}`,
+      this.endPos.x - offsetX,
+      this.endPos.y + offsetY,
+      this.endTooltip,
+    );
+  }
+
+  private fixTooltipPositions() {
+    const offsetX = 20; // Offset on the X-axis to move it away from the device
+    const offsetY = -10; // Offset on the Y-axis to bring it closer to the Edge
+
+    // Determine if the start point is to the left or right of the end point
+    const isStartLeft = this.startPos.x < this.endPos.x;
+
+    // Check the visibility of the starting device
+    const device1 = this.viewgraph.getDevice(this.data.from.id);
+    if (this.startTooltip) {
+      if (device1 && device1.visible) {
+        // If the starting device is visible, update the tooltip position
+        this.startTooltip.x =
+          this.startPos.x + (isStartLeft ? offsetX : -offsetX);
+        this.startTooltip.y = this.startPos.y + offsetY;
+        this.startTooltip.visible = true;
+      } else {
+        // If not visible, hide the tooltip
+        this.startTooltip.visible = false;
+      }
+    }
+
+    // Check the visibility of the ending device
+    const device2 = this.viewgraph.getDevice(this.data.to.id);
+    if (this.endTooltip) {
+      if (device2 && device2.visible) {
+        // If the ending device is visible, update the tooltip position
+        this.endTooltip.x = this.endPos.x + (isStartLeft ? -offsetX : offsetX);
+        this.endTooltip.y = this.endPos.y + offsetY;
+        this.endTooltip.visible = true;
+      } else {
+        // If not visible, hide the tooltip
+        this.endTooltip.visible = false;
+      }
+    }
+  }
+
+  private hideTooltips() {
+    hideTooltip(this.startTooltip);
+    hideTooltip(this.endTooltip);
+  }
+
+  private removeTooltips() {
+    this.startTooltip = removeTooltip(this, this.startTooltip);
+    this.endTooltip = removeTooltip(this, this.endTooltip);
   }
 }
