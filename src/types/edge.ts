@@ -13,6 +13,7 @@ export class Edge extends Graphics {
   private _data: DataEdge;
   private startPos: Point;
   private endPos: Point;
+  private highlightedEdges: Edge[] = [];
 
   viewgraph: ViewGraph;
 
@@ -99,12 +100,19 @@ export class Edge extends Graphics {
   }
 
   select() {
-    this.highlight();
+    this.highlightedEdges = this.viewgraph.findConnectedEdges(this);
+    this.highlightedEdges.forEach((edge) => edge.highlight());
     this.showInfo();
   }
 
   deselect() {
-    this.removeHighlight();
+    // remove highlight from all edges
+    if (this.highlightedEdges && this.highlightedEdges.length > 0) {
+      this.highlightedEdges.forEach((edge) => edge.removeHighlight());
+      this.highlightedEdges = [];
+    } else {
+      this.removeHighlight();
+    }
   }
 
   highlight() {

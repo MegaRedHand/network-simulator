@@ -484,6 +484,33 @@ export class ViewGraph {
     }
     this.graph.clear();
   }
+
+  /**
+   * Finds all edges connected to the given edge, ignoring nodes that are not visible.
+   */
+  findConnectedEdges(edge: Edge): Edge[] {
+    const visitedEdges = new Set<Edge>();
+    const queue: Edge[] = [edge];
+
+    while (queue.length > 0) {
+      const currentEdge = queue.shift();
+      if (!currentEdge || visitedEdges.has(currentEdge)) continue;
+      visitedEdges.add(currentEdge);
+
+      for (const nodeId of currentEdge.getDeviceIds()) {
+        const device = this.getDevice(nodeId);
+        if (device && !device.visible) {
+          const edges = this.getConnections(nodeId);
+          for (const e of edges) {
+            if (!visitedEdges.has(e)) {
+              queue.push(e);
+            }
+          }
+        }
+      }
+    }
+    return Array.from(visitedEdges);
+  }
 }
 
 function layerDFS(
