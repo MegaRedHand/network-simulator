@@ -48,6 +48,12 @@ export function deselectElement() {
   }
 }
 
+export function isSelectedElementVisible() {
+  if (selectedElement) {
+    return selectedElement.isVisible();
+  }
+}
+
 export function refreshElement() {
   if (selectedElement) {
     // Deselect the current element and then reselect it to refresh
