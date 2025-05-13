@@ -146,7 +146,6 @@ export abstract class ViewDevice extends Container {
 
   private setupHoverTooltip() {
     this.on("mouseover", () => {
-      console.log("Mouse over detected on vDevice");
       const currentLayer = this.ctx.getCurrentLayer();
       const tooltipMessage = this.getTooltipDetails(currentLayer);
       this.tooltip = showTooltip(
@@ -159,7 +158,6 @@ export abstract class ViewDevice extends Container {
     });
 
     this.on("mouseout", () => {
-      console.log("Mouse out detected on vDevice");
       hideTooltip(this.tooltip);
     });
   }
