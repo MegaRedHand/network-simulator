@@ -162,6 +162,10 @@ export class Edge extends Graphics {
     this.visible = device1CanReachVisibleDevice && device2CanReachVisibleDevice;
   }
 
+  isVisible(): boolean {
+    return this.visible;
+  }
+
   /**
    * Updates the position of an edge connecting two devices, taking into account their visibility
    * and dimensions. If a device is visible, the edge will leave a space around the device's center

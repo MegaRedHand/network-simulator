@@ -1,7 +1,11 @@
 import { GlobalContext } from "../context";
 import { LeftBar } from "../graphics/left_bar";
 import { layerToName } from "../types/layer";
-import { deselectElement, saveToLocalStorage } from "../types/viewportManager";
+import {
+  deselectElement,
+  isSelectedElementVisible,
+  saveToLocalStorage,
+} from "../types/viewportManager";
 import {
   Dropdown,
   DropdownOption,
@@ -82,10 +86,12 @@ export class LayerHandler {
     this.ctx.changeLayer(selectedLayer);
     saveToLocalStorage(this.ctx);
     this.leftBar.setButtonsByLayer(selectedLayer);
-    deselectElement();
+    if (!isSelectedElementVisible()) {
+      deselectElement();
+    }
 
     if (showAlert) {
-      showSuccess(ALERT_MESSAGES.LAYER_CHANGED, 7000);
+      showSuccess(ALERT_MESSAGES.LAYER_CHANGED, 5000);
     }
   }
 }

@@ -174,6 +174,10 @@ export abstract class ViewDevice extends Container {
     this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());
   }
 
+  isVisible(): boolean {
+    return this.visible;
+  }
+
   // Function to add the ID label to the device
   addDeviceIdLabel() {
     const textStyle = new TextStyle({
