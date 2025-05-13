@@ -72,7 +72,7 @@ export class PacketInfo extends BaseInfo {
   }
 
   protected addCommonButtons(): void {
-    // Botón para descartar el paquete
+    this.addDivider();
     const discardPacketButton = new Button({
       text: TOOLTIP_KEYS.DISCARD_PACKET_BUTTON,
       onClick: () => {
@@ -86,18 +86,16 @@ export class PacketInfo extends BaseInfo {
       tooltip: TOOLTIP_KEYS.DISCARD_PACKET_BUTTON,
     });
 
-    // Agregar el botón al array de inputFields
     this.inputFields.push(discardPacketButton.toHTML());
+    this.addDivider();
   }
 
   private addToggleInfo(): void {
-    // Obtener los detalles del paquete
     const packetDetails = this.packet.getPacketDetails(
       this.packet.viewgraph.getLayer(),
       this.packet.rawPacket,
     );
 
-    // Crear un ToggleInfo para los detalles del paquete
     const toggleInfo = new ToggleInfo({
       title: "Packet Details",
       fields: Object.entries(packetDetails).map(([key, value]) => ({
@@ -110,7 +108,6 @@ export class PacketInfo extends BaseInfo {
       },
     });
 
-    // Agregar el ToggleInfo al array de inputFields
     this.inputFields.push(toggleInfo.toHTML());
   }
 }

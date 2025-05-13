@@ -8,6 +8,7 @@ import { Packet } from "./packet";
 import { EdgeInfo } from "../graphics/renderables/edge_info";
 import { DataEdge, DeviceId } from "./graphs/datagraph";
 import { MacAddress } from "../packets/ethernet";
+import { MultiEdgeInfo } from "../graphics/renderables/multi_edge_info";
 
 export class Edge extends Graphics {
   private _data: DataEdge;
@@ -123,10 +124,14 @@ export class Edge extends Graphics {
     this.drawEdge(this.startPos, this.endPos, Colors.Lightblue);
   }
 
-  // Method to show the Edge information
   showInfo() {
-    const edgeInfo = new EdgeInfo(this);
-    RightBar.getInstance().renderInfo(edgeInfo);
+    if (this.highlightedEdges && this.highlightedEdges.length > 1) {
+      const multiEdgeInfo = new MultiEdgeInfo(this.highlightedEdges);
+      RightBar.getInstance().renderInfo(multiEdgeInfo);
+    } else {
+      const edgeInfo = new EdgeInfo(this);
+      RightBar.getInstance().renderInfo(edgeInfo);
+    }
   }
 
   destroy(): void {
