@@ -135,6 +135,10 @@ export class Packet extends Graphics {
     return rawPacket.getDetails(layer);
   }
 
+  isVisible(): boolean {
+    return this.visible;
+  }
+
   getPacketLocation(): PacketLocation {
     return {
       startId: this.currStart,
