@@ -48,10 +48,11 @@ export function deselectElement() {
   }
 }
 
-export function isSelectedElementVisible() {
+export function isSelectedElementVisible(): boolean {
   if (selectedElement) {
     return selectedElement.isVisible();
   }
+  return false;
 }
 
 export function refreshElement() {
