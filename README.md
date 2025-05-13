@@ -33,7 +33,7 @@ The left bar contains buttons to add devices to the network. You can add the fol
 In order to add a device, just click on the corresponding button and the selected device will appear in the center of the canvas.
 Depending on the selected layer, different devices will be added.
 
-![alt text](./img/2025-05-11_17-31-15.gif)
+![alt text](./img/Add_device.gif)
 
 ### Right Bar
 
