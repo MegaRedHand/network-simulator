@@ -205,7 +205,7 @@ export abstract class ViewDevice extends Container {
     this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());
   }
 
-  isVisible() {
+  isVisible(): boolean {
     return this.visible;
   }
 

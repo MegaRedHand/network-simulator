@@ -133,7 +133,7 @@ export class Packet extends Graphics {
     return rawPacket.getDetails(layer);
   }
 
-  isVisible() {
+  isVisible(): boolean {
     return this.visible;
   }
 
