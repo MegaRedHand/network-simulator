@@ -113,12 +113,8 @@ export class Edge extends Graphics {
 
   deselect() {
     // remove highlight from all edges
-    if (this.highlightedEdges && this.highlightedEdges.length > 0) {
-      this.highlightedEdges.forEach((edge) => edge.removeHighlight());
-      this.highlightedEdges = [];
-    } else {
-      this.removeHighlight();
-    }
+    this.highlightedEdges.forEach((edge) => edge.removeHighlight());
+    this.highlightedEdges = [];
   }
 
   highlight() {
