@@ -75,6 +75,34 @@ and some configuration options.
 
 ### Canvas
 
+This is the main area where the network is displayed. You can drag devices to move them around the canvas and zoom in and out using the mouse wheel.
+
+There are also some controls of the packet simulation, which are located on the top of the canvas. These controls are:
+
+- **Play/Pause**: Start or stop the packet flow on the network.
+- **Undo/Redo**: Undo or redo the last action in case you made a mistake.
+- **Packet Speed Wheel**: Change the speed of the packets on the network. This is a slider that sets a multiplier to the speed of the packets. The default value is 1, which means that the packets will be sent at normal speed. You can set it up to 0.5 to slow down the packets or up to 4 to speed them up.
+- **Layer Dropdown**: Change the layer of the network. When selecting a new layer, the network and the simulator functionalities will change as well. Setting a new layer may change:
+  - The devices that can be added to the network.
+  - The information shown in the right bar.
+  - The packets shown in the network.
+  - The devices visible in the network.
+  
+  This creates a focused view that will help you understand each networking layer independently.
+  
+
+The available layers are:
+  - App Layer
+  - Transport Layer
+  - Network Layer
+  - Link Layer
+
+
+<p align="center">
+  <img src="./img/5_Canvas_Overview.gif" alt="Canvas Overview" />
+</p>
+
+
 ## Development
 
 To run the local development server, use `npm run start`
