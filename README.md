@@ -15,6 +15,7 @@ You can access it [here](https://megaredhand.github.io/network-simulator/).
 Welcome to the GEduNet simulator! This application is designed to help you visualize and understand computer networks.
 
 GEduNet consists of 4 main components on screen:
+
 1. Right bar: Shows information about the selected device.
 2. Left bar: Contains buttons to add devices to the network.
 3. Canvas: The main area where the network is displayed.
@@ -22,8 +23,8 @@ GEduNet consists of 4 main components on screen:
 
 ![Components of the App](./img/1_Start_Colores.jpg)
 
-
 ### Left Bar
+
 The left bar contains buttons to add devices to the network. You can add the following devices:
 
 - **Host**: A computer or device that connects to the network.
@@ -36,14 +37,14 @@ In order to add a device, just click on the corresponding button and the selecte
   <img src="./img/2_Add_device.gif" alt="Adding a Device" />
 </p>
 
-Depending on the selected layer, different devices will be added to the leftbar. This is to properly distinguish which devices 
+Depending on the selected layer, different devices will be added to the leftbar. This is to properly distinguish which devices
 are involved on the different layers.
 The device distribution is as follows:
+
 - **App Layer**: Host
-- **Transport Layer**: Host 
+- **Transport Layer**: Host
 - **Network Layer**: Host and Router
 - **Link Layer**: Host, Router and Switch
-
 
 ### Right Bar
 
@@ -52,11 +53,9 @@ the chosen layer. This section also shows data of the network edges and packets.
 
 To see the information of a device, edge or packet, just click on it and the right bar will update to show the information of the selected device.
 
-
 <p align="center">
   <img src="./img/3_Select_Device.gif" alt="Selecting Device" />
 </p>
-
 
 ### Top Bar
 
@@ -67,7 +66,7 @@ This section contains the simulation file controls. This includes the following 
 - **Load**: Load a network from a JSON file of your own.
 - **Print**: Take a snapshot of the current network and save it as a .png image.
 
-On the right side of the top bar, you can find the help button. This button will open a modal with a list of different shortcuts 
+On the right side of the top bar, you can find the help button. This button will open a modal with a list of different shortcuts
 and some configuration options.
 
 <p align="center">
@@ -75,8 +74,6 @@ and some configuration options.
 </p>
 
 ### Canvas
-
-
 
 ## Development
 
