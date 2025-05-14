@@ -22,6 +22,10 @@ export class Edge extends Graphics {
   private highlightedEdges: Edge[] = [];
   private startTooltip: Text | null = null; // Tooltip para el extremo inicial
   private endTooltip: Text | null = null; // Tooltip para el extremo final
+  private tooltipGroup: Edge[] = [];
+  private isTooltipGroupActive = false;
+  private _groupMouseOverHandler?: () => void;
+  private _groupMouseOutHandler?: () => void;
 
   viewgraph: ViewGraph;
 
@@ -256,14 +260,54 @@ export class Edge extends Graphics {
   }
 
   private setupHoverTooltip() {
-    this.on("mouseover", () => {
-      this.showTooltips();
-      this.fixTooltipPositions(); // fixes the tooltip positions
-    });
+    this.on("mouseover", () => this.activateTooltipGroup());
+    this.on("mouseout", () => this.deactivateTooltipGroup());
+  }
 
-    this.on("mouseout", () => {
-      this.hideTooltips();
+  private activateTooltipGroup() {
+    // if the tooltip group is already active, do nothing
+    if (this.isTooltipGroupActive) return;
+
+    // clear previous tooltip group
+    if (this.tooltipGroup && this.tooltipGroup.length > 0) {
+      this.tooltipGroup.forEach((edge) => {
+        edge.isTooltipGroupActive = false;
+        if (edge._groupMouseOverHandler)
+          edge.off("mouseover", edge._groupMouseOverHandler);
+        if (edge._groupMouseOutHandler)
+          edge.off("mouseout", edge._groupMouseOutHandler);
+      });
+    }
+
+    // set the new tooltip group
+    const group = this.viewgraph.findConnectedEdges(this);
+
+    this.tooltipGroup = group;
+
+    // set the tooltip group to all edges in the group
+    group.forEach((edge) => {
+      edge._groupMouseOverHandler = () => edge.activateTooltipGroup();
+      edge._groupMouseOutHandler = () => edge.deactivateTooltipGroup();
+
+      edge.off("mouseover", edge._groupMouseOverHandler);
+      edge.off("mouseout", edge._groupMouseOutHandler);
+
+      edge.on("mouseover", edge._groupMouseOverHandler);
+      edge.on("mouseout", edge._groupMouseOutHandler);
+
+      edge.isTooltipGroupActive = true;
+      edge.showTooltips();
+      edge.fixTooltipPositions();
     });
+  }
+
+  private deactivateTooltipGroup() {
+    if (this.tooltipGroup && this.tooltipGroup.length > 0) {
+      this.tooltipGroup.forEach((edge) => {
+        edge.isTooltipGroupActive = false;
+        edge.hideTooltips();
+      });
+    }
   }
 
   private showTooltips() {
