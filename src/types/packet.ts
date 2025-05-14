@@ -3,6 +3,7 @@ import {
   Graphics,
   GraphicsContext,
   Ticker,
+  Text,
 } from "pixi.js";
 import { deselectElement, isSelected, selectElement } from "./viewportManager";
 import { circleGraphicsContext, Colors, ZIndexLevels } from "../utils/utils";
@@ -31,6 +32,11 @@ import {
 import { PacketInfo } from "../graphics/renderables/packet_info";
 import { showWarning } from "../graphics/renderables/alert_manager";
 import { ALERT_MESSAGES } from "../utils/constants/alert_constants";
+import {
+  hideTooltip,
+  removeTooltip,
+  showTooltip,
+} from "../graphics/renderables/canvas_tooltip_manager";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
   HTTP: circleGraphicsContext(Colors.Hazel, 5), // for HTTP
@@ -86,6 +92,7 @@ export class Packet extends Graphics {
   rawPacket: EthernetFrame;
   ctx: GlobalContext;
   belongingLayer: Layer;
+  tooltip: Text | null = null;
 
   constructor(
     ctx: GlobalContext,
@@ -107,6 +114,7 @@ export class Packet extends Graphics {
     this.ctx = ctx;
     this.interactive = true;
     this.cursor = "pointer";
+    this.setupHoverTooltip();
     this.on("click", this.onClick, this);
     this.on("tap", this.onClick, this);
     // register in Packet Manager
@@ -324,7 +332,18 @@ export class Packet extends Graphics {
 
     // Deregister packet from PacketManager
     this.ctx.getViewGraph().getPacketManager().deregisterPacket(this.packetId);
+    removeTooltip(this, this.tooltip);
     this.destroy();
+  }
+
+  private setupHoverTooltip() {
+    this.on("mouseover", () => {
+      this.tooltip = showTooltip(this, this.type, 0, -15, this.tooltip);
+    });
+
+    this.on("mouseout", () => {
+      hideTooltip(this.tooltip);
+    });
   }
 }
 

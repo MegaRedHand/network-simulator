@@ -18,8 +18,10 @@ export const TOOLTIP_KEYS = {
   PROGRAM: "Program",
   SEND_ICMP_ECHO: "Send ICMP echo",
   ECHO_SERVER: "Echo server",
-  DESTINATION: "Destination",
   SEND_HTTP_REQUEST: "Send HTTP request",
+  SERVE_HTTP_REQUESTS: "Serve HTTP requests",
+  SEND_ARP_REQUEST: "Send ARP request",
+  DESTINATION: "Destination",
   TIME_BETWEEN_PINGS: "Time between pings",
   NAME: "Name",
   PID: "PID",
@@ -194,4 +196,8 @@ export const TOOLTIP_CONTENT = {
     "The port in the switching table refers to the physical or logical interface on the switch where a device is connected. It is used to forward frames to the correct destination based on the MAC address. This should not be confused with the 'port' used in transport layer protocols (such as TCP/UDP port numbers), which identify specific applications or services.",
   [TOOLTIP_KEYS.SWITCHING_TABLE]:
     "The switching table is a data structure used by switches to map MAC addresses to specific ports. It helps the switch determine where to forward incoming frames based on their destination MAC address.",
+  [TOOLTIP_KEYS.SEND_ARP_REQUEST]:
+    "Send an ARP request to a specified IP address. This command is used to resolve the MAC address of a device in the same local network.",
+  [TOOLTIP_KEYS.SERVE_HTTP_REQUESTS]:
+    "Serve HTTP requests to clients. This command is used to respond to incoming HTTP requests with the appropriate data.",
 } as const;

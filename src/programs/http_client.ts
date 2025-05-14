@@ -6,10 +6,11 @@ import { Layer } from "../types/layer";
 import { AsyncQueue } from "../types/network-modules/asyncQueue";
 import { TcpSocket } from "../types/network-modules/tcpModule";
 import { ViewHost } from "../types/view-devices";
+import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 import { ProgramBase } from "./program_base";
 
 export class HttpClient extends ProgramBase {
-  static readonly PROGRAM_NAME = "Send HTTP request";
+  static readonly PROGRAM_NAME = TOOLTIP_KEYS.SEND_HTTP_REQUEST;
 
   private dstId: DeviceId;
 
@@ -88,7 +89,7 @@ export class HttpClient extends ProgramBase {
 }
 
 export class HttpServer extends ProgramBase {
-  static readonly PROGRAM_NAME = "Serve HTTP requests";
+  static readonly PROGRAM_NAME = TOOLTIP_KEYS.SERVE_HTTP_REQUESTS;
 
   private port: number;
 

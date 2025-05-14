@@ -4,6 +4,7 @@ import { layerToName } from "../types/layer";
 import {
   deselectElement,
   isSelectedElementVisible,
+  refreshElement,
   saveToLocalStorage,
 } from "../types/viewportManager";
 import {
@@ -88,6 +89,8 @@ export class LayerHandler {
     this.leftBar.setButtonsByLayer(selectedLayer);
     if (!isSelectedElementVisible()) {
       deselectElement();
+    } else {
+      refreshElement();
     }
 
     if (showAlert) {
