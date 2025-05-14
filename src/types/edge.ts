@@ -23,7 +23,6 @@ export class Edge extends Graphics {
   private startTooltip: Text | null = null; // Tooltip para el extremo inicial
   private endTooltip: Text | null = null; // Tooltip para el extremo final
   private tooltipGroup: Edge[] = [];
-  private isTooltipGroupActive = false;
   private _groupMouseOverHandler?: () => void;
   private _groupMouseOutHandler?: () => void;
 
@@ -265,20 +264,6 @@ export class Edge extends Graphics {
   }
 
   private activateTooltipGroup() {
-    // if the tooltip group is already active, do nothing
-    if (this.isTooltipGroupActive) return;
-
-    // clear previous tooltip group
-    if (this.tooltipGroup && this.tooltipGroup.length > 0) {
-      this.tooltipGroup.forEach((edge) => {
-        edge.isTooltipGroupActive = false;
-        if (edge._groupMouseOverHandler)
-          edge.off("mouseover", edge._groupMouseOverHandler);
-        if (edge._groupMouseOutHandler)
-          edge.off("mouseout", edge._groupMouseOutHandler);
-      });
-    }
-
     // set the new tooltip group
     const group = this.viewgraph.findConnectedEdges(this);
 
@@ -289,13 +274,13 @@ export class Edge extends Graphics {
       edge._groupMouseOverHandler = () => edge.activateTooltipGroup();
       edge._groupMouseOutHandler = () => edge.deactivateTooltipGroup();
 
+      // prevent multiple handlers
       edge.off("mouseover", edge._groupMouseOverHandler);
       edge.off("mouseout", edge._groupMouseOutHandler);
 
       edge.on("mouseover", edge._groupMouseOverHandler);
       edge.on("mouseout", edge._groupMouseOutHandler);
 
-      edge.isTooltipGroupActive = true;
       edge.showTooltips();
       edge.fixTooltipPositions();
     });
@@ -304,7 +289,10 @@ export class Edge extends Graphics {
   private deactivateTooltipGroup() {
     if (this.tooltipGroup && this.tooltipGroup.length > 0) {
       this.tooltipGroup.forEach((edge) => {
-        edge.isTooltipGroupActive = false;
+        if (edge._groupMouseOverHandler)
+          edge.off("mouseover", edge._groupMouseOverHandler);
+        if (edge._groupMouseOutHandler)
+          edge.off("mouseout", edge._groupMouseOutHandler);
         edge.hideTooltips();
       });
     }
