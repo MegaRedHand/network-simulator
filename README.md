@@ -8,7 +8,7 @@ You can access it [here](https://megaredhand.github.io/network-simulator/).
 
 # Gedunet User Manual
 
-![Preview of the simulator. Shows multiple hosts, routers and switches. Some network packets are being sent through the network.](./img/full-preview.png)
+![Preview of the simulator. Shows multiple hosts, routers and switches. Some network packets are being sent through the network.](./img/0_full-preview.png)
 
 ## Getting Started
 
@@ -20,7 +20,7 @@ GEduNet consists of 4 main components on screen:
 3. Canvas: The main area where the network is displayed.
 4. Top bar: Contains the simulation file controls, help and settings.
 
-![alt text](./img/1_Start_Colores.jpg)
+![Components of the App](./img/1_Start_Colores.jpg)
 
 
 ### Left Bar
@@ -31,13 +31,48 @@ The left bar contains buttons to add devices to the network. You can add the fol
 - **Switch**: A device that connects devices within a single network and uses MAC addresses to forward data to the correct destination.
 
 In order to add a device, just click on the corresponding button and the selected device will appear in the center of the canvas.
-Depending on the selected layer, different devices will be added.
 
-![alt text](./img/Add_device.gif)
+<p align="center">
+  <img src="./img/2_Add_device.gif" alt="Adding a Device" />
+</p>
+
+Depending on the selected layer, different devices will be added to the leftbar. This is to properly distinguish which devices 
+are involved on the different layers.
+The device distribution is as follows:
+- **App Layer**: Host
+- **Transport Layer**: Host 
+- **Network Layer**: Host and Router
+- **Link Layer**: Host, Router and Switch
+
 
 ### Right Bar
 
+The right bar shows information about the selected device. This information varies depending on the type of device selected and
+the chosen layer. This section also shows data of the network edges and packets.
+
+To see the information of a device, edge or packet, just click on it and the right bar will update to show the information of the selected device.
+
+
+<p align="center">
+  <img src="./img/3_Select_Device.gif" alt="Selecting Device" />
+</p>
+
+
 ### Top Bar
+
+This section contains the simulation file controls. This includes the following buttons:
+
+- **New**: Reset the current network to its initial state.
+- **Save**: Save the current network to a JSON file.
+- **Load**: Load a network from a JSON file of your own.
+- **Print**: Take a snapshot of the current network and save it as a .png image.
+
+On the right side of the top bar, you can find the help button. This button will open a modal with a list of different shortcuts 
+and some configuration options.
+
+<p align="center">
+  <img src="./img/4_Top_Bar_Overview.gif" alt="Top Bar Overview" />
+</p>
 
 ### Canvas
 
