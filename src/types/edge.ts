@@ -22,9 +22,6 @@ export class Edge extends Graphics {
   private highlightedEdges: Edge[] = [];
   private startTooltip: Text | null = null; // Tooltip para el extremo inicial
   private endTooltip: Text | null = null; // Tooltip para el extremo final
-  private tooltipGroup: Edge[] = [];
-  private _groupMouseOverHandler?: () => void;
-  private _groupMouseOutHandler?: () => void;
 
   viewgraph: ViewGraph;
 
@@ -259,43 +256,17 @@ export class Edge extends Graphics {
   }
 
   private setupHoverTooltip() {
-    this.on("mouseover", () => this.activateTooltipGroup());
-    this.on("mouseout", () => this.deactivateTooltipGroup());
-  }
-
-  private activateTooltipGroup() {
-    // set the new tooltip group
-    const group = this.viewgraph.findConnectedEdges(this);
-
-    this.tooltipGroup = group;
-
-    // set the tooltip group to all edges in the group
-    group.forEach((edge) => {
-      edge._groupMouseOverHandler = () => edge.activateTooltipGroup();
-      edge._groupMouseOutHandler = () => edge.deactivateTooltipGroup();
-
-      // prevent multiple handlers
-      edge.off("mouseover", edge._groupMouseOverHandler);
-      edge.off("mouseout", edge._groupMouseOutHandler);
-
-      edge.on("mouseover", edge._groupMouseOverHandler);
-      edge.on("mouseout", edge._groupMouseOutHandler);
-
-      edge.showTooltips();
-      edge.fixTooltipPositions();
-    });
-  }
-
-  private deactivateTooltipGroup() {
-    if (this.tooltipGroup && this.tooltipGroup.length > 0) {
-      this.tooltipGroup.forEach((edge) => {
-        if (edge._groupMouseOverHandler)
-          edge.off("mouseover", edge._groupMouseOverHandler);
-        if (edge._groupMouseOutHandler)
-          edge.off("mouseout", edge._groupMouseOutHandler);
-        edge.hideTooltips();
+    this.on("mouseover", () => {
+      const group = this.viewgraph.findConnectedEdges(this);
+      group.forEach((edge) => {
+        edge.showTooltips();
+        edge.fixTooltipPositions();
       });
-    }
+    });
+    this.on("mouseout", () => {
+      const group = this.viewgraph.findConnectedEdges(this);
+      group.forEach((edge) => edge.hideTooltips());
+    });
   }
 
   private showTooltips() {
