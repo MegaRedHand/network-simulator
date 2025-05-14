@@ -20,8 +20,8 @@ export class Edge extends Graphics {
   private startPos: Point;
   private endPos: Point;
   private highlightedEdges: Edge[] = [];
-  private startTooltip: Text | null = null; // Tooltip para el extremo inicial
-  private endTooltip: Text | null = null; // Tooltip para el extremo final
+  private startTooltip: Text | null = null; // Tooltip for the start of the edge
+  private endTooltip: Text | null = null; // Tooltip for the end of the edge
 
   viewgraph: ViewGraph;
 
