@@ -18,8 +18,10 @@ export const TOOLTIP_KEYS = {
   PROGRAM: "Program",
   SEND_ICMP_ECHO: "Send ICMP echo",
   ECHO_SERVER: "Echo server",
-  DESTINATION: "Destination",
   SEND_HTTP_REQUEST: "Send HTTP request",
+  SERVE_HTTP_REQUESTS: "Serve HTTP requests",
+  SEND_ARP_REQUEST: "Send ARP request",
+  DESTINATION: "Destination",
   TIME_BETWEEN_PINGS: "Time between pings",
   NAME: "Name",
   PID: "PID",
@@ -188,4 +190,8 @@ export const TOOLTIP_CONTENT = {
     "The ARP (Address Resolution Protocol) table maps IP addresses to MAC addresses. It is used to resolve the hardware address of a device in the same local network.",
   [TOOLTIP_KEYS.IFACE_EDITOR]:
     "Modify the network interface used by this device.",
+  [TOOLTIP_KEYS.SEND_ARP_REQUEST]:
+    "Send an ARP request to a specified IP address. This command is used to resolve the MAC address of a device in the same local network.",
+  [TOOLTIP_KEYS.SERVE_HTTP_REQUESTS]:
+    "Serve HTTP requests to clients. This command is used to respond to incoming HTTP requests with the appropriate data.",
 } as const;

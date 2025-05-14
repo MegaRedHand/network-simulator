@@ -13,7 +13,7 @@ import { attachTooltip } from "./tooltip_manager";
 export class ProgramRunnerInfo implements Renderable {
   private runner: ProgramRunner;
   private inputFields: Node[] = [];
-  private runningProgramsTable: HTMLTableElement;
+  private runningProgramsTable: HTMLElement;
 
   constructor(runner: ProgramRunner, programInfos: ProgramInfo[]) {
     this.runner = runner;
@@ -88,7 +88,7 @@ export class ProgramRunnerInfo implements Renderable {
   private createProgramsTable(
     runner: ProgramRunner,
     runningPrograms: RunningProgram[],
-  ): HTMLTableElement {
+  ): HTMLElement {
     const onDelete = (row: number) => {
       const { pid } = runningPrograms[row];
       runner.removeRunningProgram(pid);
@@ -129,7 +129,7 @@ export class ProgramRunnerInfo implements Renderable {
     this.runningProgramsTable = newTable;
   }
 
-  private generateProgramsTable(): HTMLTableElement {
+  private generateProgramsTable(): HTMLElement {
     const runningPrograms = this.runner.getRunningPrograms();
     if (runningPrograms.length === 0) {
       return document.createElement("table");

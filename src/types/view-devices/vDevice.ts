@@ -27,6 +27,11 @@ import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer, layerIncluded } from "../layer";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
+import {
+  hideTooltip,
+  removeTooltip,
+  showTooltip,
+} from "../../graphics/renderables/canvas_tooltip_manager";
 
 export enum DeviceType {
   Host = 0,
@@ -139,16 +144,21 @@ export abstract class ViewDevice extends Container {
     // Do nothing
   }
 
-  // Tooltip setup
   private setupHoverTooltip() {
     this.on("mouseover", () => {
-      const currentLayer = this.ctx.getCurrentLayer(); // Get the current layer from the context
-      const tooltipMessage = this.getTooltipDetails(currentLayer); // Generate the tooltip message
-      this.showTooltip(tooltipMessage); // Show the tooltip
+      const currentLayer = this.ctx.getCurrentLayer();
+      const tooltipMessage = this.getTooltipDetails(currentLayer);
+      this.tooltip = showTooltip(
+        this,
+        tooltipMessage,
+        0,
+        this.height * 0.8 + 20,
+        this.tooltip,
+      );
     });
 
     this.on("mouseout", () => {
-      this.hideTooltip(); // Hide the tooltip
+      hideTooltip(this.tooltip);
     });
   }
 
@@ -158,51 +168,12 @@ export abstract class ViewDevice extends Container {
    */
   abstract getTooltipDetails(layer: Layer): string;
 
-  /**
-   * Displays a tooltip with the provided message.
-   */
-  protected showTooltip(message: string) {
-    if (!this.tooltip) {
-      const textStyle = new TextStyle({
-        fontSize: 12,
-        fill: Colors.Black,
-        align: "center",
-        fontWeight: "bold",
-      });
-
-      this.tooltip = new Text({ text: message, style: textStyle });
-      this.tooltip.anchor.set(0.5); // Center the text
-      const idTextY = this.height * 0.8; // Position of the ID label
-      this.tooltip.y = idTextY + 20; // Tooltip is 20px below the ID label
-      this.addChild(this.tooltip); // Add the tooltip as a child
-    }
-
-    this.tooltip.text = message; // Update the tooltip message
-    this.tooltip.visible = true; // Show the tooltip
-  }
-
-  /**
-   * Hides the tooltip.
-   */
-  protected hideTooltip() {
-    if (this.tooltip) {
-      this.tooltip.visible = false; // Hide the tooltip
-    }
-  }
-
-  /**
-   * Removes the tooltip from the device.
-   */
-  protected removeTooltip() {
-    if (this.tooltip) {
-      this.removeChild(this.tooltip); // Remove the tooltip from the sprite
-      this.tooltip.destroy(); // Free memory
-      this.tooltip = null;
-    }
-  }
-
   updateVisibility() {
     this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());
+  }
+
+  isVisible(): boolean {
+    return this.visible;
   }
 
   // Function to add the ID label to the device
@@ -333,7 +304,7 @@ export abstract class ViewDevice extends Container {
 
   destroy() {
     deselectElement();
-    this.removeTooltip(); // Remove the tooltip if it exists
+    removeTooltip(this, this.tooltip); // Remove the tooltip if it exists
     super.destroy();
   }
 }
