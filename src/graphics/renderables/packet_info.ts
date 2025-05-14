@@ -29,27 +29,41 @@ export class PacketInfo extends BaseInfo {
     const framePayload = this.packet.rawPacket.payload as IPv4Packet;
 
     if (layer == Layer.Link) {
+      const srcDevice = this.packet.viewgraph.getDeviceByMac(
+        this.packet.rawPacket.source,
+      );
+      const dstDevice = this.packet.viewgraph.getDeviceByMac(
+        this.packet.rawPacket.destination,
+      );
+
       this.information.addField(
         TOOLTIP_KEYS.SOURCE_MAC_ADDRESS,
-        this.packet.rawPacket.source.toString(),
+        `${this.packet.rawPacket.source.toString()}${srcDevice ? " (Device " + srcDevice.id + ")" : ""}`,
         TOOLTIP_KEYS.SOURCE_MAC_ADDRESS,
       );
       this.information.addField(
         TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS,
-        this.packet.rawPacket.destination.toString(),
+        `${this.packet.rawPacket.destination.toString()}${dstDevice ? " (Device " + dstDevice.id + ")" : ""}`,
         TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS,
       );
     }
 
     if (layer >= Layer.Network) {
+      const srcDevice = this.packet.viewgraph.getDeviceByIP(
+        framePayload.sourceAddress,
+      );
+      const dstDevice = this.packet.viewgraph.getDeviceByIP(
+        framePayload.destinationAddress,
+      );
+
       this.information.addField(
         TOOLTIP_KEYS.SOURCE_IP_ADDRESS,
-        framePayload.sourceAddress.toString(),
+        `${framePayload.sourceAddress.toString()}${srcDevice ? " (Device " + srcDevice.id + ")" : ""}`,
         TOOLTIP_KEYS.SOURCE_IP_ADDRESS,
       );
       this.information.addField(
         TOOLTIP_KEYS.DESTINATION_IP_ADDRESS,
-        framePayload.destinationAddress.toString(),
+        `${framePayload.destinationAddress.toString()}${dstDevice ? " (Device " + dstDevice.id + ")" : ""}`,
         TOOLTIP_KEYS.DESTINATION_IP_ADDRESS,
       );
     }
