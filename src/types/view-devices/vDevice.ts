@@ -182,12 +182,11 @@ export abstract class ViewDevice extends Container {
   abstract getTooltipDetails(layer: Layer): string;
 
   updateVisibility() {
-    // No cambies this.visible, solo cambia la apariencia y el comportamiento
     if (!layerIncluded(this.getLayer(), this.viewgraph.getLayer())) {
-      // Cambia a círculo arrastrable y no seleccionable
+      // Change visibility to false
       this.setAsDragCircle();
     } else {
-      // Restaura apariencia normal y seleccionable
+      // change visibility to true
       this.setAsNormalDevice();
     }
   }
@@ -196,9 +195,8 @@ export abstract class ViewDevice extends Container {
     if (this.isDragCircle) return;
     this.isDragCircle = true;
 
-    // Cambia apariencia a círculo
     if (this.sprite) this.sprite.visible = false;
-    if (this.idLabel) this.idLabel.visible = false; // Oculta la label
+    if (this.idLabel) this.idLabel.visible = false;
     if (!this.circleGraphic) {
       this.circleGraphic = new Graphics();
       this.circleGraphic.circle(0, 0, 10);
@@ -208,14 +206,12 @@ export abstract class ViewDevice extends Container {
     this.eventMode = "static";
     this.interactive = true;
     this.cursor = "grab";
-    // Sigue siendo arrastrable
   }
 
   private setAsNormalDevice() {
     if (!this.isDragCircle) return;
     this.isDragCircle = false;
 
-    // Restaura apariencia
     if (this.sprite) this.sprite.visible = true;
     if (this.idLabel) this.idLabel.visible = true;
     if (this.circleGraphic) {
@@ -267,7 +263,6 @@ export abstract class ViewDevice extends Container {
     }
     ViewDevice.dragTarget = this;
 
-    // Guardar posición inicial
     ViewDevice.startPosition = { x: this.x, y: this.y };
     event.stopPropagation();
 

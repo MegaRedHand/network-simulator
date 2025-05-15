@@ -109,6 +109,7 @@ export class Edge extends Graphics {
     this.highlightedEdges = this.viewgraph.findConnectedEdges(this);
     this.highlightedEdges.forEach((edge) => {
       edge.highlight();
+      // Highlight the color of the circles connected to this edge
       edge.getDeviceIds().forEach((deviceId) => {
         const device = this.viewgraph.getDevice(deviceId);
         device.setCircleColor(Colors.Violet);
@@ -120,6 +121,7 @@ export class Edge extends Graphics {
   deselect() {
     this.highlightedEdges.forEach((edge) => {
       edge.removeHighlight();
+      // Reset the color of the circles connected to this edge
       edge.getDeviceIds().forEach((deviceId) => {
         const device = this.viewgraph.getDevice(deviceId);
         device.setCircleColor(Colors.Lightblue);
