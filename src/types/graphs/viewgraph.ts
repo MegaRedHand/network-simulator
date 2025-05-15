@@ -499,12 +499,13 @@ export class ViewGraph {
 
       for (const nodeId of currentEdge.getDeviceIds()) {
         const device = this.getDevice(nodeId);
-        if (device && !device.visible) {
-          const edges = this.getConnections(nodeId);
-          for (const e of edges) {
-            if (!visitedEdges.has(e)) {
-              queue.push(e);
-            }
+        if (device && device.visible) {
+          continue;
+        }
+        const edges = this.getConnections(nodeId);
+        for (const e of edges) {
+          if (!visitedEdges.has(e)) {
+            queue.push(e);
           }
         }
       }
