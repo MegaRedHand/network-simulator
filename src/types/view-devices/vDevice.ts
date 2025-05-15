@@ -33,6 +33,8 @@ import {
   showTooltip,
 } from "../../graphics/renderables/canvas_tooltip_manager";
 
+const CIRCLE_RADIUS = 6; // Radius of the circle for drag and drop
+
 export enum DeviceType {
   Host = 0,
   Router = 1,
@@ -170,7 +172,7 @@ export abstract class ViewDevice extends Container {
     if (!this.isDragCircle) return;
     if (this.circleGraphic) {
       this.circleGraphic.clear();
-      this.circleGraphic.circle(0, 0, 10);
+      this.circleGraphic.circle(0, 0, CIRCLE_RADIUS);
       this.circleGraphic.fill({ color });
     }
   }
@@ -199,7 +201,7 @@ export abstract class ViewDevice extends Container {
     if (this.idLabel) this.idLabel.visible = false;
     if (!this.circleGraphic) {
       this.circleGraphic = new Graphics();
-      this.circleGraphic.circle(0, 0, 10);
+      this.circleGraphic.circle(0, 0, CIRCLE_RADIUS);
       this.circleGraphic.fill({ color: Colors.Lightblue });
       this.addChild(this.circleGraphic);
     }
