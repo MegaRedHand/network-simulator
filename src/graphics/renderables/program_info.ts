@@ -76,7 +76,7 @@ function otherDevicesIp(viewgraph: ViewGraph, srcId: DeviceId) {
     .getDevices()
     .filter(
       (device) =>
-        device.visible &&
+        device.isVisible() &&
         device.getType() !== DeviceType.Switch &&
         device.id !== srcId,
     )

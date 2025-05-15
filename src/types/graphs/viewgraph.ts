@@ -214,9 +214,9 @@ export class ViewGraph {
       // For each iteration, update visibility of all edges.
       // This takes into account currently visible edges and devices.
       for (const [, , edge] of this.graph.getAllEdges()) {
-        const previousVisibility = edge.visible;
+        const previousVisibility = edge.isVisible();
         edge.updateVisibility();
-        hadChanges ||= previousVisibility !== edge.visible;
+        hadChanges ||= previousVisibility !== edge.isVisible();
       }
       if (!hadChanges) {
         break;
@@ -250,7 +250,7 @@ export class ViewGraph {
 
     const vertexFilter = (device: ViewDevice, id: DeviceId): boolean => {
       // If device is visible, add it to the set and stop traversal
-      if (device.visible && id !== deviceId) {
+      if (device.isVisible() && id !== deviceId) {
         visibleDevices.push(id);
         return false;
       }
@@ -277,7 +277,7 @@ export class ViewGraph {
         return false;
       }
       // If device is visible, add it to the set and stop traversal
-      if (device.visible) {
+      if (device.isVisible()) {
         visibleDevices.add(id);
         return false;
       }
@@ -285,7 +285,7 @@ export class ViewGraph {
     };
 
     // Avoid invisible edges
-    const edgeFilter = (edge: Edge) => edge.visible;
+    const edgeFilter = (edge: Edge) => edge.isVisible();
 
     this.graph.dfs(startId, { vertexFilter, edgeFilter });
     return visibleDevices.size > 0;
@@ -501,7 +501,7 @@ export class ViewGraph {
 
       for (const nodeId of currentEdge.getDeviceIds()) {
         const device = this.getDevice(nodeId);
-        if (device && device.visible) {
+        if (device && device.isVisible()) {
           continue;
         }
         const edges = this.getConnections(nodeId);
