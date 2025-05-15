@@ -8,6 +8,7 @@ import { Packet } from "./packet";
 import { EdgeInfo } from "../graphics/renderables/edge_info";
 import { DataEdge, DeviceId } from "./graphs/datagraph";
 import { MacAddress } from "../packets/ethernet";
+import { MultiEdgeInfo } from "../graphics/renderables/multi_edge_info";
 import {
   hideTooltip,
   removeTooltip,
@@ -18,8 +19,9 @@ export class Edge extends Graphics {
   private _data: DataEdge;
   private startPos: Point;
   private endPos: Point;
-  private startTooltip: Text | null = null; // Tooltip para el extremo inicial
-  private endTooltip: Text | null = null; // Tooltip para el extremo final
+  private highlightedEdges: Edge[] = [];
+  private startTooltip: Text | null = null; // Tooltip for the start of the edge
+  private endTooltip: Text | null = null; // Tooltip for the end of the edge
 
   viewgraph: ViewGraph;
 
@@ -104,12 +106,15 @@ export class Edge extends Graphics {
   }
 
   select() {
-    this.highlight();
+    this.highlightedEdges = this.viewgraph.findConnectedEdges(this);
+    this.highlightedEdges.forEach((edge) => edge.highlight());
     this.showInfo();
   }
 
   deselect() {
-    this.removeHighlight();
+    // remove highlight from all edges
+    this.highlightedEdges.forEach((edge) => edge.removeHighlight());
+    this.highlightedEdges = [];
   }
 
   highlight() {
@@ -120,10 +125,14 @@ export class Edge extends Graphics {
     this.drawEdge(this.startPos, this.endPos, Colors.Lightblue);
   }
 
-  // Method to show the Edge information
   showInfo() {
-    const edgeInfo = new EdgeInfo(this);
-    RightBar.getInstance().renderInfo(edgeInfo);
+    if (this.highlightedEdges && this.highlightedEdges.length > 1) {
+      const multiEdgeInfo = new MultiEdgeInfo(this.highlightedEdges);
+      RightBar.getInstance().renderInfo(multiEdgeInfo);
+    } else {
+      const edgeInfo = new EdgeInfo(this);
+      RightBar.getInstance().renderInfo(edgeInfo);
+    }
   }
 
   destroy(): void {
@@ -244,12 +253,15 @@ export class Edge extends Graphics {
 
   private setupHoverTooltip() {
     this.on("mouseover", () => {
-      this.showTooltips();
-      this.fixTooltipPositions(); // fixes the tooltip positions
+      const group = this.viewgraph.findConnectedEdges(this);
+      group.forEach((edge) => {
+        edge.showTooltips();
+        edge.fixTooltipPositions();
+      });
     });
-
     this.on("mouseout", () => {
-      this.hideTooltips();
+      const group = this.viewgraph.findConnectedEdges(this);
+      group.forEach((edge) => edge.hideTooltips());
     });
   }
 
