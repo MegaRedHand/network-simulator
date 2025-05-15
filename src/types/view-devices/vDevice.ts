@@ -60,6 +60,9 @@ export function layerFromType(type: DeviceType) {
 export abstract class ViewDevice extends Container {
   private sprite: Sprite;
   private tooltip: Text | null = null; // Tooltip como un Text de PIXI.js
+  private isDragCircle = false;
+  private circleGraphic?: Graphics;
+  private idLabel?: Text;
 
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
@@ -146,6 +149,7 @@ export abstract class ViewDevice extends Container {
 
   private setupHoverTooltip() {
     this.on("mouseover", () => {
+      if (this.isDragCircle) return;
       const currentLayer = this.ctx.getCurrentLayer();
       const tooltipMessage = this.getTooltipDetails(currentLayer);
       this.tooltip = showTooltip(
@@ -162,6 +166,15 @@ export abstract class ViewDevice extends Container {
     });
   }
 
+  setCircleColor(color: number) {
+    if (!this.isDragCircle) return;
+    if (this.circleGraphic) {
+      this.circleGraphic.clear();
+      this.circleGraphic.circle(0, 0, 10);
+      this.circleGraphic.fill({ color });
+    }
+  }
+
   /**
    * Abstract method to get tooltip details based on the layer.
    * Must be implemented by derived classes.
@@ -169,11 +182,52 @@ export abstract class ViewDevice extends Container {
   abstract getTooltipDetails(layer: Layer): string;
 
   updateVisibility() {
-    this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());
+    // No cambies this.visible, solo cambia la apariencia y el comportamiento
+    if (!layerIncluded(this.getLayer(), this.viewgraph.getLayer())) {
+      // Cambia a círculo arrastrable y no seleccionable
+      this.setAsDragCircle();
+    } else {
+      // Restaura apariencia normal y seleccionable
+      this.setAsNormalDevice();
+    }
+  }
+
+  private setAsDragCircle() {
+    if (this.isDragCircle) return;
+    this.isDragCircle = true;
+
+    // Cambia apariencia a círculo
+    if (this.sprite) this.sprite.visible = false;
+    if (this.idLabel) this.idLabel.visible = false; // Oculta la label
+    if (!this.circleGraphic) {
+      this.circleGraphic = new Graphics();
+      this.circleGraphic.circle(0, 0, 10);
+      this.circleGraphic.fill({ color: Colors.Lightblue });
+      this.addChild(this.circleGraphic);
+    }
+    this.eventMode = "static";
+    this.interactive = true;
+    this.cursor = "grab";
+    // Sigue siendo arrastrable
+  }
+
+  private setAsNormalDevice() {
+    if (!this.isDragCircle) return;
+    this.isDragCircle = false;
+
+    // Restaura apariencia
+    if (this.sprite) this.sprite.visible = true;
+    if (this.idLabel) this.idLabel.visible = true;
+    if (this.circleGraphic) {
+      this.removeChild(this.circleGraphic);
+      this.circleGraphic.destroy();
+      this.circleGraphic = undefined;
+    }
+    this.cursor = "pointer";
   }
 
   isVisible(): boolean {
-    return this.visible;
+    return this.sprite.visible;
   }
 
   // Function to add the ID label to the device
@@ -188,7 +242,12 @@ export abstract class ViewDevice extends Container {
     idText.anchor.set(0.5);
     idText.y = this.height * 0.8;
     idText.zIndex = ZIndexLevels.Label;
+    this.idLabel = idText;
     this.addChild(idText); // Add the ID text as a child of the device
+
+    if (this.isDragCircle) {
+      this.idLabel.visible = false;
+    }
   }
 
   getPosition(): Position {
@@ -287,6 +346,7 @@ export abstract class ViewDevice extends Container {
   }
 
   select() {
+    if (this.isDragCircle) return;
     this.highlight(); // Calls highlight on select
     this.showInfo();
   }
