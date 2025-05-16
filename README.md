@@ -116,9 +116,13 @@ The available layers are:
 
 A host is a computer or device that connects to the network. It can send and receive data packets. In the simulator, a host can be used to represent a computer, a server or any other endpoint that connects to the network.
 
-On this simulator, a host is visible on all layers. Given the fact that hosts are endpoints, they can't be abstacted to a specific layer. Hosts are involved on every layer.
+In the simulator, a host is visible on all layers. Given the fact that hosts are endpoints, they can't be abstacted to a specific layer. Hosts are involved on every layer.
 
 #### Host Information
+
+<p align="center">
+  <img src="./img/08_Host_Right_Bar.png" alt="Host Right Bar" />
+</p>
 
 The information shown in the right bar when selecting a host is as follows:
 - **ID**: The ID of the host. This is a simulated unique identifier for the host in the network.
@@ -145,6 +149,40 @@ Hovering on a Host will show the IP address. If the simulator is set on the Link
 <p align="center">
   <img src="./src/assets/router.svg" alt="Router" width="25%" style="background-color: white;border-radius: 10px;" />
 </p>
+
+A router is a device that forwards data packets between computer networks. It is used to connect different networks and route data between them. 
+
+In the simulator, the routers are visible from the Network layer downward. Routers act as intermediaries between different networks and are responsible for routing data packets to their destination. But they are not particularly involved in the App and Transport layers.
+
+#### Router Information
+
+<p align="center">
+  <img src="./img/09_Router_Right_Bar.png" alt="Router Right Bar" />
+</p>
+
+The information shown in the right bar when selecting a router is as follows:
+- **ID**: The ID of the router. This is a simulated unique identifier for the router in the network.
+- **Connected Devices**: The devices that are directly connected to this router through edges.
+- **MAC Address**: The MAC address of the router. This is only visible in the Link Layer.
+- **IP Address**: The IP address of the router. This is always visible.
+- **Connect Device Button**: This button allows you to connect the host to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. You can only connect 
+devices if the host and the other device have free interfaces. This button has a keyboard shortcut. Pressing **C** and then clicking
+on another device will also connect the devices, if they have free interfaces. (?)
+- **Delete Device Button**: This button allows you to delete the router from the network. This will also delete all edges connected to this router.
+- **Packet Queue Usage Bar**: This bar shows the usage of the packet queue of the router. The packet queue is used to store packets that are waiting to be processed by the router. The bar shows the percentage of the queue that is currently in use. If the queue is full, the router will drop packets until there is space in the queue.
+- **Router Parameters Dropdown**: This dropdown allows you to select the parameters of the router. The parameters are:
+  - **Packet Queue Size [bytes]**: The amount of bytes that the router can store in its queue. This is the maximum size of the queue. The default value is 1024 bytes.
+  - **Packet Processing Speed [ms/byte]**: The time it takes for the router to process a packet. The default value is 8 miliseconds.
+- **Routing Table**: The routing table is a data structure used by routers to determine the best path for forwarding packets to their destination. It contains the IP, the Nework Mask and the selected interface. You can edit the entries of the table to fit your desired routing scheme. You can also restore the default state of the table by pressing the reset button on the top right corner. (?)
+- **ARP Table**: This table shows the translation of the different IP Adresses translations into MAC Adresses. It also allows to edit and refresh these translations. (?)
+
+#### Router Hover
+Hovering on a Router will show the IP address. If the simulator is set on the Link Layer, it will also show the MAC address.
+
+<p align="center">
+  <img src="./img/10_Router_Overview.gif" alt="Router Overview" />
+</p>
+
 
 ### Switch
 
