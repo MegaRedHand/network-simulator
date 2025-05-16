@@ -51,6 +51,7 @@ export class DeviceInfo extends BaseInfo {
   }
 
   protected addCommonButtons(): void {
+    this.addDivider();
     const connectButton = new Button({
       text: TOOLTIP_KEYS.CONNECT_DEVICE,
       onClick: () => this.device.selectToConnect(),
@@ -76,6 +77,7 @@ export class DeviceInfo extends BaseInfo {
     });
 
     this.inputFields.push(connectButton.toHTML(), deleteButton.toHTML());
+    this.addDivider();
   }
 
   addProgramRunner(runner: ProgramRunner, programs: ProgramInfo[]): void {
