@@ -193,11 +193,7 @@ export class TextInfo {
       ),
       fieldsPerRow: Object.keys(flags).length,
       rows: [statusRow, valueRow],
-      tableClasses: [
-        CSS_CLASSES.TABLE,
-        CSS_CLASSES.RIGHT_BAR_TABLE,
-        CSS_CLASSES.TCP_FLAGS_TABLE,
-      ],
+      tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE],
     });
 
     // Get the table element

@@ -8,9 +8,10 @@ import { EchoRequest } from "../packets/icmp";
 import { IPv4Packet } from "../packets/ip";
 import { ViewNetworkDevice } from "../types/view-devices/vNetworkDevice";
 import { EthernetFrame } from "../packets/ethernet";
+import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 
 export class SingleEcho extends ProgramBase {
-  static readonly PROGRAM_NAME = "Send ICMP echo";
+  static readonly PROGRAM_NAME = TOOLTIP_KEYS.SEND_ICMP_ECHO;
 
   protected dstId: DeviceId;
 
@@ -85,7 +86,7 @@ export class SingleEcho extends ProgramBase {
 }
 
 export class EchoServer extends ProgramBase {
-  static readonly PROGRAM_NAME = "Echo server";
+  static readonly PROGRAM_NAME = TOOLTIP_KEYS.ECHO_SERVER;
 
   private echoProgram: SingleEcho;
   private progress = 0;

@@ -65,6 +65,7 @@ export class EdgeInfo extends BaseInfo {
 
   protected addCommonButtons(): void {
     // Button to delete the edge
+    this.addDivider();
     const deleteEdgeButton = new Button({
       text: TOOLTIP_KEYS.DELETE_EDGE_BUTTON,
       onClick: () => {
@@ -84,6 +85,7 @@ export class EdgeInfo extends BaseInfo {
 
     // Add the button to the inputFields array
     this.inputFields.push(deleteEdgeButton.toHTML());
+    this.addDivider();
   }
 
   protected addInterfaceDropdowns(): void {
