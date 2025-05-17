@@ -68,6 +68,8 @@ export const TOOLTIP_KEYS = {
   IP_REQUEST: "IP to Request",
   ARP_TABLE: "ARP Table",
   IFACE_EDITOR: "iface-editor",
+  PORT: "Port",
+  SWITCHING_TABLE: "Switching Table",
   MULTI_EDGE_CONNECTED_DEVICES: "Multi Edge Connected Devices",
   ETHERTYPE: "EtherType",
   // ARP Details
@@ -224,6 +226,10 @@ export const TOOLTIP_CONTENT = {
     "The ARP (Address Resolution Protocol) table maps IP addresses to MAC addresses. It is used to resolve the hardware address of a device in the same local network.",
   [TOOLTIP_KEYS.IFACE_EDITOR]:
     "Modify the network interface used by this device.",
+  [TOOLTIP_KEYS.PORT]:
+    "The port in the switching table refers to the physical or logical interface on the switch where a device is connected. It is used to forward frames to the correct destination based on the MAC address. This should not be confused with the 'port' used in transport layer protocols (such as TCP/UDP port numbers), which identify specific applications or services.",
+  [TOOLTIP_KEYS.SWITCHING_TABLE]:
+    "The switching table is a data structure used by switches to map MAC addresses to specific ports. It helps the switch determine where to forward incoming frames based on their destination MAC address.",
   [TOOLTIP_KEYS.MULTI_EDGE_CONNECTED_DEVICES]:
     "This field shows the devices connected to the selected edge. It provides a list of all devices that are directly connected.",
   [TOOLTIP_KEYS.SEND_ARP_REQUEST]:
