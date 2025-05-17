@@ -18,8 +18,10 @@ export const TOOLTIP_KEYS = {
   PROGRAM: "Program",
   SEND_ICMP_ECHO: "Send ICMP echo",
   ECHO_SERVER: "Echo server",
-  DESTINATION: "Destination",
   SEND_HTTP_REQUEST: "Send HTTP request",
+  SERVE_HTTP_REQUESTS: "Serve HTTP requests",
+  SEND_ARP_REQUEST: "Send ARP request",
+  DESTINATION: "Destination",
   TIME_BETWEEN_PINGS: "Time between pings",
   NAME: "Name",
   PID: "PID",
@@ -66,6 +68,7 @@ export const TOOLTIP_KEYS = {
   IP_REQUEST: "IP to Request",
   ARP_TABLE: "ARP Table",
   IFACE_EDITOR: "iface-editor",
+  MULTI_EDGE_CONNECTED_DEVICES: "Multi Edge Connected Devices",
 } as const;
 
 // Tooltip Content
@@ -188,4 +191,10 @@ export const TOOLTIP_CONTENT = {
     "The ARP (Address Resolution Protocol) table maps IP addresses to MAC addresses. It is used to resolve the hardware address of a device in the same local network.",
   [TOOLTIP_KEYS.IFACE_EDITOR]:
     "Modify the network interface used by this device.",
+  [TOOLTIP_KEYS.MULTI_EDGE_CONNECTED_DEVICES]:
+    "This field shows the devices connected to the selected edge. It provides a list of all devices that are directly connected.",
+  [TOOLTIP_KEYS.SEND_ARP_REQUEST]:
+    "Send an ARP request to a specified IP address. This command is used to resolve the MAC address of a device in the same local network.",
+  [TOOLTIP_KEYS.SERVE_HTTP_REQUESTS]:
+    "Serve HTTP requests to clients. This command is used to respond to incoming HTTP requests with the appropriate data.",
 } as const;

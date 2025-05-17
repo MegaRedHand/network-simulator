@@ -11,9 +11,7 @@ export abstract class BaseInfo implements Renderable {
 
   constructor(title: string) {
     this.information = new TextInfo(title);
-    this.addDivider();
     this.addCommonButtons();
-    this.addDivider();
   }
 
   protected abstract addCommonInfoFields(): void;
