@@ -260,11 +260,11 @@ export abstract class ViewDevice extends Container {
     this.highlightMarker.roundRect(-width / 2, -height / 2, width, height, 5);
     this.highlightMarker.stroke({
       width: 3,
-      color: this.ctx.get_select_color(),
+      color: this.ctx.getSelectColor(),
       alpha: 0.6,
     });
     this.highlightMarker.fill({
-      color: this.ctx.get_select_color(),
+      color: this.ctx.getSelectColor(),
       alpha: 0.1,
     });
     this.highlightMarker.zIndex = ZIndexLevels.Device;
