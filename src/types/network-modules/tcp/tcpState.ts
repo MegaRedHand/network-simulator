@@ -23,6 +23,12 @@ enum TcpStateEnum {
   TIME_WAIT = 10,
 }
 
+enum ProcessingResult {
+  SUCCESS = 0,
+  DISCARD = 1,
+  POSTPONE = 2,
+}
+
 const MAX_BUFFER_SIZE = 0xffff;
 const MAX_SEGMENT_SIZE = 1460;
 const u32_MODULUS = 0x100000000; // 2^32
@@ -77,6 +83,8 @@ export class TcpState {
   private sendQueue = new AsyncQueue<undefined>();
   private connectionQueue = new AsyncQueue<undefined>();
   private retransmissionQueue: RetransmissionQueue;
+
+  private recvQueue = new ReceivedSegmentsQueue();
 
   // Buffer of data received
   private readBuffer = new BytesBuffer(MAX_BUFFER_SIZE);
@@ -193,7 +201,7 @@ export class TcpState {
     return true;
   }
 
-  private handleSegment(segment: TcpSegment) {
+  private handleSegment(segment: TcpSegment): ProcessingResult {
     // Sanity check: ports match with expected
     if (
       segment.sourcePort !== this.dstPort ||
@@ -209,16 +217,16 @@ export class TcpState {
         if (ack <= this.initialSendSeqNum || ack > this.sendNext) {
           if (flags.rst) {
             console.debug("Invalid SYN_SENT ACK with RST");
-            return false;
+            return ProcessingResult.DISCARD;
           }
           console.debug("Invalid SYN_SENT ACK, sending RST");
           this.newSegment(ack, 0).withFlags(new Flags().withRst());
-          return false;
+          return ProcessingResult.DISCARD;
         }
         // Try to process ACK
         if (!this.isAckValid(segment.acknowledgementNumber)) {
           console.debug("Invalid SYN_SENT ACK");
-          return false;
+          return ProcessingResult.DISCARD;
         }
       }
       if (flags.rst) {
@@ -228,7 +236,7 @@ export class TcpState {
           throw new Error("error: connection reset");
         } else {
           console.debug("SYN_SENT RST without ACK, dropping segment");
-          return false;
+          return ProcessingResult.DISCARD;
         }
       }
       if (flags.syn) {
@@ -242,11 +250,11 @@ export class TcpState {
           // Process the segment normally
           this.state = TcpStateEnum.ESTABLISHED;
           this.connectionQueue.push(undefined);
-          if (!this.handleSegmentData(segment)) {
+          if (this.handleSegmentData(segment) !== ProcessingResult.SUCCESS) {
             console.debug("Segment data processing failed");
-            return false;
+            return ProcessingResult.DISCARD;
           }
-          return true;
+          return ProcessingResult.SUCCESS;
         } else {
           // It's a SYN
           if (segment.data.length > 0) {
@@ -264,16 +272,16 @@ export class TcpState {
       }
       if (!(flags.rst || flags.syn)) {
         console.debug("SYN_SENT segment without SYN or RST");
-        return false;
+        return ProcessingResult.DISCARD;
       }
-      return true;
+      return ProcessingResult.SUCCESS;
     }
     // Check the sequence number is valid
     const segSeq = segment.sequenceNumber;
     const segLen = segment.data.length;
     if (!this.isSeqNumValid(segSeq, segLen)) {
       console.debug("Sequence number not valid");
-      return false;
+      return ProcessingResult.DISCARD;
     }
 
     // TODO: handle RST or SYN flags
@@ -285,7 +293,7 @@ export class TcpState {
     // If the ACK bit is off, drop the segment.
     if (!flags.ack) {
       console.debug("ACK bit is off, dropping segment");
-      return false;
+      return ProcessingResult.DISCARD;
     }
     if (this.state === TcpStateEnum.SYN_RECEIVED) {
       if (!this.isAckValid(segment.acknowledgementNumber)) {
@@ -293,7 +301,7 @@ export class TcpState {
         this.newSegment(segment.acknowledgementNumber, 0).withFlags(
           new Flags().withRst(),
         );
-        return false;
+        return ProcessingResult.DISCARD;
       }
       this.state = TcpStateEnum.ESTABLISHED;
       this.connectionQueue.push(undefined);
@@ -324,7 +332,7 @@ export class TcpState {
         this.newSegment(this.sendNext, this.recvNext).withFlags(
           new Flags().withAck(),
         );
-        return false;
+        return ProcessingResult.DISCARD;
       } else {
         this.processAck(segment);
       }
@@ -345,9 +353,13 @@ export class TcpState {
     }
 
     // Process the segment data
-    if (!this.handleSegmentData(segment)) {
+    const result = this.handleSegmentData(segment);
+    if (result === ProcessingResult.DISCARD) {
       console.debug("Segment data processing failed, dropping segment");
-      return false;
+      return result;
+    } else if (result === ProcessingResult.POSTPONE) {
+      console.debug("Segment data processing postponed");
+      return result;
     }
 
     if (flags.fin) {
@@ -357,7 +369,7 @@ export class TcpState {
       this.notifySendPackets();
     }
 
-    return true;
+    return ProcessingResult.SUCCESS;
   }
 
   private dropSegment(segment: TcpSegment) {
@@ -366,13 +378,16 @@ export class TcpState {
     dropPacket(this.srcHost.viewgraph, this.srcHost.id, frame);
   }
 
-  private handleSegmentData(segment: TcpSegment) {
-    // NOTE: for simplicity, we ignore cases where RCV.NXT != SEG.SEQ
+  private handleSegmentData(segment: TcpSegment): ProcessingResult {
     const seqNum = segment.flags.syn
       ? (segment.sequenceNumber + 1) % u32_MODULUS
       : segment.sequenceNumber;
-    if (seqNum !== this.recvNext) {
-      return false;
+    if (seqNum > this.recvNext) {
+      // Postpone the segment
+      return ProcessingResult.POSTPONE;
+    } else if (seqNum < this.recvNext) {
+      // Drop the segment
+      return ProcessingResult.DISCARD;
     }
     const receivedData = segment.data;
     // NOTE: for simplicity, we ignore cases where the data is only partially
@@ -386,7 +401,7 @@ export class TcpState {
     this.recvWindow = MAX_BUFFER_SIZE - this.readBuffer.bytesAvailable();
     // We should send back an ACK segment
     this.notifySendPackets();
-    return true;
+    return ProcessingResult.SUCCESS;
   }
 
   async read(output: Uint8Array): Promise<number> {
@@ -546,8 +561,36 @@ export class TcpState {
         this.notifiedSendPackets = false;
       } else if ("segment" in result) {
         receivedSegmentPromise = this.tcpQueue.pop();
-        if (!this.handleSegment(result.segment)) {
-          this.dropSegment(result.segment);
+        let segment = result.segment;
+
+        let processingResult = this.handleSegment(segment);
+
+        if (processingResult === ProcessingResult.DISCARD) {
+          this.dropSegment(segment);
+          continue;
+        }
+
+        while (
+          processingResult !== ProcessingResult.POSTPONE &&
+          !this.recvQueue.isEmpty()
+        ) {
+          segment = this.recvQueue.dequeue();
+          processingResult = this.handleSegment(segment);
+          if (processingResult === ProcessingResult.DISCARD) {
+            this.dropSegment(segment);
+          }
+        }
+
+        if (processingResult === ProcessingResult.POSTPONE) {
+          // Enqueue the segment for later processing
+          this.recvQueue.enqueue(segment);
+        }
+
+        if (processingResult === ProcessingResult.POSTPONE) {
+          // Enqueue the segment for later processing
+          this.recvQueue.enqueue(segment);
+        } else if (processingResult === ProcessingResult.DISCARD) {
+          this.dropSegment(segment);
         }
         continue;
       } else if ("seqNum" in result) {
@@ -974,5 +1017,22 @@ class RTTEstimator {
     // Update the current sample's RTT
     // NOTE: we do this to account for the simulation's speed
     this.currentSample.rtt += ticker.elapsedMS * this.ctx.getCurrentSpeed();
+  }
+}
+
+class ReceivedSegmentsQueue {
+  private queue: TcpSegment[] = [];
+
+  enqueue(segment: TcpSegment) {
+    this.queue.push(segment);
+    this.queue.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+  }
+
+  dequeue(): TcpSegment | undefined {
+    return this.queue.shift();
+  }
+
+  isEmpty() {
+    return this.queue.length === 0;
   }
 }
