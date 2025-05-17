@@ -139,7 +139,7 @@ export interface IpPayload {
   // Packet protocol name
   getPacketType(): string;
   // Get details of the payload
-  getDetails?(layer: Layer): Record<string, string | number | object>;
+  getDetails(layer: Layer): Record<string, string | number | object>;
   // Get ports of the payload (if any)
   getPorts(): Ports;
   // Get the payload data for Network layer

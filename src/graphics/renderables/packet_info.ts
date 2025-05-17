@@ -115,6 +115,7 @@ export class PacketInfo extends BaseInfo {
       fields: Object.entries(packetDetails).map(([key, value]) => ({
         key: key,
         value: value,
+        tooltip: key,
       })),
       toggleButtonText: {
         on: "Hide Packet Details",

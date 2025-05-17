@@ -162,10 +162,13 @@ export class EthernetFrame {
 
   getDetails(layer: Layer) {
     if (layer == Layer.Link) {
-      return {
-        "Source MAC": this.source.toString(),
-        "Destination MAC": this.destination.toString(),
+      const ethernetDetails = {
         EtherType: this.type.toString(),
+      };
+      // Merge Ethernet details with payload details
+      return {
+        ...ethernetDetails,
+        ...this.payload.getDetails(layer),
       };
     } else {
       return this.payload.getDetails(layer);
