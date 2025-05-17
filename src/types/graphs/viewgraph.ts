@@ -326,7 +326,6 @@ export class ViewGraph {
   /**
    * Remove a device and its connections from the viewgraph and its underlying datagraph.
    */
-  // Method to remove a device and its connections (edges)
   removeDevice(id: DeviceId): RemovedNodeData | undefined {
     const device = this.graph.getVertex(id);
 
@@ -413,13 +412,13 @@ export class ViewGraph {
 
   getDeviceByIP(ipAddress: IpAddress) {
     return this.getDevices().find((device) => {
-      return device instanceof ViewNetworkDevice && device.ip.equals(ipAddress);
+      return device instanceof ViewNetworkDevice && device.ownIp(ipAddress);
     });
   }
 
   getDeviceByMac(destination: MacAddress): ViewDevice {
     return this.getDevices().find((device) => {
-      return device.mac.equals(destination);
+      return device.ownMac(destination);
     });
   }
 

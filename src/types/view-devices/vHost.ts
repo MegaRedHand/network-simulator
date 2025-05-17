@@ -46,9 +46,7 @@ export class ViewHost extends ViewNetworkDevice {
     viewgraph: ViewGraph,
     ctx: GlobalContext,
     position: Position,
-    mac: MacAddress,
     interfaces: NetworkInterfaceData[],
-    ip: IpAddress,
     mask: IpAddress,
   ) {
     super(
@@ -57,9 +55,7 @@ export class ViewHost extends ViewNetworkDevice {
       viewgraph,
       ctx,
       position,
-      mac,
       interfaces,
-      ip,
       mask,
     );
   }
@@ -68,10 +64,12 @@ export class ViewHost extends ViewNetworkDevice {
     this.loadRunningPrograms();
   }
 
-  receiveDatagram(packet: IPv4Packet): void {
-    if (!this.ip.equals(packet.destinationAddress)) {
+  receiveDatagram(packet: IPv4Packet, iface: number): void {
+    if (!this.interfaces[iface].ip.equals(packet.destinationAddress)) {
       // TODO: improve this
-      const frame = new EthernetFrame(this.mac, this.mac, packet);
+      // dummy mac
+      const dummyMac = this.interfaces[0].mac;
+      const frame = new EthernetFrame(dummyMac, dummyMac, packet);
       dropPacket(this.viewgraph, this.id, frame);
       return;
     }
@@ -80,17 +78,19 @@ export class ViewHost extends ViewNetworkDevice {
       this.tcpModule.handleSegment(packet.sourceAddress, segment);
       return;
     }
-    this.handleDatagram(packet);
+    this.handleDatagram(packet, iface);
   }
 
   showInfo(): void {
     const programList = getProgramList(this.viewgraph, this.id);
 
     const info = new DeviceInfo(this);
-    info.addField(
-      TOOLTIP_KEYS.IP_ADDRESS,
-      this.ip.octets.join("."),
-      TOOLTIP_KEYS.IP_ADDRESS,
+    this.interfaces.forEach((iface) =>
+      info.addField(
+        TOOLTIP_KEYS.IP_ADDRESS,
+        iface.ip.octets.join("."),
+        TOOLTIP_KEYS.IP_ADDRESS,
+      ),
     );
 
     info.addProgramRunner(this, programList);

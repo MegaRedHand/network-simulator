@@ -51,7 +51,8 @@ export class HttpClient extends ProgramBase {
     }
 
     // Encode dummy HTTP request
-    const httpRequest = "GET / HTTP/1.1\r\nHost: " + dstDevice.ip + "\r\n\r\n";
+    const httpRequest =
+      "GET / HTTP/1.1\r\nHost: " + dstDevice.interfaces[0].ip + "\r\n\r\n";
     const content = new TextEncoder().encode(httpRequest);
 
     // Write request

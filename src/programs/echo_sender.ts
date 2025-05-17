@@ -49,32 +49,27 @@ export class SingleEcho extends ProgramBase {
       );
       return;
     }
+    const { src, dst, sendingIface } = ViewNetworkDevice.getForwardingData(
+      this.srcId,
+      this.dstId,
+      this.viewgraph,
+    );
     const echoRequest = new EchoRequest(0);
     // Wrap in IP datagram
-    const ipPacket = new IPv4Packet(srcDevice.ip, dstDevice.ip, echoRequest);
+    const ipPacket = new IPv4Packet(src.ip, dst.ip, echoRequest);
 
     // Resolve destination MAC address
-    let dstMac = srcDevice.resolveAddress(dstDevice.ip);
+    let dstMac = srcDevice.resolveAddress(dst.ip);
     if (!dstMac) {
       console.warn(
-        `Device ${this.srcId} couldn't resolve MAC address for device with IP ${dstDevice.ip.toString()}. Program cancelled`,
+        `Device ${this.srcId} couldn't resolve MAC address for device with IP ${dst.ip.toString()}. Program cancelled`,
       );
       return;
     }
-    const path = this.viewgraph.getPathBetween(this.srcId, this.dstId);
-    if (!path) return;
-    for (const id of path.slice(1)) {
-      const device = this.viewgraph.getDevice(id);
-      // if there’s a router in the middle, first send frame to router mac
-      if (device instanceof ViewNetworkDevice) {
-        dstMac = device.mac;
-        break;
-      }
-    }
 
     // Wrap in Ethernet frame
-    const ethernetFrame = new EthernetFrame(srcDevice.mac, dstMac, ipPacket);
-    sendViewPacket(this.viewgraph, this.srcId, ethernetFrame);
+    const ethernetFrame = new EthernetFrame(src.mac, dst.mac, ipPacket);
+    sendViewPacket(this.viewgraph, this.srcId, ethernetFrame, sendingIface);
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {

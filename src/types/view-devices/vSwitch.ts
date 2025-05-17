@@ -32,18 +32,9 @@ export class ViewSwitch extends ViewDevice {
     viewgraph: ViewGraph,
     ctx: GlobalContext,
     position: Position,
-    mac: MacAddress,
     interfaces: NetworkInterfaceData[],
   ) {
-    super(
-      id,
-      ViewSwitch.getTexture(),
-      viewgraph,
-      ctx,
-      position,
-      mac,
-      interfaces,
-    );
+    super(id, ViewSwitch.getTexture(), viewgraph, ctx, position, interfaces);
   }
 
   showInfo(): void {
@@ -75,10 +66,10 @@ export class ViewSwitch extends ViewDevice {
 
   private forwardFrame(
     frame: EthernetFrame,
-    sendingIface: number, // will be the interface where to send the packet
-    senderId: number, // will be the interface where the packet came from
+    sendingIface: number,
+    iface: number,
   ) {
-    if (sendingIface === senderId) {
+    if (sendingIface === iface) {
       // Packet would be sent to the interface where it came, discard it
       return;
     }
@@ -86,7 +77,7 @@ export class ViewSwitch extends ViewDevice {
     // as this is a switch, frame.destination should already be
     // the mac of the next network device to receive the packet
     const newFrame = new EthernetFrame(
-      this.mac,
+      this.interfaces[sendingIface].mac,
       frame.destination,
       frame.payload, // should be a copy
     );
@@ -94,23 +85,18 @@ export class ViewSwitch extends ViewDevice {
   }
 
   // TODO: change all related senderId features to the receiver interface
-  receiveFrame(frame: EthernetFrame, iface: DeviceId): void {
+  receiveFrame(frame: EthernetFrame, iface: number): void {
     // WARNING: Hay que cambiar a interfaces aca!!!!!!!
     if (frame.payload instanceof ArpRequest) {
       const { sha, spa, tha, tpa } = frame.payload;
-      const connections = this.viewgraph.getConnections(this.id);
-      connections.forEach((edge) => {
+      this.interfaces.forEach((sendingIface, idx) => {
         const packet = new ArpRequest(sha, spa, tpa, tha);
         const frame = new EthernetFrame(
-          this.mac,
+          this.interfaces[iface].mac,
           MacAddress.broadcastAddress(),
           packet,
         );
-        const nextHopId = edge.otherEnd(this.id);
-        if (!nextHopId || nextHopId === iface) {
-          return;
-        }
-        sendViewPacket(this.viewgraph, this.id, frame, nextHopId);
+        this.forwardFrame(frame, idx, iface);
       });
       return;
     }

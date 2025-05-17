@@ -338,7 +338,7 @@ export function sendViewPacket(
   viewgraph: ViewGraph,
   srcId: DeviceId,
   rawPacket: EthernetFrame,
-  sendingIface?: DeviceId,
+  sendingIface?: number,
 ) {
   const srcMac = rawPacket.source;
   const dstMac = rawPacket.destination;
@@ -354,7 +354,7 @@ export function sendViewPacket(
     let firstEdge = originConnections.find((edge) => {
       const otherId = edge.otherEnd(srcId);
       const otherDevice = viewgraph.getDevice(otherId);
-      return otherDevice.mac.equals(dstMac);
+      return otherDevice.ownMac(dstMac);
     });
     if (firstEdge === undefined) {
       const datagraph = viewgraph.getDataGraph();

@@ -1,6 +1,10 @@
 import { IpAddress } from "../../packets/ip";
 import { RunningProgram } from "../../programs";
-import { DeviceType, layerFromType } from "../view-devices/vDevice";
+import {
+  DeviceType,
+  layerFromType,
+  NetworkInterface,
+} from "../view-devices/vDevice";
 import { layerIncluded, Layer } from "../layer";
 import { Graph, RemovedVertexData, VertexId } from "./graph";
 import {
@@ -32,7 +36,6 @@ interface CommonDataNode {
   y: number;
   type: DeviceType;
   // TODO: remove this
-  mac: string;
   interfaces: NetworkInterfaceData[];
 }
 
@@ -53,7 +56,6 @@ export interface SwitchDataNode extends CommonDataNode {
 
 export interface NetworkDataNode extends CommonDataNode {
   // TODO: remove this
-  ip: string;
   mask: string;
   arpTable: [string, string][];
 }
@@ -346,10 +348,7 @@ export class DataGraph {
   // Get a device by its IP address
   getDeviceByIP(sourceAddress: IpAddress): DataDevice {
     for (const [, device] of this.getDevices()) {
-      if (
-        device instanceof DataNetworkDevice &&
-        device.ip.equals(sourceAddress)
-      ) {
+      if (device instanceof DataNetworkDevice && device.ownIp(sourceAddress)) {
         return device;
       }
     }
@@ -449,7 +448,7 @@ export class DataGraph {
 
       if (!visited.has(device.id)) {
         visited.add(device.id);
-        this.deviceGraph.getNeighbors(device.id).forEach((adjId) => {
+        this.getConnections(device.id).forEach((adjId) => {
           const adjDevice = this.deviceGraph.getVertex(adjId);
           if (!adjDevice) {
             console.warn(`Device ${adjId} for path not found in viewgraph`);
@@ -514,9 +513,22 @@ export class DataGraph {
       return [];
     }
 
+    /**
+     *        H1 i2 ----- i4 R2 i2 ----- i4 S3 i2  ----- i4 H4
+     *                       i1
+     *                        |
+     *                        |
+     *                       i3
+     *                       H5
+     */
+
     const parents = new Map<DeviceId, DeviceId>();
     parents.set(id, id);
     const queue = [id];
+    // parents = {2: [2, und], 1: [2, i2]}
+    // queue = []
+    // currentId = 2    connectedId = 1
+    // iface = i2
     while (queue.length > 0) {
       const currentId = queue.shift();
       const current = this.deviceGraph.getVertex(currentId);
@@ -525,6 +537,9 @@ export class DataGraph {
       const neighbors = this.deviceGraph.getNeighbors(currentId);
       neighbors.forEach((connectedId) => {
         if (!parents.has(connectedId)) {
+          const edge = this.getConnection(currentId, connectedId);
+          const iface =
+            edge.from.id === connectedId ? edge.from.iface : edge.to.iface;
           parents.set(connectedId, currentId);
           queue.push(connectedId);
         }
@@ -536,6 +551,12 @@ export class DataGraph {
     parents.forEach((currentId, childId) => {
       const dstId = childId;
       if (dstId === id) return;
+      // Get edge connection both devices
+      console.debug(`currentId: ${currentId}, childId: ${childId}`);
+      const edge = this.getConnection(currentId, childId);
+      // Get childId interface involved in connection
+      const receivingIfaceNum =
+        edge.from.id === childId ? edge.from.iface : edge.to.iface;
 
       while (currentId !== id) {
         const parentId = parents.get(currentId);
@@ -544,6 +565,7 @@ export class DataGraph {
       }
 
       const dst = this.deviceGraph.getVertex(dstId);
+      const receivingIface = dst.interfaces[receivingIfaceNum];
 
       if (dst instanceof DataNetworkDevice) {
         const dataEdge = this.deviceGraph.getEdge(currentId, childId);
@@ -553,14 +575,14 @@ export class DataGraph {
           );
           return;
         }
-        const iface =
+        const sendingIfaceNum =
           dataEdge.from.id === currentId
             ? dataEdge.from.iface
             : dataEdge.to.iface;
         newTable.push({
-          ip: dst.ip.toString(),
+          ip: receivingIface.ip.toString(),
           mask: dst.ipMask.toString(),
-          iface,
+          iface: sendingIfaceNum,
         });
       }
     });
@@ -755,21 +777,23 @@ export class DataGraph {
       return [];
     }
 
-    // Crear la tabla ARP en el formato deseado
+    // Create ARP table in desirable format
     const arpTable: { ip: string; mac: string }[] = [];
 
     for (const [currId, currDevice] of this.getDevices()) {
       if (currId === id || !(currDevice instanceof DataNetworkDevice)) {
         continue;
       }
-      // Resolver la dirección MAC para la IP del dispositivo actual
-      const mac = device.resolveAddress(currDevice.ip);
-      if (mac) {
-        arpTable.push({
-          ip: currDevice.ip.toString(),
-          mac: mac.toString(),
-        });
-      }
+      currDevice.interfaces.forEach((iface) => {
+        // Resolve the MAC address for the current device's IP
+        const mac = device.resolveAddress(iface.ip);
+        if (mac) {
+          arpTable.push({
+            ip: iface.ip?.toString(),
+            mac: mac.toString(),
+          });
+        }
+      });
     }
 
     return arpTable;

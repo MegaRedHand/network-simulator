@@ -2,6 +2,7 @@ import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { DataGraph, DataNode, DeviceId } from "../graphs/datagraph";
 import { DeviceType, NetworkInterface } from "../view-devices/vDevice";
 import { Position } from "../common";
+import { IpAddress } from "../../packets/ip";
 
 export abstract class DataDevice {
   private static idCounter = 1;
@@ -9,7 +10,6 @@ export abstract class DataDevice {
   id: number;
   x: number;
   y: number;
-  mac: MacAddress;
   datagraph: DataGraph;
   interfaces: NetworkInterface[] = [];
 
@@ -22,7 +22,6 @@ export abstract class DataDevice {
   constructor(graphData: DataNode, datagraph: DataGraph) {
     this.x = graphData.x;
     this.y = graphData.y;
-    this.mac = MacAddress.parse(graphData.mac);
     if (graphData.id) {
       this.id = graphData.id;
       DataDevice.setIdCounter(graphData.id);
@@ -33,6 +32,7 @@ export abstract class DataDevice {
       this.interfaces.push({
         name: iface.name,
         mac: MacAddress.parse(iface.mac),
+        ip: iface.ip !== undefined ? IpAddress.parse(iface.ip) : undefined,
       });
     });
     this.datagraph = datagraph;
@@ -48,15 +48,19 @@ export abstract class DataDevice {
       type: this.getType(),
       x: this.x,
       y: this.y,
-      mac: this.mac.toString(),
       interfaces: this.interfaces.map((iface) => ({
         name: iface.name,
         mac: iface.mac.toString(),
+        ip: iface.ip !== undefined ? iface.ip.toString() : undefined,
       })),
     };
   }
 
   abstract getType(): DeviceType;
+
+  ownMac(mac: MacAddress): boolean {
+    return this.interfaces.some((iface) => iface.mac.equals(mac));
+  }
 
   getPosition(): Position {
     return { x: this.x, y: this.y };
@@ -66,5 +70,5 @@ export abstract class DataDevice {
    * Returns the id for the next device to send the packet to, or
    * null if there’s no next device to send the packet.
    * */
-  abstract receiveFrame(frame: EthernetFrame, senderId: DeviceId): void;
+  abstract receiveFrame(frame: EthernetFrame, iface: number): void;
 }

@@ -38,9 +38,7 @@ export class ViewRouter extends ViewNetworkDevice {
     viewgraph: ViewGraph,
     ctx: GlobalContext,
     position: Position,
-    mac: MacAddress,
     interfaces: NetworkInterfaceData[],
-    ip: IpAddress,
     mask: IpAddress,
     packetQueueSize: number = ROUTER_CONSTANTS.PACKET_QUEUE_MAX_SIZE,
     timePerByte: number = ROUTER_CONSTANTS.PROCESSING_SPEED,
@@ -51,9 +49,7 @@ export class ViewRouter extends ViewNetworkDevice {
       viewgraph,
       ctx,
       position,
-      mac,
       interfaces,
-      ip,
       mask,
     );
     this.packetQueueSize = packetQueueSize;
@@ -63,10 +59,12 @@ export class ViewRouter extends ViewNetworkDevice {
 
   showInfo(): void {
     const info = new DeviceInfo(this);
-    info.addField(
-      TOOLTIP_KEYS.IP_ADDRESS,
-      this.ip.octets.join("."),
-      TOOLTIP_KEYS.IP_ADDRESS,
+    this.interfaces.forEach((iface) =>
+      info.addField(
+        TOOLTIP_KEYS.IP_ADDRESS,
+        iface.ip?.octets.join("."),
+        TOOLTIP_KEYS.IP_ADDRESS,
+      ),
     );
 
     info.addProgressBar(
@@ -173,9 +171,9 @@ export class ViewRouter extends ViewNetworkDevice {
     });
   }
 
-  receiveDatagram(datagram: IPv4Packet) {
-    if (this.ip.equals(datagram.destinationAddress)) {
-      this.handleDatagram(datagram);
+  receiveDatagram(datagram: IPv4Packet, iface: number) {
+    if (this.ownIp(datagram.destinationAddress)) {
+      this.handleDatagram(datagram, iface);
       return;
     }
     this.addPacketToQueue(datagram);
@@ -186,7 +184,8 @@ export class ViewRouter extends ViewNetworkDevice {
     if (!this.packetQueue.enqueue(datagram)) {
       console.debug("Packet queue full, dropping packet");
       // dummy values
-      const frame = new EthernetFrame(this.mac, this.mac, datagram);
+      const dummyMac = this.interfaces[0].mac;
+      const frame = new EthernetFrame(dummyMac, dummyMac, datagram);
       dropPacket(this.viewgraph, this.id, frame);
       return;
     }
@@ -210,19 +209,13 @@ export class ViewRouter extends ViewNetworkDevice {
 
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
     // TODO: use arp table here?
-    let dstMac = dstDevice.mac;
+    const { src, dst } = ViewNetworkDevice.getForwardingData(
+      this.id,
+      dstDevice.id,
+      this.viewgraph,
+    );
 
-    const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
-    for (const id of path.slice(1)) {
-      const device = this.viewgraph.getDevice(id);
-      // if there’s a router in the middle, first send frame to router mac
-      if (device instanceof ViewNetworkDevice) {
-        dstMac = device.mac;
-        break;
-      }
-    }
-
-    const newFrame = new EthernetFrame(this.mac, dstMac, datagram);
+    const newFrame = new EthernetFrame(src.mac, dst.mac, datagram);
     sendViewPacket(this.viewgraph, this.id, newFrame, iface);
 
     // if (!devices || devices.length === 0) {

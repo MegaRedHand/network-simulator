@@ -52,13 +52,11 @@ export class ArpProtocol extends ProgramBase {
     }
     const connections = this.viewgraph.getConnections(this.srcId);
     connections.forEach((edge) => {
-      const payload: FramePayload = new ArpRequest(
-        srcDevice.mac,
-        srcDevice.ip,
-        this.dstIp,
-      );
+      const ifaceNum = edge.getDeviceInterface(this.srcId);
+      const { mac, ip } = srcDevice.interfaces[ifaceNum];
+      const payload: FramePayload = new ArpRequest(mac, ip, this.dstIp);
       const ethernetFrame = new EthernetFrame(
-        srcDevice.mac,
+        mac,
         MacAddress.broadcastAddress(),
         payload,
       );

@@ -111,6 +111,13 @@ export class IpAddressGenerator {
     return { ip: nextIp, mask: this.mask };
   }
 
+  /**
+   * Return the mask used by the IpAddressGenerator
+   */
+  getMask(): string {
+    return this.mask;
+  }
+
   // Turn IP into a number
   static ipToNumber(ip: string): number {
     return ip

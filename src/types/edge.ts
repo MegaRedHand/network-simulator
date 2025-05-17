@@ -73,7 +73,15 @@ export class Edge extends Graphics {
     return this.data;
   }
 
-  getDeviceInterface(id: DeviceId) {
+  /**
+   * Returns the interface number associated with the specified device ID in this edge connection.
+   * If the given device is part of the connection (either as the source or destination), the corresponding
+   * interface number is returned. If the device is not involved in the connection, returns `undefined`.
+   *
+   * @param id - The ID of the device for which to retrieve the interface number.
+   * @returns The interface number if the device is part of the connection; otherwise, `undefined`.
+   */
+  getDeviceInterface(id: DeviceId): number | undefined {
     if (!(id === this.data.from.id || id === this.data.to.id)) {
       return;
     }

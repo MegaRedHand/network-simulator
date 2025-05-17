@@ -27,6 +27,7 @@ import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer, layerIncluded } from "../layer";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
+import { IpAddress } from "../../packets/ip";
 
 export enum DeviceType {
   Host = 0,
@@ -38,7 +39,7 @@ export interface NetworkInterface {
   name: string;
   mac: MacAddress;
   // TODO: add IP address
-  // ip?: string;
+  ip?: IpAddress;
 }
 
 export function layerFromType(type: DeviceType) {
@@ -59,7 +60,6 @@ export abstract class ViewDevice extends Container {
   readonly viewgraph: ViewGraph;
   ctx: GlobalContext;
 
-  mac: MacAddress;
   interfaces: NetworkInterface[] = [];
 
   highlightMarker: Graphics | null = null; // Marker to indicate selection
@@ -88,7 +88,6 @@ export abstract class ViewDevice extends Container {
     viewgraph: ViewGraph,
     ctx: GlobalContext,
     position: Position,
-    mac: MacAddress,
     interfaces: NetworkInterfaceData[],
   ) {
     super();
@@ -97,11 +96,10 @@ export abstract class ViewDevice extends Container {
     this.viewgraph = viewgraph;
     this.ctx = ctx;
 
-    this.mac = mac;
     this.interfaces = interfaces.map((iface) => ({
       name: iface.name,
       mac: MacAddress.parse(iface.mac),
-      // TODO: Add ip (in NetworkDevice)
+      ip: iface.ip !== undefined ? IpAddress.parse(iface.ip) : undefined,
     }));
 
     this.sprite = new Sprite(texture);
@@ -136,6 +134,10 @@ export abstract class ViewDevice extends Container {
 
   updateVisibility() {
     this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());
+  }
+
+  ownMac(mac: MacAddress): boolean {
+    return this.interfaces.some((iface) => iface.mac.equals(mac));
   }
 
   // Function to add the ID label to the device
