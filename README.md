@@ -6,6 +6,14 @@ It's meant as an aid to students trying to understand computer networks, along w
 The project runs on the browser and is hosted in GitHub Pages.
 You can access it [here](https://megaredhand.github.io/network-simulator/).
 
+## Development
+
+To run the local development server, use `npm run start`
+
+For building the artifacts, use `npm run build`
+
+For checking code format and lint, use `npm run lint`
+
 # **GEduNet - User Manual** 📘
 
 ![Preview of the simulator. Shows multiple hosts, routers and switches. Some network packets are being sent through the network.](./img/00_full-preview.png)
@@ -195,10 +203,38 @@ Hovering on a Router will show the IP address. If the simulator is set on the Li
 
 ### Edge
 
-## Development
+## Programs
 
-To run the local development server, use `npm run start`
+### ICMP echo
 
-For building the artifacts, use `npm run build`
+### Echo Server
 
-For checking code format and lint, use `npm run lint`
+### Send and Serve HTTP Requests
+
+### ARP Request
+
+## Packets
+
+### Packet Speed and Pause
+
+### ICMP Packet
+
+### HTTP Packet
+
+### ARP Packet
+
+## Tables
+
+### Routing Table
+
+### ARP Table
+
+## Misc
+
+### Shortcuts
+
+### Settings
+
+### Loading and Saving
+
+### Print Canvas
