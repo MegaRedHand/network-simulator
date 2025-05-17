@@ -84,7 +84,6 @@ export abstract class AddRemoveEdgeMove extends BaseMove {
       return false;
     }
 
-    // TODO: store routing tables
     this.state = { removedData: edgeData };
     // Deselect to avoid showing the information of the deleted edge
     // TODO: this isnt needed I think
