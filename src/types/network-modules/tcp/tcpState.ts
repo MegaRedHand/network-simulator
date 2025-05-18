@@ -27,6 +27,7 @@ enum ProcessingResult {
   SUCCESS = 0,
   DISCARD = 1,
   POSTPONE = 2,
+  RESET = 3,
 }
 
 const MAX_BUFFER_SIZE = 0xffff;
@@ -268,10 +269,11 @@ export class TcpState {
         }
       }
       if (flags.rst) {
-        // TODO: handle gracefully
         if (flags.ack) {
           // drop the segment, enter CLOSED state, delete TCB, and return
-          throw new Error("error: connection reset");
+          console.debug("connection reset");
+          this.connectionQueue.push(false);
+          return ProcessingResult.RESET;
         } else {
           console.debug("SYN_SENT RST without ACK, dropping segment");
           return ProcessingResult.DISCARD;
@@ -445,7 +447,11 @@ export class TcpState {
   async read(output: Uint8Array): Promise<number> {
     // Wait for there to be data in the read buffer
     while (this.readBuffer.isEmpty() && !this.readClosed) {
-      await this.readChannel.pop();
+      const available = await this.readChannel.pop();
+      if (available === -1) {
+        // Connection was reset
+        return -1;
+      }
     }
     // Consume the data and return it
     const readLength = this.readBuffer.read(output);
@@ -465,7 +471,11 @@ export class TcpState {
       const writeLength = this.writeBuffer.write(input.subarray(totalWrote));
       if (writeLength === 0) {
         // Buffer is full, wait for space
-        await this.writeChannel.pop();
+        const available = await this.writeChannel.pop();
+        if (available === -1) {
+          // Connection was reset
+          return -1;
+        }
       } else {
         totalWrote += writeLength;
         if (this.sendWindowSize() > 0) {
@@ -609,7 +619,8 @@ export class TcpState {
         }
 
         while (
-          processingResult !== ProcessingResult.POSTPONE &&
+          (processingResult === ProcessingResult.DISCARD ||
+            processingResult === ProcessingResult.SUCCESS) &&
           !this.recvQueue.isEmpty()
         ) {
           segment = this.recvQueue.dequeue();
@@ -622,13 +633,15 @@ export class TcpState {
         if (processingResult === ProcessingResult.POSTPONE) {
           // Enqueue the segment for later processing
           this.recvQueue.enqueue(segment);
-        }
-
-        if (processingResult === ProcessingResult.POSTPONE) {
-          // Enqueue the segment for later processing
-          this.recvQueue.enqueue(segment);
-        } else if (processingResult === ProcessingResult.DISCARD) {
+        } else if (processingResult === ProcessingResult.RESET) {
+          // Reset the connection
+          this.state = TcpStateEnum.CLOSED;
+          this.readClosed = true;
+          this.writeClosed = true;
+          this.writeChannel.push(-1);
+          this.readChannel.push(-1);
           this.dropSegment(segment);
+          return;
         }
         continue;
       } else if ("seqNum" in result) {
