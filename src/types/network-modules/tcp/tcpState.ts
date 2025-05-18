@@ -259,7 +259,10 @@ export class TcpState {
             return ProcessingResult.DISCARD;
           }
           console.debug("Invalid SYN_SENT ACK, sending RST");
-          this.newSegment(ack, 0).withFlags(new Flags().withRst());
+          // Send a RST segment
+          const newSegment = this.newSegment(ack, 0);
+          newSegment.withFlags(new Flags().withRst());
+          sendIpPacket(this.srcHost, this.dstHost, newSegment);
           return ProcessingResult.DISCARD;
         }
         // Try to process ACK
@@ -304,9 +307,12 @@ export class TcpState {
           this.seqNumForLastWindowUpdate = segment.sequenceNumber;
           this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
           // Send SYN-ACK
-          this.newSegment(this.initialSendSeqNum, this.recvNext).withFlags(
-            new Flags().withSyn().withAck(),
+          const newSegment = this.newSegment(
+            this.initialSendSeqNum,
+            this.recvNext,
           );
+          newSegment.withFlags(new Flags().withSyn().withAck());
+          sendIpPacket(this.srcHost, this.dstHost, newSegment);
           this.state = TcpStateEnum.SYN_RECEIVED;
         }
       }
@@ -324,10 +330,25 @@ export class TcpState {
       return ProcessingResult.DISCARD;
     }
 
-    // TODO: handle RST or SYN flags
-    if (flags.rst || flags.syn) {
-      // TODO: handle this gracefully
-      throw new Error("error: RST bit set");
+    if (flags.rst) {
+      if (this.isInReceiveWindow(segSeq)) {
+        console.debug("RST SEQ outside receive window");
+        return ProcessingResult.DISCARD;
+      } else if (segSeq === this.recvNext) {
+        console.debug("RST SEQ matches recvNext, resetting connection");
+        return ProcessingResult.RESET;
+      } else {
+        // Send a challenge segment and discard the packet
+        const challengeSegment = this.newSegment(this.sendNext, this.recvNext);
+        challengeSegment.withFlags(new Flags().withAck());
+        sendIpPacket(this.srcHost, this.dstHost, challengeSegment);
+        return ProcessingResult.DISCARD;
+      }
+    }
+    if (flags.syn) {
+      // TODO: handle SYN flags
+      console.debug("SYN flag not supported");
+      return ProcessingResult.DISCARD;
     }
 
     // If the ACK bit is off, drop the segment.
@@ -338,9 +359,9 @@ export class TcpState {
     if (this.state === TcpStateEnum.SYN_RECEIVED) {
       if (!this.isAckValid(segment.acknowledgementNumber)) {
         console.debug("ACK invalid, dropping segment");
-        this.newSegment(segment.acknowledgementNumber, 0).withFlags(
-          new Flags().withRst(),
-        );
+        const newSegment = this.newSegment(segment.acknowledgementNumber, 0);
+        newSegment.withFlags(new Flags().withRst());
+        sendIpPacket(this.srcHost, this.dstHost, newSegment);
         return ProcessingResult.DISCARD;
       }
       this.state = TcpStateEnum.ESTABLISHED;
