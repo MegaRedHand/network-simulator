@@ -10,7 +10,7 @@ import { SegmentWithIp } from "../tcpModule";
 import { GlobalContext } from "../../../context";
 
 enum TcpStateEnum {
-  // CLOSED = 0,
+  CLOSED = 0,
   // LISTEN = 1,
   SYN_SENT = 2,
   SYN_RECEIVED = 3,
@@ -199,6 +199,43 @@ export class TcpState {
     }
     this.rttEstimator.startMeasurement(this.initialSendSeqNum);
     return true;
+  }
+
+  // Reset the TCP connection in response to an unexpected segment
+  static handleUnexpectedSegment(
+    srcHost: ViewHost,
+    srcPort: Port,
+    dstHost: ViewHost,
+    dstPort: Port,
+    segment: TcpSegment,
+  ) {
+    // An incoming segment containing a RST is discarded
+    if (segment.flags.rst) {
+      return;
+    }
+    // An incoming segment not containing a RST causes a RST to be sent in response
+    let resetSegment;
+    if (segment.flags.ack) {
+      // <SEQ=SEG.ACK><CTL=RST>
+      const flags = new Flags().withRst();
+      const segAck = segment.acknowledgementNumber;
+
+      resetSegment = new TcpSegment(srcPort, dstPort, segAck, 0);
+      resetSegment.withFlags(flags);
+    } else {
+      // <SEQ=0><ACK=SEG.SEQ+SEG.LEN><CTL=RST,ACK>
+      const flags = new Flags().withRst().withAck();
+      const ackNum = segment.sequenceNumber + segment.data.length;
+
+      resetSegment = new TcpSegment(srcPort, dstPort, 0, ackNum);
+      resetSegment.withFlags(flags);
+    }
+    sendIpPacket(srcHost, dstHost, resetSegment);
+
+    // Drop the segment
+    const packet = new IPv4Packet(srcHost.ip, dstHost.ip, segment);
+    const frame = new EthernetFrame(srcHost.mac, dstHost.mac, packet);
+    dropPacket(srcHost.viewgraph, srcHost.id, frame);
   }
 
   private handleSegment(segment: TcpSegment): ProcessingResult {

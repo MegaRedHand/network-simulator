@@ -37,12 +37,25 @@ export class TcpModule {
   }
 
   handleSegment(srcIp: IpAddress, segment: TcpSegment) {
-    const queueMap = this.tcpQueues.get(segment.destinationPort);
+    const queue = this.getHandler(
+      srcIp,
+      segment.sourcePort,
+      segment.destinationPort,
+    );
+    if (!queue) {
+      this.handleUnexpectedSegment(srcIp, segment);
+      return;
+    }
+    queue.push({ srcIp, segment });
+  }
+
+  private getHandler(srcIp: IpAddress, srcPort: Port, dstPort: Port) {
+    const queueMap = this.tcpQueues.get(dstPort);
     if (!queueMap) {
       console.warn("port not in use");
       return;
     }
-    const key = [srcIp, segment.sourcePort].toString();
+    const key = [srcIp, srcPort].toString();
     let queue = queueMap.get(key);
     if (!queue) {
       console.debug("defaulting to match-all queue");
@@ -52,7 +65,7 @@ export class TcpModule {
       console.warn("no handler registered");
       return;
     }
-    queue.push({ srcIp, segment });
+    return queue;
   }
 
   async connect(dstHost: ViewHost, dstPort: Port): Promise<TcpSocket | null> {
@@ -135,6 +148,17 @@ export class TcpModule {
       throw new Error("No available ports");
     }
     return port;
+  }
+
+  private handleUnexpectedSegment(srcIp: IpAddress, segment: TcpSegment) {
+    const dst = this.host.viewgraph.getDeviceByIP(srcIp);
+    if (!dst || !(dst instanceof ViewHost)) {
+      console.warn("sender device not found or not a host");
+      return;
+    }
+    const dstPort = segment.destinationPort;
+    const srcPort = segment.sourcePort;
+    TcpState.handleUnexpectedSegment(this.host, dstPort, dst, srcPort, segment);
   }
 }
 
