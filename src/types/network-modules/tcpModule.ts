@@ -112,7 +112,7 @@ export class TcpModule {
     }
     const key = filter ? [filter.ip, filter.port].toString() : MATCH_ALL_KEY;
     const prevHandler = handlerMap.get(key);
-    if (prevHandler) {
+    if (prevHandler && !prevHandler.isClosed()) {
       return null;
     }
     const queue = new AsyncQueue<SegmentWithIp>();

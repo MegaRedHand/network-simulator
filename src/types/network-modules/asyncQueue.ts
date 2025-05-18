@@ -51,6 +51,10 @@ export class AsyncQueue<T> {
     }
   }
 
+  isClosed(): boolean {
+    return this.closed;
+  }
+
   isEmpty(): boolean {
     return this.queue.length === 0;
   }
