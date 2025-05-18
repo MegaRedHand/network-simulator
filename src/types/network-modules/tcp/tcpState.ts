@@ -81,7 +81,7 @@ export class TcpState {
   private dstPort: Port;
   private tcpQueue: AsyncQueue<SegmentWithIp>;
   private sendQueue = new AsyncQueue<undefined>();
-  private connectionQueue = new AsyncQueue<undefined>();
+  private connectionQueue = new AsyncQueue<boolean>();
   private retransmissionQueue: RetransmissionQueue;
 
   private recvQueue = new ReceivedSegmentsQueue();
@@ -172,8 +172,7 @@ export class TcpState {
 
     // Move to SYN_SENT state
     this.state = TcpStateEnum.SYN_SENT;
-    await this.connectionQueue.pop();
-    return true;
+    return await this.connectionQueue.pop();
   }
 
   // Accept passive connection
@@ -225,7 +224,9 @@ export class TcpState {
     } else {
       // <SEQ=0><ACK=SEG.SEQ+SEG.LEN><CTL=RST,ACK>
       const flags = new Flags().withRst().withAck();
-      const ackNum = segment.sequenceNumber + segment.data.length;
+      const flagsLength =
+        (segment.flags.syn ? 1 : 0) + (segment.flags.fin ? 1 : 0);
+      const ackNum = segment.sequenceNumber + segment.data.length + flagsLength;
 
       resetSegment = new TcpSegment(srcPort, dstPort, 0, ackNum);
       resetSegment.withFlags(flags);
@@ -286,7 +287,7 @@ export class TcpState {
           // It's a valid SYN-ACK
           // Process the segment normally
           this.state = TcpStateEnum.ESTABLISHED;
-          this.connectionQueue.push(undefined);
+          this.connectionQueue.push(true);
           if (this.handleSegmentData(segment) !== ProcessingResult.SUCCESS) {
             console.debug("Segment data processing failed");
             return ProcessingResult.DISCARD;
@@ -341,7 +342,7 @@ export class TcpState {
         return ProcessingResult.DISCARD;
       }
       this.state = TcpStateEnum.ESTABLISHED;
-      this.connectionQueue.push(undefined);
+      this.connectionQueue.push(true);
       this.sendWindow = segment.window;
       this.seqNumForLastWindowUpdate = segment.sequenceNumber;
       this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
