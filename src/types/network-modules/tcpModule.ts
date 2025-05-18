@@ -46,7 +46,10 @@ export class TcpModule {
       this.handleUnexpectedSegment(srcIp, segment);
       return;
     }
-    queue.push({ srcIp, segment });
+    if (!queue.push({ srcIp, segment })) {
+      console.debug("queue closed");
+      this.handleUnexpectedSegment(srcIp, segment);
+    }
   }
 
   private getHandler(srcIp: IpAddress, srcPort: Port, dstPort: Port) {

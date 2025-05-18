@@ -52,7 +52,9 @@ export class HttpClient extends ProgramBase {
     // This starts the request from the background
     (async () => {
       await this.sendHttpRequest();
-      this.signalStop();
+      if (!this.stopped) {
+        this.signalStop();
+      }
     })();
   }
 
