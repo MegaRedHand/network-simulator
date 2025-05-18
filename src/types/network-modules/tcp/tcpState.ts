@@ -336,7 +336,7 @@ export class TcpState {
     }
 
     if (flags.rst) {
-      if (this.isInReceiveWindow(segSeq)) {
+      if (!this.isInReceiveWindow(segSeq)) {
         console.debug("RST SEQ outside receive window");
         return ProcessingResult.DISCARD;
       } else if (segSeq === this.recvNext) {
