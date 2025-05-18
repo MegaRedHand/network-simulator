@@ -10,9 +10,15 @@ import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 import { ProgramBase } from "./program_base";
 
 const RESOURCE_MAP = new Map([
-  ["/small", generateResource(1024)],
-  ["/medium", generateResource(102400)],
-  ["/large", generateResource(10485760)],
+  ["/small", generateResource(1 * 1024)], // 1 KB
+  ["/medium", generateResource(256 * 1024)], // 256 KB
+  ["/large", generateResource(1 * 1024 * 1024)], // 1 MB
+]);
+
+const RESOURCE_MAP_SIZES = new Map([
+  ["/small", "1 KB"],
+  ["/medium", "256 KB"],
+  ["/large", "1 MB"],
 ]);
 
 function generateResource(size: number): Uint8Array {
@@ -103,11 +109,10 @@ export class HttpClient extends ProgramBase {
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
-    const sizeOptions = [
-      { value: "/small", text: "1 KB" },
-      { value: "/medium", text: "100 KB" },
-      { value: "/large", text: "10 MB" },
-    ];
+    const sizeOptions = [];
+    for (const [key, value] of RESOURCE_MAP_SIZES) {
+      sizeOptions.push({ value: key, text: value });
+    }
 
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);
     programInfo.withDestinationDropdown(viewgraph, srcId, Layer.App);
