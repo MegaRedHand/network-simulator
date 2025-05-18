@@ -213,6 +213,10 @@ export class TcpSocket {
   closeWrite() {
     this.tcpState.closeWrite();
   }
+
+  abort() {
+    this.tcpState.abort();
+  }
 }
 
 export class TcpListener {

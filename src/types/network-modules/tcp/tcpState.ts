@@ -74,6 +74,11 @@ function sendIpPacket(
   return true;
 }
 
+enum Command {
+  ABORT,
+  SEND_ACK,
+}
+
 export class TcpState {
   private ctx: GlobalContext;
   private srcHost: ViewHost;
@@ -81,7 +86,7 @@ export class TcpState {
   private dstHost: ViewHost;
   private dstPort: Port;
   private tcpQueue: AsyncQueue<SegmentWithIp>;
-  private sendQueue = new AsyncQueue<undefined>();
+  private cmdQueue = new AsyncQueue<Command>();
   private connectionQueue = new AsyncQueue<boolean>();
   private retransmissionQueue: RetransmissionQueue;
 
@@ -514,6 +519,10 @@ export class TcpState {
     this.notifySendPackets();
   }
 
+  abort() {
+    this.cmdQueue.push(Command.ABORT);
+  }
+
   // utils
 
   private newSegment(seqNum: number, ackNum: number) {
@@ -608,13 +617,13 @@ export class TcpState {
     }
     this.notifiedSendPackets = true;
     setTimeout(
-      () => this.sendQueue.push(undefined),
+      () => this.cmdQueue.push(Command.SEND_ACK),
       10 * this.ctx.getCurrentSpeed(),
     );
   }
 
   private async mainLoop() {
-    let recheckPromise = this.sendQueue.pop();
+    let recheckPromise = this.cmdQueue.pop();
     let receivedSegmentPromise = this.tcpQueue.pop();
     let retransmitPromise = this.retransmissionQueue.pop();
 
@@ -625,9 +634,15 @@ export class TcpState {
         retransmitPromise,
       ]);
 
-      if (result === undefined) {
-        recheckPromise = this.sendQueue.pop();
+      if (result === Command.SEND_ACK) {
+        recheckPromise = this.cmdQueue.pop();
         this.notifiedSendPackets = false;
+      } else if (result === Command.ABORT) {
+        // Send RST and quit
+        const segment = this.newSegment(this.sendNext, 0);
+        segment.withFlags(new Flags().withRst());
+        sendIpPacket(this.srcHost, this.dstHost, segment);
+        break;
       } else if ("segment" in result) {
         receivedSegmentPromise = this.tcpQueue.pop();
         let segment = result.segment;
@@ -656,13 +671,8 @@ export class TcpState {
           this.recvQueue.enqueue(segment);
         } else if (processingResult === ProcessingResult.RESET) {
           // Reset the connection
-          this.state = TcpStateEnum.CLOSED;
-          this.readClosed = true;
-          this.writeClosed = true;
-          this.writeChannel.push(-1);
-          this.readChannel.push(-1);
           this.dropSegment(segment);
-          return;
+          break;
         }
         continue;
       } else if ("seqNum" in result) {
@@ -713,6 +723,17 @@ export class TcpState {
         this.notifySendPackets();
       }
     }
+    this.abortConnection();
+  }
+
+  // Closes the connection and notifies reads/writes of this
+  private abortConnection() {
+    this.state = TcpStateEnum.CLOSED;
+    this.readClosed = true;
+    this.writeClosed = true;
+    this.writeChannel.push(-1);
+    this.readChannel.push(-1);
+    this.tcpQueue.close();
   }
 
   private resendPacket(seqNum: number, size: number) {

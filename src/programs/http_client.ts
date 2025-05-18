@@ -35,6 +35,8 @@ export class HttpClient extends ProgramBase {
   private dstId: DeviceId;
   private resource: string;
 
+  private stopped = false;
+
   protected _parseInputs(inputs: string[]): void {
     if (inputs.length !== 2) {
       console.error(
@@ -55,8 +57,7 @@ export class HttpClient extends ProgramBase {
   }
 
   protected _stop() {
-    // TODO: stop request preemptively?
-    // Nothing to do
+    this.stopped = true;
   }
 
   private async sendHttpRequest() {
@@ -85,6 +86,10 @@ export class HttpClient extends ProgramBase {
       console.warn("HttpClient failed to connect");
       return;
     }
+    if (this.stopped) {
+      socket.abort();
+      return;
+    }
     const wrote = await socket.write(httpRequest);
     if (wrote < 0) {
       console.error("HttpClient failed to write to socket");
@@ -99,6 +104,10 @@ export class HttpClient extends ProgramBase {
     const expectedLength = RESOURCE_MAP.get(this.resource)?.length || 0;
     let totalRead = 0;
     while (totalRead < expectedLength) {
+      if (this.stopped) {
+        socket.abort();
+        return;
+      }
       const readLength = await socket.read(buffer);
       if (readLength < 0) {
         console.error("HttpClient failed to read from socket");
