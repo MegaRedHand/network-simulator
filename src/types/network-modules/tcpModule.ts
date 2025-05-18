@@ -120,18 +120,6 @@ export class TcpModule {
     return queue;
   }
 
-  closeQueue(port: Port, filter?: IpAndPort) {
-    const handlerMap = this.tcpQueues.get(port);
-    if (!handlerMap) {
-      return;
-    }
-    const key = filter ? [filter.ip, filter.port].toString() : MATCH_ALL_KEY;
-    handlerMap.delete(key);
-    if (handlerMap.size === 0) {
-      this.tcpQueues.delete(port);
-    }
-  }
-
   // Port number to use for the next connection.
   // The number is arbitrary
   private nextPortNumber: Port = STARTING_PORT;
@@ -260,7 +248,7 @@ export class TcpListener {
       queue,
     );
     if (!tcpState.accept(segment)) {
-      this.tcpModule.closeQueue(this.port, ipAndPort);
+      queue.close();
       return this.next();
     }
 
@@ -268,6 +256,6 @@ export class TcpListener {
   }
 
   close() {
-    this.tcpModule.closeQueue(this.port);
+    this.tcpQueue.close();
   }
 }
