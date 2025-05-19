@@ -23,7 +23,7 @@ export function attachTooltip(
   key: string,
   hideDelay = false,
 ): void {
-  const tooltipsEnabled = globalContext?.get_enable_tooltips() ?? true;
+  const tooltipsEnabled = globalContext?.getEnableTooltips() ?? true;
 
   if (key in TOOLTIP_CONTENT) {
     if (tooltipsEnabled) {
@@ -66,7 +66,7 @@ export function attachTooltip(
  * @param key - The key for the tooltip content.
  */
 export function showTooltip(key: string): void {
-  const tooltipsEnabled = globalContext?.get_enable_tooltips() ?? true;
+  const tooltipsEnabled = globalContext?.getEnableTooltips() ?? true;
   if (!tooltipsEnabled) return;
 
   const text = TOOLTIP_CONTENT[key as keyof typeof TOOLTIP_CONTENT];
@@ -107,7 +107,7 @@ export function hideTooltip(): void {
  * Updates the state of tooltips (enabled/disabled).
  */
 export function updateTooltipsState(): void {
-  const tooltipsEnabled = globalContext?.get_enable_tooltips() ?? true;
+  const tooltipsEnabled = globalContext?.getEnableTooltips() ?? true;
 
   // Select all elements with the "has-tooltip" class
   const tooltipElements = document.querySelectorAll(".has-tooltip");
