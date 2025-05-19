@@ -37,9 +37,11 @@ import {
   removeTooltip,
   showTooltip,
 } from "../graphics/renderables/canvas_tooltip_manager";
+import { TcpSegment } from "../packets/tcp";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
-  HTTP: circleGraphicsContext(Colors.Hazel, 5), // for HTTP
+  HTTP: circleGraphicsContext(Colors.Burgundy, 5),
+  TCP: circleGraphicsContext(Colors.Hazel, 5),
   IP: circleGraphicsContext(Colors.Green, 5),
   "ICMP-8": circleGraphicsContext(Colors.Red, 5),
   "ICMP-0": circleGraphicsContext(Colors.Yellow, 5),
@@ -72,8 +74,13 @@ function packetContext(frame: EthernetFrame): PacketContext {
         return { type: "ICMP-0", layer: Layer.Network };
       }
     } else if (datagram.payload.protocol() === TCP_PROTOCOL_NUMBER) {
-      // TODO: change when we have a TCP packet
-      return { type: "HTTP", layer: Layer.App };
+      const segment = datagram.payload as TcpSegment;
+      // TODO: we should have classes for each APP-layer protocol
+      // and use them to get the protocol type
+      if (segment.data.length > 0) {
+        return { type: "HTTP", layer: Layer.App };
+      }
+      return { type: "TCP", layer: Layer.Transport };
     }
   }
   if (frame.payload.type() === ARP_PROTOCOL_TYPE)
