@@ -149,6 +149,10 @@ export class Edge extends Graphics {
     }
   }
 
+  isMerged(): boolean {
+    return this.highlightedEdges.length > 1;
+  }
+
   destroy(): void {
     deselectElement();
     this.removeTooltips();
