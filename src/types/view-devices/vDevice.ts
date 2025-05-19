@@ -65,6 +65,7 @@ export abstract class ViewDevice extends Container {
   private isDragCircle = false;
   private circleGraphic?: Graphics;
   private idLabel?: Text;
+  private isVisibleFlag = true; // Flag to track visibility
 
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
@@ -183,14 +184,31 @@ export abstract class ViewDevice extends Container {
    */
   abstract getTooltipDetails(layer: Layer): string;
 
-  updateVisibility() {
-    if (!layerIncluded(this.getLayer(), this.viewgraph.getLayer())) {
-      // Change visibility to false
+  updateDevicesAspect() {
+    if (!this.isVisibleFlag) {
+      const edges = this.viewgraph
+        .getConnections(this.id)
+        .filter((e) => e.isVisible());
+      // if it doesn't have visible edges, hide it completely
+      if (!edges || edges.length === 0) {
+        this.visible = false;
+        return;
+      }
+      // if it has visible edges, show it as a drag circle
+      this.visible = true;
       this.setAsDragCircle();
     } else {
-      // change visibility to true
+      // if it is in the current layer, show it as a normal device
+      this.visible = true;
       this.setAsNormalDevice();
     }
+  }
+
+  updateVisibility() {
+    this.isVisibleFlag = layerIncluded(
+      this.getLayer(),
+      this.viewgraph.getLayer(),
+    );
   }
 
   private setAsDragCircle() {
@@ -225,7 +243,7 @@ export abstract class ViewDevice extends Container {
   }
 
   isVisible(): boolean {
-    return this.sprite.visible;
+    return this.isVisibleFlag;
   }
 
   // Function to add the ID label to the device

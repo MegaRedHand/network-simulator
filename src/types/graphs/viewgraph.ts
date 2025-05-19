@@ -223,6 +223,11 @@ export class ViewGraph {
       }
     }
 
+    // Update the devices aspect
+    for (const [, device] of this.graph.getAllVertices()) {
+      device.updateDevicesAspect();
+    }
+
     // warn Packet Manager that the layer has been changed
     this.packetManager.layerChanged(newLayer);
 
