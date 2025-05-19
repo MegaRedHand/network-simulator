@@ -300,6 +300,12 @@ export abstract class ViewDevice extends Container {
       return;
     }
 
+    // if the device is not visible, ignore
+    if (!this.isVisibleFlag || !ViewDevice.connectionTarget.isVisibleFlag) {
+      ViewDevice.connectionTarget = null;
+      return;
+    }
+
     // Connect both devices
     const n1 = ViewDevice.connectionTarget.id;
     const n2 = this.id;
