@@ -116,7 +116,6 @@ export class EthernetFrame {
   type: number;
   // 46-1500 bytes
   // If the payload is smaller than 46 bytes, it is padded.
-  // TODO: make this an interface
   // The payload
   payload: FramePayload;
   // 4 bytes
@@ -163,10 +162,13 @@ export class EthernetFrame {
 
   getDetails(layer: Layer) {
     if (layer == Layer.Link) {
-      return {
-        "Source MAC": this.source.toString(),
-        "Destination MAC": this.destination.toString(),
+      const ethernetDetails = {
         EtherType: this.type.toString(),
+      };
+      // Merge Ethernet details with payload details
+      return {
+        ...ethernetDetails,
+        ...this.payload.getDetails(layer),
       };
     } else {
       return this.payload.getDetails(layer);

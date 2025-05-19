@@ -30,14 +30,18 @@ import {
   IcmpPacket,
 } from "../packets/icmp";
 import { PacketInfo } from "../graphics/renderables/packet_info";
+import { showWarning } from "../graphics/renderables/alert_manager";
+import { ALERT_MESSAGES } from "../utils/constants/alert_constants";
 import {
   hideTooltip,
   removeTooltip,
   showTooltip,
 } from "../graphics/renderables/canvas_tooltip_manager";
+import { TcpSegment } from "../packets/tcp";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
-  HTTP: circleGraphicsContext(Colors.Hazel, 5), // for HTTP
+  HTTP: circleGraphicsContext(Colors.Burgundy, 5),
+  TCP: circleGraphicsContext(Colors.Hazel, 5),
   IP: circleGraphicsContext(Colors.Green, 5),
   "ICMP-8": circleGraphicsContext(Colors.Red, 5),
   "ICMP-0": circleGraphicsContext(Colors.Yellow, 5),
@@ -70,8 +74,13 @@ function packetContext(frame: EthernetFrame): PacketContext {
         return { type: "ICMP-0", layer: Layer.Network };
       }
     } else if (datagram.payload.protocol() === TCP_PROTOCOL_NUMBER) {
-      // TODO: change when we have a TCP packet
-      return { type: "HTTP", layer: Layer.App };
+      const segment = datagram.payload as TcpSegment;
+      // TODO: we should have classes for each APP-layer protocol
+      // and use them to get the protocol type
+      if (segment.data.length > 0) {
+        return { type: "HTTP", layer: Layer.App };
+      }
+      return { type: "TCP", layer: Layer.Transport };
     }
   }
   if (frame.payload.type() === ARP_PROTOCOL_TYPE)
@@ -378,6 +387,27 @@ export function sendViewPacket(
       );
     });
   }
+
+  if (nextHopId) {
+    const nextHopDevice = viewgraph.getDevice(nextHopId);
+
+    // Verify if the next hop is a valid device
+    if (!nextHopDevice) {
+      showWarning(ALERT_MESSAGES.INEXISTENT_PORT(nextHopId.toString()));
+      return;
+    }
+
+    // Verify if the next hop is a valid connection
+    const isNeighbor = viewgraph
+      .getConnections(srcId)
+      .some((edge) => edge.otherEnd(srcId) === nextHopId);
+
+    if (!isNeighbor) {
+      showWarning(ALERT_MESSAGES.NON_NEIGHBOR_PORT(nextHopId.toString()));
+      return;
+    }
+  }
+
   if (firstEdge === undefined && !nextHopId) {
     console.warn(
       "El dispositivo de origen no está conectado al destino, a un router o a un switch.",

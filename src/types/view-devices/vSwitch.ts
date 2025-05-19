@@ -44,7 +44,7 @@ export class ViewSwitch extends ViewDevice {
 
   showInfo(): void {
     const info = new DeviceInfo(this);
-    info.addEmptySpace();
+    info.addSwitchingTable(this.viewgraph, this.id);
     RightBar.getInstance().renderInfo(info);
   }
 
