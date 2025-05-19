@@ -65,6 +65,7 @@ export class Edge extends Graphics {
   }
 
   getDeviceIds(): DeviceId[] {
+    if (!this.data) return [];
     return [this.data.from.id, this.data.to.id];
   }
 

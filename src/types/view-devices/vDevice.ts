@@ -129,10 +129,10 @@ export abstract class ViewDevice extends Container {
     this.interactive = true;
     this.cursor = "pointer";
     this.zIndex = ZIndexLevels.Device;
-    this.updateVisibility();
 
     // Add device ID label using the helper function
     this.addDeviceIdLabel();
+    this.updateVisibility();
 
     // Set up tooltip behavior
     this.setupHoverTooltip();
@@ -242,10 +242,6 @@ export abstract class ViewDevice extends Container {
     idText.zIndex = ZIndexLevels.Label;
     this.idLabel = idText;
     this.addChild(idText); // Add the ID text as a child of the device
-
-    if (this.isDragCircle) {
-      this.idLabel.visible = false;
-    }
   }
 
   getPosition(): Position {
