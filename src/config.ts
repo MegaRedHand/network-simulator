@@ -12,9 +12,14 @@ export class ConfigModal {
   private colorPicker: HTMLInputElement | null;
   private selectedColor: number; // Stores the actual selected color as a number
   private tempColor: number; // Temporary color for selection
+
   private enableTooltipsSwitch: HTMLInputElement | null;
   private enableTooltips: boolean;
   private tempEnableTooltips: boolean;
+
+  private useTcpRenoSwitch: HTMLInputElement | null;
+  private useTcpReno: boolean;
+  private tempUseTcpReno: boolean;
 
   constructor(ctx: GlobalContext) {
     this.ctx = ctx;
@@ -27,6 +32,8 @@ export class ConfigModal {
     this.tempColor = this.selectedColor; // Temporary color for selection
     this.enableTooltips = true; // Default saved value
     this.tempEnableTooltips = this.enableTooltips; // Temporary value for selection
+    this.useTcpReno = true; // Default saved value
+    this.tempUseTcpReno = this.useTcpReno; // Temporary value for selection
 
     this.createModal();
     this.setupEventListeners();
@@ -83,6 +90,13 @@ export class ConfigModal {
                     <span class="switch-slider"></span>
                   </label>
                 </li>
+                <li class="setting-item">
+                  <label for="useTcpReno">Use TCP Reno</label>
+                  <label class="switch">
+                    <input type="checkbox" id="useTcpReno" class="switch-input" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </li>
               </ul>
             </div>
           </div>
@@ -111,6 +125,9 @@ export class ConfigModal {
     this.enableTooltipsSwitch = document.getElementById(
       "enableTooltips",
     ) as HTMLInputElement;
+    this.useTcpRenoSwitch = document.getElementById(
+      "useTcpReno",
+    ) as HTMLInputElement;
   }
 
   private setupEventListeners() {
@@ -120,7 +137,8 @@ export class ConfigModal {
       !this.closeBtn ||
       !this.saveSettingsButton ||
       !this.colorPicker ||
-      !this.enableTooltipsSwitch
+      !this.enableTooltipsSwitch ||
+      !this.useTcpRenoSwitch
     ) {
       console.error("Some modal elements were not found.");
       return;
@@ -151,6 +169,12 @@ export class ConfigModal {
       const isEnabled = this.enableTooltipsSwitch?.checked || false;
       this.tempEnableTooltips = isEnabled; // Update the local variable only
       console.log("Tooltips setting changed (not saved yet):", isEnabled);
+    };
+
+    this.useTcpRenoSwitch.onchange = () => {
+      const isEnabled = this.useTcpRenoSwitch?.checked || false;
+      this.tempUseTcpReno = isEnabled; // Update the local variable only
+      console.log("TCP Reno setting changed (not saved yet):", isEnabled);
     };
   }
 
@@ -192,6 +216,11 @@ export class ConfigModal {
         this.enableTooltipsSwitch.checked = this.tempEnableTooltips; // Reflect the saved value in the UI
       }
 
+      if (this.useTcpRenoSwitch) {
+        this.tempUseTcpReno = this.useTcpReno;
+        this.useTcpRenoSwitch.checked = this.tempUseTcpReno; // Reflect the saved value in the UI
+      }
+
       this.modalOverlay.style.display = "flex"; // Make it visible first
       setTimeout(() => {
         this.modalOverlay?.classList.add("show");
@@ -223,27 +252,45 @@ export class ConfigModal {
       this.tempEnableTooltips = this.enableTooltips; // Reset temp value
       this.enableTooltipsSwitch.checked = this.enableTooltips; // Reflect saved value in UI
     }
+
+    if (this.useTcpRenoSwitch) {
+      this.tempUseTcpReno = this.useTcpReno; // Reset temp value
+      this.useTcpRenoSwitch.checked = this.useTcpReno; // Reflect saved value in UI
+    }
   }
 
   private saveSettings() {
     // Save the temp color as the actual selected color
     if (this.tempColor != this.selectedColor) {
       this.selectedColor = this.tempColor;
-      this.ctx.change_select_color(this.selectedColor);
+      this.ctx.setSelectColor(this.selectedColor);
     }
+
+    let updateTooltips = false;
 
     // Save the tooltips setting
     if (this.enableTooltipsSwitch) {
       this.enableTooltips = this.tempEnableTooltips; // Save the temporary value
-      this.ctx.change_enable_tooltips(this.enableTooltips); // Update the GlobalContext
-      updateTooltipsState(); // Update tooltips state in the app
+      this.ctx.setEnableTooltips(this.enableTooltips); // Update the GlobalContext
+      updateTooltips = true;
     }
 
+    if (this.useTcpRenoSwitch) {
+      this.useTcpReno = this.tempUseTcpReno; // Save the temporary value
+      this.ctx.setUseTcpReno(this.useTcpReno); // Update the GlobalContext
+      updateTooltips = true;
+    }
+
+    if (updateTooltips) {
+      updateTooltipsState(); // Update tooltips state in the app
+    }
     console.log(
       "Settings saved. Applied color:",
       this.selectedColor,
       "Tooltips enabled:",
       this.enableTooltips,
+      "TCP Reno enabled:",
+      this.useTcpReno,
     );
   }
 
