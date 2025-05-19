@@ -1,5 +1,6 @@
 import { IpAddress } from "./ip";
 import { ARP_PROTOCOL_TYPE, FramePayload, MacAddress } from "./ethernet";
+import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 
 const ETHERNET_HTYPE = 1;
 const IPv4_PTYPE = 0x0800;
@@ -92,17 +93,17 @@ export abstract class ArpPacket implements FramePayload {
   }
 
   // eslint-disable-next-line
-  getDetails(layer: number): Record<string, string | number | object> {
+  getDetails(_layer: number): Record<string, string | number | object> {
     return {
-      HTYPE: this.htype,
-      PTYPE: this.ptype,
-      HLEN: this.hlen,
-      PLEN: this.plen,
-      OP: this.op,
-      SHA: this.sha.toString(),
-      SPA: this.spa.toString(),
-      THA: this.tha.toString(),
-      TPA: this.tpa.toString(),
+      [TOOLTIP_KEYS.HTYPE]: this.htype,
+      [TOOLTIP_KEYS.PTYPE]: this.ptype,
+      [TOOLTIP_KEYS.HLEN]: this.hlen,
+      [TOOLTIP_KEYS.PLEN]: this.plen,
+      [TOOLTIP_KEYS.OP]: this.op,
+      [TOOLTIP_KEYS.SHA]: this.sha.toString(),
+      [TOOLTIP_KEYS.SPA]: this.spa.toString(),
+      [TOOLTIP_KEYS.THA]: this.tha.toString(),
+      [TOOLTIP_KEYS.TPA]: this.tpa.toString(),
     };
   }
 }
