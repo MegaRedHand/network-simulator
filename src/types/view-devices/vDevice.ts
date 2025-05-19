@@ -300,14 +300,6 @@ export abstract class ViewDevice extends Container {
       return;
     }
 
-    // If one of the devices is not visible, ignore (a circle)
-    // !ViewDevice.connectionTarget.isVisibleFlag is not necessary
-    // couse is not possible to select an unvisible device
-    if (!this.isVisibleFlag || !ViewDevice.connectionTarget.isVisibleFlag) {
-      ViewDevice.connectionTarget = null;
-      return;
-    }
-
     // Connect both devices
     const n1 = ViewDevice.connectionTarget.id;
     const n2 = this.id;

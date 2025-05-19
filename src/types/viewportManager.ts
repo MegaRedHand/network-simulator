@@ -31,7 +31,7 @@ export const urManager = new UndoRedoManager();
 export function selectElement(element: Selectable) {
   deselectElement();
 
-  if (element) {
+  if (element && element.isVisible()) {
     selectedElement = element;
     element.select();
   }
