@@ -140,7 +140,7 @@ export class Edge extends Graphics {
   }
 
   showInfo() {
-    if (this.highlightedEdges && this.highlightedEdges.length > 1) {
+    if (this.isMerged()) {
       const multiEdgeInfo = new MultiEdgeInfo(this.highlightedEdges);
       RightBar.getInstance().renderInfo(multiEdgeInfo);
     } else {
