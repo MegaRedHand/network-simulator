@@ -52,9 +52,14 @@ export class ViewSwitch extends ViewDevice {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getTooltipDetails(_layer: Layer): string {
-    // TODO MAC-IP: See for what it is used this function, so corrections can be done
-    return `MAC: TODO MAC-IP: See for what it is used this function, so corrections can be done`;
+  getTooltipDetails(_layer: Layer, iface: number): string {
+    if (iface >= this.interfaces.length) {
+      console.error(
+        `Interface idx ${iface + 1} overcome amount if interfaces ${this.interfaces.length}`,
+      );
+      return "";
+    }
+    return `MAC: ${this.interfaces[iface].mac.toCompressedString()}`;
   }
 
   updateSwitchingTable(mac: MacAddress, iface: number): void {

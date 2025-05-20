@@ -6,7 +6,7 @@ import { RightBar } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils/utils";
 import { Packet } from "./packet";
 import { EdgeInfo } from "../graphics/renderables/edge_info";
-import { DataEdge, DeviceId } from "./graphs/datagraph";
+import { DataEdge, DeviceId, EdgeTip } from "./graphs/datagraph";
 import { MacAddress } from "../packets/ethernet";
 import { MultiEdgeInfo } from "../graphics/renderables/multi_edge_info";
 import {
@@ -270,13 +270,17 @@ export class Edge extends Graphics {
     this.on("mouseover", () => {
       const group = this.viewgraph.findConnectedEdges(this);
       group.forEach((edge) => {
+        edge.setupConnectedDevicesTooltips();
         edge.showTooltips();
         edge.fixTooltipPositions();
       });
     });
     this.on("mouseout", () => {
       const group = this.viewgraph.findConnectedEdges(this);
-      group.forEach((edge) => edge.hideTooltips());
+      group.forEach((edge) => {
+        edge.hideConnectedDevicesTooltips();
+        edge.hideTooltips();
+      });
     });
   }
 
@@ -302,6 +306,46 @@ export class Edge extends Graphics {
       this.endPos.y + offsetY,
       this.endTooltip,
     );
+  }
+
+  private setupConnectedDevicesTooltips() {
+    const [startId, startIface] = [this.data.from.id, this.data.from.iface];
+    const [endId, endIface] = [this.data.to.id, this.data.to.iface];
+    const startDevice = this.viewgraph.getDevice(startId);
+    const endDevice = this.viewgraph.getDevice(endId);
+
+    const setTooltip = (device: ViewDevice, iface: number) => {
+      if (!startDevice) {
+        console.error(
+          `Device ${device.id} not found in viewgraph, cannot set device tooltip`,
+        );
+        return;
+      }
+      device.setupTooltip(iface);
+    };
+
+    setTooltip(startDevice, startIface);
+    setTooltip(endDevice, endIface);
+  }
+
+  private hideConnectedDevicesTooltips() {
+    const startId = this.data.from.id;
+    const endId = this.data.to.id;
+    const startDevice = this.viewgraph.getDevice(startId);
+    const endDevice = this.viewgraph.getDevice(endId);
+
+    const hideTooltip = (device: ViewDevice) => {
+      if (!startDevice) {
+        console.error(
+          `Device ${device.id} not found in viewgraph, cannot set device tooltip`,
+        );
+        return;
+      }
+      device.hideToolTip();
+    };
+
+    hideTooltip(startDevice);
+    hideTooltip(endDevice);
   }
 
   private fixTooltipPositions() {

@@ -127,7 +127,7 @@ export abstract class ViewDevice extends Container {
     this.addDeviceIdLabel();
 
     // Set up tooltip behavior
-    this.setupHoverTooltip();
+    // this.setupHoverTooltip();
 
     this.on("pointerdown", this.onPointerDown, this);
     this.on("click", this.onClick, this);
@@ -141,29 +141,30 @@ export abstract class ViewDevice extends Container {
     // Do nothing
   }
 
-  private setupHoverTooltip() {
-    this.on("mouseover", () => {
-      const currentLayer = this.ctx.getCurrentLayer();
-      const tooltipMessage = this.getTooltipDetails(currentLayer);
-      this.tooltip = showTooltip(
-        this,
-        tooltipMessage,
-        0,
-        this.height * 0.8 + 20,
-        this.tooltip,
-      );
-    });
+  setupTooltip(iface: number) {
+    const currentLayer = this.ctx.getCurrentLayer();
+    const tooltipMessage = this.getTooltipDetails(currentLayer, iface);
+    this.tooltip = showTooltip(
+      this,
+      tooltipMessage,
+      0,
+      this.height * 0.8 + 20,
+      this.tooltip,
+    );
+  }
 
-    this.on("mouseout", () => {
-      hideTooltip(this.tooltip);
-    });
+  hideToolTip() {
+    hideTooltip(this.tooltip);
   }
 
   /**
    * Abstract method to get tooltip details based on the layer.
    * Must be implemented by derived classes.
+   * @param layer - The network layer for which to retrieve tooltip details.
+   * @param iface - The index of the network interface to provide details for.
+   * @returns A string with the tooltip content to display.
    */
-  abstract getTooltipDetails(layer: Layer): string;
+  abstract getTooltipDetails(layer: Layer, iface: number): string;
 
   updateVisibility() {
     this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());

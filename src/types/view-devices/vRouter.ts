@@ -7,7 +7,7 @@ import { Position } from "../common";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { Texture, Ticker } from "pixi.js";
-import { EthernetFrame, MacAddress } from "../../packets/ethernet";
+import { EthernetFrame } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataRouter } from "../data-devices";
 import { dropPacket, sendViewPacket } from "../packet";
@@ -116,17 +116,6 @@ export class ViewRouter extends ViewNetworkDevice {
 
   getType(): DeviceType {
     return DeviceType.Router;
-  }
-
-  getTooltipDetails(layer: Layer): string {
-    // TODO MAC-IP: See for what it is used this function so corrections can be done
-    if (layer >= Layer.Network) {
-      // If we are in the network layer or below, show only the IP
-      return `IP: router ips`; //${this.ip.toString()}`;
-    } else {
-      // If we are in the upper layer, show both IP and MAC
-      return `IP: router ips and mac`; //${this.ip.toString()}\nMAC: ${this.mac.toCompressedString()}`;
-    }
   }
 
   setMaxQueueSize(newSize: number) {

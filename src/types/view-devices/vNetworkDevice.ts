@@ -20,6 +20,7 @@ import {
   ArpReply,
 } from "../../packets/arp";
 import { DataNetworkDevice } from "../data-devices";
+import { Layer } from "../layer";
 
 interface ForwardingData {
   src: {
@@ -103,6 +104,23 @@ export abstract class ViewNetworkDevice extends ViewDevice {
   }
 
   abstract receiveDatagram(packet: IPv4Packet, iface: number): void;
+
+  getTooltipDetails(layer: Layer, iface: number): string {
+    if (iface >= this.interfaces.length) {
+      console.error(
+        `Interface idx ${iface + 1} overcome amount if interfaces ${this.interfaces.length}`,
+      );
+      return "";
+    }
+    const { mac, ip } = this.interfaces[iface];
+    if (layer >= Layer.Network) {
+      // If we are in the network layer or below, show only the IP
+      return `IP: ${ip.toString()}`;
+    } else {
+      // If we are in the upper layer, show both IP and MAC
+      return `IP: ${ip.toString()}\nMAC: ${mac.toCompressedString()}`;
+    }
+  }
 
   ownIp(ip: IpAddress): boolean {
     return this.interfaces.some((iface) => iface.ip?.equals(ip));

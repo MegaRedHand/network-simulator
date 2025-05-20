@@ -179,17 +179,6 @@ export class ViewHost extends ViewNetworkDevice {
     this.runningPrograms.clear();
   }
 
-  getTooltipDetails(layer: Layer): string {
-    // TODO MAC-IP: For now, as hosts have just one interface, destination ip and mac are hardcoded
-    if (layer >= Layer.Network) {
-      // If we are in the network layer or below, show only the IP
-      return `IP: ${this.interfaces[0].ip.toString()}`;
-    } else {
-      // If we are in the upper layer, show both IP and MAC
-      return `IP: ${this.interfaces[0].ip.toString()}\nMAC: ${this.interfaces[0].mac.toCompressedString()}`;
-    }
-  }
-
   // TCP
 
   private tcpModule = new TcpModule(this);
