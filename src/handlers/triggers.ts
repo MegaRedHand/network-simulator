@@ -6,8 +6,8 @@ import {
   loadFromFile,
 } from "../types/viewportManager";
 import { captureAndDownloadViewport } from "../utils/utils";
-import { ConfigModal } from "../config";
 import { DataGraph } from "../types/graphs/datagraph";
+import { ConfigMenu } from "../config_menu/config_menu";
 
 // Function to create a new network
 export const triggerNew = (ctx: GlobalContext) => {
@@ -35,7 +35,7 @@ export const triggerPrint = (app: Application, ctx: GlobalContext) => {
 };
 
 // Function to open the help modal
-export const triggerHelp = (configModal: ConfigModal) => {
+export const triggerHelp = (configMenu: ConfigMenu) => {
   deselectElement(); // Deselect any currently selected element
-  configModal.open(); // Open the configuration/help modal
+  configMenu.open(); // Open the configuration/help modal
 };

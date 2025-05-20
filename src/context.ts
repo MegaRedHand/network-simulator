@@ -15,7 +15,6 @@ import {
   MacAddressGenerator,
 } from "./packets/ethernet";
 import { DataNetworkDevice } from "./types/data-devices";
-import { Colors } from "./utils/utils";
 
 export class GlobalContext {
   private viewport: Viewport = null;
@@ -27,12 +26,10 @@ export class GlobalContext {
   private macGenerator: MacAddressGenerator;
 
   // Settings
-  private selectColor: number;
   private tooltipsEnabled: boolean;
   private useTcpReno: boolean;
 
   constructor(viewport: Viewport) {
-    this.selectColor = Colors.Violet;
     this.tooltipsEnabled = true;
     this.viewport = viewport;
 
@@ -204,14 +201,6 @@ export class GlobalContext {
     console.log(this.viewgraph);
     console.log("DataGraph");
     console.log(this.datagraph);
-  }
-
-  setSelectColor(color: number) {
-    this.selectColor = color;
-  }
-
-  getSelectColor() {
-    return this.selectColor;
   }
 
   setEnableTooltips(enabled: boolean) {

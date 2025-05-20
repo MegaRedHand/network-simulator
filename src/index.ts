@@ -3,7 +3,6 @@ import { LeftBar } from "./graphics/left_bar";
 import { RightBar } from "./graphics/right_bar";
 import { Viewport } from "./graphics/viewport";
 import { GlobalContext } from "./context";
-import { ConfigModal } from "./config";
 import { ShortcutsManager } from "./handlers/shortcuts";
 import { ResponsiveHandler } from "./handlers/responsiveHandler";
 import { SpeedControlHandler } from "./handlers/speedControlHandler";
@@ -33,6 +32,7 @@ import {
   TooltipManagersetGlobalContext,
 } from "./graphics/renderables/tooltip_manager";
 import { TOOLTIP_KEYS } from "./utils/constants/tooltips_constants";
+import { ConfigMenu } from "./config_menu/config_menu";
 
 const assets = [
   RouterSvg,
@@ -84,7 +84,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   new PauseHandler(ctx);
   new SpeedControlHandler(ctx);
 
-  const configModal = new ConfigModal(ctx);
+  const configMenu = new ConfigMenu(ctx);
   new ShortcutsManager(ctx, app);
 
   // Setup button event handlers
@@ -93,7 +93,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     { id: TOOLTIP_KEYS.SAVE_BUTTON, action: () => triggerSave(ctx) },
     { id: TOOLTIP_KEYS.LOAD_BUTTON, action: () => triggerLoad(ctx) },
     { id: TOOLTIP_KEYS.PRINT_BUTTON, action: () => triggerPrint(app, ctx) },
-    { id: TOOLTIP_KEYS.HELP_BUTTON, action: () => triggerHelp(configModal) },
+    { id: TOOLTIP_KEYS.HELP_BUTTON, action: () => triggerHelp(configMenu) },
   ];
 
   buttonActions.forEach(({ id, action }) => {
