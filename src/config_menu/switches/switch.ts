@@ -1,15 +1,22 @@
-export abstract class SwitchSetting {
+export class SwitchSetting {
   key: string;
   label: string;
   value: boolean;
   tempValue: boolean;
   input: HTMLInputElement | null = null;
+  private onApply?: () => void;
 
-  constructor(key: string, label: string, defaultValue: boolean) {
+  constructor(
+    key: string,
+    label: string,
+    defaultValue: boolean,
+    onApply?: () => void,
+  ) {
     this.key = key;
     this.label = label;
     this.value = defaultValue;
     this.tempValue = defaultValue;
+    this.onApply = onApply;
   }
 
   attachInputListener() {
@@ -60,5 +67,9 @@ export abstract class SwitchSetting {
     return this.value ? 1 : 0;
   }
 
-  abstract apply(): void;
+  apply(): void {
+    if (this.onApply) {
+      this.onApply();
+    }
+  }
 }
