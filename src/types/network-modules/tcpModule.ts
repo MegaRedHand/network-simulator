@@ -57,7 +57,7 @@ export class TcpModule {
 
   async connect(dstHost: ViewHost, dstPort: Port): Promise<TcpSocket | null> {
     const srcPort: Port = this.getNextPortNumber();
-    // TODO: For now, as hosts have just one interface, destination ip is hardcoded
+    // TODO MAC-IP: For now, as hosts have just one interface, destination ip is hardcoded
     const filter = { ip: dstHost.interfaces[0].ip, port: dstPort };
     const tcpQueue = this.initNewQueue(srcPort, filter);
 
@@ -176,8 +176,15 @@ export class TcpSocket {
     return bytesRead;
   }
 
+  /**
+   * Writes data from the given buffer into the connection.
+   * This returns immediately, unless the connection is closed
+   * or the underlying buffer is full.
+   * @param buffer to copy the contents from
+   * @returns the number of bytes written
+   */
   async write(content: Uint8Array) {
-    return this.tcpState.write(content);
+    return await this.tcpState.write(content);
   }
 
   closeWrite() {

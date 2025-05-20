@@ -7,10 +7,11 @@ import { EthernetFrame, FramePayload, MacAddress } from "../packets/ethernet";
 import { sendViewPacket } from "../types/packet";
 import { IpAddress } from "../packets/ip";
 import { ArpRequest } from "../packets/arp";
+import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 
 // ARP Request/Response
 export class ArpProtocol extends ProgramBase {
-  static readonly PROGRAM_NAME = "Send ARP request";
+  static readonly PROGRAM_NAME = TOOLTIP_KEYS.SEND_ARP_REQUEST;
 
   protected dstIp: IpAddress;
 

@@ -39,7 +39,7 @@ export class ViewSwitch extends ViewDevice {
 
   showInfo(): void {
     const info = new DeviceInfo(this);
-    info.addEmptySpace();
+    info.addSwitchingTable(this.viewgraph, this.id);
     RightBar.getInstance().renderInfo(info);
   }
 
@@ -49,6 +49,12 @@ export class ViewSwitch extends ViewDevice {
 
   getType(): DeviceType {
     return DeviceType.Switch;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getTooltipDetails(_layer: Layer): string {
+    // TODO MAC-IP: See for what it is used this function, so corrections can be done
+    return `MAC: TODO MAC-IP: See for what it is used this function, so corrections can be done`;
   }
 
   updateSwitchingTable(mac: MacAddress, iface: number): void {

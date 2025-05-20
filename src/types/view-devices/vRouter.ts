@@ -118,6 +118,17 @@ export class ViewRouter extends ViewNetworkDevice {
     return DeviceType.Router;
   }
 
+  getTooltipDetails(layer: Layer): string {
+    // TODO MAC-IP: See for what it is used this function so corrections can be done
+    if (layer >= Layer.Network) {
+      // If we are in the network layer or below, show only the IP
+      return `IP: router ips`; //${this.ip.octets.join(".")}`;
+    } else {
+      // If we are in the upper layer, show both IP and MAC
+      return `IP: router ips and mac`; //${this.ip.octets.join(".")}\nMAC: ${this.mac.toCompressedString()}`;
+    }
+  }
+
   setMaxQueueSize(newSize: number) {
     this.packetQueue.setMaxQueueSize(newSize);
     this.packetQueueSize = newSize;

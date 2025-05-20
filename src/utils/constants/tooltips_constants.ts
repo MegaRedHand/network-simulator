@@ -18,8 +18,10 @@ export const TOOLTIP_KEYS = {
   PROGRAM: "Program",
   SEND_ICMP_ECHO: "Send ICMP echo",
   ECHO_SERVER: "Echo server",
-  DESTINATION: "Destination",
   SEND_HTTP_REQUEST: "Send HTTP request",
+  SERVE_HTTP_REQUESTS: "Serve HTTP requests",
+  SEND_ARP_REQUEST: "Send ARP request",
+  DESTINATION: "Destination",
   TIME_BETWEEN_PINGS: "Time between pings",
   NAME: "Name",
   PID: "PID",
@@ -66,6 +68,42 @@ export const TOOLTIP_KEYS = {
   IP_REQUEST: "IP to Request",
   ARP_TABLE: "ARP Table",
   IFACE_EDITOR: "iface-editor",
+  PORT: "Port",
+  SWITCHING_TABLE: "Switching Table",
+  MULTI_EDGE_CONNECTED_DEVICES: "Multi Edge Connected Devices",
+  ETHERTYPE: "EtherType",
+  // ARP Details
+  HTYPE: "Hardware Type",
+  PTYPE: "Protocol Type",
+  HLEN: "Hardware address Length",
+  PLEN: "Protocol address Length",
+  OP: "Operation code",
+  SHA: "Sender Hardware Address",
+  SPA: "Sender Protocol Address",
+  THA: "Target Hardware Address",
+  TPA: "Target Protocol Address",
+  // TCP Details
+  SEQ: "Seq Number",
+  ACK: "Ack Number",
+  WINDOW: "Window Size",
+  // TCP Flags
+  URG_FLAG: "Urg",
+  ACK_FLAG: "Ack",
+  PSH_FLAG: "Psh",
+  RST_FLAG: "Rst",
+  SYN_FLAG: "Syn",
+  FIN_FLAG: "Fin",
+  // IPV4 details
+  VERSION: "Version",
+  INTERNET_HEADER_LENGTH: "Internet Header Length",
+  TYPE_OF_SERVICE: "Type of Service",
+  TOTAL_LENGTH: "Total Length",
+  IDENTIFICATION: "Identification",
+  FRAGMENT_OFFSET: "Fragment Offset",
+  TIME_TO_LIVE: "Time to Live",
+  PROTOCOL: "Protocol",
+  HEADER_CHECKSUM: "Header Checksum",
+  PAYLOAD: "Payload",
 } as const;
 
 // Tooltip Content
@@ -188,4 +226,72 @@ export const TOOLTIP_CONTENT = {
     "The ARP (Address Resolution Protocol) table maps IP addresses to MAC addresses. It is used to resolve the hardware address of a device in the same local network.",
   [TOOLTIP_KEYS.IFACE_EDITOR]:
     "Modify the network interface used by this device.",
+  [TOOLTIP_KEYS.PORT]:
+    "The port in the switching table refers to the physical or logical interface on the switch where a device is connected. It is used to forward frames to the correct destination based on the MAC address. This should not be confused with the 'port' used in transport layer protocols (such as TCP/UDP port numbers), which identify specific applications or services.",
+  [TOOLTIP_KEYS.SWITCHING_TABLE]:
+    "The switching table is a data structure used by switches to map MAC addresses to specific ports. It helps the switch determine where to forward incoming frames based on their destination MAC address.",
+  [TOOLTIP_KEYS.MULTI_EDGE_CONNECTED_DEVICES]:
+    "This field shows the devices connected to the selected edge. It provides a list of all devices that are directly connected.",
+  [TOOLTIP_KEYS.SEND_ARP_REQUEST]:
+    "Send an ARP request to a specified IP address. This command is used to resolve the MAC address of a device in the same local network.",
+  [TOOLTIP_KEYS.SERVE_HTTP_REQUESTS]:
+    "Serve HTTP requests to clients. This command is used to respond to incoming HTTP requests with the appropriate data.",
+  [TOOLTIP_KEYS.HTYPE]:
+    "Hardware type. Specifies the type of hardware used for the network (e.g., 1 for Ethernet).",
+  [TOOLTIP_KEYS.PTYPE]:
+    "Protocol type. Specifies the protocol address type (e.g., 0x0800 for IPv4).",
+  [TOOLTIP_KEYS.HLEN]:
+    "Hardware address length. Indicates the length in bytes of a hardware address (e.g., 6 for MAC).",
+  [TOOLTIP_KEYS.PLEN]:
+    "Protocol address length. Indicates the length in bytes of a protocol address (e.g., 4 for IPv4).",
+  [TOOLTIP_KEYS.OP]:
+    "Operation code. Specifies the ARP operation: 1 for request, 2 for reply.",
+  [TOOLTIP_KEYS.SHA]:
+    "Sender hardware address (MAC). The MAC address of the sender.",
+  [TOOLTIP_KEYS.SPA]:
+    "Sender protocol address (IP). The IP address of the sender.",
+  [TOOLTIP_KEYS.THA]:
+    "Target hardware address (MAC). The MAC address of the target.",
+  [TOOLTIP_KEYS.TPA]:
+    "Target protocol address (IP). The IP address of the target.",
+  [TOOLTIP_KEYS.ETHERTYPE]:
+    "EtherType field. Specifies the protocol encapsulated in the payload of the frame.",
+  [TOOLTIP_KEYS.SEQ]:
+    "Sequence number. Used to identify the order of packets in a TCP stream.",
+  [TOOLTIP_KEYS.ACK]:
+    "Acknowledgment number. Used to confirm the receipt of packets in a TCP stream.",
+  [TOOLTIP_KEYS.WINDOW]:
+    "Window size. Indicates the amount of data that can be sent before receiving an acknowledgment.",
+  [TOOLTIP_KEYS.URG_FLAG]:
+    "Urgent flag. Indicates that the packet contains urgent data.",
+  [TOOLTIP_KEYS.ACK_FLAG]:
+    "Acknowledgment flag. Indicates that the acknowledgment number is valid.",
+  [TOOLTIP_KEYS.PSH_FLAG]:
+    "Push flag. Indicates that the receiver should pass the data to the application immediately.",
+  [TOOLTIP_KEYS.RST_FLAG]:
+    "Reset flag. Indicates that the connection should be reset.",
+  [TOOLTIP_KEYS.SYN_FLAG]:
+    "Synchronize flag. Used to initiate a TCP connection.",
+  [TOOLTIP_KEYS.FIN_FLAG]:
+    "Finish flag. Indicates that the sender has finished sending data and wants to close the connection.",
+  [TOOLTIP_KEYS.VERSION]:
+    "The version of the IP protocol. For IPv4, this value is always 4.",
+  [TOOLTIP_KEYS.INTERNET_HEADER_LENGTH]:
+    "The length of the IP header in 32-bit words. The minimum value is 5 (20 bytes), indicating no options are present.",
+  [TOOLTIP_KEYS.TYPE_OF_SERVICE]:
+    "Specifies the quality of service desired for this packet, such as precedence, delay, throughput, and reliability.",
+  [TOOLTIP_KEYS.TOTAL_LENGTH]:
+    "The total length of the IP packet, including both header and data, in bytes.",
+  [TOOLTIP_KEYS.IDENTIFICATION]:
+    "An identifying value assigned by the sender to aid in assembling the fragments of a datagram.",
+  [TOOLTIP_KEYS.FRAGMENT_OFFSET]:
+    "Indicates where in the datagram this fragment belongs. Used for reassembling fragmented packets.",
+  [TOOLTIP_KEYS.TIME_TO_LIVE]:
+    "The maximum number of hops (routers) the packet can pass through before being discarded. Prevents infinite loops.",
+  [TOOLTIP_KEYS.PROTOCOL]:
+    "Indicates the protocol used in the data portion of the IP datagram (e.g., TCP, UDP, ICMP).",
+  [TOOLTIP_KEYS.HEADER_CHECKSUM]:
+    "A checksum on the header only, used for error-checking of the header.",
+  [TOOLTIP_KEYS.PAYLOAD]:
+    "The encapsulated data carried by the IP packet. This could be a TCP segment, UDP datagram, or other protocol data.",
 } as const;

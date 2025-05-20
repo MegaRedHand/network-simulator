@@ -203,6 +203,8 @@ export abstract class ViewNetworkDevice extends ViewDevice {
       // Check if tpa is device ip
       if (!tpa.equals(ip)) {
         // drop packet
+        const frame = new EthernetFrame(mac, sha, packet);
+        dropPacket(this.viewgraph, this.id, frame);
         return;
       }
       // Send an ARP Reply to the requesting device
@@ -213,6 +215,8 @@ export abstract class ViewNetworkDevice extends ViewDevice {
       // Check if the reply was actually sent to device
       if (!tha.equals(mac) && tpa.equals(ip)) {
         // drop packet
+        const frame = new EthernetFrame(mac, sha, packet);
+        dropPacket(this.viewgraph, this.id, frame);
         return;
       }
       this.updateArpTable(sha, spa);

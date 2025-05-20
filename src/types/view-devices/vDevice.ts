@@ -28,6 +28,11 @@ import { Layer, layerIncluded } from "../layer";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { IpAddress } from "../../packets/ip";
+import {
+  hideTooltip,
+  removeTooltip,
+  showTooltip,
+} from "../../graphics/renderables/canvas_tooltip_manager";
 
 export enum DeviceType {
   Host = 0,
@@ -55,6 +60,7 @@ export function layerFromType(type: DeviceType) {
 
 export abstract class ViewDevice extends Container {
   private sprite: Sprite;
+  private tooltip: Text | null = null; // Tooltip como un Text de PIXI.js
 
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
@@ -120,6 +126,9 @@ export abstract class ViewDevice extends Container {
     // Add device ID label using the helper function
     this.addDeviceIdLabel();
 
+    // Set up tooltip behavior
+    this.setupHoverTooltip();
+
     this.on("pointerdown", this.onPointerDown, this);
     this.on("click", this.onClick, this);
     // NOTE: this is "click" for mobile devices
@@ -132,8 +141,36 @@ export abstract class ViewDevice extends Container {
     // Do nothing
   }
 
+  private setupHoverTooltip() {
+    this.on("mouseover", () => {
+      const currentLayer = this.ctx.getCurrentLayer();
+      const tooltipMessage = this.getTooltipDetails(currentLayer);
+      this.tooltip = showTooltip(
+        this,
+        tooltipMessage,
+        0,
+        this.height * 0.8 + 20,
+        this.tooltip,
+      );
+    });
+
+    this.on("mouseout", () => {
+      hideTooltip(this.tooltip);
+    });
+  }
+
+  /**
+   * Abstract method to get tooltip details based on the layer.
+   * Must be implemented by derived classes.
+   */
+  abstract getTooltipDetails(layer: Layer): string;
+
   updateVisibility() {
     this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());
+  }
+
+  isVisible(): boolean {
+    return this.visible;
   }
 
   ownMac(mac: MacAddress): boolean {
@@ -224,11 +261,11 @@ export abstract class ViewDevice extends Container {
     this.highlightMarker.roundRect(-width / 2, -height / 2, width, height, 5);
     this.highlightMarker.stroke({
       width: 3,
-      color: this.ctx.get_select_color(),
+      color: this.ctx.getSelectColor(),
       alpha: 0.6,
     });
     this.highlightMarker.fill({
-      color: this.ctx.get_select_color(),
+      color: this.ctx.getSelectColor(),
       alpha: 0.1,
     });
     this.highlightMarker.zIndex = ZIndexLevels.Device;
@@ -268,6 +305,7 @@ export abstract class ViewDevice extends Container {
 
   destroy() {
     deselectElement();
+    removeTooltip(this, this.tooltip); // Remove the tooltip if it exists
     super.destroy();
   }
 }

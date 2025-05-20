@@ -410,12 +410,14 @@ export class ViewGraph {
     return this.datagraph;
   }
 
+  // TODO: This should eventually be changed to use interfaces instead
   getDeviceByIP(ipAddress: IpAddress) {
     return this.getDevices().find((device) => {
       return device instanceof ViewNetworkDevice && device.ownIp(ipAddress);
     });
   }
 
+  // TODO: This should eventually be changed to use interfaces instead
   getDeviceByMac(destination: MacAddress): ViewDevice {
     return this.getDevices().find((device) => {
       return device.ownMac(destination);
@@ -482,6 +484,34 @@ export class ViewGraph {
       edge.destroy();
     }
     this.graph.clear();
+  }
+
+  /**
+   * Finds all edges connected to the given edge, ignoring nodes that are not visible.
+   */
+  findConnectedEdges(edge: Edge): Edge[] {
+    const visitedEdges = new Set<Edge>();
+    const queue: Edge[] = [edge];
+
+    while (queue.length > 0) {
+      const currentEdge = queue.shift();
+      if (!currentEdge || visitedEdges.has(currentEdge)) continue;
+      visitedEdges.add(currentEdge);
+
+      for (const nodeId of currentEdge.getDeviceIds()) {
+        const device = this.getDevice(nodeId);
+        if (device && device.visible) {
+          continue;
+        }
+        const edges = this.getConnections(nodeId);
+        for (const e of edges) {
+          if (!visitedEdges.has(e)) {
+            queue.push(e);
+          }
+        }
+      }
+    }
+    return Array.from(visitedEdges);
   }
 }
 

@@ -146,9 +146,11 @@ export interface IpPayload {
   // Packet protocol name
   getPacketType(): string;
   // Get details of the payload
-  getDetails?(layer: Layer): Record<string, string | number | object>;
+  getDetails(layer: Layer): Record<string, string | number | object>;
   // Get ports of the payload (if any)
   getPorts(): Ports;
+  // Get the payload data for Network layer
+  getPayload?(): Record<string, string | number | object> | string;
 }
 
 // Info taken from the original RFC: https://datatracker.ietf.org/doc/html/rfc791#section-3.1
@@ -296,7 +298,7 @@ export class IPv4Packet implements FramePayload {
         "Time to Live": this.timeToLive,
         Protocol: this.protocol,
         "Header Checksum": this.headerChecksum,
-        Payload: this.payload,
+        Payload: this.payload.getPayload(),
       };
     } else {
       return this.payload.getDetails(layer);

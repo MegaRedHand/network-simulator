@@ -1,3 +1,4 @@
+import { Layer } from "../types/layer";
 import {
   ICMP_PROTOCOL_NUMBER,
   IpPayload,
@@ -63,6 +64,11 @@ export abstract class IcmpPacket implements IpPayload {
   getPorts(): Ports {
     return null;
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getDetails(layer: Layer) {
+    return {};
+  }
 }
 
 //   0                   1                   2                   3
@@ -103,6 +109,16 @@ class EchoMessage extends IcmpPacket {
       this.sequenceNumber & 0xff,
       ...this.data,
     ]);
+  }
+
+  getPayload(): Record<string, string | number | object> {
+    return {
+      Type: this.type,
+      Code: this.code,
+      Identifier: this.identifier,
+      SequenceNumber: this.sequenceNumber,
+      Data: this.data,
+    };
   }
 }
 

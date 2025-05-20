@@ -16,6 +16,8 @@ import { ProgressBar } from "../basic_components/progress_bar";
 import { LabeledProgressBar } from "../components/labeled_progress_bar";
 import { ArpTable } from "./arp_table";
 import { Layer } from "../../types/layer";
+import { DataNetworkDevice, DataSwitch } from "../../types/data-devices";
+import { SwitchingTable } from "./switching_table";
 
 export class DeviceInfo extends BaseInfo {
   readonly device: ViewDevice;
@@ -51,6 +53,7 @@ export class DeviceInfo extends BaseInfo {
   }
 
   protected addCommonButtons(): void {
+    this.addDivider();
     const connectButton = new Button({
       text: TOOLTIP_KEYS.CONNECT_DEVICE,
       onClick: () => this.device.selectToConnect(),
@@ -76,6 +79,7 @@ export class DeviceInfo extends BaseInfo {
     });
 
     this.inputFields.push(connectButton.toHTML(), deleteButton.toHTML());
+    this.addDivider();
   }
 
   addProgramRunner(runner: ProgramRunner, programs: ProgramInfo[]): void {
@@ -159,6 +163,42 @@ export class DeviceInfo extends BaseInfo {
     });
 
     this.inputFields.push(arpTable.toHTML());
+
+    const dataDevice = viewgraph.getDataGraph().getDevice(deviceId);
+
+    if (dataDevice instanceof DataNetworkDevice) {
+      // Suscribe to ARP table changes
+      dataDevice.setArpTableChangeListener(() => {
+        // update the ARP table in the UI
+        arpTable.refreshTable();
+      });
+    } else {
+      console.warn(`Device with ID ${deviceId} is not a DataNetworkDevice.`);
+    }
+  }
+
+  addSwitchingTable(viewgraph: ViewGraph, deviceId: number): void {
+    const entries = viewgraph.getDataGraph().getSwitchingTable(deviceId);
+
+    const rows = entries.map((entry) => [entry.mac, entry.port.toString()]);
+
+    const switchingTable = new SwitchingTable({
+      rows,
+      viewgraph,
+      deviceId,
+    });
+
+    this.inputFields.push(switchingTable.toHTML());
+
+    const dataDevice = viewgraph.getDataGraph().getDevice(deviceId);
+
+    if (dataDevice instanceof DataSwitch) {
+      dataDevice.setSwitchingTableChangeListener(() => {
+        switchingTable.refreshTable();
+      });
+    } else {
+      console.warn(`Device with ID ${deviceId} is not a DataNetworkDevice.`);
+    }
   }
 }
 

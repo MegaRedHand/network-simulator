@@ -22,7 +22,6 @@ export class RoutingTable {
 
   constructor(private props: RoutingTableProps) {
     this.container = document.createElement("div");
-    this.container.className = CSS_CLASSES.ROUTING_TABLE_CONTAINER;
 
     const { onEdit, onDelete, onRegenerate } = this.setRoutingTableCallbacks(
       props.viewgraph,
@@ -46,7 +45,7 @@ export class RoutingTable {
       editableColumns: [false, true, true, false], // Make the last column non-editable
       onEdit: onEdit,
       onDelete: onDelete,
-      tableClasses: [CSS_CLASSES.RIGHT_BAR_TABLE],
+      tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE],
     });
 
     this.toggleButton = new ToggleButton({

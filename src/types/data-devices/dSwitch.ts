@@ -5,6 +5,7 @@ import { DataGraph, DeviceId, SwitchDataNode } from "../graphs/datagraph";
 
 export class DataSwitch extends DataDevice {
   switchingTable: Map<string, number> = new Map<string, number>();
+  private switchingTableChangeListener: (() => void) | null = null;
 
   constructor(graphData: SwitchDataNode, datagraph: DataGraph) {
     super(graphData, datagraph);
@@ -20,6 +21,13 @@ export class DataSwitch extends DataDevice {
       console.debug(`Adding ${mac.toString()} to the switching table`);
       this.switchingTable.set(mac.toString(), iface);
     }
+    if (this.switchingTableChangeListener) {
+      this.switchingTableChangeListener();
+    }
+  }
+
+  setSwitchingTableChangeListener(listener: () => void): void {
+    this.switchingTableChangeListener = listener;
   }
 
   getDataNode(): SwitchDataNode {
