@@ -8,6 +8,7 @@ import { ViewNetworkDevice } from "../../view-devices/vNetworkDevice";
 import { AsyncQueue } from "../asyncQueue";
 import { SegmentWithIp } from "../tcpModule";
 import { GlobalContext } from "../../../context";
+import { CONFIG_SWITCH_KEYS } from "../../../config_menu/switches/switch_factory";
 
 enum TcpStateEnum {
   CLOSED = 0,
@@ -131,7 +132,7 @@ export class TcpState {
   private initialRecvSeqNum: number;
 
   private rttEstimator: RTTEstimator;
-  private congestionControl = new CongestionControl();
+  private congestionControl: CongestionControl;
 
   constructor(
     srcHost: ViewHost,
@@ -152,6 +153,12 @@ export class TcpState {
     this.retransmissionQueue = new RetransmissionQueue(
       this.srcHost.ctx,
       this.rttEstimator,
+    );
+
+    this.congestionControl = new CongestionControl(
+      this.srcHost.ctx
+        .getConfigMenu()
+        .getConfigSwitchValue(CONFIG_SWITCH_KEYS.USE_TCP_RENO),
     );
 
     this.mainLoop();
@@ -449,6 +456,8 @@ export class TcpState {
       ? (segment.sequenceNumber + 1) % u32_MODULUS
       : segment.sequenceNumber;
     if (seqNum > this.recvNext) {
+      // Send a possibly duplicate ACK
+      this.notifySendPackets();
       // Postpone the segment
       return ProcessingResult.POSTPONE;
     } else if (seqNum < this.recvNext) {
@@ -931,14 +940,16 @@ type CongestionControlStateBehavior =
 class CongestionControl {
   private state: CongestionControlState;
   private stateBehavior: CongestionControlStateBehavior;
+  private useFastRecovery: boolean;
 
-  constructor() {
+  constructor(useFastRecovery: boolean) {
     this.state = {
       cwnd: 1 * MAX_SEGMENT_SIZE,
       ssthresh: Infinity,
       dupAckCount: 0,
     };
     this.stateBehavior = new SlowStart();
+    this.useFastRecovery = useFastRecovery;
   }
 
   getCwnd(): number {
@@ -946,6 +957,14 @@ class CongestionControl {
   }
 
   notifyDupAck(): boolean {
+    if (!this.useFastRecovery) {
+      this.state.dupAckCount++;
+      const isThreeDupAcks = this.state.dupAckCount === 3;
+      if (isThreeDupAcks) {
+        this.notifyTimeout();
+      }
+      return isThreeDupAcks;
+    }
     this.stateBehavior.handleAck(this.state, 0);
     return this.state.dupAckCount === 3;
   }
