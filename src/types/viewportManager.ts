@@ -25,7 +25,7 @@ export const urManager = new UndoRedoManager();
 export function selectElement(element: Selectable) {
   deselectElement();
 
-  if (element) {
+  if (element && element.isVisible()) {
     selectedElement = element;
     element.select();
   }
@@ -87,6 +87,10 @@ document.addEventListener("keydown", (event) => {
         const move = new RemoveDeviceMove(currLayer, selectedElement.id);
         urManager.push(viewgraph, move);
       } else if (isEdge(selectedElement)) {
+        // if the edge is merged, do not delete it
+        if (selectedElement.isMerged()) {
+          return;
+        }
         const ends = selectedElement.getDeviceIds();
         const move = new RemoveEdgeMove(currLayer, ends[0], ends[1]);
         urManager.push(viewgraph, move);
