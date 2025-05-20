@@ -46,9 +46,7 @@ export class ArpProtocol extends ProgramBase {
   private sendRequest() {
     const srcDevice = this.viewgraph.getDevice(this.srcId);
     if (!(srcDevice instanceof ViewNetworkDevice)) {
-      console.log(
-        "At least one device between source and destination is not a network device",
-      );
+      console.error("Source device is not a network device");
       return;
     }
     const connections = this.viewgraph.getConnections(this.srcId);
@@ -61,12 +59,7 @@ export class ArpProtocol extends ProgramBase {
         MacAddress.broadcastAddress(),
         payload,
       );
-      sendViewPacket(
-        this.viewgraph,
-        this.srcId,
-        ethernetFrame,
-        edge.otherEnd(this.srcId),
-      );
+      sendViewPacket(this.viewgraph, this.srcId, ethernetFrame, ifaceNum);
     });
   }
 
