@@ -32,7 +32,6 @@ import {
   TooltipManagersetGlobalContext,
 } from "./graphics/renderables/tooltip_manager";
 import { TOOLTIP_KEYS } from "./utils/constants/tooltips_constants";
-import { ConfigMenu } from "./config_menu/config_menu";
 
 const assets = [
   RouterSvg,
@@ -83,8 +82,6 @@ async function loadAssets(otherPromises: Promise<void>[]) {
   new UndoRedoHandler(ctx);
   new PauseHandler(ctx);
   new SpeedControlHandler(ctx);
-
-  const configMenu = new ConfigMenu(ctx);
   new ShortcutsManager(ctx, app);
 
   // Setup button event handlers
@@ -93,7 +90,7 @@ async function loadAssets(otherPromises: Promise<void>[]) {
     { id: TOOLTIP_KEYS.SAVE_BUTTON, action: () => triggerSave(ctx) },
     { id: TOOLTIP_KEYS.LOAD_BUTTON, action: () => triggerLoad(ctx) },
     { id: TOOLTIP_KEYS.PRINT_BUTTON, action: () => triggerPrint(app, ctx) },
-    { id: TOOLTIP_KEYS.HELP_BUTTON, action: () => triggerHelp(configMenu) },
+    { id: TOOLTIP_KEYS.HELP_BUTTON, action: () => triggerHelp(ctx) },
   ];
 
   buttonActions.forEach(({ id, action }) => {

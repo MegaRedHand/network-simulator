@@ -1,11 +1,7 @@
 import { Viewport } from "./graphics/viewport";
-import { DataGraph } from "./types/graphs/datagraph";
+import { DataGraph, GraphData } from "./types/graphs/datagraph";
 import { ViewGraph } from "./types/graphs/viewgraph";
-import {
-  loadFromLocalStorage,
-  saveToLocalStorage,
-  urManager,
-} from "./types/viewportManager";
+import { urManager } from "./types/viewportManager";
 import { compareIps, IpAddress, IpAddressGenerator } from "./packets/ip";
 import { layerFromName, Layer } from "./types/layer";
 import { SpeedMultiplier } from "./types/speedMultiplier";
@@ -15,6 +11,9 @@ import {
   MacAddressGenerator,
 } from "./packets/ethernet";
 import { DataNetworkDevice } from "./types/data-devices";
+import { showError, showSuccess } from "./graphics/renderables/alert_manager";
+import { ALERT_MESSAGES } from "./utils/constants/alert_constants";
+import { ConfigMenu } from "./config_menu/config_menu";
 
 export class GlobalContext {
   private viewport: Viewport = null;
@@ -24,17 +23,15 @@ export class GlobalContext {
   private saveIntervalId: NodeJS.Timeout | null = null;
   private ipGenerator: IpAddressGenerator;
   private macGenerator: MacAddressGenerator;
-
-  // Settings
-  private tooltipsEnabled: boolean;
-  private useTcpReno: boolean;
+  private configMenu: ConfigMenu;
 
   constructor(viewport: Viewport) {
-    this.tooltipsEnabled = true;
     this.viewport = viewport;
 
+    this.setConfigMenu();
+
     // Sets the initial datagraph and viewgraph
-    loadFromLocalStorage(this);
+    this.loadFromLocalStorage();
 
     this.setIpGenerator();
     this.setMacGenerator();
@@ -46,6 +43,13 @@ export class GlobalContext {
 
   getNextMac(): string {
     return this.macGenerator.getNextMac();
+  }
+
+  private setConfigMenu() {
+    this.configMenu = new ConfigMenu();
+    this.configMenu.addListener(() => {
+      this.saveToLocalStorage();
+    });
   }
 
   private setNetwork(datagraph: DataGraph, layer: Layer) {
@@ -82,7 +86,7 @@ export class GlobalContext {
     this.viewport.restorePosition();
     this.setSpeedMultiplier(speedMultiplier);
     this.setupAutoSave();
-    saveToLocalStorage(this);
+    this.saveToLocalStorage();
     urManager.reset();
   }
 
@@ -144,7 +148,7 @@ export class GlobalContext {
 
   changeSpeedMultiplier(speedMultiplier: number) {
     this.speedMultiplier.setSpeed(speedMultiplier);
-    saveToLocalStorage(this);
+    this.saveToLocalStorage();
   }
 
   private setupAutoSave() {
@@ -155,7 +159,7 @@ export class GlobalContext {
         clearInterval(this.saveIntervalId);
       }
       this.saveIntervalId = setInterval(() => {
-        saveToLocalStorage(this);
+        this.saveToLocalStorage();
         clearInterval(this.saveIntervalId);
       }, 100);
     });
@@ -203,19 +207,92 @@ export class GlobalContext {
     console.log(this.datagraph);
   }
 
-  setEnableTooltips(enabled: boolean) {
-    this.tooltipsEnabled = enabled;
+  public getConfigMenu(): ConfigMenu {
+    return this.configMenu;
   }
 
-  getEnableTooltips() {
-    return this.tooltipsEnabled;
+  // save & load logic
+
+  public saveToFile() {
+    const graphData = this.getDataGraph().toData();
+
+    // Convert to JSON and download
+    const jsonString = JSON.stringify(graphData, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "networkGraph.json";
+    link.click();
+    URL.revokeObjectURL(url);
+
+    console.log("Graph state saved.");
   }
 
-  setUseTcpReno(enabled: boolean) {
-    this.useTcpReno = enabled;
+  public loadFromFile() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+
+    input.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files[0];
+      const reader = new FileReader();
+      reader.readAsText(file);
+
+      reader.onload = (readerEvent) => {
+        const jsonData = readerEvent.target.result as string;
+        let graphData: GraphData;
+        let dataGraph: DataGraph;
+        try {
+          graphData = JSON.parse(jsonData);
+          dataGraph = DataGraph.fromData(graphData, this);
+        } catch (error) {
+          console.error("Failed to load graph data:", error);
+          showError(ALERT_MESSAGES.FAILED_TO_LOAD_GRAPH);
+          return;
+        }
+        this.load(dataGraph, this.getCurrentLayer());
+        this.centerView();
+
+        showSuccess(ALERT_MESSAGES.GRAPH_LOADED_SUCCESSFULLY);
+      };
+    };
+
+    input.click();
   }
 
-  getUseTcpReno() {
-    return this.useTcpReno;
+  private static readonly LOCAL_STORAGE_KEY = "graphData";
+
+  public saveToLocalStorage() {
+    const dataGraph = this.getDataGraph();
+    const graphData = JSON.stringify(dataGraph.toData());
+    const layer = this.getCurrentLayer();
+    const speedMultiplier = this.getCurrentSpeed();
+    const switchesState = this.configMenu.getSwitchesPersistence();
+    const data = { graph: graphData, layer, speedMultiplier, switchesState };
+    localStorage.setItem(GlobalContext.LOCAL_STORAGE_KEY, JSON.stringify(data));
+    console.log("Graph saved in local storage.");
+  }
+
+  private loadFromLocalStorage() {
+    const jsonData =
+      localStorage.getItem(GlobalContext.LOCAL_STORAGE_KEY) || "{}";
+    try {
+      const data = JSON.parse(jsonData);
+      const graphData = JSON.parse(data.graph);
+      const speedMultiplier = new SpeedMultiplier(data.speedMultiplier || 1);
+      this.load(
+        DataGraph.fromData(graphData, this),
+        data.layer,
+        speedMultiplier,
+      );
+
+      if (data.switchesState) {
+        this.configMenu.applySwitchesPersistence(data.switchesState);
+      }
+    } catch (error) {
+      this.load(new DataGraph(this), Layer.App, new SpeedMultiplier(1));
+      console.log("Failed to load graph data from local storage:", error);
+    }
   }
 }

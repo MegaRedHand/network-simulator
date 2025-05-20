@@ -1,8 +1,19 @@
-import { GlobalContext } from "../../context";
-import { EnableTooltipsSwitch } from "./enable_tooltips";
+import { updateTooltipsState } from "../../graphics/renderables/tooltip_manager";
 import { SwitchSetting } from "./switch";
-import { UseTcpRenoSwitch } from "./tcp_reno";
 
-export function createAllSwitches(ctx: GlobalContext): SwitchSetting[] {
-  return [new EnableTooltipsSwitch(ctx), new UseTcpRenoSwitch(ctx)];
+export const CONFIG_SWITCH_KEYS = {
+  ENABLE_TOOLTIPS: "enableTooltips",
+  USE_TCP_RENO: "useTcpReno",
+} as const;
+
+export function createAllSwitches(): SwitchSetting[] {
+  return [
+    new SwitchSetting(
+      CONFIG_SWITCH_KEYS.ENABLE_TOOLTIPS,
+      "Enable Tooltips",
+      true,
+      () => updateTooltipsState(),
+    ),
+    new SwitchSetting(CONFIG_SWITCH_KEYS.USE_TCP_RENO, "Use TCP Reno", true),
+  ];
 }

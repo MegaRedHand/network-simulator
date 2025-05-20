@@ -1,4 +1,3 @@
-import { GlobalContext } from "../context";
 import { deselectElement } from "../types/viewportManager";
 import { SwitchSetting } from "./switches/switch";
 import { createAllSwitches } from "./switches/switch_factory";
@@ -8,20 +7,50 @@ export class ConfigMenu {
   private modalContent: HTMLDivElement | null;
   private closeBtn: HTMLSpanElement | null;
   private saveSettingsButton: HTMLButtonElement | null;
+  private changeListeners: (() => void)[] = [];
 
   private switches: SwitchSetting[];
 
-  constructor(ctx: GlobalContext) {
+  constructor() {
     this.modalOverlay = null;
     this.modalContent = null;
     this.closeBtn = null;
     this.saveSettingsButton = null;
 
-    this.switches = createAllSwitches(ctx);
+    this.switches = createAllSwitches();
 
     this.createModal();
     this.setupEventListeners();
     this.setUpShortCuts();
+  }
+
+  public addListener(listener: () => void) {
+    this.changeListeners.push(listener);
+  }
+
+  private notifyChange() {
+    this.changeListeners.forEach((listener) => listener());
+  }
+
+  getSwitchesPersistence(): Record<string, 0 | 1> {
+    const result: Record<string, 0 | 1> = {};
+    this.switches.forEach((sw) => {
+      result[sw.key] = sw.toPersistenceValue();
+    });
+    return result;
+  }
+
+  applySwitchesPersistence(state: Record<string, 0 | 1>) {
+    this.switches.forEach((sw) => {
+      if (sw.key in state) {
+        sw.setValue(!!state[sw.key]);
+      }
+    });
+  }
+
+  public getConfigSwitchValue(key: string): boolean | undefined {
+    const sw = this.switches.find((sw) => sw.key === key);
+    return sw ? sw.value : undefined;
   }
 
   private createModal() {
@@ -164,5 +193,7 @@ export class ConfigMenu {
       "Settings saved:",
       this.switches.map((sw) => ({ [sw.key]: sw.value })),
     );
+
+    this.notifyChange();
   }
 }
