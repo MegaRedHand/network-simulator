@@ -13,6 +13,7 @@ import {
 import { DataNetworkDevice } from "./types/data-devices";
 import { showError, showSuccess } from "./graphics/renderables/alert_manager";
 import { ALERT_MESSAGES } from "./utils/constants/alert_constants";
+import { ConfigMenu } from "./config_menu/config_menu";
 
 export class GlobalContext {
   private viewport: Viewport = null;
@@ -22,14 +23,12 @@ export class GlobalContext {
   private saveIntervalId: NodeJS.Timeout | null = null;
   private ipGenerator: IpAddressGenerator;
   private macGenerator: MacAddressGenerator;
-
-  // Settings
-  private tooltipsEnabled: boolean;
-  private useTcpReno: boolean;
+  private configMenu: ConfigMenu;
 
   constructor(viewport: Viewport) {
-    this.tooltipsEnabled = true;
     this.viewport = viewport;
+
+    this.setConfigMenu();
 
     // Sets the initial datagraph and viewgraph
     this.loadFromLocalStorage();
@@ -44,6 +43,13 @@ export class GlobalContext {
 
   getNextMac(): string {
     return this.macGenerator.getNextMac();
+  }
+
+  private setConfigMenu() {
+    this.configMenu = new ConfigMenu();
+    this.configMenu.addListener(() => {
+      this.saveToLocalStorage();
+    });
   }
 
   private setNetwork(datagraph: DataGraph, layer: Layer) {
@@ -201,20 +207,8 @@ export class GlobalContext {
     console.log(this.datagraph);
   }
 
-  setEnableTooltips(enabled: boolean) {
-    this.tooltipsEnabled = enabled;
-  }
-
-  getEnableTooltips() {
-    return this.tooltipsEnabled;
-  }
-
-  setUseTcpReno(enabled: boolean) {
-    this.useTcpReno = enabled;
-  }
-
-  getUseTcpReno() {
-    return this.useTcpReno;
+  public getConfigMenu(): ConfigMenu {
+    return this.configMenu;
   }
 
   // save & load logic
@@ -274,7 +268,8 @@ export class GlobalContext {
     const graphData = JSON.stringify(dataGraph.toData());
     const layer = this.getCurrentLayer();
     const speedMultiplier = this.getCurrentSpeed();
-    const data = { graph: graphData, layer, speedMultiplier };
+    const switchesState = this.configMenu.getSwitchesPersistence();
+    const data = { graph: graphData, layer, speedMultiplier, switchesState };
     localStorage.setItem(GlobalContext.LOCAL_STORAGE_KEY, JSON.stringify(data));
     console.log("Graph saved in local storage.");
   }
@@ -291,6 +286,10 @@ export class GlobalContext {
         data.layer,
         speedMultiplier,
       );
+
+      if (data.switchesState) {
+        this.configMenu.applySwitchesPersistence(data.switchesState);
+      }
     } catch (error) {
       this.load(new DataGraph(this), Layer.App, new SpeedMultiplier(1));
       console.log("Failed to load graph data from local storage:", error);

@@ -1,20 +1,11 @@
-import { GlobalContext } from "../../context";
-
 export abstract class SwitchSetting {
   key: string;
   label: string;
   value: boolean;
   tempValue: boolean;
   input: HTMLInputElement | null = null;
-  ctx: GlobalContext;
 
-  constructor(
-    ctx: GlobalContext,
-    key: string,
-    label: string,
-    defaultValue: boolean,
-  ) {
-    this.ctx = ctx;
+  constructor(key: string, label: string, defaultValue: boolean) {
     this.key = key;
     this.label = label;
     this.value = defaultValue;
@@ -44,6 +35,15 @@ export abstract class SwitchSetting {
     }
   }
 
+  setValue(value: boolean) {
+    this.value = value;
+    this.tempValue = value;
+    if (this.input) {
+      this.input.checked = value;
+    }
+    this.apply();
+  }
+
   getHtml(): string {
     return `
       <li class="setting-item">
@@ -54,6 +54,10 @@ export abstract class SwitchSetting {
         </label>
       </li>
     `;
+  }
+
+  toPersistenceValue(): 0 | 1 {
+    return this.value ? 1 : 0;
   }
 
   abstract apply(): void;

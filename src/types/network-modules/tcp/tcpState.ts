@@ -149,7 +149,7 @@ export class TcpState {
     );
 
     this.congestionControl = new CongestionControl(
-      this.srcHost.ctx.getUseTcpReno(),
+      this.srcHost.ctx.getConfigMenu().getConfigSwitchValue("useTcpReno"),
     );
 
     this.mainLoop();

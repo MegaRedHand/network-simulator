@@ -3,7 +3,6 @@ import { Application } from "pixi.js";
 import { deselectElement } from "../types/viewportManager";
 import { captureAndDownloadViewport } from "../utils/utils";
 import { DataGraph } from "../types/graphs/datagraph";
-import { ConfigMenu } from "../config_menu/config_menu";
 
 // Function to create a new network
 export const triggerNew = (ctx: GlobalContext) => {
@@ -31,7 +30,7 @@ export const triggerPrint = (app: Application, ctx: GlobalContext) => {
 };
 
 // Function to open the help modal
-export const triggerHelp = (configMenu: ConfigMenu) => {
+export const triggerHelp = (ctx: GlobalContext) => {
   deselectElement(); // Deselect any currently selected element
-  configMenu.open(); // Open the configuration/help modal
+  ctx.getConfigMenu().open(); // Open the configuration/help modal
 };
