@@ -1,3 +1,4 @@
+import { CONFIG_SWITCH_KEYS } from "../../config_menu/switches/switch_factory";
 import { GlobalContext } from "../../context";
 import { TOOLTIP_CONTENT } from "../../utils/constants/tooltips_constants";
 
@@ -23,7 +24,10 @@ export function attachTooltip(
   key: string,
   hideDelay = false,
 ): void {
-  const tooltipsEnabled = globalContext?.getEnableTooltips() ?? true;
+  const tooltipsEnabled =
+    globalContext
+      ?.getConfigMenu()
+      .getConfigSwitchValue(CONFIG_SWITCH_KEYS.ENABLE_TOOLTIPS) ?? true;
 
   if (key in TOOLTIP_CONTENT) {
     if (tooltipsEnabled) {
@@ -66,7 +70,10 @@ export function attachTooltip(
  * @param key - The key for the tooltip content.
  */
 export function showTooltip(key: string): void {
-  const tooltipsEnabled = globalContext?.getEnableTooltips() ?? true;
+  const tooltipsEnabled =
+    globalContext
+      ?.getConfigMenu()
+      .getConfigSwitchValue(CONFIG_SWITCH_KEYS.ENABLE_TOOLTIPS) ?? true;
   if (!tooltipsEnabled) return;
 
   const text = TOOLTIP_CONTENT[key as keyof typeof TOOLTIP_CONTENT];
@@ -107,7 +114,10 @@ export function hideTooltip(): void {
  * Updates the state of tooltips (enabled/disabled).
  */
 export function updateTooltipsState(): void {
-  const tooltipsEnabled = globalContext?.getEnableTooltips() ?? true;
+  const tooltipsEnabled =
+    globalContext
+      ?.getConfigMenu()
+      .getConfigSwitchValue(CONFIG_SWITCH_KEYS.ENABLE_TOOLTIPS) ?? true;
 
   // Select all elements with the "has-tooltip" class
   const tooltipElements = document.querySelectorAll(".has-tooltip");
