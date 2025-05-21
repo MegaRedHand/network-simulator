@@ -62,6 +62,7 @@ export function layerFromType(type: DeviceType) {
 export abstract class ViewDevice extends Container {
   private sprite: Sprite;
   private tooltip: Text | null = null; // Tooltip como un Text de PIXI.js
+  private tag: string | null = null; // Tag for the device
   private isDragCircle = false;
   private circleGraphic?: Graphics;
   private idLabel?: Text;
@@ -246,20 +247,34 @@ export abstract class ViewDevice extends Container {
     return this.isVisibleFlag;
   }
 
-  // Function to add the ID label to the device
+  // Function to add or update the label on the device
   addDeviceIdLabel() {
+    // Remove previous label if exists
+    if (this.idLabel) {
+      this.removeChild(this.idLabel);
+      this.idLabel.destroy();
+    }
     const textStyle = new TextStyle({
       fontSize: 12,
       fill: Colors.Black,
       align: "center",
       fontWeight: "bold",
     });
-    const idText = new Text({ text: `ID: ${this.id}`, style: textStyle });
-    idText.anchor.set(0.5);
-    idText.y = this.height * 0.8;
-    idText.zIndex = ZIndexLevels.Label;
-    this.idLabel = idText;
-    this.addChild(idText); // Add the ID text as a child of the device
+    const labelText = this.tag ?? `ID: ${this.id}`;
+    this.idLabel = new Text({ text: labelText, style: textStyle });
+    this.idLabel.anchor.set(0.5);
+    this.idLabel.y = this.height * 0.8;
+    this.idLabel.zIndex = ZIndexLevels.Label;
+    this.addChild(this.idLabel);
+  }
+
+  setTag(tag: string | null) {
+    this.tag = tag;
+    this.addDeviceIdLabel();
+  }
+
+  getTag(): string | null {
+    return this.tag;
   }
 
   getPosition(): Position {
