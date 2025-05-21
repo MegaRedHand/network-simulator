@@ -119,7 +119,7 @@ The available layers are:
 ### Host
 
 <p align="center">
-  <img src="./src/assets/server.svg" alt="Server" width="25%" style="background-color: white;border-radius: 10px;" />
+  <img src="./src/assets/pc.svg" alt="Host" width="25%" style="background-color: white;border-radius: 10px;" />
 </p>
 
 A host is a computer or device that connects to the network. It can send and receive data packets. In the simulator, a host can be used to represent a computer, a server or any other endpoint that connects to the network.
@@ -140,11 +140,12 @@ The information shown in the right bar when selecting a host is as follows:
 - **IP Address**: The IP address of the host. This is always visible.
 - **Connect Device Button**: This button allows you to connect the host to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. You can only connect
   devices if the host and the other device have free interfaces. This button has a keyboard shortcut. Pressing **C** and then clicking
-  on another device will also connect the devices, if they have free interfaces. (?)
+  on another device will also connect the devices, if they have free interfaces. TODO: Completar el manejo de interfaces del host
+
 - **Delete Device Button**: This button allows you to delete the host from the network. This will also delete all edges connected to this host.
 - **Program Runner Section**: This section includes a dropdown to select a program and a second button to start the program after
   selecting the program inputs.
-- **ARP Table**: This table shows the translation of the different IP Adresses translations into MAC Adresses. It also allows to edit and refresh these translations. (?)
+- **ARP Table**: This table shows the translation of the different IP Adresses translations into MAC Adresses. It also allows to edit and refresh these translations.
 
 #### Host Hover
 
@@ -176,16 +177,14 @@ The information shown in the right bar when selecting a router is as follows:
 - **Connected Devices**: The devices that are directly connected to this router through edges.
 - **MAC Address**: The MAC address of the router. This is only visible in the Link Layer.
 - **IP Address**: The IP address of the router. This is always visible.
-- **Connect Device Button**: This button allows you to connect the host to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. You can only connect
-  devices if the host and the other device have free interfaces. This button has a keyboard shortcut. Pressing **C** and then clicking
-  on another device will also connect the devices, if they have free interfaces. (?)
+- **Connect Device Button**: This button allows you to connect the router to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. This button has a keyboard shortcut. Pressing **C** and then clicking. TODO: Completar el manejo de interfaces del router
 - **Delete Device Button**: This button allows you to delete the router from the network. This will also delete all edges connected to this router.
 - **Packet Queue Usage Bar**: This bar shows the usage of the packet queue of the router. The packet queue is used to store packets that are waiting to be processed by the router. The bar shows the percentage of the queue that is currently in use. If the queue is full, the router will drop packets until there is space in the queue.
 - **Router Parameters Dropdown**: This dropdown allows you to select the parameters of the router. The parameters are:
   - **Packet Queue Size [bytes]**: The amount of bytes that the router can store in its queue. This is the maximum size of the queue. The default value is 1024 bytes.
   - **Packet Processing Speed [ms/byte]**: The time it takes for the router to process a packet. The default value is 8 miliseconds.
-- **Routing Table**: The routing table is a data structure used by routers to determine the best path for forwarding packets to their destination. It contains the IP, the Nework Mask and the selected interface. You can edit the entries of the table to fit your desired routing scheme. You can also restore the default state of the table by pressing the reset button on the top right corner. (?)
-- **ARP Table**: This table shows the translation of the different IP Adresses translations into MAC Adresses. It also allows to edit and refresh these translations. (?)
+- **Routing Table**: The routing table is a data structure used by routers to determine the best path for forwarding packets to their destination. It contains the IP, the Nework Mask and the selected interface. You can edit the entries of the table to fit your desired routing scheme. You can also restore the default state of the table by pressing the reset button on the top right corner.
+- **ARP Table**: This table shows the translation of the different IP Adresses translations into MAC Adresses. It also allows to edit and refresh these translations.
 
 #### Router Hover
 
@@ -199,6 +198,36 @@ Hovering on a Router will show the IP address. If the simulator is set on the Li
 
 <p align="center">
   <img src="./src/assets/switch.svg" alt="Switch" width="25%" style="background-color: white;border-radius: 10px;" />
+</p>
+
+A switch is a device that connects devices within a single network and uses MAC addresses to forward data to the correct destination. It is used to connect devices on a local area network (LAN) and is responsible for forwarding data packets between those devices.
+
+In the simulator, the switches are only in the Link Layer. As switches are used to connect devices within a single network, they are not involved in the use of endpoints or routing data between different networks.
+
+> ⚠️ Aclaración de la simplificación de LANs en el simulador
+
+#### Switch Information
+
+<p align="center">
+  <img src="./img/11_Switch_Data.png" alt="Switch Info" />
+</p>
+
+The information shown in the right bar when selecting a switch is as follows:
+
+- **ID**: The ID of the switch. This is a simulated unique identifier for the switch in the network.
+- **Connected Devices**: The devices that are directly connected to this switch through edges.
+- **MAC Address**: The MAC address of the switch.
+- **Connect Device Button**: This button allows you to connect the host to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. Pressing **C** and then clicking on another device will also connect the devices, if they have free interfaces. #TODO: Completar el manejo de interfaces del switch
+- **Delete Device Button**: This button allows you to delete the switch from the network. This will also delete all edges connected to this switch.
+- **Switching Table**: This table shows the MAC Address and the port in which that Address is assigned.
+  This table is used by the switch to forward data packets to the correct destination. You can edit the entries of the table to fit your desired switching scheme. You can also restore the default state of the table by pressing the reset button on the top right corner.
+
+#### Switch Hover
+
+Hovering on a Switch will show the MAC address.
+
+<p align="center">
+  <img src="./img/12_Switch_Overview.gif" alt="Switch Overview" />
 </p>
 
 ### Edge
