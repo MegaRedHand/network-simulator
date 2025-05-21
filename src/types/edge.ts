@@ -333,13 +333,15 @@ export class Edge extends Graphics {
     const endDevice = this.viewgraph.getDevice(endId);
 
     const setTooltip = (device: ViewDevice, iface: number) => {
-      if (!startDevice) {
+      if (!device) {
         console.error(
           `Device ${device.id} not found in viewgraph, cannot set device tooltip`,
         );
         return;
       }
-      device.setupTooltip(iface);
+      if (device.isVisible()) {
+        device.setupTooltip(iface);
+      }
     };
 
     setTooltip(startDevice, startIface);
@@ -353,7 +355,7 @@ export class Edge extends Graphics {
     const endDevice = this.viewgraph.getDevice(endId);
 
     const hideTooltip = (device: ViewDevice) => {
-      if (!startDevice) {
+      if (!device) {
         console.error(
           `Device ${device.id} not found in viewgraph, cannot set device tooltip`,
         );
