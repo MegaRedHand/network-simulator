@@ -8,6 +8,7 @@ import { ViewNetworkDevice } from "../../view-devices/vNetworkDevice";
 import { AsyncQueue } from "../asyncQueue";
 import { SegmentWithIp } from "../tcpModule";
 import { GlobalContext } from "../../../context";
+import { CONFIG_SWITCH_KEYS } from "../../../config_menu/switches/switch_factory";
 
 enum TcpStateEnum {
   // CLOSED = 0,
@@ -149,7 +150,9 @@ export class TcpState {
     );
 
     this.congestionControl = new CongestionControl(
-      this.srcHost.ctx.getUseTcpReno(),
+      this.srcHost.ctx
+        .getConfigMenu()
+        .getConfigSwitchValue(CONFIG_SWITCH_KEYS.USE_TCP_RENO),
     );
 
     this.mainLoop();

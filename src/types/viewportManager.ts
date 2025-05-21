@@ -1,7 +1,5 @@
 import { GlobalContext } from "./../context";
 import {
-  DataGraph,
-  GraphData,
   DataNode,
   getNumberOfInterfaces,
   NetworkInterfaceData,
@@ -11,16 +9,12 @@ import { Edge } from "./edge";
 import { RightBar } from "../graphics/right_bar";
 import { Packet } from "./packet";
 import { DeviceType } from "./view-devices/vDevice";
-import { Layer } from "./layer";
 import {
   UndoRedoManager,
   AddDeviceMove,
   RemoveDeviceMove,
   RemoveEdgeMove,
 } from "./undo-redo";
-import { SpeedMultiplier } from "./speedMultiplier";
-import { showError, showSuccess } from "../graphics/renderables/alert_manager";
-import { ALERT_MESSAGES } from "../utils/constants/alert_constants";
 
 type Selectable = ViewDevice | Edge | Packet;
 
@@ -31,7 +25,7 @@ export const urManager = new UndoRedoManager();
 export function selectElement(element: Selectable) {
   deselectElement();
 
-  if (element) {
+  if (element && element.isVisible()) {
     selectedElement = element;
     element.select();
   }
@@ -93,6 +87,10 @@ document.addEventListener("keydown", (event) => {
         const move = new RemoveDeviceMove(currLayer, selectedElement.id);
         urManager.push(viewgraph, move);
       } else if (isEdge(selectedElement)) {
+        // if the edge is merged, do not delete it
+        if (selectedElement.isMerged()) {
+          return;
+        }
         const ends = selectedElement.getDeviceIds();
         const move = new RemoveEdgeMove(currLayer, ends[0], ends[1]);
         urManager.push(viewgraph, move);
@@ -150,91 +148,4 @@ export function addDevice(ctx: GlobalContext, type: DeviceType) {
 
   const move = new AddDeviceMove(viewgraph.getLayer(), deviceInfo);
   urManager.push(viewgraph, move);
-}
-
-// Function to save the current graph in JSON format
-export function saveToFile(ctx: GlobalContext) {
-  const graphData = ctx.getDataGraph().toData();
-
-  // Convert to JSON and download
-  const jsonString = JSON.stringify(graphData, null, 2);
-  const blob = new Blob([jsonString], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "networkGraph.json";
-  link.click();
-  URL.revokeObjectURL(url);
-
-  console.log("Graph state saved.");
-}
-
-// Function to load a graph from a JSON file
-export function loadFromFile(ctx: GlobalContext) {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".json";
-
-  input.onchange = (event) => {
-    const file = (event.target as HTMLInputElement).files[0];
-    const reader = new FileReader();
-    reader.readAsText(file);
-
-    reader.onload = (readerEvent) => {
-      const jsonData = readerEvent.target.result as string;
-      const graphData: GraphData = JSON.parse(jsonData);
-      let dataGraph: DataGraph;
-      try {
-        dataGraph = DataGraph.fromData(graphData, ctx);
-      } catch (error) {
-        console.error("Failed to load graph data:", error);
-        showError(ALERT_MESSAGES.FAILED_TO_LOAD_GRAPH);
-        return;
-      }
-      ctx.load(dataGraph, ctx.getCurrentLayer());
-      ctx.centerView();
-
-      showSuccess(ALERT_MESSAGES.GRAPH_LOADED_SUCCESSFULLY);
-    };
-  };
-
-  input.click();
-}
-
-const LOCAL_STORAGE_KEY = "graphData";
-
-interface LocalStorageData {
-  graph: string;
-  layer: Layer;
-  speedMultiplier: number;
-}
-
-export function saveToLocalStorage(ctx: GlobalContext) {
-  const dataGraph = ctx.getDataGraph();
-  const graphData = JSON.stringify(dataGraph.toData());
-  const layer = ctx.getCurrentLayer();
-  const speedMultiplier = ctx.getCurrentSpeed();
-  const data: LocalStorageData = { graph: graphData, layer, speedMultiplier };
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
-
-  console.log("Graph saved in local storage.");
-}
-
-export function loadFromLocalStorage(ctx: GlobalContext) {
-  const jsonData = localStorage.getItem(LOCAL_STORAGE_KEY) || "{}";
-  try {
-    const data: LocalStorageData = JSON.parse(jsonData);
-    console.debug("Data from local storage:", data);
-    const graphData: GraphData = JSON.parse(data.graph);
-    const speedMultiplier = new SpeedMultiplier(data.speedMultiplier || 1);
-    console.log("Speed multiplier: ", speedMultiplier);
-    console.debug("Graph data from local storage:", graphData);
-    ctx.load(DataGraph.fromData(graphData, ctx), data.layer, speedMultiplier);
-  } catch (error) {
-    const extraData = { jsonData, error };
-    console.error("Failed to load graph from local storage.", extraData);
-    ctx.load(new DataGraph(ctx), Layer.App, new SpeedMultiplier(1));
-    return;
-  }
-  console.log("Graph loaded from local storage.");
 }

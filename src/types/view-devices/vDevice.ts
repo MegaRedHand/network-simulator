@@ -34,6 +34,8 @@ import {
   showTooltip,
 } from "../../graphics/renderables/canvas_tooltip_manager";
 
+const CIRCLE_RADIUS = 6; // Radius of the circle for drag and drop
+
 export enum DeviceType {
   Host = 0,
   Router = 1,
@@ -61,6 +63,10 @@ export function layerFromType(type: DeviceType) {
 export abstract class ViewDevice extends Container {
   private sprite: Sprite;
   private tooltip: Text | null = null; // Tooltip como un Text de PIXI.js
+  private isDragCircle = false;
+  private circleGraphic?: Graphics;
+  private idLabel?: Text;
+  private isVisibleFlag = true; // Flag to track visibility
 
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
@@ -121,10 +127,10 @@ export abstract class ViewDevice extends Container {
     this.interactive = true;
     this.cursor = "pointer";
     this.zIndex = ZIndexLevels.Device;
-    this.updateVisibility();
 
     // Add device ID label using the helper function
     this.addDeviceIdLabel();
+    this.updateVisibility();
 
     // Set up tooltip behavior
     // this.setupHoverTooltip();
@@ -141,6 +147,7 @@ export abstract class ViewDevice extends Container {
     // Do nothing
   }
 
+<<<<<<< HEAD
   setupTooltip(iface: number) {
     const currentLayer = this.ctx.getCurrentLayer();
     const tooltipMessage = this.getTooltipDetails(currentLayer, iface);
@@ -152,9 +159,33 @@ export abstract class ViewDevice extends Container {
       this.tooltip,
     );
   }
+=======
+  private setupHoverTooltip() {
+    this.on("mouseover", () => {
+      if (this.isDragCircle) return;
+      const currentLayer = this.ctx.getCurrentLayer();
+      const tooltipMessage = this.getTooltipDetails(currentLayer);
+      this.tooltip = showTooltip(
+        this,
+        tooltipMessage,
+        0,
+        this.height * 0.8 + 20,
+        this.tooltip,
+      );
+    });
+>>>>>>> main
 
   hideToolTip() {
     hideTooltip(this.tooltip);
+  }
+
+  setCircleColor(color: number) {
+    if (!this.isDragCircle) return;
+    if (this.circleGraphic) {
+      this.circleGraphic.clear();
+      this.circleGraphic.circle(0, 0, CIRCLE_RADIUS);
+      this.circleGraphic.fill({ color });
+    }
   }
 
   /**
@@ -166,12 +197,66 @@ export abstract class ViewDevice extends Container {
    */
   abstract getTooltipDetails(layer: Layer, iface: number): string;
 
+  updateDevicesAspect() {
+    if (!this.isVisibleFlag) {
+      const edges = this.viewgraph
+        .getConnections(this.id)
+        .filter((e) => e.isVisible());
+      // if it doesn't have visible edges, hide it completely
+      if (!edges || edges.length === 0) {
+        this.visible = false;
+        return;
+      }
+      // if it has visible edges, show it as a drag circle
+      this.visible = true;
+      this.setAsDragCircle();
+    } else {
+      // if it is in the current layer, show it as a normal device
+      this.visible = true;
+      this.setAsNormalDevice();
+    }
+  }
+
   updateVisibility() {
-    this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());
+    this.isVisibleFlag = layerIncluded(
+      this.getLayer(),
+      this.viewgraph.getLayer(),
+    );
+  }
+
+  private setAsDragCircle() {
+    if (this.isDragCircle) return;
+    this.isDragCircle = true;
+
+    if (this.sprite) this.sprite.visible = false;
+    if (this.idLabel) this.idLabel.visible = false;
+    if (!this.circleGraphic) {
+      this.circleGraphic = new Graphics();
+      this.circleGraphic.circle(0, 0, CIRCLE_RADIUS);
+      this.circleGraphic.fill({ color: Colors.Lightblue });
+      this.addChild(this.circleGraphic);
+    }
+    this.eventMode = "static";
+    this.interactive = true;
+    this.cursor = "grab";
+  }
+
+  private setAsNormalDevice() {
+    if (!this.isDragCircle) return;
+    this.isDragCircle = false;
+
+    if (this.sprite) this.sprite.visible = true;
+    if (this.idLabel) this.idLabel.visible = true;
+    if (this.circleGraphic) {
+      this.removeChild(this.circleGraphic);
+      this.circleGraphic.destroy();
+      this.circleGraphic = undefined;
+    }
+    this.cursor = "pointer";
   }
 
   isVisible(): boolean {
-    return this.visible;
+    return this.isVisibleFlag;
   }
 
   ownMac(mac: MacAddress): boolean {
@@ -190,6 +275,7 @@ export abstract class ViewDevice extends Container {
     idText.anchor.set(0.5);
     idText.y = this.height * 0.8;
     idText.zIndex = ZIndexLevels.Label;
+    this.idLabel = idText;
     this.addChild(idText); // Add the ID text as a child of the device
   }
 
@@ -210,7 +296,6 @@ export abstract class ViewDevice extends Container {
     }
     ViewDevice.dragTarget = this;
 
-    // Guardar posición inicial
     ViewDevice.startPosition = { x: this.x, y: this.y };
     event.stopPropagation();
 
@@ -231,6 +316,13 @@ export abstract class ViewDevice extends Container {
       ViewDevice.connectionTarget = null;
       return;
     }
+
+    // if the device is not visible, ignore
+    if (!this.isVisibleFlag || !ViewDevice.connectionTarget.isVisibleFlag) {
+      ViewDevice.connectionTarget = null;
+      return;
+    }
+
     // Connect both devices
     const n1 = ViewDevice.connectionTarget.id;
     const n2 = this.id;
@@ -242,6 +334,10 @@ export abstract class ViewDevice extends Container {
   }
 
   selectToConnect() {
+    // if the device is not visible, do nothing
+    if (!this.isVisibleFlag) {
+      return;
+    }
     if (ViewDevice.connectionTarget) {
       ViewDevice.connectionTarget = null;
       return;
@@ -262,11 +358,11 @@ export abstract class ViewDevice extends Container {
     this.highlightMarker.roundRect(-width / 2, -height / 2, width, height, 5);
     this.highlightMarker.stroke({
       width: 3,
-      color: this.ctx.getSelectColor(),
+      color: Colors.Violet,
       alpha: 0.6,
     });
     this.highlightMarker.fill({
-      color: this.ctx.getSelectColor(),
+      color: Colors.Violet,
       alpha: 0.1,
     });
     this.highlightMarker.zIndex = ZIndexLevels.Device;
@@ -289,6 +385,7 @@ export abstract class ViewDevice extends Container {
   }
 
   select() {
+    if (this.isDragCircle) return;
     this.highlight(); // Calls highlight on select
     this.showInfo();
   }

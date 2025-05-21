@@ -24,10 +24,10 @@ export class MultiEdgeInfo extends BaseInfo {
       const fromDevice = edge.viewgraph.getDevice(edge.data.from.id);
       const toDevice = edge.viewgraph.getDevice(edge.data.to.id);
 
-      if (fromDevice && fromDevice.visible) {
+      if (fromDevice && fromDevice.isVisible()) {
         visibleDevices.add(fromDevice.id);
       }
-      if (toDevice && toDevice.visible) {
+      if (toDevice && toDevice.isVisible()) {
         visibleDevices.add(toDevice.id);
       }
     });

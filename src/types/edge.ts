@@ -65,6 +65,7 @@ export class Edge extends Graphics {
   }
 
   getDeviceIds(): DeviceId[] {
+    if (!this.data) return [];
     return [this.data.from.id, this.data.to.id];
   }
 
@@ -122,13 +123,26 @@ export class Edge extends Graphics {
 
   select() {
     this.highlightedEdges = this.viewgraph.findConnectedEdges(this);
-    this.highlightedEdges.forEach((edge) => edge.highlight());
+    this.highlightedEdges.forEach((edge) => {
+      edge.highlight();
+      // Highlight the color of the circles connected to this edge
+      edge.getDeviceIds().forEach((deviceId) => {
+        const device = this.viewgraph.getDevice(deviceId);
+        device.setCircleColor(Colors.Violet);
+      });
+    });
     this.showInfo();
   }
 
   deselect() {
-    // remove highlight from all edges
-    this.highlightedEdges.forEach((edge) => edge.removeHighlight());
+    this.highlightedEdges.forEach((edge) => {
+      edge.removeHighlight();
+      // Reset the color of the circles connected to this edge
+      edge.getDeviceIds().forEach((deviceId) => {
+        const device = this.viewgraph.getDevice(deviceId);
+        device.setCircleColor(Colors.Lightblue);
+      });
+    });
     this.highlightedEdges = [];
   }
 
@@ -141,13 +155,17 @@ export class Edge extends Graphics {
   }
 
   showInfo() {
-    if (this.highlightedEdges && this.highlightedEdges.length > 1) {
+    if (this.isMerged()) {
       const multiEdgeInfo = new MultiEdgeInfo(this.highlightedEdges);
       RightBar.getInstance().renderInfo(multiEdgeInfo);
     } else {
       const edgeInfo = new EdgeInfo(this);
       RightBar.getInstance().renderInfo(edgeInfo);
     }
+  }
+
+  isMerged(): boolean {
+    return this.highlightedEdges.length > 1;
   }
 
   destroy(): void {
@@ -203,8 +221,8 @@ export class Edge extends Graphics {
     const dy = device2.y - device1.y;
     const angle = Math.atan2(dy, dx);
 
-    const n1IsVisible = device1.visible;
-    const n2IsVisible = device2.visible;
+    const n1IsVisible = device1.isVisible();
+    const n2IsVisible = device2.isVisible();
 
     const offsetX1 = n1IsVisible
       ? ((device1.width + 5) / 2) * Math.cos(angle)
@@ -358,7 +376,7 @@ export class Edge extends Graphics {
     // Check the visibility of the starting device
     const device1 = this.viewgraph.getDevice(this.data.from.id);
     if (this.startTooltip) {
-      if (device1 && device1.visible) {
+      if (device1 && device1.isVisible()) {
         // If the starting device is visible, update the tooltip position
         this.startTooltip.x =
           this.startPos.x + (isStartLeft ? offsetX : -offsetX);
@@ -373,7 +391,7 @@ export class Edge extends Graphics {
     // Check the visibility of the ending device
     const device2 = this.viewgraph.getDevice(this.data.to.id);
     if (this.endTooltip) {
-      if (device2 && device2.visible) {
+      if (device2 && device2.isVisible()) {
         // If the ending device is visible, update the tooltip position
         this.endTooltip.x = this.endPos.x + (isStartLeft ? -offsetX : offsetX);
         this.endTooltip.y = this.endPos.y + offsetY;

@@ -82,7 +82,7 @@ function otherDevicesIp(
     .getDevices()
     .filter(
       (device) =>
-        device.visible &&
+        device.isVisible() &&
         device.getType() !== DeviceType.Switch &&
         device.id !== srcId,
     )
