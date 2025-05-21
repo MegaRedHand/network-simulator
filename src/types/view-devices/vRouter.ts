@@ -200,11 +200,7 @@ export class ViewRouter extends ViewNetworkDevice {
     if (!datagram) {
       return;
     }
-    // TODO: routePacket would return the sending interface, then the function
-    //       should find set the frame destination mac as the mac of the next
-    //       network device to receive the packet (or its interface), and
-    //       finally, call sendViewPacket, who would send the packet to all
-    //       devices connected with the interface.
+
     const iface = this.routePacket(datagram);
 
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
@@ -217,38 +213,6 @@ export class ViewRouter extends ViewNetworkDevice {
 
     const newFrame = new EthernetFrame(src.mac, dst.mac, datagram);
     sendViewPacket(this.viewgraph, this.id, newFrame, iface);
-
-    // if (!devices || devices.length === 0) {
-    //   // dummy values
-    //   const frame = new EthernetFrame(this.mac, this.mac, datagram);
-    //   dropPacket(this.viewgraph, this.id, frame);
-    //   return;
-    // }
-
-    // // TODO: Simulates the mapping of the packet's destination MAC address to the next network device in the path.
-    // // This could either be the final destination of the packet or an intermediate device along the route.
-    // const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
-    // if (!dstDevice) {
-    //   console.warn(
-    //     `Device with ip ${datagram.destinationAddress.toString()} not found in viewgraph`,
-    //   );
-    //   return;
-    // }
-    // const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
-    // let dstMac = dstDevice.mac;
-    // if (!path) return;
-    // for (const id of path.slice(1)) {
-    //   const device = this.viewgraph.getDevice(id);
-    //   // if there’s a router in the middle, first send frame to router mac
-    //   if (device instanceof ViewNetworkDevice) {
-    //     dstMac = device.mac;
-    //     break;
-    //   }
-    // }
-    // for (const nextHopId of devices) {
-    //   const newFrame = new EthernetFrame(this.mac, dstMac, datagram);
-    //   sendViewPacket(this.viewgraph, this.id, newFrame, nextHopId);
-    // }
 
     if (this.packetQueue.isEmpty()) {
       this.stopPacketProcessor();
@@ -301,16 +265,6 @@ export class ViewRouter extends ViewNetworkDevice {
     }
 
     return result.iface;
-    // const devices = this.viewgraph
-    //   .getDataGraph()
-    //   .getConnectionsInInterface(this.id, result.iface);
-
-    // if (!devices) {
-    //   console.error("Current device doesn't exist!", this.id);
-    //   return [];
-    // }
-
-    // return devices;
   }
 }
 

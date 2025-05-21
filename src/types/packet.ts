@@ -23,15 +23,12 @@ import {
   TCP_PROTOCOL_NUMBER,
 } from "../packets/ip";
 import { GlobalContext } from "../context";
-import { DataRouter, DataSwitch } from "./data-devices";
 import {
   ICMP_REPLY_TYPE_NUMBER,
   ICMP_REQUEST_TYPE_NUMBER,
   IcmpPacket,
 } from "../packets/icmp";
 import { PacketInfo } from "../graphics/renderables/packet_info";
-import { showWarning } from "../graphics/renderables/alert_manager";
-import { ALERT_MESSAGES } from "../utils/constants/alert_constants";
 import {
   hideTooltip,
   removeTooltip,
@@ -364,8 +361,6 @@ export class Packet extends Graphics {
   }
 }
 
-// TODO: Replace and nextHopId with the sending interface. Like this, the function
-//       can manage to send the packet to each one of the interface connection.
 export function sendViewPacket(
   viewgraph: ViewGraph,
   srcId: DeviceId,
@@ -377,55 +372,16 @@ export function sendViewPacket(
   console.debug(
     `Sending frame from ${srcMac.toString()} to ${dstMac.toString()}`,
   );
-  if (!sendingIface) {
-    const originConnections = viewgraph.getConnections(srcId);
-    if (originConnections.length === 0) {
-      console.warn("El dispositivo de origen no tiene conexiones.");
-      return;
+  viewgraph.getConnections(srcId).forEach((edge) => {
+    const dataEdge = edge.getData();
+    const iface =
+      dataEdge.from.id === srcId ? dataEdge.from.iface : dataEdge.to.iface;
+    if (iface === sendingIface) {
+      const nextHopId = edge.otherEnd(srcId);
+      const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket);
+      packet.traverseEdge(srcId, nextHopId);
     }
-    let firstEdge = originConnections.find((edge) => {
-      const otherId = edge.otherEnd(srcId);
-      const otherDevice = viewgraph.getDevice(otherId);
-      return otherDevice.ownMac(dstMac);
-    });
-    if (firstEdge === undefined) {
-      const datagraph = viewgraph.getDataGraph();
-      firstEdge = originConnections.find((edge) => {
-        const otherId = edge.otherEnd(srcId);
-        const otherDevice = datagraph.getDevice(otherId);
-        return (
-          otherDevice instanceof DataRouter || otherDevice instanceof DataSwitch
-        );
-      });
-    }
-    if (firstEdge === undefined) {
-      console.warn(
-        "El dispositivo de origen no está conectado al destino, a un router o a un switch.",
-      );
-      return;
-    }
-    const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket);
-    packet.traverseEdge(srcId, firstEdge.otherEnd(srcId));
-  } else {
-    viewgraph.getConnections(srcId).forEach((edge) => {
-      const dataEdge = edge.getData();
-      const iface =
-        dataEdge.from.id === srcId ? dataEdge.from.iface : dataEdge.to.iface;
-      if (iface === sendingIface) {
-        const nextHopId = edge.otherEnd(srcId);
-        const nextHopDevice = viewgraph.getDevice(nextHopId);
-
-        // Verify if the next hop is a valid device
-        if (!nextHopDevice) {
-          // TODO MAC-IP: Change msg
-          showWarning(ALERT_MESSAGES.INEXISTENT_PORT(nextHopId.toString()));
-          return;
-        }
-        const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket);
-        packet.traverseEdge(srcId, nextHopId);
-      }
-    });
-  }
+  });
 }
 
 export function dropPacket(

@@ -6,7 +6,7 @@ import { RightBar } from "../graphics/right_bar";
 import { Colors, ZIndexLevels } from "../utils/utils";
 import { Packet } from "./packet";
 import { EdgeInfo } from "../graphics/renderables/edge_info";
-import { DataEdge, DeviceId, EdgeTip } from "./graphs/datagraph";
+import { DataEdge, DeviceId } from "./graphs/datagraph";
 import { MacAddress } from "../packets/ethernet";
 import { MultiEdgeInfo } from "../graphics/renderables/multi_edge_info";
 import {

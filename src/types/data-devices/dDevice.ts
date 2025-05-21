@@ -1,5 +1,5 @@
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
-import { DataGraph, DataNode, DeviceId } from "../graphs/datagraph";
+import { DataGraph, DataNode } from "../graphs/datagraph";
 import { DeviceType, NetworkInterface } from "../view-devices/vDevice";
 import { Position } from "../common";
 import { IpAddress } from "../../packets/ip";

@@ -60,7 +60,7 @@ export class SingleEcho extends ProgramBase {
     const ipPacket = new IPv4Packet(src.ip, dst.ip, echoRequest);
 
     // Resolve destination MAC address
-    let dstMac = srcDevice.resolveAddress(dst.ip);
+    const dstMac = srcDevice.resolveAddress(dst.ip);
     if (!dstMac) {
       console.warn(
         `Device ${this.srcId} couldn't resolve MAC address for device with IP ${dst.ip.toString()}. Program cancelled`,

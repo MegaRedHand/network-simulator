@@ -74,7 +74,7 @@ export class HttpClient extends ProgramBase {
     }
 
     // Encode HTTP request
-    // TODO MAR-IP: For now, as hosts have just one interface, destination ip is hardcoded
+    // NOTE: For now, as hosts have just one interface, destination ip is hardcoded
     const httpRequest = getContentRequest(
       this.runner.interfaces[0].toString(),
       this.resource,

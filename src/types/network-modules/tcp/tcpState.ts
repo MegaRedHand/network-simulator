@@ -57,9 +57,8 @@ function sendIpPacket(
     forwardingData.sendingIface,
   ];
 
-  // TODO: use MAC and IP of the interfaces used
   // Resolve destination MAC address
-  let dstMac = src.resolveAddress(dstData.ip);
+  const dstMac = src.resolveAddress(dstData.ip);
   if (!dstMac) {
     console.warn(
       `Device ${src.id} couldn't resolve MAC address for device with IP ${dstData.ip.toString()}. Program cancelled`,
@@ -378,7 +377,6 @@ export class TcpState {
   }
 
   private dropSegment(segment: TcpSegment) {
-    // TODO MAC-IP: see what to put here
     // dummy values
     const [srcIp, srcMac, dstIp, dstMac] = [
       this.srcHost.interfaces[0].ip,

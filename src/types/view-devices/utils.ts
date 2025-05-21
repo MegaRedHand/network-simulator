@@ -1,5 +1,4 @@
 import { GlobalContext } from "../../context";
-import { MacAddress } from "../../packets/ethernet";
 import { IpAddress } from "../../packets/ip";
 import { Position } from "../common";
 import { DataNode, isNetworkNode, isRouter } from "../graphs/datagraph";

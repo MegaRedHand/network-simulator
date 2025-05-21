@@ -6,7 +6,7 @@ import {
   TCP_PROTOCOL_NUMBER,
 } from "../../packets/ip";
 import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
-import { NetworkInterface, ViewDevice } from "./vDevice";
+import { ViewDevice } from "./vDevice";
 import { ViewGraph } from "../graphs/viewgraph";
 import { Position } from "../common";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
@@ -50,10 +50,9 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     this.ipMask = ipMask;
   }
 
-  // TODO MAC-IP: Borrar la funcion e intentar manejar las direcciones de otra manera
   /**
    * Gets all the necessary data to forward a packet, including the addresses used
-   * to craft the packet and the first interface that will receive the packet
+   * to craft the packet and the interface that will send the packet
    * @param srcId Id of the device forwarding the packet
    * @param dstId Id of the destination device
    * @param viewgraph `Viewgraph` of the network
@@ -66,7 +65,7 @@ export abstract class ViewNetworkDevice extends ViewDevice {
   ): ForwardingData {
     // Get path
     const path = viewgraph.getPathBetween(srcId, dstId);
-    if (!path) return;
+    if (!path || path.length < 2) return;
     // Get sendingIface
     const nextHopId = path[1];
     const nextEdge = viewgraph.getEdge(srcId, nextHopId);
@@ -175,32 +174,18 @@ export abstract class ViewNetworkDevice extends ViewDevice {
       case ICMP_PROTOCOL_NUMBER: {
         const request: EchoRequest = datagram.payload as EchoRequest;
         if (dstDevice && request.type) {
-          const { src, dst, sendingIface } =
-            ViewNetworkDevice.getForwardingData(
-              this.id,
-              dstDevice.id,
-              this.viewgraph,
-            );
+          const { src, dst } = ViewNetworkDevice.getForwardingData(
+            this.id,
+            dstDevice.id,
+            this.viewgraph,
+          );
           const [srcMac, srcIp] = [src.mac, src.ip];
           const [dstMac, dstIp] = [dst.mac, dst.ip];
           const echoReply = new EchoReply(0);
-          const ipPacket = new IPv4Packet(
-            srcIp /*ip de mi iface  A*/,
-            dstIp /*ip de la iface del destino */,
-            echoReply,
-          );
-          const frame = new EthernetFrame(
-            srcMac /*mac de mi iface A*/,
-            dstMac /*mac de la iface del primer network device B*/,
-            ipPacket,
-          );
+          const ipPacket = new IPv4Packet(srcIp, dstIp, echoReply);
+          const frame = new EthernetFrame(srcMac, dstMac, ipPacket);
           console.debug(`Sending EchoReply to ${dstDevice}`);
-          sendViewPacket(
-            this.viewgraph,
-            this.id,
-            frame,
-            sendingIface /*iface por donde se va a mandar el paquete C*/,
-          );
+          sendViewPacket(this.viewgraph, this.id, frame, iface);
         }
         break;
       }
@@ -228,7 +213,7 @@ export abstract class ViewNetworkDevice extends ViewDevice {
       // Send an ARP Reply to the requesting device
       const reply = new ArpReply(mac, tpa, spa, sha);
       const frame = new EthernetFrame(mac, sha, reply);
-      sendViewPacket(this.viewgraph, this.id, frame);
+      sendViewPacket(this.viewgraph, this.id, frame, iface);
     } else if (packet.op === ARP_REPLY_CODE) {
       // Check if the reply was actually sent to device
       if (!tha.equals(mac) && tpa.equals(ip)) {
@@ -241,7 +226,6 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   receiveFrame(frame: EthernetFrame, iface: number): void {
     const { mac } = this.interfaces[iface];
     if (!mac.equals(frame.destination) && !frame.destination.isBroadcast()) {

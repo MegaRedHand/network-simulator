@@ -1,10 +1,6 @@
 import { IpAddress } from "../../packets/ip";
 import { RunningProgram } from "../../programs";
-import {
-  DeviceType,
-  layerFromType,
-  NetworkInterface,
-} from "../view-devices/vDevice";
+import { DeviceType, layerFromType } from "../view-devices/vDevice";
 import { layerIncluded, Layer } from "../layer";
 import { Graph, RemovedVertexData, VertexId } from "./graph";
 import {
@@ -513,22 +509,9 @@ export class DataGraph {
       return [];
     }
 
-    /**
-     *        H1 i2 ----- i4 R2 i2 ----- i4 S3 i2  ----- i4 H4
-     *                       i1
-     *                        |
-     *                        |
-     *                       i3
-     *                       H5
-     */
-
     const parents = new Map<DeviceId, DeviceId>();
     parents.set(id, id);
     const queue = [id];
-    // parents = {2: [2, und], 1: [2, i2]}
-    // queue = []
-    // currentId = 2    connectedId = 1
-    // iface = i2
     while (queue.length > 0) {
       const currentId = queue.shift();
       const current = this.deviceGraph.getVertex(currentId);
@@ -537,9 +520,6 @@ export class DataGraph {
       const neighbors = this.deviceGraph.getNeighbors(currentId);
       neighbors.forEach((connectedId) => {
         if (!parents.has(connectedId)) {
-          const edge = this.getConnection(currentId, connectedId);
-          const iface =
-            edge.from.id === connectedId ? edge.from.iface : edge.to.iface;
           parents.set(connectedId, currentId);
           queue.push(connectedId);
         }

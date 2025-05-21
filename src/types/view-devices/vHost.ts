@@ -15,7 +15,7 @@ import {
   RunningProgram,
 } from "../../programs";
 import { Texture } from "pixi.js";
-import { EthernetFrame, MacAddress } from "../../packets/ethernet";
+import { EthernetFrame } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataHost } from "../data-devices";
 import { dropPacket } from "../packet";

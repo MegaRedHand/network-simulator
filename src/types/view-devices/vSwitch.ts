@@ -51,7 +51,6 @@ export class ViewSwitch extends ViewDevice {
     return DeviceType.Switch;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getTooltipDetails(_layer: Layer, iface: number): string {
     if (iface >= this.interfaces.length) {
       console.error(
@@ -63,7 +62,6 @@ export class ViewSwitch extends ViewDevice {
   }
 
   updateSwitchingTable(mac: MacAddress, iface: number): void {
-    console.debug(`Adding ${mac.toString()} to the switching table`);
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
       if (!device) {
         console.error(`Switch with id ${this.id} not found in datagraph`);
@@ -95,15 +93,13 @@ export class ViewSwitch extends ViewDevice {
     sendViewPacket(this.viewgraph, this.id, newFrame, sendingIface);
   }
 
-  // TODO: change all related senderId features to the receiver interface
   receiveFrame(frame: EthernetFrame, iface: number): void {
-    // WARNING: Hay que cambiar a interfaces aca!!!!!!!
     if (frame.payload instanceof ArpRequest) {
       const { sha, spa, tha, tpa } = frame.payload;
       this.interfaces.forEach((sendingIface, idx) => {
         const packet = new ArpRequest(sha, spa, tpa, tha);
         const frame = new EthernetFrame(
-          this.interfaces[iface].mac,
+          sendingIface.mac,
           MacAddress.broadcastAddress(),
           packet,
         );
