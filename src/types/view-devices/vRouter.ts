@@ -40,6 +40,7 @@ export class ViewRouter extends ViewNetworkDevice {
     position: Position,
     mac: MacAddress,
     interfaces: NetworkInterfaceData[],
+    tag: string,
     ip: IpAddress,
     mask: IpAddress,
     packetQueueSize: number = ROUTER_CONSTANTS.PACKET_QUEUE_MAX_SIZE,
@@ -53,6 +54,7 @@ export class ViewRouter extends ViewNetworkDevice {
       position,
       mac,
       interfaces,
+      tag,
       ip,
       mask,
     );

@@ -48,6 +48,7 @@ export class ViewHost extends ViewNetworkDevice {
     position: Position,
     mac: MacAddress,
     interfaces: NetworkInterfaceData[],
+    tag: string,
     ip: IpAddress,
     mask: IpAddress,
   ) {
@@ -59,6 +60,7 @@ export class ViewHost extends ViewNetworkDevice {
       position,
       mac,
       interfaces,
+      tag,
       ip,
       mask,
     );

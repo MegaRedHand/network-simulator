@@ -33,7 +33,7 @@ export function createViewDevice(
     packetQueueSize = deviceInfo.packetQueueSize;
     timePerByte = deviceInfo.timePerByte;
   }
-  const { id, interfaces } = deviceInfo;
+  const { id, interfaces, tag } = deviceInfo;
 
   switch (deviceInfo.type) {
     case DeviceType.Router:
@@ -44,6 +44,7 @@ export function createViewDevice(
         position,
         mac,
         interfaces,
+        tag,
         ip,
         mask,
         packetQueueSize,
@@ -57,10 +58,11 @@ export function createViewDevice(
         position,
         mac,
         interfaces,
+        tag,
         ip,
         mask,
       );
     case DeviceType.Switch:
-      return new ViewSwitch(id, viewgraph, ctx, position, mac, interfaces);
+      return new ViewSwitch(id, viewgraph, ctx, position, mac, interfaces, tag);
   }
 }

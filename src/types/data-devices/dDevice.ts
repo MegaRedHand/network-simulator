@@ -12,6 +12,7 @@ export abstract class DataDevice {
   mac: MacAddress;
   datagraph: DataGraph;
   interfaces: NetworkInterface[] = [];
+  tag: string;
 
   private static setIdCounter(id: number): void {
     if (id >= DataDevice.idCounter) {
@@ -36,6 +37,7 @@ export abstract class DataDevice {
       });
     });
     this.datagraph = datagraph;
+    this.tag = graphData.tag;
   }
 
   static initializedIdCounter() {
@@ -53,10 +55,15 @@ export abstract class DataDevice {
         name: iface.name,
         mac: iface.mac.toString(),
       })),
+      tag: this.getTag(),
     };
   }
 
   abstract getType(): DeviceType;
+
+  getTag(): string {
+    return this.tag;
+  }
 
   getPosition(): Position {
     return { x: this.x, y: this.y };

@@ -30,6 +30,7 @@ export class ViewSwitch extends ViewDevice {
     position: Position,
     mac: MacAddress,
     interfaces: NetworkInterfaceData[],
+    tag: string,
   ) {
     super(
       id,
@@ -39,6 +40,7 @@ export class ViewSwitch extends ViewDevice {
       position,
       mac,
       interfaces,
+      tag,
     );
   }
 

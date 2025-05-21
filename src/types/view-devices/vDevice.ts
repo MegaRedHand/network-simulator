@@ -104,10 +104,12 @@ export abstract class ViewDevice extends Container {
     position: Position,
     mac: MacAddress,
     interfaces: NetworkInterfaceData[],
+    tag: string | null,
   ) {
     super();
 
     this.id = id;
+    this.tag = tag;
     this.viewgraph = viewgraph;
     this.ctx = ctx;
 
@@ -133,7 +135,7 @@ export abstract class ViewDevice extends Container {
     this.zIndex = ZIndexLevels.Device;
 
     // Add device ID label using the helper function
-    this.addDeviceIdLabel();
+    this.setTag(tag);
     this.updateVisibility();
 
     // Set up tooltip behavior
@@ -270,6 +272,11 @@ export abstract class ViewDevice extends Container {
 
   setTag(tag: string | null) {
     this.tag = tag && tag.trim() !== "" ? tag : null;
+    this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
+      if (device) {
+        device.tag = this.tag;
+      }
+    });
     this.addDeviceIdLabel();
   }
 

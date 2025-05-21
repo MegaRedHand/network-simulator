@@ -34,6 +34,7 @@ interface CommonDataNode {
   // TODO: remove this
   mac: string;
   interfaces: NetworkInterfaceData[];
+  tag?: string;
 }
 
 export interface NetworkInterfaceData {
