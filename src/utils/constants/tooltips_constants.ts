@@ -296,5 +296,5 @@ export const TOOLTIP_CONTENT = {
   [TOOLTIP_KEYS.PAYLOAD]:
     "The encapsulated data carried by the IP packet. This could be a TCP segment, UDP datagram, or other protocol data.",
   [TOOLTIP_KEYS.TAG]:
-    "The tag is a label or identifier assigned to a device or network element. It is used for categorization, organization, and identification purposes within the network simulator.",
+    "The tag is a label or identifier assigned to a device or network element.",
 } as const;

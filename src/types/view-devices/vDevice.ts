@@ -269,12 +269,16 @@ export abstract class ViewDevice extends Container {
   }
 
   setTag(tag: string | null) {
-    this.tag = tag;
+    this.tag = tag && tag.trim() !== "" ? tag : null;
     this.addDeviceIdLabel();
   }
 
   getTag(): string | null {
     return this.tag;
+  }
+
+  getIdentifier(): string {
+    return this.tag ?? `Device ${this.id.toString()}`;
   }
 
   getPosition(): Position {
