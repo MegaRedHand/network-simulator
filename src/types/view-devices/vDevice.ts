@@ -27,6 +27,7 @@ import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer, layerIncluded } from "../layer";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
+import { IpAddress } from "../../packets/ip";
 import {
   hideTooltip,
   removeTooltip,
@@ -45,7 +46,7 @@ export interface NetworkInterface {
   name: string;
   mac: MacAddress;
   // TODO: add IP address
-  // ip?: string;
+  ip?: IpAddress;
 }
 
 export function layerFromType(type: DeviceType) {
@@ -71,7 +72,6 @@ export abstract class ViewDevice extends Container {
   readonly viewgraph: ViewGraph;
   ctx: GlobalContext;
 
-  mac: MacAddress;
   interfaces: NetworkInterface[] = [];
 
   highlightMarker: Graphics | null = null; // Marker to indicate selection
@@ -92,8 +92,7 @@ export abstract class ViewDevice extends Container {
    * Returns the id for the next device to send the packet to, or
    * null if there’s no next device to send the packet.
    * */
-  abstract receiveFrame(frame: EthernetFrame, senderId: DeviceId): void;
-  //                                        would be the interface
+  abstract receiveFrame(frame: EthernetFrame, iface: number): void;
 
   constructor(
     id: DeviceId,
@@ -101,7 +100,6 @@ export abstract class ViewDevice extends Container {
     viewgraph: ViewGraph,
     ctx: GlobalContext,
     position: Position,
-    mac: MacAddress,
     interfaces: NetworkInterfaceData[],
   ) {
     super();
@@ -110,11 +108,10 @@ export abstract class ViewDevice extends Container {
     this.viewgraph = viewgraph;
     this.ctx = ctx;
 
-    this.mac = mac;
     this.interfaces = interfaces.map((iface) => ({
       name: iface.name,
       mac: MacAddress.parse(iface.mac),
-      // TODO: Add ip (in NetworkDevice)
+      ip: iface.ip !== undefined ? IpAddress.parse(iface.ip) : undefined,
     }));
 
     this.sprite = new Sprite(texture);
@@ -136,7 +133,7 @@ export abstract class ViewDevice extends Container {
     this.updateVisibility();
 
     // Set up tooltip behavior
-    this.setupHoverTooltip();
+    // this.setupHoverTooltip();
 
     this.on("pointerdown", this.onPointerDown, this);
     this.on("click", this.onClick, this);
@@ -150,23 +147,20 @@ export abstract class ViewDevice extends Container {
     // Do nothing
   }
 
-  private setupHoverTooltip() {
-    this.on("mouseover", () => {
-      if (this.isDragCircle) return;
-      const currentLayer = this.ctx.getCurrentLayer();
-      const tooltipMessage = this.getTooltipDetails(currentLayer);
-      this.tooltip = showTooltip(
-        this,
-        tooltipMessage,
-        0,
-        this.height * 0.8 + 20,
-        this.tooltip,
-      );
-    });
+  setupTooltip(iface: number) {
+    const currentLayer = this.ctx.getCurrentLayer();
+    const tooltipMessage = this.getTooltipDetails(currentLayer, iface);
+    this.tooltip = showTooltip(
+      this,
+      tooltipMessage,
+      0,
+      this.height * 0.8 + 20,
+      this.tooltip,
+    );
+  }
 
-    this.on("mouseout", () => {
-      hideTooltip(this.tooltip);
-    });
+  hideToolTip() {
+    hideTooltip(this.tooltip);
   }
 
   setCircleColor(color: number) {
@@ -181,8 +175,11 @@ export abstract class ViewDevice extends Container {
   /**
    * Abstract method to get tooltip details based on the layer.
    * Must be implemented by derived classes.
+   * @param layer - The network layer for which to retrieve tooltip details.
+   * @param iface - The index of the network interface to provide details for.
+   * @returns A string with the tooltip content to display.
    */
-  abstract getTooltipDetails(layer: Layer): string;
+  abstract getTooltipDetails(layer: Layer, iface: number): string;
 
   updateDevicesAspect() {
     if (!this.isVisibleFlag) {
@@ -244,6 +241,10 @@ export abstract class ViewDevice extends Container {
 
   isVisible(): boolean {
     return this.isVisibleFlag;
+  }
+
+  ownMac(mac: MacAddress): boolean {
+    return this.interfaces.some((iface) => iface.mac.equals(mac));
   }
 
   // Function to add the ID label to the device

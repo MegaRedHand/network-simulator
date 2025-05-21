@@ -29,7 +29,7 @@ export class DeviceInfo extends BaseInfo {
   }
 
   protected addCommonInfoFields(): void {
-    const { id, mac } = this.device;
+    const { id } = this.device;
     const connections = this.device.viewgraph.getVisibleConnectedDeviceIds(id);
 
     this.information.addField(TOOLTIP_KEYS.ID, id.toString(), TOOLTIP_KEYS.ID);
@@ -42,10 +42,12 @@ export class DeviceInfo extends BaseInfo {
     const layer = this.device.viewgraph.getLayer();
 
     if (layer == Layer.Link) {
-      this.information.addField(
-        TOOLTIP_KEYS.MAC_ADDRESS,
-        mac.toString(),
-        TOOLTIP_KEYS.MAC_ADDRESS,
+      this.device.interfaces.forEach((iface) =>
+        this.information.addField(
+          TOOLTIP_KEYS.MAC_ADDRESS,
+          iface.mac.toString(),
+          TOOLTIP_KEYS.MAC_ADDRESS,
+        ),
       );
     }
   }

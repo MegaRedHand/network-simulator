@@ -47,30 +47,30 @@ function sendIpPacket(
 ): boolean {
   const viewgraph = src.viewgraph;
 
-  // TODO: use MAC and IP of the interfaces used
+  const forwardingData = ViewNetworkDevice.getForwardingData(
+    src.id,
+    dst.id,
+    viewgraph,
+  );
+  const [srcData, dstData, sendingIface] = [
+    forwardingData.src,
+    forwardingData.dst,
+    forwardingData.sendingIface,
+  ];
+
   // Resolve destination MAC address
-  let nextHopMac = src.resolveAddress(dst.ip);
-  if (!nextHopMac) {
+  const dstMac = src.resolveAddress(dstData.ip);
+  if (!dstMac) {
     console.warn(
-      `Device ${src.id} couldn't resolve MAC address for device with IP ${dst.ip.toString()}. Program cancelled`,
+      `Device ${src.id} couldn't resolve MAC address for device with IP ${dstData.ip.toString()}. Program cancelled`,
     );
     return false;
   }
 
-  const path = viewgraph.getPathBetween(src.id, dst.id);
-  if (!path) return;
-  for (const id of path.slice(1)) {
-    const device = viewgraph.getDevice(id);
-    // if there’s a router in the middle, first send frame to router mac
-    if (device instanceof ViewNetworkDevice) {
-      nextHopMac = device.mac;
-      break;
-    }
-  }
-  const ipPacket = new IPv4Packet(src.ip, dst.ip, payload);
-  const frame = new EthernetFrame(src.mac, nextHopMac, ipPacket);
+  const ipPacket = new IPv4Packet(srcData.ip, dstData.ip, payload);
+  const frame = new EthernetFrame(srcData.mac, dstData.mac, ipPacket);
 
-  sendViewPacket(src.viewgraph, src.id, frame);
+  sendViewPacket(src.viewgraph, src.id, frame, sendingIface);
   return true;
 }
 
@@ -170,7 +170,7 @@ export class TcpState {
     const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
     if (!sendIpPacket(this.srcHost, this.dstHost, segment)) {
       console.warn(
-        `Device ${this.srcHost.id} couldn't send SYN to device with IP ${this.dstHost.ip.toString()}.`,
+        `Device ${this.srcHost.id} couldn't send SYN to device ${this.dstHost.id}.`,
       );
       return false;
     }
@@ -380,8 +380,15 @@ export class TcpState {
   }
 
   private dropSegment(segment: TcpSegment) {
-    const packet = new IPv4Packet(this.srcHost.ip, this.dstHost.ip, segment);
-    const frame = new EthernetFrame(this.srcHost.mac, this.dstHost.mac, packet);
+    // dummy values
+    const [srcIp, srcMac, dstIp, dstMac] = [
+      this.srcHost.interfaces[0].ip,
+      this.srcHost.interfaces[0].mac,
+      this.dstHost.interfaces[0].ip,
+      this.dstHost.interfaces[0].mac,
+    ];
+    const packet = new IPv4Packet(srcIp, dstIp, segment);
+    const frame = new EthernetFrame(srcMac, dstMac, packet);
     dropPacket(this.srcHost.viewgraph, this.srcHost.id, frame);
   }
 

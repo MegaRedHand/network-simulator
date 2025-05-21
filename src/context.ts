@@ -41,6 +41,9 @@ export class GlobalContext {
     return this.ipGenerator.getNextIp();
   }
 
+  getMask(): string {
+    return this.ipGenerator.getMask();
+  }
   getNextMac(): string {
     return this.macGenerator.getNextMac();
   }
@@ -178,9 +181,11 @@ export class GlobalContext {
 
     for (const [, device] of this.datagraph.getDevices()) {
       if (device instanceof DataNetworkDevice) {
-        if (compareIps(maxIp, device.ip) < 0) {
-          maxIp = device.ip;
-        }
+        device.interfaces.forEach((iface) => {
+          if (iface.ip && compareIps(maxIp, iface.ip) < 0) {
+            maxIp = iface.ip;
+          }
+        });
       }
     }
     const baseIp = maxIp.toString();
@@ -191,9 +196,11 @@ export class GlobalContext {
   private setMacGenerator() {
     let maxMac = MacAddress.parse("00:00:10:00:00:00");
     for (const [, device] of this.datagraph.getDevices()) {
-      if (compareMacs(maxMac, device.mac) < 0) {
-        maxMac = device.mac;
-      }
+      device.interfaces.forEach((iface) => {
+        if (compareMacs(maxMac, iface.mac) < 0) {
+          maxMac = iface.mac;
+        }
+      });
     }
     // TODO: we should use MacAddress instead of string here and in Datagraph
     const baseMac = maxMac.toString();

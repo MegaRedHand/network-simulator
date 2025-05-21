@@ -53,7 +53,7 @@ export class DataRouter extends DataNetworkDevice {
   }
 
   receiveDatagram(datagram: IPv4Packet) {
-    if (this.ip.equals(datagram.destinationAddress)) {
+    if (this.ownIp(datagram.destinationAddress)) {
       this.handlePacket(datagram);
       return;
     }

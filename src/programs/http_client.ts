@@ -74,8 +74,9 @@ export class HttpClient extends ProgramBase {
     }
 
     // Encode HTTP request
+    // NOTE: For now, as hosts have just one interface, destination ip is hardcoded
     const httpRequest = getContentRequest(
-      this.runner.ip.toString(),
+      this.runner.interfaces[0].toString(),
       this.resource,
     );
 
