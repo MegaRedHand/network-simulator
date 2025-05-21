@@ -147,7 +147,6 @@ export abstract class ViewDevice extends Container {
     // Do nothing
   }
 
-<<<<<<< HEAD
   setupTooltip(iface: number) {
     const currentLayer = this.ctx.getCurrentLayer();
     const tooltipMessage = this.getTooltipDetails(currentLayer, iface);
@@ -159,21 +158,6 @@ export abstract class ViewDevice extends Container {
       this.tooltip,
     );
   }
-=======
-  private setupHoverTooltip() {
-    this.on("mouseover", () => {
-      if (this.isDragCircle) return;
-      const currentLayer = this.ctx.getCurrentLayer();
-      const tooltipMessage = this.getTooltipDetails(currentLayer);
-      this.tooltip = showTooltip(
-        this,
-        tooltipMessage,
-        0,
-        this.height * 0.8 + 20,
-        this.tooltip,
-      );
-    });
->>>>>>> main
 
   hideToolTip() {
     hideTooltip(this.tooltip);
