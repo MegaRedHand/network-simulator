@@ -59,13 +59,6 @@ export class ViewRouter extends ViewNetworkDevice {
 
   showInfo(): void {
     const info = new DeviceInfo(this);
-    this.interfaces.forEach((iface) =>
-      info.addField(
-        TOOLTIP_KEYS.IP_ADDRESS,
-        iface.ip?.octets.join("."),
-        TOOLTIP_KEYS.IP_ADDRESS,
-      ),
-    );
 
     info.addProgressBar(
       TOOLTIP_KEYS.PACKET_QUEUE_USAGE,
