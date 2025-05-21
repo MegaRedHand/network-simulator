@@ -6,14 +6,6 @@ It's meant as an aid to students trying to understand computer networks, along w
 The project runs on the browser and is hosted in GitHub Pages.
 You can access it [here](https://megaredhand.github.io/network-simulator/).
 
-## Development
-
-To run the local development server, use `npm run start`
-
-For building the artifacts, use `npm run build`
-
-For checking code format and lint, use `npm run lint`
-
 # **GEduNet - User Manual** 📘
 
 ![Preview of the simulator. Shows multiple hosts, routers and switches. Some network packets are being sent through the network.](./img/00_full-preview.png)
@@ -113,6 +105,8 @@ The available layers are:
 <p align="center">
   <img src="./img/06_Canvas_Buttons.gif" alt="Canvas Overview" />
 </p>
+
+This introductory information is also shown on the right bar when nothing is selected.
 
 ## Devices and Edges
 
@@ -232,6 +226,46 @@ Hovering on a Switch will show the MAC address.
 
 ### Edge
 
+In the simulator, and edge represents a connection between two devices. Packets travel through edges to reach their destination.
+If a device stops being visible while changing layers, the respective edges will also stop being visible.
+
+<p align="center">
+  <img src="./img/13_Edge_remove_1.gif" alt="Edge Disappear" />
+</p>
+
+However, if the device that stops being visible in one layer is in the middle of two visible devices, the edges will still be visible and the device will be replaced with a **dot**. This **dot** will not be selectable and will not show any information when hovered. It is just a placeholder to show that there is a connection between the two devices. Besides, it lets you manipulate the network more easily.
+
+<p align="center">
+  <img src="./img/14_Edge_and_dot.gif" alt="Edge and Dot" />
+</p>
+
+#### Edge Information
+
+<p align="center">
+  <img src="./img/15_Edge_info.png" alt="Edge Info" />
+</p>
+
+The information shown in the right bar when selecting an edge that conects two devices is as follows:
+
+- **Connected Devices**: The IDs of the devices that are connected by this edge.
+- **Connected Interfaces**: The interfaces that are used to connect the two devices.
+- **MAC Address Interface of Device 1**: The MAC address of the interface of the first device.
+- **MAC Address Interface of Device 2**: The MAC address of the interface of the second device.
+- **Delete Edge Button**: This button allows you to delete the edge from the network.
+- **Device 1 Interface Dropdown**: This dropdown allows you to select the interface that the first device will use to connect to the second device.
+- **Device 2 Interface Dropdown**: This dropdown allows you to select the interface that the second device will use to connect to the first device.
+
+If there is a dot in the middle of the edge, it would not be clear which device is the first and which is the second. In this case, the whole path will be selected and it will show the devices connected by that path. If you want to see more information about one of those specific edges, you will have to change the current layer.
+
+<p align="center">
+  <img src="./img/16_Multiple_Edges.gif" alt="Multiple Edges" />
+</p>
+
+#### Edge Hover
+
+While hovering over an edge, it will show the interfaces that each device use to communicate with each other. This way you can
+see how the devices are connected.
+
 ## Programs
 
 ### ICMP echo
@@ -256,6 +290,8 @@ Hovering on a Switch will show the MAC address.
 
 ### Routing Table
 
+### Switch Table
+
 ### ARP Table
 
 ## Misc
@@ -267,3 +303,11 @@ Hovering on a Switch will show the MAC address.
 ### Loading and Saving
 
 ### Print Canvas
+
+# Development
+
+To run the local development server, use `npm run start`
+
+For building the artifacts, use `npm run build`
+
+For checking code format and lint, use `npm run lint`
