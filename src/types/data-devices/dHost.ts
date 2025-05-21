@@ -25,7 +25,7 @@ export class DataHost extends DataNetworkDevice {
     if (!(datagram instanceof IPv4Packet)) {
       return null;
     }
-    if (this.ip.equals(datagram.destinationAddress)) {
+    if (this.ownIp(datagram.destinationAddress)) {
       this.handlePacket(datagram);
     }
   }

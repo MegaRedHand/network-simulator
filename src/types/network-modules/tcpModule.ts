@@ -73,7 +73,8 @@ export class TcpModule {
 
   async connect(dstHost: ViewHost, dstPort: Port): Promise<TcpSocket | null> {
     const srcPort: Port = this.getNextPortNumber();
-    const filter = { ip: dstHost.ip, port: dstPort };
+    // NOTE: For now, as hosts have just one interface, destination ip is hardcoded
+    const filter = { ip: dstHost.interfaces[0].ip, port: dstPort };
     const tcpQueue = this.initNewQueue(srcPort, filter);
 
     const tcpState = new TcpState(
