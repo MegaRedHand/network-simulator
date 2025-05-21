@@ -40,15 +40,27 @@ export class DeviceInfo extends BaseInfo {
     );
 
     const layer = this.device.viewgraph.getLayer();
+    const showIp = this.device.getType() !== DeviceType.Switch;
+    const showMac = layer === Layer.Link;
 
-    if (layer == Layer.Link) {
-      this.device.interfaces.forEach((iface) =>
+    if (showIp) {
+      this.device.interfaces.forEach((iface) => {
         this.information.addField(
-          TOOLTIP_KEYS.MAC_ADDRESS,
+          TOOLTIP_KEYS.IP_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
+          iface.ip.toString(),
+          TOOLTIP_KEYS.IP_ADDRESS,
+        );
+      });
+    }
+
+    if (showMac) {
+      this.device.interfaces.forEach((iface) => {
+        this.information.addField(
+          TOOLTIP_KEYS.MAC_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
           iface.mac.toString(),
           TOOLTIP_KEYS.MAC_ADDRESS,
-        ),
-      );
+        );
+      });
     }
   }
 

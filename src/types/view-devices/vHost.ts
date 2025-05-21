@@ -20,7 +20,6 @@ import { GlobalContext } from "../../context";
 import { DataHost } from "../data-devices";
 import { dropPacket } from "../packet";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
-import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { TcpSegment } from "../../packets/tcp";
 import {
   TcpListener,
@@ -84,13 +83,6 @@ export class ViewHost extends ViewNetworkDevice {
     const programList = getProgramList(this.viewgraph, this.id);
 
     const info = new DeviceInfo(this);
-    this.interfaces.forEach((iface) =>
-      info.addField(
-        TOOLTIP_KEYS.IP_ADDRESS,
-        iface.ip.toString(),
-        TOOLTIP_KEYS.IP_ADDRESS,
-      ),
-    );
 
     info.addProgramRunner(this, programList);
 
