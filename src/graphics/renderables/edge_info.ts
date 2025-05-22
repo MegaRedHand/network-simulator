@@ -14,6 +14,7 @@ export class EdgeInfo extends BaseInfo {
     super(TOOLTIP_KEYS.EDGE_INFORMATION);
     this.edge = edge;
     this.addCommonInfoFields();
+    this.addCommonButtons();
     this.addInterfaceDropdowns();
   }
 

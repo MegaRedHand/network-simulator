@@ -14,6 +14,7 @@ export class PacketInfo extends BaseInfo {
     super("Packet Information");
     this.packet = packet;
     this.addCommonInfoFields();
+    this.addCommonButtons();
     this.addToggleInfo(); // Add the toggle info for packet details
   }
 
