@@ -263,7 +263,9 @@ export abstract class ViewDevice extends Container {
       align: "center",
       fontWeight: "bold",
     });
-    const labelText = this.tag ?? `ID: ${this.id}`;
+    const labelText = this.tag
+      ? `ID: ${this.id} - ${this.tag}`
+      : `ID: ${this.id}`;
     this.idLabel = new Text({ text: labelText, style: textStyle });
     this.idLabel.anchor.set(0.5);
     this.idLabel.y = this.height * 0.8;
