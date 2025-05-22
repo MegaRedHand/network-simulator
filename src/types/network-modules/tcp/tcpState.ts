@@ -246,9 +246,12 @@ export class TcpState {
     }
     sendIpPacket(srcHost, dstHost, resetSegment);
 
+    const srcInterface = srcHost.interfaces[0];
+    const dstInterface = dstHost.interfaces[0];
+
     // Drop the segment
-    const packet = new IPv4Packet(srcHost.ip, dstHost.ip, segment);
-    const frame = new EthernetFrame(srcHost.mac, dstHost.mac, packet);
+    const packet = new IPv4Packet(srcInterface.ip, dstInterface.ip, segment);
+    const frame = new EthernetFrame(srcInterface.mac, dstInterface.mac, packet);
     dropPacket(srcHost.viewgraph, srcHost.id, frame);
   }
 
