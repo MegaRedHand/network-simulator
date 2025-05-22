@@ -75,7 +75,13 @@ function otherDevices(viewgraph: ViewGraph, srcId: DeviceId) {
     }));
 }
 
-function otherDevicesIp(viewgraph: ViewGraph, srcId: DeviceId) {
+function otherDevicesIp(
+  viewgraph: ViewGraph,
+  srcId: DeviceId,
+): {
+  value: string;
+  text: string;
+}[] {
   return viewgraph
     .getDevices()
     .filter(
@@ -84,15 +90,10 @@ function otherDevicesIp(viewgraph: ViewGraph, srcId: DeviceId) {
         device.getType() !== DeviceType.Switch &&
         device.id !== srcId,
     )
-    .map((device) => {
-      if ("ip" in device) {
-        const ipString = device.ip.toString();
-        return {
-          value: ipString,
-          text: `${ipString} (${device.getIdentifier()})`,
-        };
-      }
-      // Shouldn’t get here
-      return { value: "", text: "" };
+    .flatMap((device) => {
+      return device.interfaces.map((iface) => ({
+        value: iface.ip.toString(),
+        text: `${iface.ip.toString()} (${device.getIdentifier()})`,
+      }));
     });
 }

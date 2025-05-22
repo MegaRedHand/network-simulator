@@ -118,7 +118,6 @@ function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType): DataNode {
     viewport.screenWidth / 2,
     viewport.screenHeight / 2,
   );
-  const mac = ctx.getNextMac();
 
   const interfaces = [];
   const numberOfInterfaces = getNumberOfInterfaces(type);
@@ -134,10 +133,10 @@ function setUpDeviceInfo(ctx: GlobalContext, type: DeviceType): DataNode {
     interfaces.push(iface);
   }
   if (isSwitch) {
-    return { x, y, type, mac, interfaces, switchingTable: [] };
+    return { x, y, type, interfaces, switchingTable: [] };
   }
-  const { ip, mask } = ctx.getNextIp();
-  return { x, y, type, mac, ip, mask, interfaces, arpTable: [] };
+  const mask = ctx.getMask();
+  return { x, y, type, mask, interfaces, arpTable: [] };
 }
 
 // Function to add a device at the center of the viewport

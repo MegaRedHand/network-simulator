@@ -15,12 +15,11 @@ import {
   RunningProgram,
 } from "../../programs";
 import { Texture } from "pixi.js";
-import { EthernetFrame, MacAddress } from "../../packets/ethernet";
+import { EthernetFrame } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataHost } from "../data-devices";
 import { dropPacket } from "../packet";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
-import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { TcpSegment } from "../../packets/tcp";
 import {
   TcpListener,
@@ -46,7 +45,6 @@ export class ViewHost extends ViewNetworkDevice {
     viewgraph: ViewGraph,
     ctx: GlobalContext,
     position: Position,
-    mac: MacAddress,
     interfaces: NetworkInterfaceData[],
     tag: string,
     ip: IpAddress,
@@ -58,7 +56,6 @@ export class ViewHost extends ViewNetworkDevice {
       viewgraph,
       ctx,
       position,
-      mac,
       interfaces,
       tag,
       ip,
@@ -70,10 +67,11 @@ export class ViewHost extends ViewNetworkDevice {
     this.loadRunningPrograms();
   }
 
-  receiveDatagram(packet: IPv4Packet): void {
-    if (!this.ip.equals(packet.destinationAddress)) {
-      // TODO: improve this
-      const frame = new EthernetFrame(this.mac, this.mac, packet);
+  receiveDatagram(packet: IPv4Packet, iface: number): void {
+    if (!this.interfaces[iface].ip.equals(packet.destinationAddress)) {
+      // dummy mac
+      const dummyMac = this.interfaces[0].mac;
+      const frame = new EthernetFrame(dummyMac, dummyMac, packet);
       dropPacket(this.viewgraph, this.id, frame);
       return;
     }
@@ -82,18 +80,13 @@ export class ViewHost extends ViewNetworkDevice {
       this.tcpModule.handleSegment(packet.sourceAddress, segment);
       return;
     }
-    this.handleDatagram(packet);
+    this.handleDatagram(packet, iface);
   }
 
   showInfo(): void {
     const programList = getProgramList(this.viewgraph, this.id);
 
     const info = new DeviceInfo(this);
-    info.addField(
-      TOOLTIP_KEYS.IP_ADDRESS,
-      this.ip.octets.join("."),
-      TOOLTIP_KEYS.IP_ADDRESS,
-    );
 
     info.addProgramRunner(this, programList);
 
@@ -180,16 +173,6 @@ export class ViewHost extends ViewNetworkDevice {
     super.destroy();
     this.runningPrograms.forEach((program) => program.stop());
     this.runningPrograms.clear();
-  }
-
-  getTooltipDetails(layer: Layer): string {
-    if (layer >= Layer.Network) {
-      // If we are in the network layer or below, show only the IP
-      return `IP: ${this.ip.octets.join(".")}`;
-    } else {
-      // If we are in the upper layer, show both IP and MAC
-      return `IP: ${this.ip.octets.join(".")}\nMAC: ${this.mac.toCompressedString()}`;
-    }
   }
 
   // TCP

@@ -53,12 +53,12 @@ export class EdgeInfo extends BaseInfo {
     // Add MAC addresses as separate fields
     this.information.addField(
       `MAC Address iface (${this.edge.viewgraph.getDevice(from).getIdentifier()})`,
-      fromInterface.mac.octets.join(":"),
+      fromInterface.mac.toString(),
       TOOLTIP_KEYS.MAC_ADDRESS_IFACE,
     );
     this.information.addField(
       `MAC Address iface (${this.edge.viewgraph.getDevice(to).getIdentifier()})`,
-      toInterface.mac.octets.join(":"),
+      toInterface.mac.toString(),
       TOOLTIP_KEYS.MAC_ADDRESS_IFACE,
     );
   }
