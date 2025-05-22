@@ -10,6 +10,50 @@ You can access it [here](https://megaredhand.github.io/network-simulator/).
 
 ![Preview of the simulator. Shows multiple hosts, routers and switches. Some network packets are being sent through the network.](./img/00_full-preview.png)
 
+- [GEduNet 🌐](#gedunet-)
+- [**GEduNet - User Manual** 📘](#gedunet---user-manual-)
+  - [Getting Started](#getting-started)
+    - [Left Bar](#left-bar)
+    - [Right Bar](#right-bar)
+    - [Top Bar](#top-bar)
+    - [Canvas](#canvas)
+  - [Devices and Edges](#devices-and-edges)
+    - [Host](#host)
+      - [Host Information](#host-information)
+      - [Host Hover](#host-hover)
+    - [Router](#router)
+      - [Router Information](#router-information)
+      - [Router Hover](#router-hover)
+    - [Switch](#switch)
+      - [Switch Information](#switch-information)
+      - [Switch Hover](#switch-hover)
+    - [Edge](#edge)
+      - [Edge Information](#edge-information)
+      - [Edge Hover](#edge-hover)
+      - [Devices Interfaces](#devices-interfaces)
+  - [Programs](#programs)
+    - [ICMP echo](#icmp-echo)
+    - [Echo Server](#echo-server)
+    - [Send and Serve HTTP Requests](#send-and-serve-http-requests)
+    - [ARP Request](#arp-request)
+  - [Packets](#packets)
+    - [Packet Speed and Pause](#packet-speed-and-pause)
+    - [ICMP Packet](#icmp-packet)
+    - [HTTP Packet](#http-packet)
+    - [TCP Packet](#tcp-packet)
+    - [ARP Packet](#arp-packet)
+  - [Tables](#tables)
+    - [Routing Table](#routing-table)
+    - [Switch Table](#switch-table)
+    - [ARP Table](#arp-table)
+  - [Misc](#misc)
+    - [Shortcuts](#shortcuts)
+    - [Settings](#settings)
+    - [Loading and Saving](#loading-and-saving)
+    - [Print Canvas](#print-canvas)
+- [Development](#development)
+
+
 ## Getting Started
 
 Welcome to the GEduNet simulator! This application is designed to help you visualize and understand computer networks.
@@ -133,9 +177,8 @@ The information shown in the right bar when selecting a host is as follows:
 - **MAC Address**: The MAC address of the host. This is only visible in the Link Layer.
 - **IP Address**: The IP address of the host. This is always visible.
 - **Connect Device Button**: This button allows you to connect the host to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. You can only connect
-  devices if the host and the other device have free interfaces. This button has a keyboard shortcut. Pressing **C** and then clicking
-  on another device will also connect the devices, if they have free interfaces. TODO: Completar el manejo de interfaces del host
-
+  devices if the host and the other device have free interfaces.
+When you connect a host to another device, it will link the first two unused interfaces of each device. You can change the interfaces used to connect the devices by selecting the [edge](#devices-interfaces) that connects them.
 - **Delete Device Button**: This button allows you to delete the host from the network. This will also delete all edges connected to this host.
 - **Program Runner Section**: This section includes a dropdown to select a program and a second button to start the program after
   selecting the program inputs.
@@ -171,7 +214,9 @@ The information shown in the right bar when selecting a router is as follows:
 - **Connected Devices**: The devices that are directly connected to this router through edges.
 - **MAC Address**: The MAC address of the router. This is only visible in the Link Layer.
 - **IP Address**: The IP address of the router. This is always visible.
-- **Connect Device Button**: This button allows you to connect the router to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. This button has a keyboard shortcut. Pressing **C** and then clicking. TODO: Completar el manejo de interfaces del router
+- **Connect Device Button**: This button allows you to connect the router to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. You can only connect
+  devices if the host and the other device have free interfaces. 
+When you connect a router to another device, it will link the first two unused interfaces of each device. You can change the interfaces used to connect the devices by selecting the [edge](#devices-interfaces) that connects them.
 - **Delete Device Button**: This button allows you to delete the router from the network. This will also delete all edges connected to this router.
 - **Packet Queue Usage Bar**: This bar shows the usage of the packet queue of the router. The packet queue is used to store packets that are waiting to be processed by the router. The bar shows the percentage of the queue that is currently in use. If the queue is full, the router will drop packets until there is space in the queue.
 - **Router Parameters Dropdown**: This dropdown allows you to select the parameters of the router. The parameters are:
@@ -211,7 +256,9 @@ The information shown in the right bar when selecting a switch is as follows:
 - **ID**: The ID of the switch. This is a simulated unique identifier for the switch in the network.
 - **Connected Devices**: The devices that are directly connected to this switch through edges.
 - **MAC Address**: The MAC address of the switch.
-- **Connect Device Button**: This button allows you to connect the host to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. Pressing **C** and then clicking on another device will also connect the devices, if they have free interfaces. #TODO: Completar el manejo de interfaces del switch
+- **Connect Device Button**: This button allows you to connect the switch to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. You can only connect
+  devices if the host and the other device have free interfaces.
+When you connect a switch to another device, it will link the first two unused interfaces of each device. You can change the interfaces used to connect the devices by selecting the [edge](#devices-interfaces) that connects them.
 - **Delete Device Button**: This button allows you to delete the switch from the network. This will also delete all edges connected to this switch.
 - **Switching Table**: This table shows the MAC Address and the port in which that Address is assigned.
   This table is used by the switch to forward data packets to the correct destination. You can edit the entries of the table to fit your desired switching scheme. You can also restore the default state of the table by pressing the reset button on the top right corner.
@@ -266,6 +313,15 @@ If there is a dot in the middle of the edge, it would not be clear which device 
 While hovering over an edge, it will show the interfaces that each device use to communicate with each other. This way you can
 see how the devices are connected.
 
+#### Devices Interfaces
+When you select an edge that connect two devices, you will see a dropdown menu to select which interface of each device you want to use to connect those devices. Each type of device has a fixed limited amount of interfaces. Hosts have 2 interfaces, Routers have 4 and Switches have 8. 
+
+<p align="center">
+  <img src="./img/17_Host_Interfaces.png" alt="Host Interfaces" />
+  <img src="./img/18_Router_Interfaces.png" alt="Router Interfaces" />
+  <img src="./img/19_Switch_Interfaces.png" alt="Switch Interfaces" />
+</p>
+
 ## Programs
 
 ### ICMP echo
@@ -283,6 +339,8 @@ see how the devices are connected.
 ### ICMP Packet
 
 ### HTTP Packet
+
+### TCP Packet
 
 ### ARP Packet
 
