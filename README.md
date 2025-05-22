@@ -33,7 +33,9 @@ You can access it [here](https://megaredhand.github.io/network-simulator/).
       - [Devices Interfaces](#devices-interfaces)
   - [Programs](#programs)
     - [ICMP echo](#icmp-echo)
+      - [Tutorial](#tutorial)
     - [Echo Server](#echo-server)
+      - [Tutorial](#tutorial-1)
     - [Send and Serve HTTP Requests](#send-and-serve-http-requests)
     - [ARP Request](#arp-request)
   - [Packets](#packets)
@@ -52,7 +54,6 @@ You can access it [here](https://megaredhand.github.io/network-simulator/).
     - [Loading and Saving](#loading-and-saving)
     - [Print Canvas](#print-canvas)
 - [Development](#development)
-
 
 ## Getting Started
 
@@ -178,7 +179,7 @@ The information shown in the right bar when selecting a host is as follows:
 - **IP Address**: The IP address of the host. This is always visible.
 - **Connect Device Button**: This button allows you to connect the host to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. You can only connect
   devices if the host and the other device have free interfaces.
-When you connect a host to another device, it will link the first two unused interfaces of each device. You can change the interfaces used to connect the devices by selecting the [edge](#devices-interfaces) that connects them.
+  When you connect a host to another device, it will link the first two unused interfaces of each device. You can change the interfaces used to connect the devices by selecting the [edge](#devices-interfaces) that connects them.
 - **Delete Device Button**: This button allows you to delete the host from the network. This will also delete all edges connected to this host.
 - **Program Runner Section**: This section includes a dropdown to select a program and a second button to start the program after
   selecting the program inputs.
@@ -215,8 +216,8 @@ The information shown in the right bar when selecting a router is as follows:
 - **MAC Address**: The MAC address of the router. This is only visible in the Link Layer.
 - **IP Address**: The IP address of the router. This is always visible.
 - **Connect Device Button**: This button allows you to connect the router to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. You can only connect
-  devices if the host and the other device have free interfaces. 
-When you connect a router to another device, it will link the first two unused interfaces of each device. You can change the interfaces used to connect the devices by selecting the [edge](#devices-interfaces) that connects them.
+  devices if the host and the other device have free interfaces.
+  When you connect a router to another device, it will link the first two unused interfaces of each device. You can change the interfaces used to connect the devices by selecting the [edge](#devices-interfaces) that connects them.
 - **Delete Device Button**: This button allows you to delete the router from the network. This will also delete all edges connected to this router.
 - **Packet Queue Usage Bar**: This bar shows the usage of the packet queue of the router. The packet queue is used to store packets that are waiting to be processed by the router. The bar shows the percentage of the queue that is currently in use. If the queue is full, the router will drop packets until there is space in the queue.
 - **Router Parameters Dropdown**: This dropdown allows you to select the parameters of the router. The parameters are:
@@ -258,7 +259,7 @@ The information shown in the right bar when selecting a switch is as follows:
 - **MAC Address**: The MAC address of the switch.
 - **Connect Device Button**: This button allows you to connect the switch to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. You can only connect
   devices if the host and the other device have free interfaces.
-When you connect a switch to another device, it will link the first two unused interfaces of each device. You can change the interfaces used to connect the devices by selecting the [edge](#devices-interfaces) that connects them.
+  When you connect a switch to another device, it will link the first two unused interfaces of each device. You can change the interfaces used to connect the devices by selecting the [edge](#devices-interfaces) that connects them.
 - **Delete Device Button**: This button allows you to delete the switch from the network. This will also delete all edges connected to this switch.
 - **Switching Table**: This table shows the MAC Address and the port in which that Address is assigned.
   This table is used by the switch to forward data packets to the correct destination. You can edit the entries of the table to fit your desired switching scheme. You can also restore the default state of the table by pressing the reset button on the top right corner.
@@ -314,7 +315,8 @@ While hovering over an edge, it will show the interfaces that each device use to
 see how the devices are connected.
 
 #### Devices Interfaces
-When you select an edge that connect two devices, you will see a dropdown menu to select which interface of each device you want to use to connect those devices. Each type of device has a fixed limited amount of interfaces. Hosts have 2 interfaces, Routers have 4 and Switches have 8. 
+
+When you select an edge that connect two devices, you will see a dropdown menu to select which interface of each device you want to use to connect those devices. Each type of device has a fixed limited amount of interfaces. Hosts have 2 interfaces, Routers have 4 and Switches have 8.
 
 <p align="center">
   <img src="./img/17_Host_Interfaces.png" alt="Host Interfaces" />
@@ -324,9 +326,46 @@ When you select an edge that connect two devices, you will see a dropdown menu t
 
 ## Programs
 
+One of the features of the simulator is the ability to run programs on the devices. These programs are used to simulate different network protocols and applications. The programs are available in the right bar when selecting a host.
+
 ### ICMP echo
 
+An ICMP echo is a network utility used to test the reachability of a host on an IP network. It sends an ICMP echo request packet to the target host and waits for an ICMP echo reply. This is commonly used to check if a host is reachable and to measure the round-trip time for packets sent from the source to the destination.
+
+In the simulator, the ICMP echo program is used to send an ICMP echo request packet to a device and wait for an ICMP echo reply.
+
+#### Tutorial
+
+1. select "Send ICMP echo" program from the dropdown menu.
+2. Select the destination device (Router or Host) to send the packet to.
+3. Press the "Start Program" button to send the packet.
+
+The packet will travel through the network following the current routing scheme. If it reaches the destination device, it will send an ICMP echo reply back to the source device. If not, the packet will be dropped.
+
+<p align="center">
+  <img src="./img/20_Echo_Program.gif" alt="Echo Program" />
+</p>
+
 ### Echo Server
+
+An echo server is a network service that receives data from a client and sends it back to the client. Just as the echo program, it is commonly used to test network connectivity and to measure the round-trip time for packets sent from the client to the server and back.
+
+In the simulator, the echo server program works similar to the ICMP echo program but it sends multiple ICMP echo request packets to a destination device. The destination device will then send an ICMP echo reply back to the source device for each packet received.
+
+#### Tutorial
+
+1. Select the "Echo Server" program from the dropdown menu.
+2. Select the destination device (Router or Host) to send the packets to.
+3. Choose the time between pings that the packets will have. The shorter the time, the more packets will be sent. The selectable values are 250ms, 500ms, 1s, 5s and 15s.
+4. Press the "Start Program" button to start the server.
+
+The packets will travel through the network following the current routing scheme and the selected time between pings. If they reach the destination device, it will send an ICMP echo reply back to the source device. If not, the packet will be dropped.
+
+If you want to stop the program, you can press the Trash can icon on the program table of the host.
+
+<p align="center">
+  <img src="./img/21_Echo_Server_Program.gif" alt="Echo Server Program" />
+</p>
 
 ### Send and Serve HTTP Requests
 
