@@ -64,7 +64,7 @@ export abstract class DataDevice {
   getTag(): string {
     return this.tag;
   }
-  
+
   ownMac(mac: MacAddress): boolean {
     return this.interfaces.some((iface) => iface.mac.equals(mac));
   }

@@ -47,7 +47,6 @@ export class ViewHost extends ViewNetworkDevice {
     position: Position,
     interfaces: NetworkInterfaceData[],
     tag: string,
-    ip: IpAddress,
     mask: IpAddress,
   ) {
     super(
@@ -58,7 +57,6 @@ export class ViewHost extends ViewNetworkDevice {
       position,
       interfaces,
       tag,
-      ip,
       mask,
     );
   }

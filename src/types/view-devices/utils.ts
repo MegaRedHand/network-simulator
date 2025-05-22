@@ -44,15 +44,7 @@ export function createViewDevice(
         timePerByte,
       );
     case DeviceType.Host:
-      return new ViewHost(
-        id,
-        viewgraph,
-        ctx,
-        position,
-        interfaces,
-        tag,
-        mask,
-      );
+      return new ViewHost(id, viewgraph, ctx, position, interfaces, tag, mask);
     case DeviceType.Switch:
       return new ViewSwitch(id, viewgraph, ctx, position, interfaces, tag);
   }
