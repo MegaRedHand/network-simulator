@@ -37,12 +37,28 @@ export class TcpModule {
   }
 
   handleSegment(srcIp: IpAddress, segment: TcpSegment) {
-    const queueMap = this.tcpQueues.get(segment.destinationPort);
+    const queue = this.getHandler(
+      srcIp,
+      segment.sourcePort,
+      segment.destinationPort,
+    );
+    if (!queue) {
+      this.handleUnexpectedSegment(srcIp, segment);
+      return;
+    }
+    if (!queue.push({ srcIp, segment })) {
+      console.debug("queue closed");
+      this.handleUnexpectedSegment(srcIp, segment);
+    }
+  }
+
+  private getHandler(srcIp: IpAddress, srcPort: Port, dstPort: Port) {
+    const queueMap = this.tcpQueues.get(dstPort);
     if (!queueMap) {
       console.warn("port not in use");
       return;
     }
-    const key = [srcIp, segment.sourcePort].toString();
+    const key = [srcIp, srcPort].toString();
     let queue = queueMap.get(key);
     if (!queue) {
       console.debug("defaulting to match-all queue");
@@ -52,7 +68,7 @@ export class TcpModule {
       console.warn("no handler registered");
       return;
     }
-    queue.push({ srcIp, segment });
+    return queue;
   }
 
   async connect(dstHost: ViewHost, dstPort: Port): Promise<TcpSocket | null> {
@@ -97,24 +113,12 @@ export class TcpModule {
     }
     const key = filter ? [filter.ip, filter.port].toString() : MATCH_ALL_KEY;
     const prevHandler = handlerMap.get(key);
-    if (prevHandler) {
+    if (prevHandler && !prevHandler.isClosed()) {
       return null;
     }
     const queue = new AsyncQueue<SegmentWithIp>();
     handlerMap.set(key, queue);
     return queue;
-  }
-
-  closeQueue(port: Port, filter?: IpAndPort) {
-    const handlerMap = this.tcpQueues.get(port);
-    if (!handlerMap) {
-      return;
-    }
-    const key = filter ? [filter.ip, filter.port].toString() : MATCH_ALL_KEY;
-    handlerMap.delete(key);
-    if (handlerMap.size === 0) {
-      this.tcpQueues.delete(port);
-    }
   }
 
   // Port number to use for the next connection.
@@ -136,6 +140,17 @@ export class TcpModule {
       throw new Error("No available ports");
     }
     return port;
+  }
+
+  private handleUnexpectedSegment(srcIp: IpAddress, segment: TcpSegment) {
+    const dst = this.host.viewgraph.getDeviceByIP(srcIp);
+    if (!dst || !(dst instanceof ViewHost)) {
+      console.warn("sender device not found or not a host");
+      return;
+    }
+    const dstPort = segment.destinationPort;
+    const srcPort = segment.sourcePort;
+    TcpState.handleUnexpectedSegment(this.host, dstPort, dst, srcPort, segment);
   }
 }
 
@@ -190,6 +205,10 @@ export class TcpSocket {
   closeWrite() {
     this.tcpState.closeWrite();
   }
+
+  abort() {
+    this.tcpState.abort();
+  }
 }
 
 export class TcpListener {
@@ -230,7 +249,7 @@ export class TcpListener {
       queue,
     );
     if (!tcpState.accept(segment)) {
-      this.tcpModule.closeQueue(this.port, ipAndPort);
+      queue.close();
       return this.next();
     }
 
@@ -238,6 +257,6 @@ export class TcpListener {
   }
 
   close() {
-    this.tcpModule.closeQueue(this.port);
+    this.tcpQueue.close();
   }
 }

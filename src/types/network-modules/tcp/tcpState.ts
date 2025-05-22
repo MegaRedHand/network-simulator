@@ -11,7 +11,7 @@ import { GlobalContext } from "../../../context";
 import { CONFIG_SWITCH_KEYS } from "../../../config_menu/switches/switch_factory";
 
 enum TcpStateEnum {
-  // CLOSED = 0,
+  CLOSED = 0,
   // LISTEN = 1,
   SYN_SENT = 2,
   SYN_RECEIVED = 3,
@@ -28,6 +28,7 @@ enum ProcessingResult {
   SUCCESS = 0,
   DISCARD = 1,
   POSTPONE = 2,
+  RESET = 3,
 }
 
 const MAX_BUFFER_SIZE = 0xffff;
@@ -74,6 +75,11 @@ function sendIpPacket(
   return true;
 }
 
+enum Command {
+  ABORT,
+  SEND_ACK,
+}
+
 export class TcpState {
   private ctx: GlobalContext;
   private srcHost: ViewHost;
@@ -81,8 +87,8 @@ export class TcpState {
   private dstHost: ViewHost;
   private dstPort: Port;
   private tcpQueue: AsyncQueue<SegmentWithIp>;
-  private sendQueue = new AsyncQueue<undefined>();
-  private connectionQueue = new AsyncQueue<undefined>();
+  private cmdQueue = new AsyncQueue<Command>();
+  private connectionQueue = new AsyncQueue<boolean>();
   private retransmissionQueue: RetransmissionQueue;
 
   private recvQueue = new ReceivedSegmentsQueue();
@@ -179,8 +185,7 @@ export class TcpState {
 
     // Move to SYN_SENT state
     this.state = TcpStateEnum.SYN_SENT;
-    await this.connectionQueue.pop();
-    return true;
+    return await this.connectionQueue.pop();
   }
 
   // Accept passive connection
@@ -208,6 +213,48 @@ export class TcpState {
     return true;
   }
 
+  // Reset the TCP connection in response to an unexpected segment
+  static handleUnexpectedSegment(
+    srcHost: ViewHost,
+    srcPort: Port,
+    dstHost: ViewHost,
+    dstPort: Port,
+    segment: TcpSegment,
+  ) {
+    // An incoming segment containing a RST is discarded
+    if (segment.flags.rst) {
+      return;
+    }
+    // An incoming segment not containing a RST causes a RST to be sent in response
+    let resetSegment;
+    if (segment.flags.ack) {
+      // <SEQ=SEG.ACK><CTL=RST>
+      const flags = new Flags().withRst();
+      const segAck = segment.acknowledgementNumber;
+
+      resetSegment = new TcpSegment(srcPort, dstPort, segAck, 0);
+      resetSegment.withFlags(flags);
+    } else {
+      // <SEQ=0><ACK=SEG.SEQ+SEG.LEN><CTL=RST,ACK>
+      const flags = new Flags().withRst().withAck();
+      const flagsLength =
+        (segment.flags.syn ? 1 : 0) + (segment.flags.fin ? 1 : 0);
+      const ackNum = segment.sequenceNumber + segment.data.length + flagsLength;
+
+      resetSegment = new TcpSegment(srcPort, dstPort, 0, ackNum);
+      resetSegment.withFlags(flags);
+    }
+    sendIpPacket(srcHost, dstHost, resetSegment);
+
+    const srcInterface = srcHost.interfaces[0];
+    const dstInterface = dstHost.interfaces[0];
+
+    // Drop the segment
+    const packet = new IPv4Packet(srcInterface.ip, dstInterface.ip, segment);
+    const frame = new EthernetFrame(srcInterface.mac, dstInterface.mac, packet);
+    dropPacket(srcHost.viewgraph, srcHost.id, frame);
+  }
+
   private handleSegment(segment: TcpSegment): ProcessingResult {
     // Sanity check: ports match with expected
     if (
@@ -227,7 +274,10 @@ export class TcpState {
             return ProcessingResult.DISCARD;
           }
           console.debug("Invalid SYN_SENT ACK, sending RST");
-          this.newSegment(ack, 0).withFlags(new Flags().withRst());
+          // Send a RST segment
+          const newSegment = this.newSegment(ack, 0);
+          newSegment.withFlags(new Flags().withRst());
+          sendIpPacket(this.srcHost, this.dstHost, newSegment);
           return ProcessingResult.DISCARD;
         }
         // Try to process ACK
@@ -237,10 +287,11 @@ export class TcpState {
         }
       }
       if (flags.rst) {
-        // TODO: handle gracefully
         if (flags.ack) {
           // drop the segment, enter CLOSED state, delete TCB, and return
-          throw new Error("error: connection reset");
+          console.debug("connection reset");
+          this.connectionQueue.push(false);
+          return ProcessingResult.RESET;
         } else {
           console.debug("SYN_SENT RST without ACK, dropping segment");
           return ProcessingResult.DISCARD;
@@ -256,7 +307,7 @@ export class TcpState {
           // It's a valid SYN-ACK
           // Process the segment normally
           this.state = TcpStateEnum.ESTABLISHED;
-          this.connectionQueue.push(undefined);
+          this.connectionQueue.push(true);
           if (this.handleSegmentData(segment) !== ProcessingResult.SUCCESS) {
             console.debug("Segment data processing failed");
             return ProcessingResult.DISCARD;
@@ -271,9 +322,12 @@ export class TcpState {
           this.seqNumForLastWindowUpdate = segment.sequenceNumber;
           this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
           // Send SYN-ACK
-          this.newSegment(this.initialSendSeqNum, this.recvNext).withFlags(
-            new Flags().withSyn().withAck(),
+          const newSegment = this.newSegment(
+            this.initialSendSeqNum,
+            this.recvNext,
           );
+          newSegment.withFlags(new Flags().withSyn().withAck());
+          sendIpPacket(this.srcHost, this.dstHost, newSegment);
           this.state = TcpStateEnum.SYN_RECEIVED;
         }
       }
@@ -291,10 +345,25 @@ export class TcpState {
       return ProcessingResult.DISCARD;
     }
 
-    // TODO: handle RST or SYN flags
-    if (flags.rst || flags.syn) {
-      // TODO: handle this gracefully
-      throw new Error("error: RST bit set");
+    if (flags.rst) {
+      if (!this.isInReceiveWindow(segSeq)) {
+        console.debug("RST SEQ outside receive window");
+        return ProcessingResult.DISCARD;
+      } else if (segSeq === this.recvNext) {
+        console.debug("RST SEQ matches recvNext, resetting connection");
+        return ProcessingResult.RESET;
+      } else {
+        // Send a challenge segment and discard the packet
+        const challengeSegment = this.newSegment(this.sendNext, this.recvNext);
+        challengeSegment.withFlags(new Flags().withAck());
+        sendIpPacket(this.srcHost, this.dstHost, challengeSegment);
+        return ProcessingResult.DISCARD;
+      }
+    }
+    if (flags.syn) {
+      // TODO: handle SYN flags
+      console.debug("SYN flag not supported");
+      return ProcessingResult.DISCARD;
     }
 
     // If the ACK bit is off, drop the segment.
@@ -305,13 +374,13 @@ export class TcpState {
     if (this.state === TcpStateEnum.SYN_RECEIVED) {
       if (!this.isAckValid(segment.acknowledgementNumber)) {
         console.debug("ACK invalid, dropping segment");
-        this.newSegment(segment.acknowledgementNumber, 0).withFlags(
-          new Flags().withRst(),
-        );
+        const newSegment = this.newSegment(segment.acknowledgementNumber, 0);
+        newSegment.withFlags(new Flags().withRst());
+        sendIpPacket(this.srcHost, this.dstHost, newSegment);
         return ProcessingResult.DISCARD;
       }
       this.state = TcpStateEnum.ESTABLISHED;
-      this.connectionQueue.push(undefined);
+      this.connectionQueue.push(true);
       this.sendWindow = segment.window;
       this.seqNumForLastWindowUpdate = segment.sequenceNumber;
       this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
@@ -423,7 +492,11 @@ export class TcpState {
   async read(output: Uint8Array): Promise<number> {
     // Wait for there to be data in the read buffer
     while (this.readBuffer.isEmpty() && !this.readClosed) {
-      await this.readChannel.pop();
+      const available = await this.readChannel.pop();
+      if (available === -1) {
+        // Connection was reset
+        return -1;
+      }
     }
     // Consume the data and return it
     const readLength = this.readBuffer.read(output);
@@ -443,7 +516,11 @@ export class TcpState {
       const writeLength = this.writeBuffer.write(input.subarray(totalWrote));
       if (writeLength === 0) {
         // Buffer is full, wait for space
-        await this.writeChannel.pop();
+        const available = await this.writeChannel.pop();
+        if (available === -1) {
+          // Connection was reset
+          return -1;
+        }
       } else {
         totalWrote += writeLength;
         if (this.sendWindowSize() > 0) {
@@ -459,6 +536,10 @@ export class TcpState {
       (this.sendUnacknowledged + this.writeBuffer.bytesAvailable()) %
       u32_MODULUS;
     this.notifySendPackets();
+  }
+
+  abort() {
+    this.cmdQueue.push(Command.ABORT);
   }
 
   // utils
@@ -555,13 +636,13 @@ export class TcpState {
     }
     this.notifiedSendPackets = true;
     setTimeout(
-      () => this.sendQueue.push(undefined),
+      () => this.cmdQueue.push(Command.SEND_ACK),
       10 * this.ctx.getCurrentSpeed(),
     );
   }
 
   private async mainLoop() {
-    let recheckPromise = this.sendQueue.pop();
+    let recheckPromise = this.cmdQueue.pop();
     let receivedSegmentPromise = this.tcpQueue.pop();
     let retransmitPromise = this.retransmissionQueue.pop();
 
@@ -572,9 +653,15 @@ export class TcpState {
         retransmitPromise,
       ]);
 
-      if (result === undefined) {
-        recheckPromise = this.sendQueue.pop();
+      if (result === Command.SEND_ACK) {
+        recheckPromise = this.cmdQueue.pop();
         this.notifiedSendPackets = false;
+      } else if (result === Command.ABORT) {
+        // Send RST and quit
+        const segment = this.newSegment(this.sendNext, 0);
+        segment.withFlags(new Flags().withRst());
+        sendIpPacket(this.srcHost, this.dstHost, segment);
+        break;
       } else if ("segment" in result) {
         receivedSegmentPromise = this.tcpQueue.pop();
         let segment = result.segment;
@@ -587,7 +674,8 @@ export class TcpState {
         }
 
         while (
-          processingResult !== ProcessingResult.POSTPONE &&
+          (processingResult === ProcessingResult.DISCARD ||
+            processingResult === ProcessingResult.SUCCESS) &&
           !this.recvQueue.isEmpty()
         ) {
           segment = this.recvQueue.dequeue();
@@ -600,13 +688,10 @@ export class TcpState {
         if (processingResult === ProcessingResult.POSTPONE) {
           // Enqueue the segment for later processing
           this.recvQueue.enqueue(segment);
-        }
-
-        if (processingResult === ProcessingResult.POSTPONE) {
-          // Enqueue the segment for later processing
-          this.recvQueue.enqueue(segment);
-        } else if (processingResult === ProcessingResult.DISCARD) {
+        } else if (processingResult === ProcessingResult.RESET) {
+          // Reset the connection
           this.dropSegment(segment);
+          break;
         }
         continue;
       } else if ("seqNum" in result) {
@@ -657,6 +742,17 @@ export class TcpState {
         this.notifySendPackets();
       }
     }
+    this.abortConnection();
+  }
+
+  // Closes the connection and notifies reads/writes of this
+  private abortConnection() {
+    this.state = TcpStateEnum.CLOSED;
+    this.readClosed = true;
+    this.writeClosed = true;
+    this.writeChannel.push(-1);
+    this.readChannel.push(-1);
+    this.tcpQueue.close();
   }
 
   private resendPacket(seqNum: number, size: number) {
