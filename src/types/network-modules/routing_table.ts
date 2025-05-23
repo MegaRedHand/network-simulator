@@ -1,4 +1,5 @@
 import { showSuccess } from "../../graphics/renderables/alert_manager";
+import { compareIps, IpAddress } from "../../packets/ip";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { DataRouter, DataHost, DataNetworkDevice } from "../data-devices";
 import { DataGraph, DeviceId, RoutingTableEntry } from "../graphs/datagraph";
@@ -13,7 +14,6 @@ export function regenerateRoutingTableClean(
   router.routingTable = generateRoutingTable(dataGraph, id);
   router.routingTableEditedIps = [];
   router.routingTableEdited = false;
-  return router.routingTable;
 }
 
 // Regenera la tabla, respetando edits y bloqueadas
@@ -37,6 +37,7 @@ export function regenerateRoutingTable(dataGraph: DataGraph, id: DeviceId) {
         router.routingTable.push(entry);
       }
     });
+    sortRoutingTable(router.routingTable);
   } else {
     router.routingTable = generateRoutingTable(dataGraph, id);
   }
@@ -115,6 +116,8 @@ export function generateRoutingTable(
     }
   });
 
+  sortRoutingTable(newTable);
+
   console.log(`Generated routing table for router ID ${id}:`, newTable);
   return newTable;
 }
@@ -125,6 +128,21 @@ export function getRoutingTable(dataGraph: DataGraph, id: DeviceId) {
     return [];
   }
   return device.routingTable;
+}
+
+export function sortRoutingTable(routingTable: RoutingTableEntry[]) {
+  routingTable.sort((a, b) => {
+    const prefixLengthA = IpAddress.getPrefixLength(IpAddress.parse(a.mask)); // ej: 255.255.255.0 → 24
+    const prefixLengthB = IpAddress.getPrefixLength(IpAddress.parse(b.mask));
+
+    if (prefixLengthA !== prefixLengthB) {
+      return prefixLengthB - prefixLengthA;
+    }
+
+    const ipA = IpAddress.parse(a.ip);
+    const ipB = IpAddress.parse(b.ip);
+    return compareIps(ipA, ipB);
+  });
 }
 
 export function saveRoutingTableManualChange(
@@ -187,6 +205,7 @@ export function saveRoutingTableManualChange(
   }
 
   if (changed) {
+    sortRoutingTable(router.routingTable);
     router.routingTableEdited = true;
     dataGraph.notifyChanges();
     showSuccess(ALERT_MESSAGES.ROUTING_TABLE_UPDATED);

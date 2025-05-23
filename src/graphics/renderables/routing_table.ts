@@ -13,6 +13,7 @@ import {
   removeRoutingTableRow,
   saveRoutingTableManualChange,
 } from "../../types/network-modules/routing_table";
+import { DataRouter } from "../../types/data-devices";
 
 export interface RoutingTableProps {
   rows: string[][]; // Rows for the table
@@ -79,8 +80,24 @@ export class RoutingTable {
     return this.container;
   }
 
-  updateRows(newRows: string[][]): void {
-    this.table.updateRows(newRows); // Use the new method in Table
+  getRoutingTable(): string[][] {
+    const routingTable = this.props.viewgraph
+      .getDataGraph()
+      .getDevice(this.props.deviceId) as DataRouter;
+    if (!routingTable) {
+      console.warn("Routing table not found.");
+      return [];
+    }
+    return routingTable.routingTable.map((entry) => [
+      entry.ip,
+      entry.mask,
+      `eth${entry.iface}`,
+    ]);
+  }
+
+  updateRows(): void {
+    const newTableData = this.getRoutingTable();
+    this.table.updateRows(newTableData); // Use the new method in Table
   }
 
   // Function to create the regenerate button
@@ -97,23 +114,12 @@ export class RoutingTable {
   }
 
   private OnRegenerate(): void {
-    const newTableData = regenerateRoutingTableClean(
+    regenerateRoutingTableClean(
       this.props.viewgraph.getDataGraph(),
       this.props.deviceId,
     );
 
-    if (!newTableData.length) {
-      console.warn("Failed to regenerate routing table.");
-      return;
-    }
-
-    const newRows = newTableData.map((entry) => [
-      entry.ip,
-      entry.mask,
-      `eth${entry.iface}`,
-    ]);
-
-    this.updateRows(newRows);
+    this.updateRows();
 
     showSuccess(ALERT_MESSAGES.ROUTING_TABLE_REGENERATED);
   }
@@ -136,6 +142,8 @@ export class RoutingTable {
           col,
           newValue,
         );
+
+        this.updateRows();
       }
       return isValid;
     };
