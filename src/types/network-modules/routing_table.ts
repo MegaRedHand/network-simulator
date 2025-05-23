@@ -14,6 +14,7 @@ export function regenerateRoutingTableClean(
   router.routingTable = generateRoutingTable(dataGraph, id);
   router.routingTableEditedIps = [];
   router.routingTableEdited = false;
+  sortRoutingTable(router.routingTable);
 }
 
 // Regenera la tabla, respetando edits y bloqueadas
@@ -37,10 +38,10 @@ export function regenerateRoutingTable(dataGraph: DataGraph, id: DeviceId) {
         router.routingTable.push(entry);
       }
     });
-    sortRoutingTable(router.routingTable);
   } else {
     router.routingTable = generateRoutingTable(dataGraph, id);
   }
+  sortRoutingTable(router.routingTable);
 }
 
 export function regenerateAllRoutingTables(dataGraph: DataGraph) {
@@ -115,8 +116,6 @@ export function generateRoutingTable(
       });
     }
   });
-
-  sortRoutingTable(newTable);
 
   console.log(`Generated routing table for router ID ${id}:`, newTable);
   return newTable;
@@ -308,4 +307,27 @@ export function updateRoutingTableIface(
   if (changed) {
     dataGraph.notifyChanges?.();
   }
+}
+
+export function addRoutingTableEntry(
+  dataGraph: DataGraph,
+  routerId: DeviceId,
+  entry: RoutingTableEntry,
+) {
+  const router = dataGraph.getDevice(routerId);
+  if (!router || !(router instanceof DataRouter)) {
+    console.warn(`Device with ID ${routerId} is not a router.`);
+    return;
+  }
+
+  router.routingTable.push(entry);
+  sortRoutingTable(router.routingTable);
+  router.routingTableEdited = true;
+  if (!router.routingTableEditedIps) {
+    router.routingTableEditedIps = [];
+  }
+  if (!router.routingTableEditedIps.includes(entry.ip)) {
+    router.routingTableEditedIps.push(entry.ip);
+  }
+  dataGraph.notifyChanges?.();
 }
