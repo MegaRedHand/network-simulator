@@ -39,10 +39,12 @@ You can access it [here](https://megaredhand.github.io/network-simulator/).
     - [Send and Serve HTTP Requests](#send-and-serve-http-requests)
     - [ARP Request](#arp-request)
   - [Packets](#packets)
-    - [Packet Speed and Pause](#packet-speed-and-pause)
-    - [ICMP Packet](#icmp-packet)
     - [HTTP Packet](#http-packet)
     - [TCP Packet](#tcp-packet)
+    - [ICMP-8 Packet](#icmp-8-packet)
+      - [Visibility](#visibility)
+    - [ICMP-0 Packet](#icmp-0-packet)
+      - [Visibility](#visibility-1)
     - [ARP Packet](#arp-packet)
   - [Tables](#tables)
     - [Routing Table](#routing-table)
@@ -373,13 +375,86 @@ If you want to stop the program, you can press the Trash can icon on the program
 
 ## Packets
 
-### Packet Speed and Pause
+Packets are the data units that travel through the network. They are used to send and receive data between devices. In the simulator, packets are represented as colored circles that travel through the edges of the network. 
+Every packet has a different color depending on the type. The colors are as follows:
 
-### ICMP Packet
+| **Packet Type** | **Color** |
+|------------------|-----------|
+| HTTP             | <span style="color:white;">Burgundy</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#6d071a;"></span> |
+| TCP              | <span style="color:white;">Hazel</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#d99802;"></span> |
+| ICMP-8           | <span style="color:white;">Red</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#ff0000;"></span> |
+| ICMP-0           | <span style="color:white;">Yellow</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#ffff00;"></span> |
+| ARP              | <span style="color:white;">Green</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#00ff00;"></span> |
+
+You can also see the type of the packets while hovering them.
+
+<p align="center">
+  <img src="./img/22_Hovering_Packet.gif" alt="Packet Hover" />
+</p>
+
+When you select a packet, it will show the information of the packet in the right bar. This information varies depending on the type of packet and the current layer. The packets are visible on different layers depending on their type.
+
+<p align="center">
+  <img src="./img/24_Packet_Data.png" alt="Packet Data" />
+</p>
+
+The information shown in the right bar when selecting a packet is as follows:
+- **Packet Type**: The type of the packet.
+- **Source Ip Address**: The IP address of the source device.
+- **Destination Ip Address**: The IP address of the destination device.
+- **Discard Packet Button**: This button allows you to discard the packet from the network. This will stop the packet from reaching its destination. 
+- **More details Dropdown**: This dropdown allows you to see more details about the packet. The details shown depend on the type of packet and the current layer.
 
 ### HTTP Packet
 
 ### TCP Packet
+
+### ICMP-8 Packet
+
+ICMP-8 packets, also known as ICMP Echo Request packets, are a type of message used by the Internet Control Message Protocol (ICMP). They are primarily used for diagnostic and network testing purposes, most notably by the ping command.
+
+In the simulator, ICMP-8 packets show different information depending on the current layer. 
+
+#### Visibility
+
+ICMP-8 packets are not visible on the App Layer and the Transport Layer.
+
+On the Network Layer, they show the following information:
+- **IP Version**: The version of the IP protocol used. For now, only IPv4 is supported.
+- **Internet Header Length**: The length of the IP header in 32-bit words. 
+- **Type of Service**: The type of service field in the IP header. This field is used to specify the quality of service for the packet.
+- **Total Length**: The total length of the packet in bytes. This includes the IP header and the data.
+- **Identification**: A unique identifier for the packet. This is used to identify the packet in case it is fragmented.
+- **Fragmentation Offset**: The offset of the packet in case it is fragmented. This is used to reassemble the packet at the destination.
+- **Time to Live**: The time to live field in the IP header. This field is used to specify the maximum number of hops that the packet can take before it is discarded.
+- **Protocol**: The protocol used in the packet. For ICMP-8 packets, this is always 1.
+- **Header Checksum**: The checksum of the IP header. This is used to verify the integrity of the packet.
+- **Payload**: This is the data that is being sent in the packet. In this case, it is the ICMP-8 packet payload includes:
+  - **Type**: For ICMP-8 packets, this is always 8.
+  - **Code**: For ICMP-8 packets, this is always 0.
+  - **Identifier**: This is used to match the request and reply packets.
+  - **Sequence Number**: This is used to match the request and reply packets.
+  - **Data**: For ICMP-8 packets, this is always empty because it is used for testing purposes.
+  
+<p align="center">
+  <img src="./img/23_ICMP_8_Network.gif" alt="ICMP-8 Network Layer" />
+</p>
+
+On the Link Layer, they only show the EtherType field. This field is used to specify the protocol used in the packet. For ICMP-8 packets, this is always 2048.
+
+### ICMP-0 Packet
+
+ICMP-0 packets, also known as ICMP Echo Reply packets, are a type of message used by the Internet Control Message Protocol (ICMP). They are primarily used for diagnostic and network testing purposes, most notably by the ping command.
+
+#### Visibility
+
+ICMP-0 packets visible on the same layers as [ICMP-8](#icmp-8-packet) packets. The information shown is really similar to the one shown for ICMP-8 packets. The only difference is the type of the packet on the payload. For ICMP-0 packets, the type is always 0.
+
+<p align="center">
+  <img src="./img/25_ICMP_0_Network.gif" alt="ICMP-0 Network Layer" />
+</p>
+
+Just like ICMP-8 packets, on the Link Layer, they only show the EtherType field which is always 2048.
 
 ### ARP Packet
 
