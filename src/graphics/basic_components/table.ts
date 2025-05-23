@@ -133,7 +133,7 @@ export class Table {
       const addTd = document.createElement("td");
       const addButton = new Button({
         text: "➕",
-        classList: [CSS_CLASSES.TRASH_BUTTON],
+        classList: [CSS_CLASSES.TABLE_BUTTON],
         onClick: () => {
           const values = addCells.map((cell) => cell.textContent?.trim() || "");
           onAddRow(values);
@@ -175,7 +175,7 @@ export class Table {
     const deleteTd = document.createElement("td");
     const deleteButton = new Button({
       text: "🗑️",
-      classList: [CSS_CLASSES.TRASH_BUTTON],
+      classList: [CSS_CLASSES.TABLE_BUTTON],
       onClick: () => {
         const index = Array.from(this.tbody.rows).indexOf(tr); // Calculate the index of the row
         if (index !== -1 && onDelete(index)) {

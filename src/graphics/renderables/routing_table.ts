@@ -122,7 +122,7 @@ export class RoutingTable {
   ): HTMLButtonElement {
     const regenerateAllButton = new Button({
       text: "🔄",
-      classList: [CSS_CLASSES.REGENERATE_BUTTON],
+      classList: [CSS_CLASSES.TABLE_BUTTON],
       onClick: onRegenerateCallback,
     });
 
