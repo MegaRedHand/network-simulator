@@ -375,16 +375,16 @@ If you want to stop the program, you can press the Trash can icon on the program
 
 ## Packets
 
-Packets are the data units that travel through the network. They are used to send and receive data between devices. In the simulator, packets are represented as colored circles that travel through the edges of the network. 
+Packets are the data units that travel through the network. They are used to send and receive data between devices. In the simulator, packets are represented as colored circles that travel through the edges of the network.
 Every packet has a different color depending on the type. The colors are as follows:
 
-| **Packet Type** | **Color** |
-|------------------|-----------|
-| HTTP             | <span style="color:white;">Burgundy</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#6d071a;"></span> |
-| TCP              | <span style="color:white;">Hazel</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#d99802;"></span> |
-| ICMP-8           | <span style="color:white;">Red</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#ff0000;"></span> |
-| ICMP-0           | <span style="color:white;">Yellow</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#ffff00;"></span> |
-| ARP              | <span style="color:white;">Green</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#00ff00;"></span> |
+| **Packet Type** | **Color**                                                                                                                                                |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| HTTP            | <span style="color:white;">Burgundy</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#6d071a;"></span> |
+| TCP             | <span style="color:white;">Hazel</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#d99802;"></span>    |
+| ICMP-8          | <span style="color:white;">Red</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#ff0000;"></span>      |
+| ICMP-0          | <span style="color:white;">Yellow</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#ffff00;"></span>   |
+| ARP             | <span style="color:white;">Green</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#00ff00;"></span>    |
 
 You can also see the type of the packets while hovering them.
 
@@ -399,10 +399,11 @@ When you select a packet, it will show the information of the packet in the righ
 </p>
 
 The information shown in the right bar when selecting a packet is as follows:
+
 - **Packet Type**: The type of the packet.
 - **Source Ip Address**: The IP address of the source device.
 - **Destination Ip Address**: The IP address of the destination device.
-- **Discard Packet Button**: This button allows you to discard the packet from the network. This will stop the packet from reaching its destination. 
+- **Discard Packet Button**: This button allows you to discard the packet from the network. This will stop the packet from reaching its destination.
 - **More details Dropdown**: This dropdown allows you to see more details about the packet. The details shown depend on the type of packet and the current layer.
 
 ### HTTP Packet
@@ -413,15 +414,16 @@ The information shown in the right bar when selecting a packet is as follows:
 
 ICMP-8 packets, also known as ICMP Echo Request packets, are a type of message used by the Internet Control Message Protocol (ICMP). They are primarily used for diagnostic and network testing purposes, most notably by the ping command.
 
-In the simulator, ICMP-8 packets show different information depending on the current layer. 
+In the simulator, ICMP-8 packets show different information depending on the current layer.
 
 #### Visibility
 
 ICMP-8 packets are not visible on the App Layer and the Transport Layer.
 
 On the Network Layer, they show the following information:
+
 - **IP Version**: The version of the IP protocol used. For now, only IPv4 is supported.
-- **Internet Header Length**: The length of the IP header in 32-bit words. 
+- **Internet Header Length**: The length of the IP header in 32-bit words.
 - **Type of Service**: The type of service field in the IP header. This field is used to specify the quality of service for the packet.
 - **Total Length**: The total length of the packet in bytes. This includes the IP header and the data.
 - **Identification**: A unique identifier for the packet. This is used to identify the packet in case it is fragmented.
@@ -435,7 +437,7 @@ On the Network Layer, they show the following information:
   - **Identifier**: This is used to match the request and reply packets.
   - **Sequence Number**: This is used to match the request and reply packets.
   - **Data**: For ICMP-8 packets, this is always empty because it is used for testing purposes.
-  
+
 <p align="center">
   <img src="./img/23_ICMP_8_Network.gif" alt="ICMP-8 Network Layer" />
 </p>
@@ -469,11 +471,13 @@ Just like ICMP-8 packets, on the Link Layer, they only show the EtherType field 
 ## Misc
 
 ### Settings
+
 On the right corner of the top bar, you can find the settings button. This button will open a modal with a list of different [keyboard shortcuts](#keyboard-shortcuts) and some configuration options.
 
 The configuration options are:
+
 - **Enable Tooltips**: This option enables or disables the tooltips that show the information of some buttons and entries of the simulator when hovering over them. It is enabled by default.
-- **Use TCP Reno**: This option enables or disables the TCP Reno algorithm. This algorithm is used to control the flow of data in the network. It is enabled by default. If disabled, the TCP Tahoe algorithm will be used instead. 
+- **Use TCP Reno**: This option enables or disables the TCP Reno algorithm. This algorithm is used to control the flow of data in the network. It is enabled by default. If disabled, the TCP Tahoe algorithm will be used instead.
 
 <p align="center">
   <img src="./img/28_Settings.gif" alt="Settings" />
