@@ -51,10 +51,10 @@ You can access it [here](https://megaredhand.github.io/network-simulator/).
     - [Switch Table](#switch-table)
     - [ARP Table](#arp-table)
   - [Misc](#misc)
-    - [Shortcuts](#shortcuts)
     - [Settings](#settings)
     - [Loading and Saving](#loading-and-saving)
     - [Print Canvas](#print-canvas)
+    - [Keyboard Shortcuts](#keyboard-shortcuts)
 - [Development](#development)
 
 ## Getting Started
@@ -468,13 +468,56 @@ Just like ICMP-8 packets, on the Link Layer, they only show the EtherType field 
 
 ## Misc
 
-### Shortcuts
-
 ### Settings
+On the right corner of the top bar, you can find the settings button. This button will open a modal with a list of different [keyboard shortcuts](#keyboard-shortcuts) and some configuration options.
+
+The configuration options are:
+- **Enable Tooltips**: This option enables or disables the tooltips that show the information of some buttons and entries of the simulator when hovering over them. It is enabled by default.
+- **Use TCP Reno**: This option enables or disables the TCP Reno algorithm. This algorithm is used to control the flow of data in the network. It is enabled by default. If disabled, the TCP Tahoe algorithm will be used instead. 
+
+<p align="center">
+  <img src="./img/28_Settings.gif" alt="Settings" />
+</p>
 
 ### Loading and Saving
 
+The simulator will save the current network on your browser's local storage. This means that if you close the browser or refresh the page, the network will still be there when you open the simulator again.
+
+However if you need to persist the network for safety or to share it with someone else, you can save the network to a JSON file. To do this, just press the Save button on the top bar and the current network will be saved automaticaly. The file will be saved as a JSON file with the name "networkGraph.json" on your Downloads folder.
+
+<p align="center">
+  <img src="./img/26_Save.gif" alt="Save network" />
+</p>
+
+To load a network from a JSON file, just press the Load button on the top bar and select the JSON file you want to load. The network will be loaded and the simulator will update to show the new network. If the network is not valid, the simulator will show an error message and the network will not be loaded.
+
+<p align="center">
+  <img src="./img/27_Load.gif" alt="Load network" />
+</p>
+
 ### Print Canvas
+
+The simulator has a print button that allows you to take a snapshot of the current network and save it as a .png image. To do this, just press the Print button on the top bar and the current network will be saved as a .png image with the name "viewport-snapshot.png" on your Downloads folder.
+
+<p align="center">
+  <img src="./img/29_Print.gif" alt="Print network" />
+</p>
+
+### Keyboard Shortcuts
+
+The simulator has some keyboard shortcuts to make it easier to use. The shortcuts are as follows:
+
+- **C**: Connect a device to another device. This is the same as pressing the Connect Device button on the right bar. It will only work if the devices involved hace free interfaces.
+- **H**: Open the help modal. This is the same as pressing the Help button on the top bar.
+- **Delete/Backspace**: Delete the selected device, edge or packet. This is the same as pressing the Delete Device, Delete Edge and Discard Packet buttons on the right bar.
+- **SpaceBar**: Play or pause the simulation. This is the same as pressing the Play/Pause button on the canvas.
+- **Ctrl + Z**: Undo the last action. Is the same as pressing the Undo button on the top bar.
+- **Ctrl + Y**: Redo the last action. Is the same as pressing the Redo button on the top bar.
+- **Ctrl + S**: Save the current network. Is the same as pressing the Save button on the top bar.
+- **N**: Create a new network. Is the same as pressing the New button on the top bar.
+- **S**: Save the current network into a JSON file. Is the same as pressing the Save button on the top bar.
+- **L**: Load a network from a JSON file. Is the same as pressing the Load button on the top bar.
+- **P**: Print the current network on the canvas. Is the same as pressing the Print button on the top bar.
 
 # Development
 
