@@ -29,19 +29,22 @@ export class DataRouter extends DataNetworkDevice {
     this.timePerByte =
       graphData.timePerByte ?? ROUTER_CONSTANTS.PROCESSING_SPEED;
     this.routingTable = graphData.routingTable ?? [];
-    console.log("packetQueueSize Dr", this.packetQueueSize);
-    console.log("processingSpeed Dr", this.timePerByte);
+    this.routingTableEdited = graphData.routingTableEdited ?? false;
+    this.routingTableEditedIps = graphData.routingTableEditedIps ?? [];
+
+    console.log(
+      `[DataRouter] routingTableEdited: ${this.routingTableEdited}, routingTableEditedIps:`,
+      this.routingTableEditedIps,
+    );
   }
 
   setMaxQueueSize(newSize: number) {
     this.packetQueue.setMaxQueueSize(newSize);
-    console.log("Max queue size set to Dr", newSize);
     this.packetQueueSize = newSize;
   }
 
   setTimePerByte(newTime: number) {
     this.timePerByte = newTime;
-    console.log("Time per byte set to Dr", newTime);
   }
 
   getDataNode(): RouterDataNode {
@@ -51,6 +54,8 @@ export class DataRouter extends DataNetworkDevice {
       routingTable: this.routingTable,
       packetQueueSize: this.packetQueue.getMaxQueueSize(),
       timePerByte: this.timePerByte,
+      routingTableEdited: this.routingTableEdited,
+      routingTableEditedIps: this.routingTableEditedIps,
     };
   }
 
@@ -106,10 +111,6 @@ export class DataRouter extends DataNetworkDevice {
     }
 
     const result = device.routingTable.find((entry) => {
-      if (entry.deleted) {
-        console.debug("Skipping deleted entry:", entry);
-        return false;
-      }
       const ip = IpAddress.parse(entry.ip);
       const mask = IpAddress.parse(entry.mask);
       return datagram.destinationAddress.isInSubnet(ip, mask);

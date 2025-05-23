@@ -243,10 +243,6 @@ export class ViewRouter extends ViewNetworkDevice {
     }
 
     const result = device.routingTable.find((entry) => {
-      if (entry.deleted) {
-        console.debug("Skipping deleted entry:", entry);
-        return false;
-      }
       const ip = IpAddress.parse(entry.ip);
       const mask = IpAddress.parse(entry.mask);
       return datagram.destinationAddress.isInSubnet(ip, mask);

@@ -62,14 +62,14 @@ export interface RouterDataNode extends NetworkDataNode {
   routingTable?: RoutingTableEntry[];
   packetQueueSize: number;
   timePerByte: number;
+  routingTableEdited?: boolean;
+  routingTableEditedIps?: string[];
 }
 
 export interface RoutingTableEntry {
   ip: string;
   mask: string;
   iface: number;
-  manuallyEdited?: boolean;
-  deleted?: boolean;
 }
 
 export interface HostDataNode extends NetworkDataNode {
