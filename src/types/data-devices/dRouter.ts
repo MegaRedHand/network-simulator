@@ -18,6 +18,8 @@ export class DataRouter extends DataNetworkDevice {
   // Number of bytes processed
   private processingProgress = 0;
   routingTable: RoutingTableEntry[];
+  routingTableEdited = false;
+  routingTableEditedIps: string[] = [];
 
   constructor(graphData: RouterDataNode, datagraph: DataGraph) {
     super(graphData, datagraph);

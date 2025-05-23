@@ -18,6 +18,7 @@ import { ArpTable } from "./arp_table";
 import { Layer } from "../../types/layer";
 import { DataNetworkDevice, DataSwitch } from "../../types/data-devices";
 import { SwitchingTable } from "./switching_table";
+import { getRoutingTable } from "../../types/network-modules/routing_table";
 
 export class DeviceInfo extends BaseInfo {
   readonly device: ViewDevice;
@@ -100,7 +101,7 @@ export class DeviceInfo extends BaseInfo {
   }
 
   addRoutingTable(viewgraph: ViewGraph, deviceId: number): void {
-    const entries = viewgraph.getRoutingTable(deviceId);
+    const entries = getRoutingTable(viewgraph.getDataGraph(), deviceId);
 
     const rows = entries.map((entry) => [
       entry.ip,

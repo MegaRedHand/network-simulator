@@ -8,6 +8,11 @@ import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { ROUTER_CONSTANTS } from "../../utils/constants/router_constants";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { showError, showSuccess } from "./alert_manager";
+import {
+  regenerateRoutingTableClean,
+  removeRoutingTableRow,
+  saveRoutingTableManualChange,
+} from "../../types/network-modules/routing_table";
 
 export interface RoutingTableProps {
   rows: string[][]; // Rows for the table
@@ -42,7 +47,7 @@ export class RoutingTable {
       headers: headers,
       fieldsPerRow: ROUTER_CONSTANTS.TABLE_FIELDS_PER_ROW,
       rows: props.rows,
-      editableColumns: [false, true, true, false], // Make the last column non-editable
+      editableColumns: [true, true, true, false], // Make the last column non-editable
       onEdit: onEdit,
       onDelete: onDelete,
       tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE],
@@ -92,9 +97,10 @@ export class RoutingTable {
   }
 
   private OnRegenerate(): void {
-    const newTableData = this.props.viewgraph
-      .getDataGraph()
-      .regenerateRoutingTableClean(this.props.deviceId);
+    const newTableData = regenerateRoutingTableClean(
+      this.props.viewgraph.getDataGraph(),
+      this.props.deviceId,
+    );
 
     if (!newTableData.length) {
       console.warn("Failed to regenerate routing table.");
@@ -123,16 +129,20 @@ export class RoutingTable {
       else if (col === ROUTER_CONSTANTS.INTERFACE_COL_INDEX)
         isValid = isValidInterface(newValue);
       if (isValid) {
-        viewgraph
-          .getDataGraph()
-          .saveRTManualChange(deviceId, row, col, newValue);
+        saveRoutingTableManualChange(
+          viewgraph.getDataGraph(),
+          deviceId,
+          row,
+          col,
+          newValue,
+        );
         showSuccess(ALERT_MESSAGES.ROUTING_TABLE_UPDATED);
       }
       return isValid;
     };
 
     const onDelete = (row: number) => {
-      viewgraph.getDataGraph().removeRoutingTableRow(deviceId, row);
+      removeRoutingTableRow(viewgraph.getDataGraph(), deviceId, row);
       return true;
     };
 

@@ -16,6 +16,7 @@ import { Graph } from "./graph";
 import { PacketManager } from "../packetManager";
 import { ViewNetworkDevice } from "../view-devices/vNetworkDevice";
 import { MacAddress } from "../../packets/ethernet";
+import { clearEditedIpsForEdge } from "../network-modules/routing_table";
 
 export type EdgePair = [DeviceId, DeviceId];
 
@@ -366,6 +367,9 @@ export class ViewGraph {
       console.warn(`Edge ${n1Id},${n2Id} is not in the datagraph`);
       return null;
     }
+
+    clearEditedIpsForEdge(this.datagraph, datagraphEdge);
+
     // Remove connection in DataGraph
     this.datagraph.removeConnection(n1Id, n2Id);
 
@@ -397,10 +401,6 @@ export class ViewGraph {
 
   getViewport() {
     return this.viewport;
-  }
-
-  getRoutingTable(id: DeviceId) {
-    return this.datagraph.getRoutingTable(id);
   }
 
   getArpTable(id: DeviceId) {

@@ -14,6 +14,7 @@ import {
   removeTooltip,
   showTooltip,
 } from "../graphics/renderables/canvas_tooltip_manager";
+import { regenerateAllRoutingTables } from "./network-modules/routing_table";
 
 export class Edge extends Graphics {
   private _data: DataEdge;
@@ -255,7 +256,7 @@ export class Edge extends Graphics {
     } else {
       this.data.to.iface = iface;
     }
-    this.viewgraph.getDataGraph().regenerateAllRoutingTables();
+    regenerateAllRoutingTables(this.viewgraph.getDataGraph());
   }
 
   setInterfaceMac(deviceId: DeviceId, mac: string): void {
