@@ -1,3 +1,5 @@
+import { showSuccess } from "../../graphics/renderables/alert_manager";
+import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { DataRouter, DataHost, DataNetworkDevice } from "../data-devices";
 import { DataGraph, DeviceId, RoutingTableEntry } from "../graphs/datagraph";
 
@@ -150,28 +152,45 @@ export function saveRoutingTableManualChange(
   const entry = router.routingTable[rowIndex];
   const originalIp = entry.ip;
 
+  let changed = false;
+
   switch (colIndex) {
-    case 0:
-      if (!router.routingTableEditedIps.includes(originalIp)) {
-        router.routingTableEditedIps.push(originalIp);
+    case 0: // IP
+      if (entry.ip !== newValue) {
+        if (!router.routingTableEditedIps.includes(originalIp)) {
+          router.routingTableEditedIps.push(originalIp);
+        }
+        entry.ip = newValue;
+        changed = true;
       }
-      entry.ip = newValue;
       break;
-    case 1:
-      entry.mask = newValue;
+    case 1: // Mask
+      if (entry.mask !== newValue) {
+        entry.mask = newValue;
+        changed = true;
+      }
       break;
-    case 2:
-      entry.iface = newValue.startsWith("eth")
+    case 2: {
+      // Iface
+      const ifaceValue = newValue.startsWith("eth")
         ? parseInt(newValue.replace("eth", ""), 10)
         : parseInt(newValue, 10);
+      if (entry.iface !== ifaceValue) {
+        entry.iface = ifaceValue;
+        changed = true;
+      }
       break;
+    }
     default:
       console.warn(`Invalid column index: ${colIndex}`);
       return;
   }
 
-  router.routingTableEdited = true;
-  dataGraph.notifyChanges();
+  if (changed) {
+    router.routingTableEdited = true;
+    dataGraph.notifyChanges();
+    showSuccess(ALERT_MESSAGES.ROUTING_TABLE_UPDATED);
+  }
 }
 
 export function removeRoutingTableRow(

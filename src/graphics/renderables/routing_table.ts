@@ -136,7 +136,6 @@ export class RoutingTable {
           col,
           newValue,
         );
-        showSuccess(ALERT_MESSAGES.ROUTING_TABLE_UPDATED);
       }
       return isValid;
     };
