@@ -30,10 +30,8 @@ export class RoutingTable {
   constructor(private props: RoutingTableProps) {
     this.container = document.createElement("div");
 
-    const { onEdit, onDelete, onRegenerate } = this.setRoutingTableCallbacks(
-      props.viewgraph,
-      props.deviceId,
-    );
+    const { onEdit, onDelete, onRegenerate, onAddRow } =
+      this.setRoutingTableCallbacks(props.viewgraph, props.deviceId);
 
     // Create the regenerate button
     const regenerateButton = this.createRegenerateButton(onRegenerate);
@@ -52,22 +50,8 @@ export class RoutingTable {
       editableColumns: [true, true, true, false], // Make the last column non-editable
       onEdit: onEdit,
       onDelete: onDelete,
+      onAddRow: onAddRow,
       tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE],
-      allowAddRow: true,
-      onAddRow: (values: string[]) => {
-        const [ip, mask, ifaceStr] = values;
-        if (!isValidIP(ip) || !isValidIP(mask) || !isValidInterface(ifaceStr)) {
-          return;
-        }
-        const iface = parseInt(ifaceStr.replace("eth", ""), 10);
-        const router = this.props.viewgraph
-          .getDataGraph()
-          .getDevice(this.props.deviceId) as DataRouter;
-        router.routingTable.push({ ip, mask, iface });
-        sortRoutingTable(router.routingTable);
-        router.routingTableEdited = true;
-        this.updateRows();
-      },
     });
 
     this.toggleButton = new ToggleButton({
@@ -174,7 +158,23 @@ export class RoutingTable {
       this.OnRegenerate();
     };
 
-    return { onEdit, onDelete, onRegenerate };
+    const onAddRow = (values: string[]) => {
+      const [ip, mask, ifaceStr] = values;
+      if (!isValidIP(ip) || !isValidIP(mask) || !isValidInterface(ifaceStr)) {
+        return false;
+      }
+      const iface = parseInt(ifaceStr.replace("eth", ""), 10);
+      const router = this.props.viewgraph
+        .getDataGraph()
+        .getDevice(this.props.deviceId) as DataRouter;
+      router.routingTable.push({ ip, mask, iface });
+      sortRoutingTable(router.routingTable);
+      router.routingTableEdited = true;
+      this.updateRows();
+      return true;
+    };
+
+    return { onEdit, onDelete, onRegenerate, onAddRow };
   }
 }
 
