@@ -65,6 +65,7 @@ export class Edge extends Graphics {
   }
 
   getDeviceIds(): DeviceId[] {
+    if (!this.data) return [];
     return [this.data.from.id, this.data.to.id];
   }
 
@@ -78,6 +79,21 @@ export class Edge extends Graphics {
 
   getData(): DataEdge {
     return this.data;
+  }
+
+  /**
+   * Returns the interface number associated with the specified device ID in this edge connection.
+   * If the given device is part of the connection (either as the source or destination), the corresponding
+   * interface number is returned. If the device is not involved in the connection, returns `undefined`.
+   *
+   * @param id - The ID of the device for which to retrieve the interface number.
+   * @returns The interface number if the device is part of the connection; otherwise, `undefined`.
+   */
+  getDeviceInterface(id: DeviceId): number | undefined {
+    if (!(id === this.data.from.id || id === this.data.to.id)) {
+      return;
+    }
+    return this.data.from.id === id ? this.data.from.iface : this.data.to.iface;
   }
 
   // Method to draw the line
@@ -107,13 +123,26 @@ export class Edge extends Graphics {
 
   select() {
     this.highlightedEdges = this.viewgraph.findConnectedEdges(this);
-    this.highlightedEdges.forEach((edge) => edge.highlight());
+    this.highlightedEdges.forEach((edge) => {
+      edge.highlight();
+      // Highlight the color of the circles connected to this edge
+      edge.getDeviceIds().forEach((deviceId) => {
+        const device = this.viewgraph.getDevice(deviceId);
+        device.setCircleColor(Colors.Violet);
+      });
+    });
     this.showInfo();
   }
 
   deselect() {
-    // remove highlight from all edges
-    this.highlightedEdges.forEach((edge) => edge.removeHighlight());
+    this.highlightedEdges.forEach((edge) => {
+      edge.removeHighlight();
+      // Reset the color of the circles connected to this edge
+      edge.getDeviceIds().forEach((deviceId) => {
+        const device = this.viewgraph.getDevice(deviceId);
+        device.setCircleColor(Colors.Lightblue);
+      });
+    });
     this.highlightedEdges = [];
   }
 
@@ -126,13 +155,17 @@ export class Edge extends Graphics {
   }
 
   showInfo() {
-    if (this.highlightedEdges && this.highlightedEdges.length > 1) {
+    if (this.isMerged()) {
       const multiEdgeInfo = new MultiEdgeInfo(this.highlightedEdges);
       RightBar.getInstance().renderInfo(multiEdgeInfo);
     } else {
       const edgeInfo = new EdgeInfo(this);
       RightBar.getInstance().renderInfo(edgeInfo);
     }
+  }
+
+  isMerged(): boolean {
+    return this.highlightedEdges.length > 1;
   }
 
   destroy(): void {
@@ -188,8 +221,8 @@ export class Edge extends Graphics {
     const dy = device2.y - device1.y;
     const angle = Math.atan2(dy, dx);
 
-    const n1IsVisible = device1.visible;
-    const n2IsVisible = device2.visible;
+    const n1IsVisible = device1.isVisible();
+    const n2IsVisible = device2.isVisible();
 
     const offsetX1 = n1IsVisible
       ? ((device1.width + 5) / 2) * Math.cos(angle)
@@ -255,13 +288,17 @@ export class Edge extends Graphics {
     this.on("mouseover", () => {
       const group = this.viewgraph.findConnectedEdges(this);
       group.forEach((edge) => {
+        edge.setupConnectedDevicesTooltips();
         edge.showTooltips();
         edge.fixTooltipPositions();
       });
     });
     this.on("mouseout", () => {
       const group = this.viewgraph.findConnectedEdges(this);
-      group.forEach((edge) => edge.hideTooltips());
+      group.forEach((edge) => {
+        edge.hideConnectedDevicesTooltips();
+        edge.hideTooltips();
+      });
     });
   }
 
@@ -289,6 +326,48 @@ export class Edge extends Graphics {
     );
   }
 
+  private setupConnectedDevicesTooltips() {
+    const [startId, startIface] = [this.data.from.id, this.data.from.iface];
+    const [endId, endIface] = [this.data.to.id, this.data.to.iface];
+    const startDevice = this.viewgraph.getDevice(startId);
+    const endDevice = this.viewgraph.getDevice(endId);
+
+    const setTooltip = (device: ViewDevice, iface: number) => {
+      if (!device) {
+        console.error(
+          `Device ${device.id} not found in viewgraph, cannot set device tooltip`,
+        );
+        return;
+      }
+      if (device.isVisible()) {
+        device.setupTooltip(iface);
+      }
+    };
+
+    setTooltip(startDevice, startIface);
+    setTooltip(endDevice, endIface);
+  }
+
+  private hideConnectedDevicesTooltips() {
+    const startId = this.data.from.id;
+    const endId = this.data.to.id;
+    const startDevice = this.viewgraph.getDevice(startId);
+    const endDevice = this.viewgraph.getDevice(endId);
+
+    const hideTooltip = (device: ViewDevice) => {
+      if (!device) {
+        console.error(
+          `Device ${device.id} not found in viewgraph, cannot set device tooltip`,
+        );
+        return;
+      }
+      device.hideToolTip();
+    };
+
+    hideTooltip(startDevice);
+    hideTooltip(endDevice);
+  }
+
   private fixTooltipPositions() {
     const offsetX = 20; // Offset on the X-axis to move it away from the device
     const offsetY = -10; // Offset on the Y-axis to bring it closer to the Edge
@@ -299,7 +378,7 @@ export class Edge extends Graphics {
     // Check the visibility of the starting device
     const device1 = this.viewgraph.getDevice(this.data.from.id);
     if (this.startTooltip) {
-      if (device1 && device1.visible) {
+      if (device1 && device1.isVisible()) {
         // If the starting device is visible, update the tooltip position
         this.startTooltip.x =
           this.startPos.x + (isStartLeft ? offsetX : -offsetX);
@@ -314,7 +393,7 @@ export class Edge extends Graphics {
     // Check the visibility of the ending device
     const device2 = this.viewgraph.getDevice(this.data.to.id);
     if (this.endTooltip) {
-      if (device2 && device2.visible) {
+      if (device2 && device2.isVisible()) {
         // If the ending device is visible, update the tooltip position
         this.endTooltip.x = this.endPos.x + (isStartLeft ? -offsetX : offsetX);
         this.endTooltip.y = this.endPos.y + offsetY;

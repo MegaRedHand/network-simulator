@@ -8,9 +8,10 @@ import { ViewNetworkDevice } from "../../view-devices/vNetworkDevice";
 import { AsyncQueue } from "../asyncQueue";
 import { SegmentWithIp } from "../tcpModule";
 import { GlobalContext } from "../../../context";
+import { CONFIG_SWITCH_KEYS } from "../../../config_menu/switches/switch_factory";
 
 enum TcpStateEnum {
-  // CLOSED = 0,
+  CLOSED = 0,
   // LISTEN = 1,
   SYN_SENT = 2,
   SYN_RECEIVED = 3,
@@ -23,7 +24,16 @@ enum TcpStateEnum {
   TIME_WAIT = 10,
 }
 
+enum ProcessingResult {
+  SUCCESS = 0,
+  DISCARD = 1,
+  POSTPONE = 2,
+  RESET = 3,
+}
+
 const MAX_BUFFER_SIZE = 0xffff;
+const MAX_SEGMENT_SIZE = 1460;
+const u32_MODULUS = 0x100000000; // 2^32
 
 function getInitialSeqNumber() {
   // For random seqnums use:
@@ -38,44 +48,50 @@ function sendIpPacket(
 ): boolean {
   const viewgraph = src.viewgraph;
 
-  // TODO: use MAC and IP of the interfaces used
+  const forwardingData = ViewNetworkDevice.getForwardingData(
+    src.id,
+    dst.id,
+    viewgraph,
+  );
+  const [srcData, dstData, sendingIface] = [
+    forwardingData.src,
+    forwardingData.dst,
+    forwardingData.sendingIface,
+  ];
+
   // Resolve destination MAC address
-  let nextHopMac = src.resolveAddress(dst.ip);
-  if (!nextHopMac) {
+  const dstMac = src.resolveAddress(dstData.ip);
+  if (!dstMac) {
     console.warn(
-      `Device ${src.id} couldn't resolve MAC address for device with IP ${dst.ip.toString()}. Program cancelled`,
+      `Device ${src.id} couldn't resolve MAC address for device with IP ${dstData.ip.toString()}. Program cancelled`,
     );
     return false;
   }
 
-  const path = viewgraph.getPathBetween(src.id, dst.id);
-  if (!path) return;
-  for (const id of path.slice(1)) {
-    const device = viewgraph.getDevice(id);
-    // if there’s a router in the middle, first send frame to router mac
-    if (device instanceof ViewNetworkDevice) {
-      nextHopMac = device.mac;
-      break;
-    }
-  }
-  const ipPacket = new IPv4Packet(src.ip, dst.ip, payload);
-  const frame = new EthernetFrame(src.mac, nextHopMac, ipPacket);
+  const ipPacket = new IPv4Packet(srcData.ip, dstData.ip, payload);
+  const frame = new EthernetFrame(srcData.mac, dstData.mac, ipPacket);
 
-  sendViewPacket(src.viewgraph, src.id, frame);
+  sendViewPacket(src.viewgraph, src.id, frame, sendingIface);
   return true;
 }
 
-const u32_MODULUS = 0x100000000;
+enum Command {
+  ABORT,
+  SEND_ACK,
+}
 
 export class TcpState {
+  private ctx: GlobalContext;
   private srcHost: ViewHost;
   private srcPort: Port;
   private dstHost: ViewHost;
   private dstPort: Port;
   private tcpQueue: AsyncQueue<SegmentWithIp>;
-  private sendQueue = new AsyncQueue<undefined>();
-  private connectionQueue = new AsyncQueue<undefined>();
+  private cmdQueue = new AsyncQueue<Command>();
+  private connectionQueue = new AsyncQueue<boolean>();
   private retransmissionQueue: RetransmissionQueue;
+
+  private recvQueue = new ReceivedSegmentsQueue();
 
   // Buffer of data received
   private readBuffer = new BytesBuffer(MAX_BUFFER_SIZE);
@@ -84,7 +100,9 @@ export class TcpState {
 
   // Buffer of data to be sent
   private writeBuffer = new BytesBuffer(MAX_BUFFER_SIZE);
+  private writeChannel = new AsyncQueue<number>();
   private writeClosedSeqnum = -1;
+  private writeClosed = false;
 
   private state: TcpStateEnum;
 
@@ -113,6 +131,9 @@ export class TcpState {
   // IRS
   private initialRecvSeqNum: number;
 
+  private rttEstimator: RTTEstimator;
+  private congestionControl: CongestionControl;
+
   constructor(
     srcHost: ViewHost,
     srcPort: Port,
@@ -120,6 +141,7 @@ export class TcpState {
     dstPort: Port,
     tcpQueue: AsyncQueue<SegmentWithIp>,
   ) {
+    this.ctx = srcHost.ctx;
     this.srcHost = srcHost;
     this.srcPort = srcPort;
     this.dstHost = dstHost;
@@ -127,7 +149,17 @@ export class TcpState {
 
     this.tcpQueue = tcpQueue;
 
-    this.retransmissionQueue = new RetransmissionQueue(this.srcHost.ctx);
+    this.rttEstimator = new RTTEstimator(this.srcHost.ctx);
+    this.retransmissionQueue = new RetransmissionQueue(
+      this.srcHost.ctx,
+      this.rttEstimator,
+    );
+
+    this.congestionControl = new CongestionControl(
+      this.srcHost.ctx
+        .getConfigMenu()
+        .getConfigSwitchValue(CONFIG_SWITCH_KEYS.USE_TCP_RENO),
+    );
 
     this.mainLoop();
   }
@@ -144,15 +176,16 @@ export class TcpState {
     const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
     if (!sendIpPacket(this.srcHost, this.dstHost, segment)) {
       console.warn(
-        `Device ${this.srcHost.id} couldn't send SYN to device with IP ${this.dstHost.ip.toString()}.`,
+        `Device ${this.srcHost.id} couldn't send SYN to device ${this.dstHost.id}.`,
       );
       return false;
     }
 
+    this.rttEstimator.startMeasurement(this.initialSendSeqNum);
+
     // Move to SYN_SENT state
     this.state = TcpStateEnum.SYN_SENT;
-    await this.connectionQueue.pop();
-    return true;
+    return await this.connectionQueue.pop();
   }
 
   // Accept passive connection
@@ -172,40 +205,57 @@ export class TcpState {
     // Send a SYN-ACK
     const flags = new Flags().withSyn().withAck();
     const segment = this.newSegment(this.initialSendSeqNum, this.recvNext);
-    // TODO: check what to do in case the packet couldn't be sent
-    sendIpPacket(this.srcHost, this.dstHost, segment.withFlags(flags));
+
+    if (!sendIpPacket(this.srcHost, this.dstHost, segment.withFlags(flags))) {
+      return false;
+    }
+    this.rttEstimator.startMeasurement(this.initialSendSeqNum);
     return true;
   }
 
-  startConnection() {
-    const flags = new Flags().withSyn();
-    const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
-    // TODO: check what to do in case the packet couldn't be sent
-    sendIpPacket(this.srcHost, this.dstHost, segment);
+  // Reset the TCP connection in response to an unexpected segment
+  static handleUnexpectedSegment(
+    srcHost: ViewHost,
+    srcPort: Port,
+    dstHost: ViewHost,
+    dstPort: Port,
+    segment: TcpSegment,
+  ) {
+    // An incoming segment containing a RST is discarded
+    if (segment.flags.rst) {
+      return;
+    }
+    // An incoming segment not containing a RST causes a RST to be sent in response
+    let resetSegment;
+    if (segment.flags.ack) {
+      // <SEQ=SEG.ACK><CTL=RST>
+      const flags = new Flags().withRst();
+      const segAck = segment.acknowledgementNumber;
+
+      resetSegment = new TcpSegment(srcPort, dstPort, segAck, 0);
+      resetSegment.withFlags(flags);
+    } else {
+      // <SEQ=0><ACK=SEG.SEQ+SEG.LEN><CTL=RST,ACK>
+      const flags = new Flags().withRst().withAck();
+      const flagsLength =
+        (segment.flags.syn ? 1 : 0) + (segment.flags.fin ? 1 : 0);
+      const ackNum = segment.sequenceNumber + segment.data.length + flagsLength;
+
+      resetSegment = new TcpSegment(srcPort, dstPort, 0, ackNum);
+      resetSegment.withFlags(flags);
+    }
+    sendIpPacket(srcHost, dstHost, resetSegment);
+
+    const srcInterface = srcHost.interfaces[0];
+    const dstInterface = dstHost.interfaces[0];
+
+    // Drop the segment
+    const packet = new IPv4Packet(srcInterface.ip, dstInterface.ip, segment);
+    const frame = new EthernetFrame(srcInterface.mac, dstInterface.mac, packet);
+    dropPacket(srcHost.viewgraph, srcHost.id, frame);
   }
 
-  recvSynAck(segment: TcpSegment) {
-    if (!segment.flags.syn || !segment.flags.ack) {
-      return false;
-    }
-    if (
-      segment.acknowledgementNumber !==
-      (this.initialSendSeqNum + 1) % u32_MODULUS
-    ) {
-      return false;
-    }
-    this.recvNext = (segment.sequenceNumber + 1) % u32_MODULUS;
-    this.initialRecvSeqNum = segment.sequenceNumber;
-    this.sendNext = segment.acknowledgementNumber;
-    this.sendWindow = segment.window;
-
-    const ackSegment = this.newSegment(this.sendNext, this.recvNext);
-    ackSegment.withFlags(new Flags().withAck());
-    // TODO: check what to do in case the packet couldn't be sent
-    sendIpPacket(this.srcHost, this.dstHost, ackSegment);
-  }
-
-  private handleSegment(segment: TcpSegment) {
+  private handleSegment(segment: TcpSegment): ProcessingResult {
     // Sanity check: ports match with expected
     if (
       segment.sourcePort !== this.dstPort ||
@@ -221,26 +271,30 @@ export class TcpState {
         if (ack <= this.initialSendSeqNum || ack > this.sendNext) {
           if (flags.rst) {
             console.debug("Invalid SYN_SENT ACK with RST");
-            return false;
+            return ProcessingResult.DISCARD;
           }
           console.debug("Invalid SYN_SENT ACK, sending RST");
-          this.newSegment(ack, 0).withFlags(new Flags().withRst());
-          return false;
+          // Send a RST segment
+          const newSegment = this.newSegment(ack, 0);
+          newSegment.withFlags(new Flags().withRst());
+          sendIpPacket(this.srcHost, this.dstHost, newSegment);
+          return ProcessingResult.DISCARD;
         }
         // Try to process ACK
         if (!this.isAckValid(segment.acknowledgementNumber)) {
           console.debug("Invalid SYN_SENT ACK");
-          return false;
+          return ProcessingResult.DISCARD;
         }
       }
       if (flags.rst) {
-        // TODO: handle gracefully
         if (flags.ack) {
           // drop the segment, enter CLOSED state, delete TCB, and return
-          throw new Error("error: connection reset");
+          console.debug("connection reset");
+          this.connectionQueue.push(false);
+          return ProcessingResult.RESET;
         } else {
           console.debug("SYN_SENT RST without ACK, dropping segment");
-          return false;
+          return ProcessingResult.DISCARD;
         }
       }
       if (flags.syn) {
@@ -253,12 +307,12 @@ export class TcpState {
           // It's a valid SYN-ACK
           // Process the segment normally
           this.state = TcpStateEnum.ESTABLISHED;
-          this.connectionQueue.push(undefined);
-          if (!this.handleSegmentData(segment)) {
+          this.connectionQueue.push(true);
+          if (this.handleSegmentData(segment) !== ProcessingResult.SUCCESS) {
             console.debug("Segment data processing failed");
-            return false;
+            return ProcessingResult.DISCARD;
           }
-          return true;
+          return ProcessingResult.SUCCESS;
         } else {
           // It's a SYN
           if (segment.data.length > 0) {
@@ -268,47 +322,65 @@ export class TcpState {
           this.seqNumForLastWindowUpdate = segment.sequenceNumber;
           this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
           // Send SYN-ACK
-          this.newSegment(this.initialSendSeqNum, this.recvNext).withFlags(
-            new Flags().withSyn().withAck(),
+          const newSegment = this.newSegment(
+            this.initialSendSeqNum,
+            this.recvNext,
           );
+          newSegment.withFlags(new Flags().withSyn().withAck());
+          sendIpPacket(this.srcHost, this.dstHost, newSegment);
           this.state = TcpStateEnum.SYN_RECEIVED;
         }
       }
       if (!(flags.rst || flags.syn)) {
         console.debug("SYN_SENT segment without SYN or RST");
-        return false;
+        return ProcessingResult.DISCARD;
       }
-      return true;
+      return ProcessingResult.SUCCESS;
     }
     // Check the sequence number is valid
     const segSeq = segment.sequenceNumber;
     const segLen = segment.data.length;
     if (!this.isSeqNumValid(segSeq, segLen)) {
       console.debug("Sequence number not valid");
-      return false;
+      return ProcessingResult.DISCARD;
     }
 
-    // TODO: handle RST or SYN flags
-    if (flags.rst || flags.syn) {
-      // TODO: handle this gracefully
-      throw new Error("error: RST bit set");
+    if (flags.rst) {
+      if (!this.isInReceiveWindow(segSeq)) {
+        console.debug("RST SEQ outside receive window");
+        return ProcessingResult.DISCARD;
+      } else if (segSeq === this.recvNext) {
+        console.debug("RST SEQ matches recvNext, resetting connection");
+        return ProcessingResult.RESET;
+      } else {
+        // Send a challenge segment and discard the packet
+        const challengeSegment = this.newSegment(this.sendNext, this.recvNext);
+        challengeSegment.withFlags(new Flags().withAck());
+        sendIpPacket(this.srcHost, this.dstHost, challengeSegment);
+        return ProcessingResult.DISCARD;
+      }
+    }
+    if (flags.syn) {
+      // TODO: handle SYN flags
+      console.debug("SYN flag not supported");
+      return ProcessingResult.DISCARD;
     }
 
     // If the ACK bit is off, drop the segment.
     if (!flags.ack) {
       console.debug("ACK bit is off, dropping segment");
-      return false;
+      return ProcessingResult.DISCARD;
     }
     if (this.state === TcpStateEnum.SYN_RECEIVED) {
       if (!this.isAckValid(segment.acknowledgementNumber)) {
         console.debug("ACK invalid, dropping segment");
-        this.newSegment(segment.acknowledgementNumber, 0).withFlags(
-          new Flags().withRst(),
-        );
-        return false;
+        const newSegment = this.newSegment(segment.acknowledgementNumber, 0);
+        newSegment.withFlags(new Flags().withRst());
+        sendIpPacket(this.srcHost, this.dstHost, newSegment);
+        return ProcessingResult.DISCARD;
       }
       this.state = TcpStateEnum.ESTABLISHED;
-      this.connectionQueue.push(undefined);
+      this.connectionQueue.push(true);
       this.sendWindow = segment.window;
       this.seqNumForLastWindowUpdate = segment.sequenceNumber;
       this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
@@ -321,19 +393,32 @@ export class TcpState {
       this.state === TcpStateEnum.CLOSING
     ) {
       if (segment.acknowledgementNumber <= this.sendUnacknowledged) {
+        if (
+          segment.acknowledgementNumber === this.sendUnacknowledged &&
+          segment.acknowledgementNumber !== this.writeClosedSeqnum + 1
+        ) {
+          // Duplicate ACK
+          if (!this.congestionControl.notifyDupAck()) {
+            this.retransmitFirstSegment();
+          }
+        }
         // Ignore the ACK
       } else if (segment.acknowledgementNumber > this.sendNext) {
         console.debug("ACK for future segment, dropping segment");
         this.newSegment(this.sendNext, this.recvNext).withFlags(
           new Flags().withAck(),
         );
-        return false;
+        return ProcessingResult.DISCARD;
       } else {
-        this.sendUnacknowledged = segment.acknowledgementNumber;
+        this.processAck(segment);
       }
-      if (!this.processAck(segment)) {
-        console.debug("ACK processing failed, dropping segment");
-        return false;
+
+      // If SND.UNA < SEG.ACK =< SND.NXT, set SND.UNA <- SEG.ACK
+      if (this.isSegmentNewer(segment)) {
+        // set SND.WND <- SEG.WND, set SND.WL1 <- SEG.SEQ, and set SND.WL2 <- SEG.ACK.
+        this.sendWindow = segment.window;
+        this.seqNumForLastWindowUpdate = segment.sequenceNumber;
+        this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
       }
 
       if (this.state === TcpStateEnum.FIN_WAIT_1) {
@@ -344,9 +429,13 @@ export class TcpState {
     }
 
     // Process the segment data
-    if (!this.handleSegmentData(segment)) {
+    const result = this.handleSegmentData(segment);
+    if (result === ProcessingResult.DISCARD) {
       console.debug("Segment data processing failed, dropping segment");
-      return false;
+      return result;
+    } else if (result === ProcessingResult.POSTPONE) {
+      console.debug("Segment data processing postponed");
+      return result;
     }
 
     if (flags.fin) {
@@ -356,22 +445,34 @@ export class TcpState {
       this.notifySendPackets();
     }
 
-    return true;
+    return ProcessingResult.SUCCESS;
   }
 
   private dropSegment(segment: TcpSegment) {
-    const packet = new IPv4Packet(this.srcHost.ip, this.dstHost.ip, segment);
-    const frame = new EthernetFrame(this.srcHost.mac, this.dstHost.mac, packet);
+    // dummy values
+    const [srcIp, srcMac, dstIp, dstMac] = [
+      this.srcHost.interfaces[0].ip,
+      this.srcHost.interfaces[0].mac,
+      this.dstHost.interfaces[0].ip,
+      this.dstHost.interfaces[0].mac,
+    ];
+    const packet = new IPv4Packet(srcIp, dstIp, segment);
+    const frame = new EthernetFrame(srcMac, dstMac, packet);
     dropPacket(this.srcHost.viewgraph, this.srcHost.id, frame);
   }
 
-  private handleSegmentData(segment: TcpSegment) {
-    // NOTE: for simplicity, we ignore cases where RCV.NXT != SEG.SEQ
+  private handleSegmentData(segment: TcpSegment): ProcessingResult {
     const seqNum = segment.flags.syn
       ? (segment.sequenceNumber + 1) % u32_MODULUS
       : segment.sequenceNumber;
-    if (seqNum !== this.recvNext) {
-      return false;
+    if (seqNum > this.recvNext) {
+      // Send a possibly duplicate ACK
+      this.notifySendPackets();
+      // Postpone the segment
+      return ProcessingResult.POSTPONE;
+    } else if (seqNum < this.recvNext) {
+      // Drop the segment
+      return ProcessingResult.DISCARD;
     }
     const receivedData = segment.data;
     // NOTE: for simplicity, we ignore cases where the data is only partially
@@ -385,13 +486,17 @@ export class TcpState {
     this.recvWindow = MAX_BUFFER_SIZE - this.readBuffer.bytesAvailable();
     // We should send back an ACK segment
     this.notifySendPackets();
-    return true;
+    return ProcessingResult.SUCCESS;
   }
 
   async read(output: Uint8Array): Promise<number> {
     // Wait for there to be data in the read buffer
     while (this.readBuffer.isEmpty() && !this.readClosed) {
-      await this.readChannel.pop();
+      const available = await this.readChannel.pop();
+      if (available === -1) {
+        // Connection was reset
+        return -1;
+      }
     }
     // Consume the data and return it
     const readLength = this.readBuffer.read(output);
@@ -402,15 +507,28 @@ export class TcpState {
     return readLength;
   }
 
-  write(input: Uint8Array): number {
+  async write(input: Uint8Array): Promise<number> {
     if (this.writeClosedSeqnum >= 0) {
       throw new Error("write closed");
     }
-    const writeLength = this.writeBuffer.write(input);
-    if (this.sendWindowSize() > 0 && writeLength > 0) {
-      this.notifySendPackets();
+    let totalWrote = 0;
+    while (totalWrote < input.length) {
+      const writeLength = this.writeBuffer.write(input.subarray(totalWrote));
+      if (writeLength === 0) {
+        // Buffer is full, wait for space
+        const available = await this.writeChannel.pop();
+        if (available === -1) {
+          // Connection was reset
+          return -1;
+        }
+      } else {
+        totalWrote += writeLength;
+        if (this.sendWindowSize() > 0) {
+          this.notifySendPackets();
+        }
+      }
     }
-    return writeLength;
+    return totalWrote;
   }
 
   closeWrite() {
@@ -418,6 +536,10 @@ export class TcpState {
       (this.sendUnacknowledged + this.writeBuffer.bytesAvailable()) %
       u32_MODULUS;
     this.notifySendPackets();
+  }
+
+  abort() {
+    this.cmdQueue.push(Command.ABORT);
   }
 
   // utils
@@ -459,28 +581,6 @@ export class TcpState {
     return this.sendUnacknowledged < ackNum && ackNum <= this.sendNext;
   }
 
-  private processAck(segment: TcpSegment): boolean {
-    // From https://datatracker.ietf.org/doc/html/rfc9293#section-3.10.7.4-2.5.2.2.2.3.1
-    // If the ACK is for a packet not yet sent, drop it
-    if (this.sendNext < segment.acknowledgementNumber) {
-      return false;
-    }
-    // If SND.UNA < SEG.ACK =< SND.NXT, set SND.UNA <- SEG.ACK
-    if (
-      this.sendUnacknowledged === undefined ||
-      this.sendUnacknowledged <= segment.acknowledgementNumber
-    ) {
-      this.sendUnacknowledged = segment.acknowledgementNumber;
-      if (this.isSegmentNewer(segment)) {
-        // set SND.WND <- SEG.WND, set SND.WL1 <- SEG.SEQ, and set SND.WL2 <- SEG.ACK.
-        this.sendWindow = segment.window;
-        this.seqNumForLastWindowUpdate = segment.sequenceNumber;
-        this.ackNumForLastWindowUpdate = segment.acknowledgementNumber;
-      }
-    }
-    return true;
-  }
-
   private isSegmentNewer(segment: TcpSegment): boolean {
     // Since both SEQ and ACK numbers are monotonic, we can use
     // them to determine if the segment is newer than the last
@@ -495,6 +595,39 @@ export class TcpState {
     );
   }
 
+  private processAck(segment: TcpSegment) {
+    const ackNum = segment.acknowledgementNumber;
+    // Don't count the FIN or SYN bytes
+    const finByte =
+      (ackNum === this.writeClosedSeqnum + 1 ? 1 : 0) +
+      (ackNum === this.initialSendSeqNum + 1 ? 1 : 0);
+
+    if (ackNum === this.writeClosedSeqnum + 1) {
+      this.writeClosed = true;
+    }
+
+    const acknowledgedBytes =
+      (u32_MODULUS + ackNum - this.sendUnacknowledged - finByte) % u32_MODULUS;
+
+    if (acknowledgedBytes === 0) {
+      return;
+    }
+
+    // Remove ACKed bytes from queue
+    this.retransmissionQueue.ack(ackNum);
+    this.writeBuffer.shift(acknowledgedBytes);
+    this.writeChannel.push(0);
+
+    // Notify Congestion Control module
+    this.congestionControl.notifyAck(acknowledgedBytes);
+    this.sendUnacknowledged = ackNum;
+    // Update RTT estimations
+    this.rttEstimator.finishMeasurement(ackNum);
+
+    // Transmit new segments
+    this.notifySendPackets();
+  }
+
   private notifiedSendPackets = false;
 
   private notifySendPackets() {
@@ -502,77 +635,127 @@ export class TcpState {
       return;
     }
     this.notifiedSendPackets = true;
-    setTimeout(() => this.sendQueue.push(undefined), 5);
+    setTimeout(
+      () => this.cmdQueue.push(Command.SEND_ACK),
+      10 * this.ctx.getCurrentSpeed(),
+    );
   }
 
   private async mainLoop() {
-    const MAX_SEGMENT_SIZE = 1400;
-
-    let recheckPromise = this.sendQueue.pop();
+    let recheckPromise = this.cmdQueue.pop();
     let receivedSegmentPromise = this.tcpQueue.pop();
     let retransmitPromise = this.retransmissionQueue.pop();
 
-    while (!this.readClosed || this.writeClosedSeqnum === -1) {
+    while (!this.readClosed || !this.writeClosed) {
       const result = await Promise.race([
         recheckPromise,
         receivedSegmentPromise,
         retransmitPromise,
       ]);
 
-      if (result === undefined) {
-        recheckPromise = this.sendQueue.pop();
+      if (result === Command.SEND_ACK) {
+        recheckPromise = this.cmdQueue.pop();
         this.notifiedSendPackets = false;
+      } else if (result === Command.ABORT) {
+        // Send RST and quit
+        const segment = this.newSegment(this.sendNext, 0);
+        segment.withFlags(new Flags().withRst());
+        sendIpPacket(this.srcHost, this.dstHost, segment);
+        break;
       } else if ("segment" in result) {
         receivedSegmentPromise = this.tcpQueue.pop();
-        if (this.handleSegment(result.segment)) {
-          this.retransmissionQueue.ack(this.recvNext);
-        } else {
-          console.log("Dropping segment");
-          this.dropSegment(result.segment);
+        let segment = result.segment;
+
+        let processingResult = this.handleSegment(segment);
+
+        if (processingResult === ProcessingResult.DISCARD) {
+          this.dropSegment(segment);
+          continue;
+        }
+
+        while (
+          (processingResult === ProcessingResult.DISCARD ||
+            processingResult === ProcessingResult.SUCCESS) &&
+          !this.recvQueue.isEmpty()
+        ) {
+          segment = this.recvQueue.dequeue();
+          processingResult = this.handleSegment(segment);
+          if (processingResult === ProcessingResult.DISCARD) {
+            this.dropSegment(segment);
+          }
+        }
+
+        if (processingResult === ProcessingResult.POSTPONE) {
+          // Enqueue the segment for later processing
+          this.recvQueue.enqueue(segment);
+        } else if (processingResult === ProcessingResult.RESET) {
+          // Reset the connection
+          this.dropSegment(segment);
+          break;
         }
         continue;
       } else if ("seqNum" in result) {
         retransmitPromise = this.retransmissionQueue.pop();
-        this.sendPacket(result.seqNum, result.size);
+        // Retransmit the segment
+        this.resendPacket(result.seqNum, result.size);
+        this.congestionControl.notifyTimeout();
         continue;
       }
 
-      do {
-        const segment = this.newSegment(this.sendNext, this.recvNext).withFlags(
-          new Flags().withAck(),
-        );
+      const segment = this.newSegment(this.sendNext, this.recvNext).withFlags(
+        new Flags().withAck(),
+      );
 
-        const sendSize = Math.min(this.sendWindowSize(), MAX_SEGMENT_SIZE);
-        if (sendSize > 0) {
-          const data = new Uint8Array(sendSize);
-          const offset =
-            (u32_MODULUS + this.sendNext - this.sendUnacknowledged) %
-            u32_MODULUS;
-          const writeLength = this.writeBuffer.peek(offset, data);
+      const sendSize = Math.min(this.sendWindowSize(), MAX_SEGMENT_SIZE);
+      if (sendSize > 0) {
+        const data = new Uint8Array(sendSize);
+        const offset =
+          (u32_MODULUS + this.sendNext - this.sendUnacknowledged) % u32_MODULUS;
+        const writeLength = this.writeBuffer.peek(offset, data);
 
-          if (writeLength > 0) {
-            segment.withData(data.subarray(0, writeLength));
-            this.sendNext = (this.sendNext + writeLength) % u32_MODULUS;
-          }
+        if (writeLength > 0) {
+          segment.withData(data.subarray(0, writeLength));
+          this.sendNext = (this.sendNext + writeLength) % u32_MODULUS;
         }
-        segment.window = this.recvWindow;
+      }
+      segment.window = this.recvWindow;
 
-        if (this.sendNext === this.writeClosedSeqnum) {
-          this.sendNext = (this.sendNext + 1) % u32_MODULUS;
-          segment.flags.withFin();
-        }
-        // TODO: check what to do in case the packet couldn't be sent
-        sendIpPacket(this.srcHost, this.dstHost, segment);
-        this.retransmissionQueue.push(
-          segment.sequenceNumber,
-          segment.data.length,
-        );
-        // Repeat until we have no more data to send
-      } while (this.writeBuffer.bytesAvailable() > this.sendWindowSize());
+      if (this.sendNext === this.writeClosedSeqnum) {
+        this.sendNext = (this.sendNext + 1) % u32_MODULUS;
+        segment.flags.withFin();
+      }
+
+      // Ignore failed sends
+      if (sendIpPacket(this.srcHost, this.dstHost, segment)) {
+        this.rttEstimator.startMeasurement(segment.sequenceNumber);
+      }
+      this.retransmissionQueue.push(
+        segment.sequenceNumber,
+        segment.data.length,
+      );
+      // Repeat until we have no more data to send, or the window is full
+      const bytesInFlight = this.sendNext - this.sendUnacknowledged;
+      if (
+        this.writeBuffer.bytesAvailable() > bytesInFlight &&
+        this.sendWindowSize() > 0
+      ) {
+        this.notifySendPackets();
+      }
     }
+    this.abortConnection();
   }
 
-  private sendPacket(seqNum: number, size: number) {
+  // Closes the connection and notifies reads/writes of this
+  private abortConnection() {
+    this.state = TcpStateEnum.CLOSED;
+    this.readClosed = true;
+    this.writeClosed = true;
+    this.writeChannel.push(-1);
+    this.readChannel.push(-1);
+    this.tcpQueue.close();
+  }
+
+  private resendPacket(seqNum: number, size: number) {
     const segment = this.newSegment(seqNum, this.recvNext).withFlags(
       new Flags().withAck(),
     );
@@ -591,19 +774,31 @@ export class TcpState {
       segment.flags.withFin();
     }
     this.retransmissionQueue.push(segment.sequenceNumber, segment.data.length);
-    // TODO: check what to do in case the packet couldn't be sent
-    sendIpPacket(this.srcHost, this.dstHost, segment);
+    // Ignore failed sends
+    if (sendIpPacket(this.srcHost, this.dstHost, segment)) {
+      this.rttEstimator.discardMeasurement(segment.sequenceNumber);
+    }
+  }
+
+  private retransmitFirstSegment() {
+    // Remove item from the queue
+    const item = this.retransmissionQueue.popFirstSegment();
+    if (!item) {
+      return;
+    }
+    // Resend packet
+    this.resendPacket(item.seqNum, item.size);
   }
 
   private sendWindowSize() {
-    // TODO: add congestion control
-    return (
-      (this.sendUnacknowledged + this.sendWindow - this.sendNext) % u32_MODULUS
-    );
+    const rwnd = this.sendWindow;
+    const cwnd = this.congestionControl.getCwnd();
+
+    const windowSize = Math.min(rwnd, cwnd);
+    const bytesInFlight = this.sendNext - this.sendUnacknowledged;
+    return (windowSize - bytesInFlight) % u32_MODULUS;
   }
 }
-
-const RETRANSMIT_TIMEOUT = 60 * 1000;
 
 interface RetransmissionQueueItem {
   seqNum: number;
@@ -611,47 +806,84 @@ interface RetransmissionQueueItem {
 }
 
 class RetransmissionQueue {
-  private timeoutQueue: [RetransmissionQueueItem, (t: Ticker) => void][] = [];
-  private itemQueue = new AsyncQueue<RetransmissionQueueItem>();
+  private timeoutQueue = new AsyncQueue<undefined>();
+  private timeoutTick: (t: Ticker) => void = null;
+  private itemQueue: RetransmissionQueueItem[] = [];
 
   private ctx: GlobalContext;
+  private rttEstimator: RTTEstimator;
 
-  constructor(ctx: GlobalContext) {
+  constructor(ctx: GlobalContext, rttEstimator: RTTEstimator) {
     this.ctx = ctx;
+    this.rttEstimator = rttEstimator;
   }
 
   push(seqNum: number, size: number) {
-    const item = {
-      seqNum,
-      size,
-    };
-    let progress = 0;
-    const tick = (ticker: Ticker) => {
-      progress += ticker.elapsedMS * this.ctx.getCurrentSpeed();
-      if (progress >= RETRANSMIT_TIMEOUT) {
-        this.itemQueue.push(item);
-        Ticker.shared.remove(tick, this);
-      }
-    };
-    Ticker.shared.add(tick, this);
-    this.timeoutQueue.push([item, tick]);
+    const item = { seqNum, size };
+    this.itemQueue.push(item);
+    this.itemQueue.sort((a, b) => a.seqNum - b.seqNum);
+
+    if (!this.timeoutTick) {
+      this.startTimer();
+    }
   }
 
+  /**
+   * Waits for the timeout to expire and returns the first item in the queue.
+   * @returns the first item in the queue
+   */
   async pop() {
-    return await this.itemQueue.pop();
+    await this.timeoutQueue.pop();
+    const firstItem = this.itemQueue.shift();
+    if (this.itemQueue.length > 0) {
+      this.startTimer();
+    }
+    return firstItem;
   }
 
   ack(ackNum: number) {
-    this.timeoutQueue = this.timeoutQueue.filter(([item, tick]) => {
-      if (
+    this.itemQueue = this.itemQueue.filter((item) => {
+      return !(
         item.seqNum < ackNum ||
         (item.seqNum + item.size) % u32_MODULUS <= ackNum
-      ) {
-        Ticker.shared.remove(tick, this);
-        return false;
-      }
-      return true;
+      );
     });
+    if (this.itemQueue.length === 0) {
+      this.stopTimer();
+    }
+  }
+
+  popFirstSegment() {
+    if (this.itemQueue.length === 0) {
+      return;
+    }
+    const firstSegmentItem = this.itemQueue[0];
+    // Remove the segment from the queue
+    this.ack(firstSegmentItem.seqNum + 1);
+    return firstSegmentItem;
+  }
+
+  private startTimer() {
+    if (this.timeoutTick) {
+      return;
+    }
+    let progress = 0;
+    const tick = (ticker: Ticker) => {
+      progress += ticker.elapsedMS * this.ctx.getCurrentSpeed();
+      if (progress >= this.rttEstimator.getRtt()) {
+        this.timeoutQueue.push(undefined);
+        this.stopTimer();
+      }
+    };
+    this.timeoutTick = tick;
+    Ticker.shared.add(this.timeoutTick, this);
+  }
+
+  private stopTimer() {
+    if (this.timeoutTick) {
+      Ticker.shared.remove(this.timeoutTick, this);
+      this.timeoutTick = null;
+    }
   }
 }
 
@@ -691,13 +923,14 @@ class BytesBuffer {
   }
 
   write(data: Uint8Array): number {
-    const newLength = this.length + data.length;
-    if (newLength > this.buffer.length) {
+    if (this.length === this.buffer.length) {
       return 0;
     }
-    this.buffer.set(data, this.length);
+    const newLength = Math.min(this.buffer.length, this.length + data.length);
+    const dataSlice = data.subarray(0, newLength - this.length);
+    this.buffer.set(dataSlice, this.length);
     this.length = newLength;
-    return data.length;
+    return dataSlice.length;
   }
 
   bytesAvailable() {
@@ -706,5 +939,222 @@ class BytesBuffer {
 
   isEmpty() {
     return this.bytesAvailable() === 0;
+  }
+}
+
+type CongestionControlStateBehavior =
+  | SlowStart
+  | CongestionAvoidance
+  | FastRecovery;
+
+class CongestionControl {
+  private state: CongestionControlState;
+  private stateBehavior: CongestionControlStateBehavior;
+  private useFastRecovery: boolean;
+
+  constructor(useFastRecovery: boolean) {
+    this.state = {
+      cwnd: 1 * MAX_SEGMENT_SIZE,
+      ssthresh: Infinity,
+      dupAckCount: 0,
+    };
+    this.stateBehavior = new SlowStart();
+    this.useFastRecovery = useFastRecovery;
+  }
+
+  getCwnd(): number {
+    return this.state.cwnd;
+  }
+
+  notifyDupAck(): boolean {
+    if (!this.useFastRecovery) {
+      this.state.dupAckCount++;
+      const isThreeDupAcks = this.state.dupAckCount === 3;
+      if (isThreeDupAcks) {
+        this.notifyTimeout();
+      }
+      return isThreeDupAcks;
+    }
+    this.stateBehavior.handleAck(this.state, 0);
+    return this.state.dupAckCount === 3;
+  }
+
+  notifyAck(byteCount: number) {
+    this.stateBehavior.handleAck(this.state, byteCount);
+  }
+
+  notifyTimeout() {
+    this.state.ssthresh = Math.floor(this.state.cwnd / 2);
+    this.state.cwnd = 1 * MAX_SEGMENT_SIZE;
+    this.state.dupAckCount = 0;
+
+    console.log("TCP Timeout. Switching to Slow Start");
+    this.stateBehavior = new SlowStart();
+  }
+}
+
+interface CongestionControlState {
+  // The congestion window size, as a number of MSS
+  cwnd: number;
+  // The slow start threshold
+  ssthresh: number;
+  // The number of duplicate ACKs received
+  dupAckCount: number;
+}
+
+function handleDupAck(
+  state: CongestionControlState,
+  currentState: CongestionControlStateBehavior,
+) {
+  state.dupAckCount++;
+  if (state.dupAckCount !== 3) {
+    return currentState;
+  }
+  state.ssthresh = Math.floor(state.cwnd / 2);
+  state.cwnd = state.ssthresh + 3 * MAX_SEGMENT_SIZE;
+  console.log("Triple duplicate ACK received. Switching to Fast Recovery");
+  return new FastRecovery();
+}
+
+class SlowStart {
+  handleAck(
+    state: CongestionControlState,
+    byteCount: number,
+  ): CongestionControlStateBehavior {
+    if (byteCount === 0) {
+      return handleDupAck(state, this);
+    }
+    state.dupAckCount = 0;
+    state.cwnd += byteCount;
+    if (state.cwnd >= state.ssthresh) {
+      console.log(
+        "Reached the Slow Start Threshold. Switching to Congestion Avoidance",
+      );
+      return new CongestionAvoidance();
+    }
+    return this;
+  }
+}
+
+class CongestionAvoidance {
+  handleAck(
+    state: CongestionControlState,
+    byteCount: number,
+  ): CongestionControlStateBehavior {
+    if (byteCount === 0) {
+      return handleDupAck(state, this);
+    }
+    state.dupAckCount = 0;
+    state.cwnd += (byteCount * MAX_SEGMENT_SIZE) / state.cwnd;
+    return this;
+  }
+}
+
+class FastRecovery {
+  handleAck(
+    state: CongestionControlState,
+    byteCount: number,
+  ): CongestionControlStateBehavior {
+    if (byteCount === 0) {
+      // Duplicate ACK
+      state.cwnd += MAX_SEGMENT_SIZE;
+      return this;
+    }
+    state.cwnd = state.ssthresh;
+    console.log("Fast recovery finished. Switching to Congestion Avoidance");
+    return new CongestionAvoidance();
+  }
+}
+
+// Weight for the latest RTT sample when estimating the RTT.
+// The recommended value is 1/8
+const RTT_SAMPLE_WEIGHT = 0.125;
+// Weight for the latest sample when estimating the deviation.
+// The recommended value is 1/4
+const DEV_SAMPLE_WEIGHT = 0.25;
+
+class RTTEstimator {
+  private ctx: GlobalContext;
+  // Estimated Round Trip Time
+  // Initially set to 20 seconds
+  private estimatedRTT = 60 * 1000;
+  private devRTT = 0;
+
+  private measuring = false;
+  private currentSample = {
+    seqNum: 0,
+    rtt: 0,
+  };
+
+  constructor(ctx: GlobalContext) {
+    this.ctx = ctx;
+  }
+
+  getRtt() {
+    return this.estimatedRTT + 4 * this.devRTT;
+  }
+
+  startMeasurement(seqNum: number) {
+    if (this.measuring) {
+      return;
+    }
+    // Start measuring the RTT for the segment
+    this.currentSample.rtt = 0;
+    this.currentSample.seqNum = seqNum;
+    this.measuring = true;
+    Ticker.shared.add(this.measureTick, this);
+  }
+
+  finishMeasurement(ackNum: number) {
+    if (!this.measuring || ackNum < this.currentSample.seqNum) {
+      // Ignore the ACK
+      return;
+    }
+    // Stop measuring the RTT for the segment
+    this.measuring = false;
+    Ticker.shared.remove(this.measureTick, this);
+
+    // Update the estimated RTT and deviation
+    const sampleRTT = this.currentSample.rtt;
+
+    this.estimatedRTT =
+      (1 - RTT_SAMPLE_WEIGHT) * this.estimatedRTT +
+      RTT_SAMPLE_WEIGHT * sampleRTT;
+
+    this.devRTT =
+      (1 - DEV_SAMPLE_WEIGHT) * this.devRTT +
+      DEV_SAMPLE_WEIGHT * Math.abs(sampleRTT - this.estimatedRTT);
+  }
+
+  discardMeasurement(seqNum: number) {
+    if (!this.measuring || seqNum !== this.currentSample.seqNum) {
+      return;
+    }
+    // Stop measuring the RTT for the segment
+    this.measuring = false;
+    Ticker.shared.remove(this.measureTick, this);
+  }
+
+  private measureTick(ticker: Ticker) {
+    // Update the current sample's RTT
+    // NOTE: we do this to account for the simulation's speed
+    this.currentSample.rtt += ticker.elapsedMS * this.ctx.getCurrentSpeed();
+  }
+}
+
+class ReceivedSegmentsQueue {
+  private queue: TcpSegment[] = [];
+
+  enqueue(segment: TcpSegment) {
+    this.queue.push(segment);
+    this.queue.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+  }
+
+  dequeue(): TcpSegment | undefined {
+    return this.queue.shift();
+  }
+
+  isEmpty() {
+    return this.queue.length === 0;
   }
 }

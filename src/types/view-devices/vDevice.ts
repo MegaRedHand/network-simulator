@@ -27,11 +27,14 @@ import { DragDeviceMove, AddEdgeMove } from "../undo-redo";
 import { Layer, layerIncluded } from "../layer";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
+import { IpAddress } from "../../packets/ip";
 import {
   hideTooltip,
   removeTooltip,
   showTooltip,
 } from "../../graphics/renderables/canvas_tooltip_manager";
+
+const CIRCLE_RADIUS = 6; // Radius of the circle for drag and drop
 
 export enum DeviceType {
   Host = 0,
@@ -43,7 +46,7 @@ export interface NetworkInterface {
   name: string;
   mac: MacAddress;
   // TODO: add IP address
-  // ip?: string;
+  ip?: IpAddress;
 }
 
 export function layerFromType(type: DeviceType) {
@@ -60,12 +63,15 @@ export function layerFromType(type: DeviceType) {
 export abstract class ViewDevice extends Container {
   private sprite: Sprite;
   private tooltip: Text | null = null; // Tooltip como un Text de PIXI.js
+  private isDragCircle = false;
+  private circleGraphic?: Graphics;
+  private idLabel?: Text;
+  private isVisibleFlag = true; // Flag to track visibility
 
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
   ctx: GlobalContext;
 
-  mac: MacAddress;
   interfaces: NetworkInterface[] = [];
 
   highlightMarker: Graphics | null = null; // Marker to indicate selection
@@ -86,8 +92,7 @@ export abstract class ViewDevice extends Container {
    * Returns the id for the next device to send the packet to, or
    * null if there’s no next device to send the packet.
    * */
-  abstract receiveFrame(frame: EthernetFrame, senderId: DeviceId): void;
-  //                                        would be the interface
+  abstract receiveFrame(frame: EthernetFrame, iface: number): void;
 
   constructor(
     id: DeviceId,
@@ -95,7 +100,6 @@ export abstract class ViewDevice extends Container {
     viewgraph: ViewGraph,
     ctx: GlobalContext,
     position: Position,
-    mac: MacAddress,
     interfaces: NetworkInterfaceData[],
   ) {
     super();
@@ -104,11 +108,10 @@ export abstract class ViewDevice extends Container {
     this.viewgraph = viewgraph;
     this.ctx = ctx;
 
-    this.mac = mac;
     this.interfaces = interfaces.map((iface) => ({
       name: iface.name,
       mac: MacAddress.parse(iface.mac),
-      // TODO: Add ip (in NetworkDevice)
+      ip: iface.ip !== undefined ? IpAddress.parse(iface.ip) : undefined,
     }));
 
     this.sprite = new Sprite(texture);
@@ -124,13 +127,13 @@ export abstract class ViewDevice extends Container {
     this.interactive = true;
     this.cursor = "pointer";
     this.zIndex = ZIndexLevels.Device;
-    this.updateVisibility();
 
     // Add device ID label using the helper function
     this.addDeviceIdLabel();
+    this.updateVisibility();
 
     // Set up tooltip behavior
-    this.setupHoverTooltip();
+    // this.setupHoverTooltip();
 
     this.on("pointerdown", this.onPointerDown, this);
     this.on("click", this.onClick, this);
@@ -144,36 +147,104 @@ export abstract class ViewDevice extends Container {
     // Do nothing
   }
 
-  private setupHoverTooltip() {
-    this.on("mouseover", () => {
-      const currentLayer = this.ctx.getCurrentLayer();
-      const tooltipMessage = this.getTooltipDetails(currentLayer);
-      this.tooltip = showTooltip(
-        this,
-        tooltipMessage,
-        0,
-        this.height * 0.8 + 20,
-        this.tooltip,
-      );
-    });
+  setupTooltip(iface: number) {
+    const currentLayer = this.ctx.getCurrentLayer();
+    const tooltipMessage = this.getTooltipDetails(currentLayer, iface);
+    this.tooltip = showTooltip(
+      this,
+      tooltipMessage,
+      0,
+      this.height * 0.8 + 20,
+      this.tooltip,
+    );
+  }
 
-    this.on("mouseout", () => {
-      hideTooltip(this.tooltip);
-    });
+  hideToolTip() {
+    hideTooltip(this.tooltip);
+  }
+
+  setCircleColor(color: number) {
+    if (!this.isDragCircle) return;
+    if (this.circleGraphic) {
+      this.circleGraphic.clear();
+      this.circleGraphic.circle(0, 0, CIRCLE_RADIUS);
+      this.circleGraphic.fill({ color });
+    }
   }
 
   /**
    * Abstract method to get tooltip details based on the layer.
    * Must be implemented by derived classes.
+   * @param layer - The network layer for which to retrieve tooltip details.
+   * @param iface - The index of the network interface to provide details for.
+   * @returns A string with the tooltip content to display.
    */
-  abstract getTooltipDetails(layer: Layer): string;
+  abstract getTooltipDetails(layer: Layer, iface: number): string;
+
+  updateDevicesAspect() {
+    if (!this.isVisibleFlag) {
+      const edges = this.viewgraph
+        .getConnections(this.id)
+        .filter((e) => e.isVisible());
+      // if it doesn't have visible edges, hide it completely
+      if (!edges || edges.length === 0) {
+        this.visible = false;
+        return;
+      }
+      // if it has visible edges, show it as a drag circle
+      this.visible = true;
+      this.setAsDragCircle();
+    } else {
+      // if it is in the current layer, show it as a normal device
+      this.visible = true;
+      this.setAsNormalDevice();
+    }
+  }
 
   updateVisibility() {
-    this.visible = layerIncluded(this.getLayer(), this.viewgraph.getLayer());
+    this.isVisibleFlag = layerIncluded(
+      this.getLayer(),
+      this.viewgraph.getLayer(),
+    );
+  }
+
+  private setAsDragCircle() {
+    if (this.isDragCircle) return;
+    this.isDragCircle = true;
+
+    if (this.sprite) this.sprite.visible = false;
+    if (this.idLabel) this.idLabel.visible = false;
+    if (!this.circleGraphic) {
+      this.circleGraphic = new Graphics();
+      this.circleGraphic.circle(0, 0, CIRCLE_RADIUS);
+      this.circleGraphic.fill({ color: Colors.Lightblue });
+      this.addChild(this.circleGraphic);
+    }
+    this.eventMode = "static";
+    this.interactive = true;
+    this.cursor = "grab";
+  }
+
+  private setAsNormalDevice() {
+    if (!this.isDragCircle) return;
+    this.isDragCircle = false;
+
+    if (this.sprite) this.sprite.visible = true;
+    if (this.idLabel) this.idLabel.visible = true;
+    if (this.circleGraphic) {
+      this.removeChild(this.circleGraphic);
+      this.circleGraphic.destroy();
+      this.circleGraphic = undefined;
+    }
+    this.cursor = "pointer";
   }
 
   isVisible(): boolean {
-    return this.visible;
+    return this.isVisibleFlag;
+  }
+
+  ownMac(mac: MacAddress): boolean {
+    return this.interfaces.some((iface) => iface.mac.equals(mac));
   }
 
   // Function to add the ID label to the device
@@ -188,6 +259,7 @@ export abstract class ViewDevice extends Container {
     idText.anchor.set(0.5);
     idText.y = this.height * 0.8;
     idText.zIndex = ZIndexLevels.Label;
+    this.idLabel = idText;
     this.addChild(idText); // Add the ID text as a child of the device
   }
 
@@ -208,7 +280,6 @@ export abstract class ViewDevice extends Container {
     }
     ViewDevice.dragTarget = this;
 
-    // Guardar posición inicial
     ViewDevice.startPosition = { x: this.x, y: this.y };
     event.stopPropagation();
 
@@ -229,6 +300,13 @@ export abstract class ViewDevice extends Container {
       ViewDevice.connectionTarget = null;
       return;
     }
+
+    // if the device is not visible, ignore
+    if (!this.isVisibleFlag || !ViewDevice.connectionTarget.isVisibleFlag) {
+      ViewDevice.connectionTarget = null;
+      return;
+    }
+
     // Connect both devices
     const n1 = ViewDevice.connectionTarget.id;
     const n2 = this.id;
@@ -240,6 +318,10 @@ export abstract class ViewDevice extends Container {
   }
 
   selectToConnect() {
+    // if the device is not visible, do nothing
+    if (!this.isVisibleFlag) {
+      return;
+    }
     if (ViewDevice.connectionTarget) {
       ViewDevice.connectionTarget = null;
       return;
@@ -260,11 +342,11 @@ export abstract class ViewDevice extends Container {
     this.highlightMarker.roundRect(-width / 2, -height / 2, width, height, 5);
     this.highlightMarker.stroke({
       width: 3,
-      color: this.ctx.get_select_color(),
+      color: Colors.Violet,
       alpha: 0.6,
     });
     this.highlightMarker.fill({
-      color: this.ctx.get_select_color(),
+      color: Colors.Violet,
       alpha: 0.1,
     });
     this.highlightMarker.zIndex = ZIndexLevels.Device;
@@ -287,6 +369,7 @@ export abstract class ViewDevice extends Container {
   }
 
   select() {
+    if (this.isDragCircle) return;
     this.highlight(); // Calls highlight on select
     this.showInfo();
   }

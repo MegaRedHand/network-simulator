@@ -9,32 +9,57 @@ import { ViewHost } from "../types/view-devices";
 import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 import { ProgramBase } from "./program_base";
 
+const RESOURCE_MAP = new Map([
+  ["/small", generateResource(1 * 1024)], // 1 KB
+  ["/medium", generateResource(256 * 1024)], // 256 KB
+  ["/large", generateResource(1 * 1024 * 1024)], // 1 MB
+]);
+
+const RESOURCE_MAP_SIZES = new Map([
+  ["/small", "1 KB"],
+  ["/medium", "256 KB"],
+  ["/large", "1 MB"],
+]);
+
+function generateResource(size: number): Uint8Array {
+  const resource = new Uint8Array(size);
+  for (let i = 0; i < size; i++) {
+    resource[i] = Math.floor(Math.random() * 256);
+  }
+  return resource;
+}
+
 export class HttpClient extends ProgramBase {
   static readonly PROGRAM_NAME = TOOLTIP_KEYS.SEND_HTTP_REQUEST;
 
   private dstId: DeviceId;
+  private resource: string;
+
+  private stopped = false;
 
   protected _parseInputs(inputs: string[]): void {
-    if (inputs.length !== 1) {
+    if (inputs.length !== 2) {
       console.error(
-        "HttpClient requires 1 input. " + inputs.length + " were given.",
+        "HttpClient requires 2 input. " + inputs.length + " were given.",
       );
       return;
     }
     this.dstId = parseInt(inputs[0]);
+    this.resource = inputs[1];
   }
 
   protected _run() {
     // This starts the request from the background
     (async () => {
       await this.sendHttpRequest();
-      this.signalStop();
+      if (!this.stopped) {
+        this.signalStop();
+      }
     })();
   }
 
   protected _stop() {
-    // TODO: stop request preemptively?
-    // Nothing to do
+    this.stopped = true;
   }
 
   private async sendHttpRequest() {
@@ -51,19 +76,24 @@ export class HttpClient extends ProgramBase {
       return;
     }
 
-    // Encode dummy HTTP request
-    const httpRequest = "GET / HTTP/1.1\r\nHost: " + dstDevice.ip + "\r\n\r\n";
-    const content = new TextEncoder().encode(httpRequest);
+    // Encode HTTP request
+    // NOTE: For now, as hosts have just one interface, destination ip is hardcoded
+    const httpRequest = getContentRequest(
+      this.runner.interfaces[0].toString(),
+      this.resource,
+    );
 
     // Write request
     const socket = await this.runner.tcpConnect(this.dstId);
     if (!socket) {
-      console.warn(
-        "HttpClient failed to connect to socket. Program cancelled.",
-      );
+      console.warn("HttpClient failed to connect");
       return;
     }
-    const wrote = await socket.write(content);
+    if (this.stopped) {
+      socket.abort();
+      return;
+    }
+    const wrote = await socket.write(httpRequest);
     if (wrote < 0) {
       console.error("HttpClient failed to write to socket");
       return;
@@ -74,18 +104,40 @@ export class HttpClient extends ProgramBase {
 
     // Read response
     const buffer = new Uint8Array(1024);
-    const readLength = await socket.readAll(buffer);
-    if (readLength < 0) {
-      console.error("HttpClient failed to read from socket");
-      return;
+    const expectedLength = RESOURCE_MAP.get(this.resource)?.length || 0;
+    let totalRead = 0;
+    while (totalRead < expectedLength) {
+      if (this.stopped) {
+        socket.abort();
+        return;
+      }
+      const readLength = await socket.read(buffer);
+      if (readLength < 0) {
+        console.error("HttpClient failed to read from socket");
+        return;
+      }
+      totalRead += readLength;
     }
   }
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
+    const sizeOptions = [];
+    for (const [key, value] of RESOURCE_MAP_SIZES) {
+      sizeOptions.push({ value: key, text: value });
+    }
+
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);
     programInfo.withDestinationDropdown(viewgraph, srcId, Layer.App);
+    programInfo.withDropdown("Size of requested resource", sizeOptions);
     return programInfo;
   }
+}
+
+function getContentRequest(host: string, resource: string): Uint8Array {
+  const httpRequest =
+    "GET " + resource + " HTTP/1.1\r\nHost: " + host + "\r\n\r\n";
+  const content = new TextEncoder().encode(httpRequest);
+  return content;
 }
 
 export class HttpServer extends ProgramBase {
@@ -156,20 +208,37 @@ export class HttpServer extends ProgramBase {
     const buffer = new Uint8Array(1024).fill(0);
     const readLength = await socket.readAll(buffer);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const readContents = buffer.slice(0, readLength);
     if (readLength < 0) {
       console.error("HttpServer failed to read from socket");
       return;
     }
 
-    // TODO: validate request
+    const requestContents = new TextDecoder().decode(readContents);
+    const matches = requestContents.match(/GET (.+) HTTP\/1.1/);
+    if (!matches || matches.length < 2) {
+      console.error("HttpServer failed to parse request");
+      return;
+    }
+    const resourceContents = RESOURCE_MAP.get(matches[1]);
+    if (!resourceContents) {
+      console.error("HttpServer failed to find requested resource");
+      return;
+    }
 
     // Encode dummy HTTP response
-    const httpResponse = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
+    const httpResponse =
+      "HTTP/1.1 200 OK\r\nContent-Length: " +
+      resourceContents.length +
+      "\r\n\r\n";
     const content = new TextEncoder().encode(httpResponse);
     const wrote = await socket.write(content);
-    if (wrote < 0) {
+    if (wrote <= 0) {
+      console.error("HttpServer failed to write to socket");
+      return;
+    }
+    const wrote2 = await socket.write(resourceContents);
+    if (wrote2 <= 0) {
       console.error("HttpServer failed to write to socket");
       return;
     }

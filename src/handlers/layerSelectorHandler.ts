@@ -5,7 +5,6 @@ import {
   deselectElement,
   isSelectedElementVisible,
   refreshElement,
-  saveToLocalStorage,
 } from "../types/viewportManager";
 import {
   Dropdown,
@@ -85,7 +84,7 @@ export class LayerHandler {
    */
   private applyLayerChange(selectedLayer: string, showAlert: boolean) {
     this.ctx.changeLayer(selectedLayer);
-    saveToLocalStorage(this.ctx);
+    this.ctx.saveToLocalStorage();
     this.leftBar.setButtonsByLayer(selectedLayer);
     if (!isSelectedElementVisible()) {
       deselectElement();

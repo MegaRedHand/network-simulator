@@ -16,7 +16,8 @@ import { ProgressBar } from "../basic_components/progress_bar";
 import { LabeledProgressBar } from "../components/labeled_progress_bar";
 import { ArpTable } from "./arp_table";
 import { Layer } from "../../types/layer";
-import { DataNetworkDevice } from "../../types/data-devices";
+import { DataNetworkDevice, DataSwitch } from "../../types/data-devices";
+import { SwitchingTable } from "./switching_table";
 
 export class DeviceInfo extends BaseInfo {
   readonly device: ViewDevice;
@@ -28,7 +29,7 @@ export class DeviceInfo extends BaseInfo {
   }
 
   protected addCommonInfoFields(): void {
-    const { id, mac } = this.device;
+    const { id } = this.device;
     const connections = this.device.viewgraph.getVisibleConnectedDeviceIds(id);
 
     this.information.addField(TOOLTIP_KEYS.ID, id.toString(), TOOLTIP_KEYS.ID);
@@ -39,13 +40,27 @@ export class DeviceInfo extends BaseInfo {
     );
 
     const layer = this.device.viewgraph.getLayer();
+    const showIp = this.device.getType() !== DeviceType.Switch;
+    const showMac = layer === Layer.Link;
 
-    if (layer == Layer.Link) {
-      this.information.addField(
-        TOOLTIP_KEYS.MAC_ADDRESS,
-        mac.toString(),
-        TOOLTIP_KEYS.MAC_ADDRESS,
-      );
+    if (showIp) {
+      this.device.interfaces.forEach((iface) => {
+        this.information.addField(
+          TOOLTIP_KEYS.IP_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
+          iface.ip.toString(),
+          TOOLTIP_KEYS.IP_ADDRESS,
+        );
+      });
+    }
+
+    if (showMac) {
+      this.device.interfaces.forEach((iface) => {
+        this.information.addField(
+          TOOLTIP_KEYS.MAC_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
+          iface.mac.toString(),
+          TOOLTIP_KEYS.MAC_ADDRESS,
+        );
+      });
     }
   }
 
@@ -168,6 +183,30 @@ export class DeviceInfo extends BaseInfo {
       dataDevice.setArpTableChangeListener(() => {
         // update the ARP table in the UI
         arpTable.refreshTable();
+      });
+    } else {
+      console.warn(`Device with ID ${deviceId} is not a DataNetworkDevice.`);
+    }
+  }
+
+  addSwitchingTable(viewgraph: ViewGraph, deviceId: number): void {
+    const entries = viewgraph.getDataGraph().getSwitchingTable(deviceId);
+
+    const rows = entries.map((entry) => [entry.mac, entry.port.toString()]);
+
+    const switchingTable = new SwitchingTable({
+      rows,
+      viewgraph,
+      deviceId,
+    });
+
+    this.inputFields.push(switchingTable.toHTML());
+
+    const dataDevice = viewgraph.getDataGraph().getDevice(deviceId);
+
+    if (dataDevice instanceof DataSwitch) {
+      dataDevice.setSwitchingTableChangeListener(() => {
+        switchingTable.refreshTable();
       });
     } else {
       console.warn(`Device with ID ${deviceId} is not a DataNetworkDevice.`);

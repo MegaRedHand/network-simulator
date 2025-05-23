@@ -7,7 +7,7 @@ import { Position } from "../common";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { Texture, Ticker } from "pixi.js";
-import { EthernetFrame, MacAddress } from "../../packets/ethernet";
+import { EthernetFrame } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataRouter } from "../data-devices";
 import { dropPacket, sendViewPacket } from "../packet";
@@ -38,9 +38,7 @@ export class ViewRouter extends ViewNetworkDevice {
     viewgraph: ViewGraph,
     ctx: GlobalContext,
     position: Position,
-    mac: MacAddress,
     interfaces: NetworkInterfaceData[],
-    ip: IpAddress,
     mask: IpAddress,
     packetQueueSize: number = ROUTER_CONSTANTS.PACKET_QUEUE_MAX_SIZE,
     timePerByte: number = ROUTER_CONSTANTS.PROCESSING_SPEED,
@@ -51,9 +49,7 @@ export class ViewRouter extends ViewNetworkDevice {
       viewgraph,
       ctx,
       position,
-      mac,
       interfaces,
-      ip,
       mask,
     );
     this.packetQueueSize = packetQueueSize;
@@ -63,11 +59,6 @@ export class ViewRouter extends ViewNetworkDevice {
 
   showInfo(): void {
     const info = new DeviceInfo(this);
-    info.addField(
-      TOOLTIP_KEYS.IP_ADDRESS,
-      this.ip.octets.join("."),
-      TOOLTIP_KEYS.IP_ADDRESS,
-    );
 
     info.addProgressBar(
       TOOLTIP_KEYS.PACKET_QUEUE_USAGE,
@@ -118,16 +109,6 @@ export class ViewRouter extends ViewNetworkDevice {
 
   getType(): DeviceType {
     return DeviceType.Router;
-  }
-
-  getTooltipDetails(layer: Layer): string {
-    if (layer >= Layer.Network) {
-      // If we are in the network layer or below, show only the IP
-      return `IP: ${this.ip.octets.join(".")}`;
-    } else {
-      // If we are in the upper layer, show both IP and MAC
-      return `IP: ${this.ip.octets.join(".")}\nMAC: ${this.mac.toCompressedString()}`;
-    }
   }
 
   setMaxQueueSize(newSize: number) {
@@ -183,9 +164,9 @@ export class ViewRouter extends ViewNetworkDevice {
     });
   }
 
-  receiveDatagram(datagram: IPv4Packet) {
-    if (this.ip.equals(datagram.destinationAddress)) {
-      this.handleDatagram(datagram);
+  receiveDatagram(datagram: IPv4Packet, iface: number) {
+    if (this.ownIp(datagram.destinationAddress)) {
+      this.handleDatagram(datagram, iface);
       return;
     }
     this.addPacketToQueue(datagram);
@@ -196,7 +177,8 @@ export class ViewRouter extends ViewNetworkDevice {
     if (!this.packetQueue.enqueue(datagram)) {
       console.debug("Packet queue full, dropping packet");
       // dummy values
-      const frame = new EthernetFrame(this.mac, this.mac, datagram);
+      const dummyMac = this.interfaces[0].mac;
+      const frame = new EthernetFrame(dummyMac, dummyMac, datagram);
       dropPacket(this.viewgraph, this.id, frame);
       return;
     }
@@ -211,44 +193,19 @@ export class ViewRouter extends ViewNetworkDevice {
     if (!datagram) {
       return;
     }
-    // TODO: routePacket would return the sending interface, then the function
-    //       should find set the frame destination mac as the mac of the next
-    //       network device to receive the packet (or its interface), and
-    //       finally, call sendViewPacket, who would send the packet to all
-    //       devices connected with the interface.
-    const devices = this.routePacket(datagram);
 
-    if (!devices || devices.length === 0) {
-      // dummy values
-      const frame = new EthernetFrame(this.mac, this.mac, datagram);
-      dropPacket(this.viewgraph, this.id, frame);
-      return;
-    }
+    const iface = this.routePacket(datagram);
 
-    // TODO: Simulates the mapping of the packet's destination MAC address to the next network device in the path.
-    // This could either be the final destination of the packet or an intermediate device along the route.
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
-    if (!dstDevice) {
-      console.warn(
-        `Device with ip ${datagram.destinationAddress.toString()} not found in viewgraph`,
-      );
-      return;
-    }
-    const path = this.viewgraph.getPathBetween(this.id, dstDevice.id);
-    let dstMac = dstDevice.mac;
-    if (!path) return;
-    for (const id of path.slice(1)) {
-      const device = this.viewgraph.getDevice(id);
-      // if there’s a router in the middle, first send frame to router mac
-      if (device instanceof ViewNetworkDevice) {
-        dstMac = device.mac;
-        break;
-      }
-    }
-    for (const nextHopId of devices) {
-      const newFrame = new EthernetFrame(this.mac, dstMac, datagram);
-      sendViewPacket(this.viewgraph, this.id, newFrame, nextHopId);
-    }
+    // TODO: use arp table here?
+    const { src, dst } = ViewNetworkDevice.getForwardingData(
+      this.id,
+      dstDevice.id,
+      this.viewgraph,
+    );
+
+    const newFrame = new EthernetFrame(src.mac, dst.mac, datagram);
+    sendViewPacket(this.viewgraph, this.id, newFrame, iface);
 
     if (this.packetQueue.isEmpty()) {
       this.stopPacketProcessor();
@@ -276,8 +233,10 @@ export class ViewRouter extends ViewNetworkDevice {
     return this.packetQueue.dequeue();
   }
 
-  // TODO: Should retreive only the iface
-  routePacket(datagram: IPv4Packet): DeviceId[] {
+  routePacket(datagram: IPv4Packet): number {
+    console.debug(
+      `Device ${this.id} va a rutear el datagram con origen ${datagram.sourceAddress.toString()} y destino ${datagram.destinationAddress.toString()}`,
+    );
     const device = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!device || !(device instanceof DataRouter)) {
       return;
@@ -295,19 +254,10 @@ export class ViewRouter extends ViewNetworkDevice {
 
     if (!result) {
       console.warn("No route found for", datagram.destinationAddress);
-      return [];
+      return undefined;
     }
 
-    const devices = this.viewgraph
-      .getDataGraph()
-      .getConnectionsInInterface(this.id, result.iface);
-
-    if (!devices) {
-      console.error("Current device doesn't exist!", this.id);
-      return [];
-    }
-
-    return devices;
+    return result.iface;
   }
 }
 

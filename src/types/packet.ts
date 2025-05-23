@@ -23,7 +23,6 @@ import {
   TCP_PROTOCOL_NUMBER,
 } from "../packets/ip";
 import { GlobalContext } from "../context";
-import { DataRouter, DataSwitch } from "./data-devices";
 import {
   ICMP_REPLY_TYPE_NUMBER,
   ICMP_REQUEST_TYPE_NUMBER,
@@ -35,9 +34,11 @@ import {
   removeTooltip,
   showTooltip,
 } from "../graphics/renderables/canvas_tooltip_manager";
+import { TcpSegment } from "../packets/tcp";
 
 const contextPerPacketType: Record<string, GraphicsContext> = {
-  HTTP: circleGraphicsContext(Colors.Hazel, 5), // for HTTP
+  HTTP: circleGraphicsContext(Colors.Burgundy, 5),
+  TCP: circleGraphicsContext(Colors.Hazel, 5),
   IP: circleGraphicsContext(Colors.Green, 5),
   "ICMP-8": circleGraphicsContext(Colors.Red, 5),
   "ICMP-0": circleGraphicsContext(Colors.Yellow, 5),
@@ -70,8 +71,13 @@ function packetContext(frame: EthernetFrame): PacketContext {
         return { type: "ICMP-0", layer: Layer.Network };
       }
     } else if (datagram.payload.protocol() === TCP_PROTOCOL_NUMBER) {
-      // TODO: change when we have a TCP packet
-      return { type: "HTTP", layer: Layer.App };
+      const segment = datagram.payload as TcpSegment;
+      // TODO: we should have classes for each APP-layer protocol
+      // and use them to get the protocol type
+      if (segment.data.length > 0) {
+        return { type: "HTTP", layer: Layer.App };
+      }
+      return { type: "TCP", layer: Layer.Transport };
     }
   }
   if (frame.payload.type() === ARP_PROTOCOL_TYPE)
@@ -202,7 +208,17 @@ export class Packet extends Graphics {
     if (!newStartDevice) {
       return;
     }
-    newStartDevice.receiveFrame(this.rawPacket, this.currStart);
+
+    const edge = this.viewgraph.getEdge(this.currStart, this.currEnd);
+    if (!edge) {
+      console.warn(
+        `No edge connected devices ${this.currStart} and ${this.currEnd}`,
+      );
+      return;
+    }
+
+    const iface = edge.getDeviceInterface(this.currEnd);
+    newStartDevice.receiveFrame(this.rawPacket, iface);
   }
 
   traverseEdge(startId: DeviceId, endId: DeviceId): void {
@@ -345,47 +361,27 @@ export class Packet extends Graphics {
   }
 }
 
-// TODO: Replace and nextHopId with the sending interface. Like this, the function
-//       can manage to send the packet to each one of the interface connection.
 export function sendViewPacket(
   viewgraph: ViewGraph,
   srcId: DeviceId,
   rawPacket: EthernetFrame,
-  nextHopId?: DeviceId,
+  sendingIface?: number,
 ) {
   const srcMac = rawPacket.source;
   const dstMac = rawPacket.destination;
   console.debug(
     `Sending frame from ${srcMac.toString()} to ${dstMac.toString()}`,
   );
-  const originConnections = viewgraph.getConnections(srcId);
-  if (originConnections.length === 0) {
-    console.warn("El dispositivo de origen no tiene conexiones.");
-    return;
-  }
-  let firstEdge = originConnections.find((edge) => {
-    const otherId = edge.otherEnd(srcId);
-    const otherDevice = viewgraph.getDevice(otherId);
-    return otherDevice.mac.equals(dstMac);
+  viewgraph.getConnections(srcId).forEach((edge) => {
+    const dataEdge = edge.getData();
+    const iface =
+      dataEdge.from.id === srcId ? dataEdge.from.iface : dataEdge.to.iface;
+    if (iface === sendingIface) {
+      const nextHopId = edge.otherEnd(srcId);
+      const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket);
+      packet.traverseEdge(srcId, nextHopId);
+    }
   });
-  if (firstEdge === undefined) {
-    const datagraph = viewgraph.getDataGraph();
-    firstEdge = originConnections.find((edge) => {
-      const otherId = edge.otherEnd(srcId);
-      const otherDevice = datagraph.getDevice(otherId);
-      return (
-        otherDevice instanceof DataRouter || otherDevice instanceof DataSwitch
-      );
-    });
-  }
-  if (firstEdge === undefined && !nextHopId) {
-    console.warn(
-      "El dispositivo de origen no está conectado al destino, a un router o a un switch.",
-    );
-    return;
-  }
-  const packet = new Packet(viewgraph.ctx, viewgraph, rawPacket);
-  packet.traverseEdge(srcId, nextHopId ? nextHopId : firstEdge.otherEnd(srcId));
 }
 
 export function dropPacket(

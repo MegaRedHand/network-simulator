@@ -1,3 +1,4 @@
+import { CONFIG_SWITCH_KEYS } from "../../config_menu/switches/switch_factory";
 import { GlobalContext } from "../../context";
 import { TOOLTIP_CONTENT } from "../../utils/constants/tooltips_constants";
 
@@ -23,41 +24,30 @@ export function attachTooltip(
   key: string,
   hideDelay = false,
 ): void {
-  const tooltipsEnabled = globalContext?.get_enable_tooltips() ?? true;
-
   if (key in TOOLTIP_CONTENT) {
-    if (tooltipsEnabled) {
-      element.classList.add("has-tooltip");
+    const showHandler = () => showTooltip(key, element);
+    const hideHandler = () => {
+      if (hideDelay) {
+        startHideTooltipDelay();
+      } else {
+        hideTooltip();
+      }
+    };
 
-      const showHandler = () => showTooltip(key);
-      const hideHandler = () => {
-        if (hideDelay) {
-          startHideTooltipDelay();
-        } else {
-          hideTooltip();
+    element.addEventListener("mouseenter", showHandler);
+    element.addEventListener("mouseleave", hideHandler);
+
+    // Add a mutation observer to detect when the element is removed
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === "childList" && !document.body.contains(element)) {
+          hideTooltip(); // Hide the tooltip if the element is removed
+          observer.disconnect(); // Stop observing
         }
-      };
-
-      element.addEventListener("mouseenter", showHandler);
-      element.addEventListener("mouseleave", hideHandler);
-
-      // Add a mutation observer to detect when the element is removed
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (
-            mutation.type === "childList" &&
-            !document.body.contains(element)
-          ) {
-            hideTooltip(); // Hide the tooltip if the element is removed
-            observer.disconnect(); // Stop observing
-          }
-        });
       });
+    });
 
-      observer.observe(document.body, { childList: true, subtree: true });
-    } else {
-      element.classList.remove("has-tooltip");
-    }
+    observer.observe(document.body, { childList: true, subtree: true });
   }
 }
 
@@ -65,10 +55,14 @@ export function attachTooltip(
  * Shows a tooltip with the specified key.
  * @param key - The key for the tooltip content.
  */
-export function showTooltip(key: string): void {
-  const tooltipsEnabled = globalContext?.get_enable_tooltips() ?? true;
+export function showTooltip(key: string, element: HTMLElement): void {
+  const tooltipsEnabled =
+    globalContext
+      ?.getConfigMenu()
+      .getConfigSwitchValue(CONFIG_SWITCH_KEYS.ENABLE_TOOLTIPS) ?? true;
   if (!tooltipsEnabled) return;
 
+  element.classList.add("has-tooltip");
   const text = TOOLTIP_CONTENT[key as keyof typeof TOOLTIP_CONTENT];
   const tooltip = document.getElementById("global-tooltip");
   if (tooltip) {
@@ -107,7 +101,10 @@ export function hideTooltip(): void {
  * Updates the state of tooltips (enabled/disabled).
  */
 export function updateTooltipsState(): void {
-  const tooltipsEnabled = globalContext?.get_enable_tooltips() ?? true;
+  const tooltipsEnabled =
+    globalContext
+      ?.getConfigMenu()
+      .getConfigSwitchValue(CONFIG_SWITCH_KEYS.ENABLE_TOOLTIPS) ?? true;
 
   // Select all elements with the "has-tooltip" class
   const tooltipElements = document.querySelectorAll(".has-tooltip");
@@ -115,9 +112,7 @@ export function updateTooltipsState(): void {
   tooltipElements.forEach((element) => {
     const htmlElement = element as HTMLElement;
 
-    if (tooltipsEnabled) {
-      htmlElement.classList.add("has-tooltip");
-    } else {
+    if (!tooltipsEnabled) {
       htmlElement.classList.remove("has-tooltip");
     }
   });

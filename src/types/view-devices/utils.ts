@@ -1,5 +1,4 @@
 import { GlobalContext } from "../../context";
-import { MacAddress } from "../../packets/ethernet";
 import { IpAddress } from "../../packets/ip";
 import { Position } from "../common";
 import { DataNode, isNetworkNode, isRouter } from "../graphs/datagraph";
@@ -16,13 +15,9 @@ export function createViewDevice(
 ): ViewDevice {
   const position: Position = deviceInfo;
 
-  const mac: MacAddress = MacAddress.parse(deviceInfo.mac);
-
-  let ip: IpAddress;
   let mask: IpAddress;
 
   if (isNetworkNode(deviceInfo)) {
-    ip = IpAddress.parse(deviceInfo.ip);
     mask = IpAddress.parse(deviceInfo.mask);
   }
 
@@ -42,25 +37,14 @@ export function createViewDevice(
         viewgraph,
         ctx,
         position,
-        mac,
         interfaces,
-        ip,
         mask,
         packetQueueSize,
         timePerByte,
       );
     case DeviceType.Host:
-      return new ViewHost(
-        id,
-        viewgraph,
-        ctx,
-        position,
-        mac,
-        interfaces,
-        ip,
-        mask,
-      );
+      return new ViewHost(id, viewgraph, ctx, position, interfaces, mask);
     case DeviceType.Switch:
-      return new ViewSwitch(id, viewgraph, ctx, position, mac, interfaces);
+      return new ViewSwitch(id, viewgraph, ctx, position, interfaces);
   }
 }
