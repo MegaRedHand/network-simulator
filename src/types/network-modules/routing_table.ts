@@ -246,3 +246,28 @@ export function clearEditedIpsForEdge(
     clearEditedIp(dataGraph, datagraphEdge.to.id, fromIp);
   }
 }
+
+export function updateRoutingTableIface(
+  dataGraph: DataGraph,
+  routerId: DeviceId,
+  oldIface: number,
+  newIface: number,
+) {
+  const router = dataGraph.getDevice(routerId);
+  if (!router || !(router instanceof DataRouter)) {
+    console.warn(`Device with ID ${routerId} is not a router.`);
+    return;
+  }
+
+  let changed = false;
+  router.routingTable.forEach((entry) => {
+    if (entry.iface === oldIface) {
+      entry.iface = newIface;
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    dataGraph.notifyChanges?.();
+  }
+}
