@@ -12,6 +12,7 @@ import {
   regenerateRoutingTableClean,
   removeRoutingTableRow,
   saveRoutingTableManualChange,
+  sortRoutingTable,
 } from "../../types/network-modules/routing_table";
 import { DataRouter } from "../../types/data-devices";
 
@@ -52,6 +53,21 @@ export class RoutingTable {
       onEdit: onEdit,
       onDelete: onDelete,
       tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE],
+      allowAddRow: true,
+      onAddRow: (values: string[]) => {
+        const [ip, mask, ifaceStr] = values;
+        if (!isValidIP(ip) || !isValidIP(mask) || !isValidInterface(ifaceStr)) {
+          return;
+        }
+        const iface = parseInt(ifaceStr.replace("eth", ""), 10);
+        const router = this.props.viewgraph
+          .getDataGraph()
+          .getDevice(this.props.deviceId) as DataRouter;
+        router.routingTable.push({ ip, mask, iface });
+        sortRoutingTable(router.routingTable);
+        router.routingTableEdited = true;
+        this.updateRows();
+      },
     });
 
     this.toggleButton = new ToggleButton({

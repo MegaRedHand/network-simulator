@@ -10,6 +10,8 @@ export interface TableOptions {
   onEdit?: (row: number, col: number, newValue: string) => boolean; // Callback for editing cells
   onDelete?: (row: number) => boolean; // Callback for deleting rows
   tableClasses?: string[]; // Additional CSS classes for the table
+  allowAddRow?: boolean; // Allow adding new rows
+  onAddRow?: (values: string[]) => void;
 }
 
 export class Table {
@@ -80,7 +82,8 @@ export class Table {
   }
 
   private createRows(): void {
-    const { rows, fieldsPerRow, onEdit, onDelete } = this.options;
+    const { rows, fieldsPerRow, onEdit, onDelete, allowAddRow, onAddRow } =
+      this.options;
 
     rows.forEach((row, rowIndex) => {
       const tr = document.createElement("tr");
@@ -106,6 +109,42 @@ export class Table {
 
       this.tbody.appendChild(tr);
     });
+
+    if (allowAddRow && onAddRow) {
+      const addTr = document.createElement("tr");
+      addTr.classList.add("add-row");
+
+      const addCells: HTMLTableCellElement[] = [];
+
+      for (let i = 0; i < fieldsPerRow; i++) {
+        const td = document.createElement("td");
+        td.classList.add("editable-cell");
+        td.contentEditable = "true";
+
+        td.addEventListener("keydown", (event) => {
+          if (event.key === "Delete" || event.key === "Backspace") {
+            event.stopPropagation();
+          }
+        });
+        addTr.appendChild(td);
+        addCells.push(td);
+      }
+
+      const addTd = document.createElement("td");
+      const addButton = new Button({
+        text: "➕",
+        classList: [CSS_CLASSES.TRASH_BUTTON],
+        onClick: () => {
+          const values = addCells.map((cell) => cell.textContent?.trim() || "");
+          onAddRow(values);
+          addCells.forEach((cell) => (cell.textContent = ""));
+        },
+      });
+      addTd.appendChild(addButton.toHTML());
+      addTr.appendChild(addTd);
+
+      this.tbody.appendChild(addTr);
+    }
 
     this.table.appendChild(this.tbody);
   }
