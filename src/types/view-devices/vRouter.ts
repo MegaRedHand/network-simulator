@@ -39,6 +39,7 @@ export class ViewRouter extends ViewNetworkDevice {
     ctx: GlobalContext,
     position: Position,
     interfaces: NetworkInterfaceData[],
+    tag: string,
     mask: IpAddress,
     packetQueueSize: number = ROUTER_CONSTANTS.PACKET_QUEUE_MAX_SIZE,
     timePerByte: number = ROUTER_CONSTANTS.PROCESSING_SPEED,
@@ -50,6 +51,7 @@ export class ViewRouter extends ViewNetworkDevice {
       ctx,
       position,
       interfaces,
+      tag,
       mask,
     );
     this.packetQueueSize = packetQueueSize;

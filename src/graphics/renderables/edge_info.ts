@@ -53,12 +53,12 @@ export class EdgeInfo extends BaseInfo {
     );
     // Add MAC addresses as separate fields
     this.information.addField(
-      `MAC Address iface (Device ${from})`,
+      `MAC Address iface (${this.edge.viewgraph.getDevice(from).getIdentifier()})`,
       fromInterface.mac.toString(),
       TOOLTIP_KEYS.MAC_ADDRESS_IFACE,
     );
     this.information.addField(
-      `MAC Address iface (Device ${to})`,
+      `MAC Address iface (${this.edge.viewgraph.getDevice(to).getIdentifier()})`,
       toInterface.mac.toString(),
       TOOLTIP_KEYS.MAC_ADDRESS_IFACE,
     );
@@ -95,7 +95,7 @@ export class EdgeInfo extends BaseInfo {
 
     // Dropdown for selecting the interface for "from" device
     const fromIfaceDropdown = new Dropdown({
-      label: `Interface (Device ${from})`,
+      label: `Interface (${this.edge.viewgraph.getDevice(from).getIdentifier()})`,
       tooltip: TOOLTIP_KEYS.IFACE_EDITOR,
       options: [
         {
@@ -120,7 +120,7 @@ export class EdgeInfo extends BaseInfo {
 
     // Dropdown for selecting the interface for "to" device
     const toIfaceDropdown = new Dropdown({
-      label: `Interface (Device ${to})`,
+      label: `Interface (${this.edge.viewgraph.getDevice(to).getIdentifier()})`,
       tooltip: TOOLTIP_KEYS.IFACE_EDITOR,
       options: [
         {

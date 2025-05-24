@@ -44,9 +44,10 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     ctx: GlobalContext,
     position: Position,
     interfaces: NetworkInterfaceData[],
+    tag: string,
     ipMask: IpAddress,
   ) {
-    super(id, texture, viewgraph, ctx, position, interfaces);
+    super(id, texture, viewgraph, ctx, position, interfaces, tag);
     this.ipMask = ipMask;
   }
 

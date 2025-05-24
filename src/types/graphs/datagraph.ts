@@ -33,6 +33,7 @@ interface CommonDataNode {
   type: DeviceType;
   // TODO: remove this
   interfaces: NetworkInterfaceData[];
+  tag?: string;
 }
 
 export interface NetworkInterfaceData {

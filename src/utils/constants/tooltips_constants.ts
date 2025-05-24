@@ -1,6 +1,7 @@
 // Tooltip Keys
 export const TOOLTIP_KEYS = {
   ID: "ID",
+  TAG: "Tag",
   CONNECTED_DEVICES: "Connected Devices",
   MAC_ADDRESS: "MacAddress",
   IP_ADDRESS: "IP Address",
@@ -294,4 +295,6 @@ export const TOOLTIP_CONTENT = {
     "A checksum on the header only, used for error-checking of the header.",
   [TOOLTIP_KEYS.PAYLOAD]:
     "The encapsulated data carried by the IP packet. This could be a TCP segment, UDP datagram, or other protocol data.",
+  [TOOLTIP_KEYS.TAG]:
+    "The tag is a label or identifier assigned to a device or network element.",
 } as const;
