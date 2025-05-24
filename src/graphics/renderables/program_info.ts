@@ -15,18 +15,12 @@ export class ProgramInfo implements Renderable {
     this.name = name;
   }
 
-  withDestinationDropdown(
-    viewgraph: ViewGraph,
-    srcId: DeviceId,
-    layer?: Layer,
-  ) {
+  withDestinationDropdown(viewgraph: ViewGraph, srcId: DeviceId, layer: Layer) {
     let devices = otherDevices(viewgraph, srcId);
-    if (layer) {
-      devices = devices.filter((device) => {
-        const deviceLayer = viewgraph.getDevice(device.id)?.getLayer();
-        return layerIncluded(deviceLayer, layer);
-      });
-    }
+    devices = devices.filter((device) => {
+      const deviceLayer = viewgraph.getDevice(device.id)?.getLayer();
+      return layerIncluded(deviceLayer, layer);
+    });
     this.withDropdown(TOOLTIP_KEYS.DESTINATION, devices);
   }
 

@@ -200,14 +200,17 @@ export class ViewRouter extends ViewNetworkDevice {
 
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
     // TODO: use arp table here?
-    const { src, dst } = ViewNetworkDevice.getForwardingData(
+    const forwardingData = ViewNetworkDevice.getForwardingData(
       this.id,
-      dstDevice.id,
+      dstDevice?.id,
       this.viewgraph,
     );
+    if (forwardingData && forwardingData.sendingIface === iface) {
+      const { src, dst } = forwardingData;
 
-    const newFrame = new EthernetFrame(src.mac, dst.mac, datagram);
-    sendViewPacket(this.viewgraph, this.id, newFrame, iface);
+      const newFrame = new EthernetFrame(src.mac, dst.mac, datagram);
+      sendViewPacket(this.viewgraph, this.id, newFrame, iface);
+    } else console.debug(`Router ${this.id} could not forward packet.`);
 
     if (this.packetQueue.isEmpty()) {
       this.stopPacketProcessor();

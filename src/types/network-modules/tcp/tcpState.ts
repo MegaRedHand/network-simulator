@@ -53,6 +53,10 @@ function sendIpPacket(
     dst.id,
     viewgraph,
   );
+  if (!forwardingData) {
+    console.warn(`Device ${dst.id} is not reachable from device ${src.id}`);
+    return false;
+  }
   const [srcData, dstData, sendingIface] = [
     forwardingData.src,
     forwardingData.dst,
