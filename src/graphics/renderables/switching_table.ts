@@ -1,5 +1,11 @@
 import { DeviceId } from "../../types/graphs/datagraph";
 import { ViewGraph } from "../../types/graphs/viewgraph";
+import {
+  clearSwitchingTable,
+  getSwitchingTable,
+  removeSwitchingTableEntry,
+  saveSwitchingTableManualChange,
+} from "../../types/network-modules/switching_table";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
@@ -90,7 +96,7 @@ export class SwitchingTable {
     const dataGraph = this.props.viewgraph.getDataGraph();
 
     // clear the current switching table
-    dataGraph.clearSwitchingTable(this.props.deviceId);
+    clearSwitchingTable(dataGraph, this.props.deviceId);
 
     this.updateRows([]);
 
@@ -98,11 +104,10 @@ export class SwitchingTable {
   }
 
   private setSwitchingTableCallbacks() {
+    const dataGraph = this.props.viewgraph.getDataGraph();
     const onDelete = (row: number) => {
       // Get the current switching table
-      const switchingTable = this.props.viewgraph
-        .getDataGraph()
-        .getSwitchingTable(this.props.deviceId);
+      const switchingTable = getSwitchingTable(dataGraph, this.props.deviceId);
 
       // Validate that the index is valid
       if (row < 0 || row >= switchingTable.length) {
@@ -114,9 +119,7 @@ export class SwitchingTable {
       const mac = switchingTable[row].mac;
 
       // Remove the entry from the switching table using the MAC
-      this.props.viewgraph
-        .getDataGraph()
-        .removeSwitchingTableEntry(this.props.deviceId, mac);
+      removeSwitchingTableEntry(dataGraph, this.props.deviceId, mac);
 
       return true;
     };
@@ -135,9 +138,7 @@ export class SwitchingTable {
       }
 
       // Get the current switching table
-      const switchingTable = this.props.viewgraph
-        .getDataGraph()
-        .getSwitchingTable(this.props.deviceId);
+      const switchingTable = getSwitchingTable(dataGraph, this.props.deviceId);
 
       // Validate that the index is valid
       if (row < 0 || row >= switchingTable.length) {
@@ -149,13 +150,12 @@ export class SwitchingTable {
       const mac = switchingTable[row].mac;
 
       // Update the Switching Table entry
-      this.props.viewgraph
-        .getDataGraph()
-        .saveSwitchingTableManualChange(
-          this.props.deviceId,
-          mac,
-          parseInt(newValue, 10),
-        );
+      saveSwitchingTableManualChange(
+        dataGraph,
+        this.props.deviceId,
+        mac,
+        parseInt(newValue, 10),
+      );
 
       return true;
     };
@@ -164,9 +164,8 @@ export class SwitchingTable {
   }
 
   refreshTable(): void {
-    const updatedEntries = this.props.viewgraph
-      .getDataGraph()
-      .getSwitchingTable(this.props.deviceId);
+    const dataGraph = this.props.viewgraph.getDataGraph();
+    const updatedEntries = getSwitchingTable(dataGraph, this.props.deviceId);
 
     const updatedRows = updatedEntries.map((entry) => ({
       values: [entry.mac.toString(), entry.port.toString()],
