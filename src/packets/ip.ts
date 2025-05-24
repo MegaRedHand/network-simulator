@@ -67,6 +67,29 @@ export class IpAddress {
     return new this(octets);
   }
 
+  static getPrefixLength(mask: IpAddress): number {
+    let prefixLength = 0;
+    for (let i = 0; i < 4; i++) {
+      if (mask.octets[i] === 255) {
+        prefixLength += 8;
+      } else if (mask.octets[i] === 0) {
+        break;
+      } else {
+        let bits = 0;
+        for (let j = 7; j >= 0; j--) {
+          if ((mask.octets[i] & (1 << j)) !== 0) {
+            bits++;
+          } else {
+            break;
+          }
+        }
+        prefixLength += bits;
+        break;
+      }
+    }
+    return prefixLength;
+  }
+
   // Turn to string
   toString(): string {
     return Array.from(this.octets).join(".");

@@ -1,4 +1,4 @@
-import { Table } from "../basic_components/table";
+import { Table, TableRow } from "../basic_components/table";
 import { ToggleButton } from "../basic_components/toggle_button";
 import { Button } from "../basic_components/button";
 import { ViewGraph } from "../../types/graphs/viewgraph";
@@ -8,9 +8,16 @@ import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { ROUTER_CONSTANTS } from "../../utils/constants/router_constants";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { showError, showSuccess } from "./alert_manager";
+import {
+  addRoutingTableEntry,
+  regenerateRoutingTableClean,
+  removeRoutingTableRow,
+  saveRoutingTableManualChange,
+} from "../../types/network-modules/routing_table";
+import { DataRouter } from "../../types/data-devices";
 
 export interface RoutingTableProps {
-  rows: string[][]; // Rows for the table
+  rows: TableRow[]; // Rows for the table
   viewgraph: ViewGraph; // ViewGraph instance for callbacks
   deviceId: DeviceId; // Device ID for callbacks
 }
@@ -23,10 +30,8 @@ export class RoutingTable {
   constructor(private props: RoutingTableProps) {
     this.container = document.createElement("div");
 
-    const { onEdit, onDelete, onRegenerate } = this.setRoutingTableCallbacks(
-      props.viewgraph,
-      props.deviceId,
-    );
+    const { onEdit, onDelete, onRegenerate, onAddRow } =
+      this.setRoutingTableCallbacks(props.viewgraph, props.deviceId);
 
     // Create the regenerate button
     const regenerateButton = this.createRegenerateButton(onRegenerate);
@@ -42,9 +47,10 @@ export class RoutingTable {
       headers: headers,
       fieldsPerRow: ROUTER_CONSTANTS.TABLE_FIELDS_PER_ROW,
       rows: props.rows,
-      editableColumns: [false, true, true, false], // Make the last column non-editable
+      editableColumns: [true, true, true, false], // Make the last column non-editable
       onEdit: onEdit,
       onDelete: onDelete,
+      onAddRow: onAddRow,
       tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE],
     });
 
@@ -74,8 +80,23 @@ export class RoutingTable {
     return this.container;
   }
 
-  updateRows(newRows: string[][]): void {
-    this.table.updateRows(newRows); // Use the new method in Table
+  getRoutingTable(): TableRow[] {
+    const routingTable = this.props.viewgraph
+      .getDataGraph()
+      .getDevice(this.props.deviceId) as DataRouter;
+    if (!routingTable) {
+      console.warn("Routing table not found.");
+      return [];
+    }
+    return routingTable.routingTable.map((entry) => ({
+      values: [entry.ip, entry.mask, `eth${entry.iface}`],
+      edited: entry.edited ?? false, // toma el valor de entry.edited si existe
+    }));
+  }
+
+  updateRows(): void {
+    const newTableData = this.getRoutingTable();
+    this.table.updateRows(newTableData); // Use the new method in Table
   }
 
   // Function to create the regenerate button
@@ -84,7 +105,7 @@ export class RoutingTable {
   ): HTMLButtonElement {
     const regenerateAllButton = new Button({
       text: "🔄",
-      classList: [CSS_CLASSES.REGENERATE_BUTTON],
+      classList: [CSS_CLASSES.TABLE_BUTTON],
       onClick: onRegenerateCallback,
     });
 
@@ -92,22 +113,12 @@ export class RoutingTable {
   }
 
   private OnRegenerate(): void {
-    const newTableData = this.props.viewgraph
-      .getDataGraph()
-      .regenerateRoutingTableClean(this.props.deviceId);
+    regenerateRoutingTableClean(
+      this.props.viewgraph.getDataGraph(),
+      this.props.deviceId,
+    );
 
-    if (!newTableData.length) {
-      console.warn("Failed to regenerate routing table.");
-      return;
-    }
-
-    const newRows = newTableData.map((entry) => [
-      entry.ip,
-      entry.mask,
-      `eth${entry.iface}`,
-    ]);
-
-    this.updateRows(newRows);
+    this.updateRows();
 
     showSuccess(ALERT_MESSAGES.ROUTING_TABLE_REGENERATED);
   }
@@ -123,16 +134,21 @@ export class RoutingTable {
       else if (col === ROUTER_CONSTANTS.INTERFACE_COL_INDEX)
         isValid = isValidInterface(newValue);
       if (isValid) {
-        viewgraph
-          .getDataGraph()
-          .saveRTManualChange(deviceId, row, col, newValue);
-        showSuccess(ALERT_MESSAGES.ROUTING_TABLE_UPDATED);
+        saveRoutingTableManualChange(
+          viewgraph.getDataGraph(),
+          deviceId,
+          row,
+          col,
+          newValue,
+        );
+
+        this.updateRows();
       }
       return isValid;
     };
 
     const onDelete = (row: number) => {
-      viewgraph.getDataGraph().removeRoutingTableRow(deviceId, row);
+      removeRoutingTableRow(viewgraph.getDataGraph(), deviceId, row);
       return true;
     };
 
@@ -141,7 +157,22 @@ export class RoutingTable {
       this.OnRegenerate();
     };
 
-    return { onEdit, onDelete, onRegenerate };
+    const onAddRow = (values: string[]) => {
+      const [ip, mask, ifaceStr] = values;
+      if (!isValidIP(ip) || !isValidIP(mask) || !isValidInterface(ifaceStr)) {
+        return false;
+      }
+      const iface = parseInt(ifaceStr.replace("eth", ""), 10);
+      addRoutingTableEntry(
+        this.props.viewgraph.getDataGraph(),
+        this.props.deviceId,
+        { ip, mask, iface },
+      );
+      this.updateRows();
+      return true;
+    };
+
+    return { onEdit, onDelete, onRegenerate, onAddRow };
   }
 }
 

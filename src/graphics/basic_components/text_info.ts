@@ -214,7 +214,7 @@ export class TextInfo {
         {} as Record<string, string>,
       ),
       fieldsPerRow: Object.keys(flags).length,
-      rows: [statusRow, valueRow],
+      rows: [{ values: statusRow }, { values: valueRow }],
       tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE],
     });
 

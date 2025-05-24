@@ -1,5 +1,5 @@
 /* Styles for the trash button */
-.trash-button {
+.table-button {
   border: none;
   background: transparent;
   cursor: pointer;
@@ -10,12 +10,12 @@
     opacity 0.2s ease;
 }
 
-.trash-button:hover {
+.table-button:hover {
   transform: scale(1.2); /* Slightly enlarge on hover */
   opacity: 0.8; /* Reduce opacity on hover */
 }
 
-.trash-button:active {
+.table-button:active {
   transform: scale(1); /* Reset scale on click */
   opacity: 0.6; /* Further reduce opacity on click */
 }

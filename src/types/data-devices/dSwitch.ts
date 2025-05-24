@@ -4,12 +4,20 @@ import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { DataGraph, DeviceId, SwitchDataNode } from "../graphs/datagraph";
 
 export class DataSwitch extends DataDevice {
-  switchingTable: Map<string, number> = new Map<string, number>();
+  switchingTable: Map<string, { port: number; edited: boolean }> = new Map<
+    string,
+    { port: number; edited: boolean }
+  >();
   private switchingTableChangeListener: (() => void) | null = null;
 
   constructor(graphData: SwitchDataNode, datagraph: DataGraph) {
     super(graphData, datagraph);
-    this.switchingTable = new Map<string, number>(graphData.switchingTable);
+    this.switchingTable = new Map(
+      graphData.switchingTable.map(([mac, port, edited]) => [
+        mac,
+        { port, edited },
+      ]),
+    );
   }
 
   getType(): DeviceType {
@@ -19,7 +27,7 @@ export class DataSwitch extends DataDevice {
   updateSwitchingTable(mac: MacAddress, iface: number): void {
     if (!this.switchingTable.has(mac.toString())) {
       console.debug(`Adding ${mac.toString()} to the switching table`);
-      this.switchingTable.set(mac.toString(), iface);
+      this.switchingTable.set(mac.toString(), { port: iface, edited: false });
     }
     if (this.switchingTableChangeListener) {
       this.switchingTableChangeListener();
@@ -33,7 +41,9 @@ export class DataSwitch extends DataDevice {
   getDataNode(): SwitchDataNode {
     return {
       ...super.getDataNode(),
-      switchingTable: Array.from(this.switchingTable.entries()),
+      switchingTable: Array.from(this.switchingTable.entries()).map(
+        ([mac, { port, edited }]) => [mac, port, edited],
+      ),
       type: DeviceType.Switch,
     };
   }

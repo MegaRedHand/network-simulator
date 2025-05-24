@@ -2,13 +2,19 @@ import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { attachTooltip } from "../renderables/tooltip_manager";
 import { Button } from "./button";
 
+export interface TableRow {
+  values: string[];
+  edited?: boolean;
+}
+
 export interface TableOptions {
   headers: Record<string, string | HTMLElement>; // Custom elements for headers
   fieldsPerRow: number; // Number of fields per row
-  rows: string[][]; // Table rows
+  rows: TableRow[]; // Table rows
   editableColumns?: boolean[]; // Array indicating which columns are editable
   onEdit?: (row: number, col: number, newValue: string) => boolean; // Callback for editing cells
   onDelete?: (row: number) => boolean; // Callback for deleting rows
+  onAddRow?: (values: string[]) => boolean; // Callback for adding rows
   tableClasses?: string[]; // Additional CSS classes for the table
 }
 
@@ -80,21 +86,25 @@ export class Table {
   }
 
   private createRows(): void {
-    const { rows, fieldsPerRow, onEdit, onDelete } = this.options;
+    const { rows, fieldsPerRow, onEdit, onDelete, onAddRow } = this.options;
 
     rows.forEach((row, rowIndex) => {
       const tr = document.createElement("tr");
 
+      if (row.edited) {
+        tr.classList.add("edited-row");
+      }
+
       // Add cells for the row data
-      row.forEach((cellData, colIndex) => {
+      row.values.forEach((cellData, colIndex) => {
         const td = this.createCell(cellData, rowIndex, colIndex, onEdit);
         tr.appendChild(td);
       });
 
       // Add empty cells if the row has fewer fields than fieldsPerRow
-      const emptyCellsNeeded = fieldsPerRow - row.length;
+      const emptyCellsNeeded = fieldsPerRow - row.values.length;
       for (let i = 0; i < emptyCellsNeeded; i++) {
-        const td = this.createCell("", rowIndex, row.length + i, onEdit);
+        const td = this.createCell("", rowIndex, row.values.length + i, onEdit);
         tr.appendChild(td);
       }
 
@@ -107,7 +117,53 @@ export class Table {
       this.tbody.appendChild(tr);
     });
 
+    if (onAddRow) {
+      const addTr = this.createAddRow(fieldsPerRow, onAddRow);
+      this.tbody.appendChild(addTr);
+    }
+
     this.table.appendChild(this.tbody);
+  }
+
+  private createAddRow(
+    fieldsPerRow: number,
+    onAddRow: (values: string[]) => boolean,
+  ): HTMLTableRowElement {
+    const addTr = document.createElement("tr");
+    addTr.classList.add("add-row");
+
+    const addCells: HTMLTableCellElement[] = [];
+
+    for (let i = 0; i < fieldsPerRow; i++) {
+      const td = document.createElement("td");
+      td.classList.add("editable-cell");
+      td.contentEditable = "true";
+
+      td.addEventListener("keydown", (event) => {
+        if (event.key === "Delete" || event.key === "Backspace") {
+          event.stopPropagation();
+        }
+      });
+      addTr.appendChild(td);
+      addCells.push(td);
+    }
+
+    const addTd = document.createElement("td");
+    const addButton = new Button({
+      text: "➕",
+      classList: [CSS_CLASSES.TABLE_BUTTON],
+      onClick: () => {
+        const values = addCells.map((cell) => cell.textContent?.trim() || "");
+        const added = onAddRow(values);
+        if (added) {
+          addCells.forEach((cell) => (cell.textContent = ""));
+        }
+      },
+    });
+    addTd.appendChild(addButton.toHTML());
+    addTr.appendChild(addTd);
+
+    return addTr;
   }
 
   private createCell(
@@ -136,7 +192,7 @@ export class Table {
     const deleteTd = document.createElement("td");
     const deleteButton = new Button({
       text: "🗑️",
-      classList: [CSS_CLASSES.TRASH_BUTTON],
+      classList: [CSS_CLASSES.TABLE_BUTTON],
       onClick: () => {
         const index = Array.from(this.tbody.rows).indexOf(tr); // Calculate the index of the row
         if (index !== -1 && onDelete(index)) {
@@ -184,7 +240,7 @@ export class Table {
   }
 
   // New method to update rows dynamically
-  updateRows(newRows: string[][]): void {
+  updateRows(newRows: TableRow[]): void {
     this.clearTableRows(); // Clear existing rows
     this.options.rows = newRows; // Update the rows in options
     console.log("Updated rows:", this.options.rows); // Log the updated rows
