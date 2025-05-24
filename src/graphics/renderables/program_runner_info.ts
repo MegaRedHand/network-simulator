@@ -99,11 +99,14 @@ export class ProgramRunnerInfo implements Renderable {
       return true;
     };
 
-    const rows = runningPrograms.map((program) => [
-      program.pid.toString(),
-      program.name,
-      JSON.stringify(program.inputs),
-    ]);
+    const rows = runningPrograms.map((program) => ({
+      values: [
+        program.pid.toString(),
+        program.name,
+        JSON.stringify(program.inputs),
+      ],
+      edited: false,
+    }));
 
     const headers = {
       [TOOLTIP_KEYS.PID]: TOOLTIP_KEYS.PID,
@@ -111,7 +114,7 @@ export class ProgramRunnerInfo implements Renderable {
       [TOOLTIP_KEYS.INPUTS]: TOOLTIP_KEYS.INPUTS,
     };
 
-    const maxRowLength = Math.max(...rows.map((row) => row.length));
+    const maxRowLength = Math.max(...rows.map((row) => row.values.length));
     const table = new Table({
       headers,
       fieldsPerRow: maxRowLength,

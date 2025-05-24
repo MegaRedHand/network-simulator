@@ -70,6 +70,7 @@ export interface RoutingTableEntry {
   ip: string;
   mask: string;
   iface: number;
+  edited?: boolean;
 }
 
 export interface HostDataNode extends NetworkDataNode {

@@ -103,11 +103,10 @@ export class DeviceInfo extends BaseInfo {
   addRoutingTable(viewgraph: ViewGraph, deviceId: number): void {
     const entries = getRoutingTable(viewgraph.getDataGraph(), deviceId);
 
-    const rows = entries.map((entry) => [
-      entry.ip,
-      entry.mask,
-      `eth${entry.iface}`,
-    ]);
+    const rows = entries.map((entry) => ({
+      values: [entry.ip, entry.mask, `eth${entry.iface}`],
+      edited: entry.edited ?? false,
+    }));
 
     const routingTable = new RoutingTable({
       rows,
@@ -167,7 +166,10 @@ export class DeviceInfo extends BaseInfo {
   addARPTable(viewgraph: ViewGraph, deviceId: number): void {
     const entries = viewgraph.getArpTable(deviceId);
 
-    const rows = entries.map((entry) => [entry.ip, entry.mac]);
+    const rows = entries.map((entry) => ({
+      values: [entry.ip, entry.mac],
+      edited: false,
+    }));
 
     const arpTable = new ArpTable({
       rows,
@@ -193,7 +195,10 @@ export class DeviceInfo extends BaseInfo {
   addSwitchingTable(viewgraph: ViewGraph, deviceId: number): void {
     const entries = viewgraph.getDataGraph().getSwitchingTable(deviceId);
 
-    const rows = entries.map((entry) => [entry.mac, entry.port.toString()]);
+    const rows = entries.map((entry) => ({
+      values: [entry.mac, entry.port.toString()],
+      edited: false,
+    }));
 
     const switchingTable = new SwitchingTable({
       rows,

@@ -1,4 +1,4 @@
-import { Table } from "../basic_components/table";
+import { Table, TableRow } from "../basic_components/table";
 import { ToggleButton } from "../basic_components/toggle_button";
 import { Button } from "../basic_components/button";
 import { ViewGraph } from "../../types/graphs/viewgraph";
@@ -17,7 +17,7 @@ import {
 import { DataRouter } from "../../types/data-devices";
 
 export interface RoutingTableProps {
-  rows: string[][]; // Rows for the table
+  rows: TableRow[]; // Rows for the table
   viewgraph: ViewGraph; // ViewGraph instance for callbacks
   deviceId: DeviceId; // Device ID for callbacks
 }
@@ -80,7 +80,7 @@ export class RoutingTable {
     return this.container;
   }
 
-  getRoutingTable(): string[][] {
+  getRoutingTable(): TableRow[] {
     const routingTable = this.props.viewgraph
       .getDataGraph()
       .getDevice(this.props.deviceId) as DataRouter;
@@ -88,11 +88,10 @@ export class RoutingTable {
       console.warn("Routing table not found.");
       return [];
     }
-    return routingTable.routingTable.map((entry) => [
-      entry.ip,
-      entry.mask,
-      `eth${entry.iface}`,
-    ]);
+    return routingTable.routingTable.map((entry) => ({
+      values: [entry.ip, entry.mask, `eth${entry.iface}`],
+      edited: entry.edited ?? false, // toma el valor de entry.edited si existe
+    }));
   }
 
   updateRows(): void {

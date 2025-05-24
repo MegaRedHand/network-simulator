@@ -4,12 +4,12 @@ import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { Button } from "../basic_components/button";
-import { Table } from "../basic_components/table";
+import { Table, TableRow } from "../basic_components/table";
 import { ToggleButton } from "../basic_components/toggle_button";
 import { showError, showSuccess } from "./alert_manager";
 
 export interface SwitchingTableProps {
-  rows: string[][]; // Rows for the table
+  rows: TableRow[]; // Rows for the table
   viewgraph: ViewGraph; // ViewGraph instance for callbacks
   deviceId: DeviceId; // Device ID for callbacks
 }
@@ -70,7 +70,7 @@ export class SwitchingTable {
     return this.container;
   }
 
-  updateRows(newRows: string[][]): void {
+  updateRows(newRows: TableRow[]): void {
     this.table.updateRows(newRows); // Update the table with new rows
   }
 
@@ -168,10 +168,10 @@ export class SwitchingTable {
       .getDataGraph()
       .getSwitchingTable(this.props.deviceId);
 
-    const updatedRows = updatedEntries.map((entry) => [
-      entry.mac.toString(),
-      entry.port.toString(),
-    ]);
+    const updatedRows = updatedEntries.map((entry) => ({
+      values: [entry.mac.toString(), entry.port.toString()],
+      edited: false,
+    }));
 
     this.updateRows(updatedRows);
   }

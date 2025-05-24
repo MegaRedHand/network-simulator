@@ -2,10 +2,15 @@ import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { attachTooltip } from "../renderables/tooltip_manager";
 import { Button } from "./button";
 
+export interface TableRow {
+  values: string[];
+  edited?: boolean;
+}
+
 export interface TableOptions {
   headers: Record<string, string | HTMLElement>; // Custom elements for headers
   fieldsPerRow: number; // Number of fields per row
-  rows: string[][]; // Table rows
+  rows: TableRow[]; // Table rows
   editableColumns?: boolean[]; // Array indicating which columns are editable
   onEdit?: (row: number, col: number, newValue: string) => boolean; // Callback for editing cells
   onDelete?: (row: number) => boolean; // Callback for deleting rows
@@ -86,16 +91,20 @@ export class Table {
     rows.forEach((row, rowIndex) => {
       const tr = document.createElement("tr");
 
+      if (row.edited) {
+        tr.classList.add("edited-row");
+      }
+
       // Add cells for the row data
-      row.forEach((cellData, colIndex) => {
+      row.values.forEach((cellData, colIndex) => {
         const td = this.createCell(cellData, rowIndex, colIndex, onEdit);
         tr.appendChild(td);
       });
 
       // Add empty cells if the row has fewer fields than fieldsPerRow
-      const emptyCellsNeeded = fieldsPerRow - row.length;
+      const emptyCellsNeeded = fieldsPerRow - row.values.length;
       for (let i = 0; i < emptyCellsNeeded; i++) {
-        const td = this.createCell("", rowIndex, row.length + i, onEdit);
+        const td = this.createCell("", rowIndex, row.values.length + i, onEdit);
         tr.appendChild(td);
       }
 
@@ -231,7 +240,7 @@ export class Table {
   }
 
   // New method to update rows dynamically
-  updateRows(newRows: string[][]): void {
+  updateRows(newRows: TableRow[]): void {
     this.clearTableRows(); // Clear existing rows
     this.options.rows = newRows; // Update the rows in options
     console.log("Updated rows:", this.options.rows); // Log the updated rows

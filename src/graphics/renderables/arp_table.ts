@@ -4,12 +4,12 @@ import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { Button } from "../basic_components/button";
-import { Table } from "../basic_components/table";
+import { Table, TableRow } from "../basic_components/table";
 import { ToggleButton } from "../basic_components/toggle_button";
 import { showError, showSuccess } from "./alert_manager";
 
 export interface ArpTableProps {
-  rows: string[][]; // Rows for the table
+  rows: TableRow[]; // Rows for the table
   viewgraph: ViewGraph; // ViewGraph instance for callbacks
   deviceId: DeviceId; // Device ID for callbacks
 }
@@ -69,7 +69,7 @@ export class ArpTable {
     return this.container;
   }
 
-  updateRows(newRows: string[][]): void {
+  updateRows(newRows: TableRow[]): void {
     this.table.updateRows(newRows); // Update the table with new rows
   }
 
@@ -100,7 +100,10 @@ export class ArpTable {
     }
 
     // Convert ARP table entries to rows
-    const newRows = newTableData.map((entry) => [entry.ip, entry.mac]);
+    const newRows = newTableData.map((entry) => ({
+      values: [entry.ip, entry.mac],
+      edited: false,
+    }));
 
     this.updateRows(newRows);
 
@@ -174,7 +177,10 @@ export class ArpTable {
       .getDataGraph()
       .getArpTable(this.props.deviceId);
 
-    const updatedRows = updatedEntries.map((entry) => [entry.ip, entry.mac]);
+    const updatedRows = updatedEntries.map((entry) => ({
+      values: [entry.ip, entry.mac],
+      edited: false,
+    }));
 
     this.updateRows(updatedRows);
   }

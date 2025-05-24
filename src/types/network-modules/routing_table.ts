@@ -206,6 +206,7 @@ export function saveRoutingTableManualChange(
   if (changed) {
     sortRoutingTable(router.routingTable);
     router.routingTableEdited = true;
+    entry.edited = true;
     dataGraph.notifyChanges();
     showSuccess(ALERT_MESSAGES.ROUTING_TABLE_UPDATED);
   }
@@ -319,7 +320,7 @@ export function addRoutingTableEntry(
     console.warn(`Device with ID ${routerId} is not a router.`);
     return;
   }
-
+  entry.edited = true;
   router.routingTable.push(entry);
   sortRoutingTable(router.routingTable);
   router.routingTableEdited = true;
