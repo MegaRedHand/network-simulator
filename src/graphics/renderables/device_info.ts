@@ -36,6 +36,13 @@ export class DeviceInfo extends BaseInfo {
     const connections = this.device.viewgraph.getVisibleConnectedDeviceIds(id);
 
     this.information.addField(TOOLTIP_KEYS.ID, id.toString(), TOOLTIP_KEYS.ID);
+    this.information.addField(
+      TOOLTIP_KEYS.TAG,
+      this.device.getTag(),
+      TOOLTIP_KEYS.TAG,
+      true,
+      (newValue: string) => this.device.setTag(newValue),
+    );
     this.information.addListField(
       TOOLTIP_KEYS.CONNECTED_DEVICES,
       connections,

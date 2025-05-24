@@ -14,6 +14,8 @@ export interface InfoField {
   key: string;
   value: string | number | object;
   tooltip?: string;
+  editable?: boolean;
+  onEdit?: (newValue: string) => void;
 }
 
 export class TextInfo {
@@ -42,10 +44,12 @@ export class TextInfo {
   // Add a field to the info and update the UI dynamically
   addField(
     key: string,
-    value: string | number | object,
+    value: string | number | object | null,
     tooltip?: string,
+    editable?: boolean,
+    onEdit?: (newValue: string) => void,
   ): void {
-    const field: InfoField = { key, value, tooltip };
+    const field: InfoField = { key, value, tooltip, editable, onEdit };
 
     // Create and append the new field dynamically
     const listItem = this.createListItem(field);
@@ -63,9 +67,8 @@ export class TextInfo {
     return this.container;
   }
 
-  // Create a list item dynamically based on the field type
   private createListItem(field: InfoField): HTMLLIElement {
-    const { key, value, tooltip } = field;
+    const { key, value, tooltip, editable, onEdit } = field;
 
     if (key === TCP_FLAGS_KEY) {
       const flags = value as Flags;
@@ -73,7 +76,13 @@ export class TextInfo {
     } else if (typeof value === "object" && value !== null) {
       return this.createPayloadElement(key, value, tooltip);
     } else {
-      return this.createDetailElement(key, value as string, tooltip);
+      return this.createDetailElement(
+        key,
+        value as string,
+        tooltip,
+        editable,
+        onEdit,
+      );
     }
   }
 
@@ -116,17 +125,18 @@ export class TextInfo {
     return listItem;
   }
 
-  // Create a regular detail element
   private createDetailElement(
     key: string,
     value: string,
     tooltip?: string,
+    editable = false,
+    onEdit?: (newValue: string) => void,
   ): HTMLLIElement {
     const listItem = document.createElement("li");
-    listItem.classList.add(CSS_CLASSES.DETAIL_ITEM); // Apply styling
+    listItem.classList.add(CSS_CLASSES.DETAIL_ITEM);
 
     const container = document.createElement("div");
-    container.classList.add(CSS_CLASSES.DETAIL_CONTAINER); // Apply styling
+    container.classList.add(CSS_CLASSES.DETAIL_CONTAINER);
 
     const keyElement = document.createElement("span");
     keyElement.textContent = `${key}`;
@@ -135,9 +145,21 @@ export class TextInfo {
       attachTooltip(keyElement, tooltip);
     }
 
-    const valueElement = document.createElement("span");
-    valueElement.textContent = value;
-    valueElement.classList.add(CSS_CLASSES.DETAIL_VALUE);
+    let valueElement: HTMLElement;
+    if (editable) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = value;
+      input.classList.add(CSS_CLASSES.DETAIL_VALUE, "editable-field");
+      input.addEventListener("change", () => {
+        if (onEdit) onEdit(input.value);
+      });
+      valueElement = input;
+    } else {
+      valueElement = document.createElement("span");
+      valueElement.textContent = value;
+      valueElement.classList.add(CSS_CLASSES.DETAIL_VALUE);
+    }
 
     container.appendChild(keyElement);
     container.appendChild(valueElement);
