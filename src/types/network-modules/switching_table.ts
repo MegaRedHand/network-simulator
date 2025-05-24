@@ -9,7 +9,7 @@ import { DataGraph, DeviceId } from "../graphs/datagraph";
 export function getSwitchingTable(
   datagraph: DataGraph,
   deviceId: DeviceId,
-): { mac: string; port: number }[] {
+): { mac: string; port: number; edited: boolean }[] {
   const device = datagraph.getDevice(deviceId);
   if (!device || !(device instanceof DataSwitch)) {
     console.warn(`Device with ID ${deviceId} is not a switch.`);
@@ -17,10 +17,13 @@ export function getSwitchingTable(
   }
 
   // Convert the Map to an array and map it to a readable format
-  return Array.from(device.switchingTable.entries()).map(([mac, port]) => ({
-    mac,
-    port,
-  }));
+  return Array.from(device.switchingTable.entries()).map(
+    ([mac, { port, edited }]) => ({
+      mac,
+      port,
+      edited,
+    }),
+  );
 }
 
 /**
@@ -85,7 +88,7 @@ export function saveSwitchingTableManualChange(
   datagraph: DataGraph,
   deviceId: DeviceId,
   mac: string,
-  port: number,
+  newPort: number,
 ): void {
   const device = datagraph.getDevice(deviceId);
   if (!device || !(device instanceof DataSwitch)) {
@@ -93,12 +96,19 @@ export function saveSwitchingTableManualChange(
     return;
   }
 
-  // Update or add the entry in the Map
-  device.switchingTable.set(mac, port);
-  console.log(
-    `Updated/added entry in switching table for device ID ${deviceId}: MAC=${mac}, Port=${port}.`,
-  );
+  const entry = device.switchingTable.get(mac);
 
-  // Notify changes
-  datagraph.notifyChanges();
+  let changed = false;
+
+  if (!entry) {
+    device.switchingTable.set(mac, { port: newPort, edited: true });
+    changed = true;
+  } else if (entry.port !== newPort) {
+    device.switchingTable.set(mac, { port: newPort, edited: true });
+    changed = true;
+  }
+
+  if (changed) {
+    datagraph.notifyChanges();
+  }
 }

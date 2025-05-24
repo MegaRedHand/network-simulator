@@ -224,7 +224,7 @@ export class DeviceInfo extends BaseInfo {
 
     const rows = entries.map((entry) => ({
       values: [entry.mac, entry.port.toString()],
-      edited: false,
+      edited: entry.edited ?? false,
     }));
 
     const switchingTable = new SwitchingTable({

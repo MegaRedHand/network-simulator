@@ -28,7 +28,7 @@ export class SwitchingTable {
   constructor(private props: SwitchingTableProps) {
     this.container = document.createElement("div");
 
-    const { onEdit, onRegenerate, onDelete } =
+    const { onEdit, onRegenerate, onDelete, onAddRow } =
       this.setSwitchingTableCallbacks();
 
     // Create the regenerate button
@@ -47,6 +47,7 @@ export class SwitchingTable {
       editableColumns: [false, true], // Make the Port column editable
       onEdit: onEdit,
       onDelete: onDelete,
+      onAddRow: onAddRow,
       tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE],
     });
 
@@ -157,10 +158,36 @@ export class SwitchingTable {
         parseInt(newValue, 10),
       );
 
+      this.refreshTable();
+
       return true;
     };
 
-    return { onEdit, onRegenerate, onDelete };
+    const onAddRow = (values: string[]) => {
+      const [mac, portStr] = values;
+
+      if (!mac || !portStr || !/^[0-9a-fA-F:]{17}$/.test(mac.trim())) {
+        showError(ALERT_MESSAGES.INVALID_MAC);
+        return false;
+      }
+      const port = parseInt(portStr, 10);
+      if (isNaN(port) || port <= 0) {
+        showError(ALERT_MESSAGES.INVALID_PORT);
+        return false;
+      }
+
+      saveSwitchingTableManualChange(
+        this.props.viewgraph.getDataGraph(),
+        this.props.deviceId,
+        mac.trim(),
+        port,
+      );
+
+      this.refreshTable();
+      return true;
+    };
+
+    return { onEdit, onRegenerate, onDelete, onAddRow };
   }
 
   refreshTable(): void {
@@ -169,7 +196,7 @@ export class SwitchingTable {
 
     const updatedRows = updatedEntries.map((entry) => ({
       values: [entry.mac.toString(), entry.port.toString()],
-      edited: false,
+      edited: entry.edited,
     }));
 
     this.updateRows(updatedRows);
@@ -179,7 +206,7 @@ export class SwitchingTable {
 function isValidPortNumber(port: string): boolean {
   // verify if the port is a number
   const portNumber = parseInt(port, 10);
-  const isValid = !isNaN(portNumber) && portNumber > 0;
+  const isValid = !isNaN(portNumber);
 
   if (!isValid) {
     showError(ALERT_MESSAGES.INVALID_PORT);
