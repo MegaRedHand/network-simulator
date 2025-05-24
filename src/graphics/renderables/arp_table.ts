@@ -160,6 +160,7 @@ export class ArpTable {
 
       // Update the ARP table entry
       saveARPTManualChange(dataGraph, this.props.deviceId, ip, newValue);
+      this.refreshTable();
 
       return true;
     };
@@ -173,7 +174,7 @@ export class ArpTable {
 
     const updatedRows = updatedEntries.map((entry) => ({
       values: [entry.ip, entry.mac],
-      edited: false,
+      edited: entry.edited ?? false,
     }));
 
     this.updateRows(updatedRows);

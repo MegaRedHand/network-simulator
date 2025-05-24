@@ -55,7 +55,7 @@ export interface SwitchDataNode extends CommonDataNode {
 export interface NetworkDataNode extends CommonDataNode {
   // TODO: remove this
   mask: string;
-  arpTable: [string, string][];
+  arpTable: [string, string, boolean][];
 }
 
 export interface RouterDataNode extends NetworkDataNode {

@@ -5,13 +5,17 @@ import { DataDevice } from "./dDevice";
 
 export abstract class DataNetworkDevice extends DataDevice {
   ipMask: IpAddress;
-  arpTable: Map<string, string>;
+  arpTable: Map<string, { mac: string; edited: boolean }>;
   private arpTableChangeListener: (() => void) | null = null;
 
   constructor(graphData: NetworkDataNode, datagraph: DataGraph) {
     super(graphData, datagraph);
     this.ipMask = IpAddress.parse(graphData.mask);
-    this.arpTable = new Map<string, string>(graphData.arpTable);
+    this.arpTable = new Map(
+      (graphData.arpTable as [string, string, boolean][]).map(
+        ([ip, mac, edited]) => [ip, { mac, edited }],
+      ),
+    );
   }
 
   abstract receiveDatagram(datagram: IPv4Packet): void;
@@ -20,9 +24,9 @@ export abstract class DataNetworkDevice extends DataDevice {
    * Update the ARP table and notify the listener.
    */
   updateArpTable(mac: MacAddress, ip: IpAddress): void {
-    this.arpTable.set(ip.toString(), mac.toString());
+    this.arpTable.set(ip.toString(), { mac: mac.toString(), edited: false });
     if (this.arpTableChangeListener) {
-      this.arpTableChangeListener(); // Notify the listener
+      this.arpTableChangeListener();
     }
   }
 
@@ -33,30 +37,32 @@ export abstract class DataNetworkDevice extends DataDevice {
     this.arpTableChangeListener = listener;
   }
 
-  resolveAddress(ip: IpAddress): MacAddress {
-    if (!this.arpTable.has(ip.toString())) {
-      // As ip addr isn't in the table, then the 'entry' in device table never was modified.
-      // The mac addr of the device that has the ip addr should be returned.
+  resolveAddress(
+    ip: IpAddress,
+  ): { mac: MacAddress; edited: boolean } | undefined {
+    const entry = this.arpTable.get(ip.toString());
+    if (!entry) {
+      // Buscar el dispositivo y la MAC real si no está en la tabla
       const device = this.datagraph.getDeviceByIP(ip);
       if (!device) {
         console.warn(`Device with ip ${ip.toString()} not found in DataGraph`);
         return undefined;
       }
       const iface = device.interfaces.find((iface) => iface.ip?.equals(ip));
-      return iface ? iface.mac : undefined;
+      return iface ? { mac: iface.mac, edited: false } : undefined;
     }
-    // There is an entry with key=ip.
-    // This means either the entry has the address resolution expected or
-    // the entry has "", then the entry was previously deleted.
-    const mac = this.arpTable.get(ip.toString());
-    return mac != "" ? MacAddress.parse(mac) : undefined;
+    // Si la entrada existe pero la MAC es "", se considera eliminada
+    if (entry.mac === "") return undefined;
+    return { mac: MacAddress.parse(entry.mac), edited: entry.edited };
   }
 
   getDataNode(): NetworkDataNode {
     return {
       ...super.getDataNode(),
       mask: this.ipMask.toString(),
-      arpTable: Array.from(this.arpTable.entries()),
+      arpTable: Array.from(this.arpTable.entries()).map(
+        ([ip, { mac, edited }]) => [ip, mac, edited],
+      ),
     };
   }
 

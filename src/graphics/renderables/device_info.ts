@@ -194,7 +194,7 @@ export class DeviceInfo extends BaseInfo {
 
     const rows = entries.map((entry) => ({
       values: [entry.ip, entry.mac],
-      edited: false,
+      edited: entry.edited ?? false,
     }));
 
     const arpTable = new ArpTable({

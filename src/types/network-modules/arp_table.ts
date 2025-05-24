@@ -5,14 +5,13 @@ import { DataGraph, DeviceId } from "../graphs/datagraph";
 export function getArpTable(
   dataGraph: DataGraph,
   deviceId: DeviceId,
-): { ip: string; mac: string }[] {
+): { ip: string; mac: string; edited: boolean }[] {
   const device = dataGraph.getDevice(deviceId);
   if (!device || !(device instanceof DataNetworkDevice)) {
     return [];
   }
 
-  // Create ARP table in desirable format
-  const arpTable: { ip: string; mac: string }[] = [];
+  const arpTable: { ip: string; mac: string; edited: boolean }[] = [];
 
   for (const [currId, currDevice] of dataGraph.getDevices()) {
     if (currId === deviceId || !(currDevice instanceof DataNetworkDevice)) {
@@ -20,11 +19,12 @@ export function getArpTable(
     }
     currDevice.interfaces.forEach((iface) => {
       // Resolve the MAC address for the current device's IP
-      const mac = device.resolveAddress(iface.ip);
-      if (mac) {
+      const resolved = device.resolveAddress(iface.ip);
+      if (resolved) {
         arpTable.push({
           ip: iface.ip?.toString(),
-          mac: mac.toString(),
+          mac: resolved.mac.toString(),
+          edited: resolved.edited,
         });
       }
     });
@@ -47,9 +47,9 @@ export function removeArpTableEntry(
     console.warn(
       `IP ${ip} not found in ARP table. Creating a new entry with an empty MAC.`,
     );
-    device.arpTable.set(ip, "");
+    device.arpTable.set(ip, { mac: "", edited: false });
   } else {
-    device.arpTable.set(ip, "");
+    device.arpTable.set(ip, { mac: "", edited: false });
   }
   dataGraph.notifyChanges();
 }
@@ -61,7 +61,7 @@ export function clearArpTable(dataGraph: DataGraph, deviceId: DeviceId): void {
     return;
   }
 
-  device.arpTable = new Map<string, string>();
+  device.arpTable = new Map<string, { mac: string; edited: boolean }>();
 
   dataGraph.notifyChanges();
 }
@@ -83,7 +83,9 @@ export function saveARPTManualChange(
     return;
   }
 
-  device.arpTable.set(ip, mac);
-
-  dataGraph.notifyChanges();
+  const prev = device.arpTable.get(ip);
+  if (!prev || prev.mac !== mac || prev.edited !== true) {
+    device.arpTable.set(ip, { mac, edited: true });
+    dataGraph.notifyChanges();
+  }
 }
