@@ -403,10 +403,6 @@ export class ViewGraph {
     return this.viewport;
   }
 
-  getArpTable(id: DeviceId) {
-    return this.datagraph.getArpTable(id);
-  }
-
   getEdge(n1Id: DeviceId, n2Id: DeviceId): Edge | undefined {
     return this.graph.getEdge(n1Id, n2Id);
   }

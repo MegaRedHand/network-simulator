@@ -1,5 +1,11 @@
 import { DeviceId } from "../../types/graphs/datagraph";
 import { ViewGraph } from "../../types/graphs/viewgraph";
+import {
+  clearArpTable,
+  getArpTable,
+  removeArpTableEntry,
+  saveARPTManualChange,
+} from "../../types/network-modules/arp_table";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
@@ -89,9 +95,9 @@ export class ArpTable {
   private OnRegenerate(): void {
     const dataGraph = this.props.viewgraph.getDataGraph();
 
-    dataGraph.clearArpTable(this.props.deviceId);
+    clearArpTable(dataGraph, this.props.deviceId);
 
-    const newTableData = dataGraph.getArpTable(this.props.deviceId);
+    const newTableData = getArpTable(dataGraph, this.props.deviceId);
 
     if (!newTableData || newTableData.length === 0) {
       console.warn("Failed to regenerate ARP table.");
@@ -111,25 +117,18 @@ export class ArpTable {
   }
 
   private setArpTableCallbacks() {
+    const dataGraph = this.props.viewgraph.getDataGraph();
     const onDelete = (row: number) => {
-      // Obtener la tabla ARP actual
-      const arpTable = this.props.viewgraph
-        .getDataGraph()
-        .getArpTable(this.props.deviceId);
+      const arpTable = getArpTable(dataGraph, this.props.deviceId);
 
       // Validar que el índice es válido
       if (row < 0 || row >= arpTable.length) {
         console.warn(`Invalid row index: ${row}`);
         return false;
       }
-
-      // Obtener la IP correspondiente a la fila
       const ip = arpTable[row].ip;
 
-      // Eliminar la entrada de la tabla ARP usando la IP
-      this.props.viewgraph
-        .getDataGraph()
-        .removeArpTableEntry(this.props.deviceId, ip);
+      removeArpTableEntry(dataGraph, this.props.deviceId, ip);
 
       return true;
     };
@@ -148,9 +147,7 @@ export class ArpTable {
       }
 
       // Obtener la tabla ARP actual
-      const arpTable = this.props.viewgraph
-        .getDataGraph()
-        .getArpTable(this.props.deviceId);
+      const arpTable = getArpTable(dataGraph, this.props.deviceId);
 
       // Validar que el índice es válido
       if (row < 0 || row >= arpTable.length) {
@@ -162,9 +159,7 @@ export class ArpTable {
       const ip = arpTable[row].ip;
 
       // Update the ARP table entry
-      this.props.viewgraph
-        .getDataGraph()
-        .saveARPTManualChange(this.props.deviceId, ip, newValue);
+      saveARPTManualChange(dataGraph, this.props.deviceId, ip, newValue);
 
       return true;
     };
@@ -173,9 +168,8 @@ export class ArpTable {
   }
 
   refreshTable(): void {
-    const updatedEntries = this.props.viewgraph
-      .getDataGraph()
-      .getArpTable(this.props.deviceId);
+    const dataGraph = this.props.viewgraph.getDataGraph();
+    const updatedEntries = getArpTable(dataGraph, this.props.deviceId);
 
     const updatedRows = updatedEntries.map((entry) => ({
       values: [entry.ip, entry.mac],
