@@ -14,7 +14,7 @@ export class DataRouter extends DataNetworkDevice {
   packetQueueSize: number;
   private packetQueue: PacketQueue;
   // Time in ms to process a single byte
-  timePerByte: number;
+  bytesPerSecond: number;
   // Number of bytes processed
   private processingProgress = 0;
   routingTable: RoutingTableEntry[];
@@ -24,11 +24,11 @@ export class DataRouter extends DataNetworkDevice {
     this.packetQueueSize =
       graphData.packetQueueSize ?? ROUTER_CONSTANTS.PACKET_QUEUE_MAX_SIZE;
     this.packetQueue = new PacketQueue(this.packetQueueSize);
-    this.timePerByte =
-      graphData.timePerByte ?? ROUTER_CONSTANTS.PROCESSING_SPEED;
+    this.bytesPerSecond =
+      graphData.bytesPerSecond ?? ROUTER_CONSTANTS.PROCESSING_SPEED;
     this.routingTable = graphData.routingTable ?? [];
     console.log("packetQueueSize Dr", this.packetQueueSize);
-    console.log("processingSpeed Dr", this.timePerByte);
+    console.log("processingSpeed Dr", this.bytesPerSecond);
   }
 
   setMaxQueueSize(newSize: number) {
@@ -37,8 +37,8 @@ export class DataRouter extends DataNetworkDevice {
     this.packetQueueSize = newSize;
   }
 
-  setTimePerByte(newTime: number) {
-    this.timePerByte = newTime;
+  setBytesPerSecond(newTime: number) {
+    this.bytesPerSecond = newTime;
     console.log("Time per byte set to Dr", newTime);
   }
 
@@ -48,7 +48,7 @@ export class DataRouter extends DataNetworkDevice {
       type: DeviceType.Router,
       routingTable: this.routingTable,
       packetQueueSize: this.packetQueue.getMaxQueueSize(),
-      timePerByte: this.timePerByte,
+      bytesPerSecond: this.bytesPerSecond,
     };
   }
 
@@ -89,7 +89,7 @@ export class DataRouter extends DataNetworkDevice {
   getPacketsToProcess(timeMs: number): IPv4Packet | null {
     this.processingProgress += timeMs;
     const packetLength = this.packetQueue.getHead()?.totalLength;
-    const progressNeeded = this.timePerByte * packetLength;
+    const progressNeeded = this.bytesPerSecond * packetLength;
     if (this.processingProgress < progressNeeded) {
       return null;
     }
