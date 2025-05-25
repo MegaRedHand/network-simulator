@@ -33,8 +33,17 @@ export class ViewSwitch extends ViewDevice {
     ctx: GlobalContext,
     position: Position,
     interfaces: NetworkInterfaceData[],
+    tag: string,
   ) {
-    super(id, ViewSwitch.getTexture(), viewgraph, ctx, position, interfaces);
+    super(
+      id,
+      ViewSwitch.getTexture(),
+      viewgraph,
+      ctx,
+      position,
+      interfaces,
+      tag,
+    );
   }
 
   showInfo(): void {

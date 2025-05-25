@@ -46,6 +46,7 @@ export class ViewHost extends ViewNetworkDevice {
     ctx: GlobalContext,
     position: Position,
     interfaces: NetworkInterfaceData[],
+    tag: string,
     mask: IpAddress,
   ) {
     super(
@@ -55,6 +56,7 @@ export class ViewHost extends ViewNetworkDevice {
       ctx,
       position,
       interfaces,
+      tag,
       mask,
     );
   }

@@ -62,7 +62,11 @@ function otherDevices(viewgraph: ViewGraph, srcId: DeviceId) {
   return viewgraph
     .getLayerDeviceIds()
     .filter((id) => id !== srcId)
-    .map((id) => ({ value: id.toString(), text: `Device ${id}`, id }));
+    .map((id) => ({
+      value: id.toString(),
+      text: `${viewgraph.getDevice(id).getIdentifier()}`,
+      id,
+    }));
 }
 
 function otherDevicesIp(
@@ -83,7 +87,7 @@ function otherDevicesIp(
     .flatMap((device) => {
       return device.interfaces.map((iface) => ({
         value: iface.ip.toString(),
-        text: `${iface.ip.toString()} (Device ${device.id})`,
+        text: `${iface.ip.toString()} (${device.getIdentifier()})`,
       }));
     });
 }

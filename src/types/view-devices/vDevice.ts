@@ -63,6 +63,7 @@ export function layerFromType(type: DeviceType) {
 export abstract class ViewDevice extends Container {
   private sprite: Sprite;
   private tooltip: Text | null = null; // Tooltip como un Text de PIXI.js
+  private tag: string | null = null; // Tag for the device
   private isDragCircle = false;
   private circleGraphic?: Graphics;
   private idLabel?: Text;
@@ -101,10 +102,12 @@ export abstract class ViewDevice extends Container {
     ctx: GlobalContext,
     position: Position,
     interfaces: NetworkInterfaceData[],
+    tag: string | null,
   ) {
     super();
 
     this.id = id;
+    this.tag = tag;
     this.viewgraph = viewgraph;
     this.ctx = ctx;
 
@@ -129,7 +132,7 @@ export abstract class ViewDevice extends Container {
     this.zIndex = ZIndexLevels.Device;
 
     // Add device ID label using the helper function
-    this.addDeviceIdLabel();
+    this.setTag(tag);
     this.updateVisibility();
 
     // Set up tooltip behavior
@@ -253,18 +256,43 @@ export abstract class ViewDevice extends Container {
 
   // Function to add the ID label to the device
   addDeviceIdLabel() {
+    // Remove previous label if exists
+    if (this.idLabel) {
+      this.removeChild(this.idLabel);
+      this.idLabel.destroy();
+    }
     const textStyle = new TextStyle({
       fontSize: 12,
       fill: Colors.Black,
       align: "center",
       fontWeight: "bold",
     });
-    const idText = new Text({ text: `ID: ${this.id}`, style: textStyle });
-    idText.anchor.set(0.5);
-    idText.y = this.height * 0.8;
-    idText.zIndex = ZIndexLevels.Label;
-    this.idLabel = idText;
-    this.addChild(idText); // Add the ID text as a child of the device
+    const labelText = this.tag
+      ? `ID: ${this.id} - ${this.tag}`
+      : `ID: ${this.id}`;
+    this.idLabel = new Text({ text: labelText, style: textStyle });
+    this.idLabel.anchor.set(0.5);
+    this.idLabel.y = this.height * 0.8;
+    this.idLabel.zIndex = ZIndexLevels.Label;
+    this.addChild(this.idLabel);
+  }
+
+  setTag(tag: string | null) {
+    this.tag = tag && tag.trim() !== "" ? tag : null;
+    this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
+      if (device) {
+        device.tag = this.tag;
+      }
+    });
+    this.addDeviceIdLabel();
+  }
+
+  getTag(): string | null {
+    return this.tag;
+  }
+
+  getIdentifier(): string {
+    return this.tag ?? `Device ${this.id.toString()}`;
   }
 
   getPosition(): Position {

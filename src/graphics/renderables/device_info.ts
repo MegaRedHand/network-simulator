@@ -18,6 +18,7 @@ import { ArpTable } from "./arp_table";
 import { Layer } from "../../types/layer";
 import { DataNetworkDevice, DataSwitch } from "../../types/data-devices";
 import { SwitchingTable } from "./switching_table";
+import { ToggleInfo } from "../components/toggle_info";
 
 export class DeviceInfo extends BaseInfo {
   readonly device: ViewDevice;
@@ -26,6 +27,7 @@ export class DeviceInfo extends BaseInfo {
     super(getTypeName(device) + " Information");
     this.device = device;
     this.addCommonInfoFields();
+    this.addCommonButtons();
   }
 
   protected addCommonInfoFields(): void {
@@ -33,39 +35,23 @@ export class DeviceInfo extends BaseInfo {
     const connections = this.device.viewgraph.getVisibleConnectedDeviceIds(id);
 
     this.information.addField(TOOLTIP_KEYS.ID, id.toString(), TOOLTIP_KEYS.ID);
+    this.information.addField(
+      TOOLTIP_KEYS.TAG,
+      this.device.getTag(),
+      TOOLTIP_KEYS.TAG,
+      true,
+      (newValue: string) => this.device.setTag(newValue),
+    );
     this.information.addListField(
       TOOLTIP_KEYS.CONNECTED_DEVICES,
       connections,
       TOOLTIP_KEYS.CONNECTED_DEVICES,
     );
-
-    const layer = this.device.viewgraph.getLayer();
-    const showIp = this.device.getType() !== DeviceType.Switch;
-    const showMac = layer === Layer.Link;
-
-    if (showIp) {
-      this.device.interfaces.forEach((iface) => {
-        this.information.addField(
-          TOOLTIP_KEYS.IP_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
-          iface.ip.toString(),
-          TOOLTIP_KEYS.IP_ADDRESS,
-        );
-      });
-    }
-
-    if (showMac) {
-      this.device.interfaces.forEach((iface) => {
-        this.information.addField(
-          TOOLTIP_KEYS.MAC_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
-          iface.mac.toString(),
-          TOOLTIP_KEYS.MAC_ADDRESS,
-        );
-      });
-    }
   }
 
   protected addCommonButtons(): void {
     this.addDivider();
+
     const connectButton = new Button({
       text: TOOLTIP_KEYS.CONNECT_DEVICE,
       onClick: () => this.device.selectToConnect(),
@@ -91,7 +77,45 @@ export class DeviceInfo extends BaseInfo {
     });
 
     this.inputFields.push(connectButton.toHTML(), deleteButton.toHTML());
+
+    this.addIfacesToggle();
     this.addDivider();
+  }
+
+  addIfacesToggle(): void {
+    const layer = this.device.viewgraph.getLayer();
+    const showIp = this.device.getType() !== DeviceType.Switch;
+    const showMac = layer === Layer.Link;
+
+    const fields: { key: string; value: string; tooltip: string }[] = [];
+
+    if (showIp) {
+      this.device.interfaces.forEach((iface) => {
+        fields.push({
+          key: TOOLTIP_KEYS.IP_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
+          value: iface.ip.toString(),
+          tooltip: TOOLTIP_KEYS.IP_ADDRESS,
+        });
+      });
+    }
+    if (showMac) {
+      this.device.interfaces.forEach((iface) => {
+        fields.push({
+          key:
+            TOOLTIP_KEYS.MAC_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
+          value: iface.mac.toString(),
+          tooltip: TOOLTIP_KEYS.MAC_ADDRESS,
+        });
+      });
+    }
+
+    const toggleInfo = new ToggleInfo({
+      title: "Interfaces",
+      fields,
+      toggleButtonText: { on: "Hide Interfaces", off: "Show Interfaces" },
+    });
+
+    this.inputFields.push(toggleInfo.toHTML());
   }
 
   addProgramRunner(runner: ProgramRunner, programs: ProgramInfo[]): void {

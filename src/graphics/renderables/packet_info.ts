@@ -14,6 +14,7 @@ export class PacketInfo extends BaseInfo {
     super("Packet Information");
     this.packet = packet;
     this.addCommonInfoFields();
+    this.addCommonButtons();
     this.addToggleInfo(); // Add the toggle info for packet details
   }
 
@@ -38,12 +39,12 @@ export class PacketInfo extends BaseInfo {
 
       this.information.addField(
         TOOLTIP_KEYS.SOURCE_MAC_ADDRESS,
-        `${this.packet.rawPacket.source.toString()}${srcDevice ? " (Device " + srcDevice.id + ")" : ""}`,
+        `${this.packet.rawPacket.source.toString()}${srcDevice ? " (" + srcDevice.getIdentifier() + ")" : ""}`,
         TOOLTIP_KEYS.SOURCE_MAC_ADDRESS,
       );
       this.information.addField(
         TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS,
-        `${this.packet.rawPacket.destination.toString()}${dstDevice ? " (Device " + dstDevice.id + ")" : ""}`,
+        `${this.packet.rawPacket.destination.toString()}${dstDevice ? " (" + dstDevice.getIdentifier() + ")" : ""}`,
         TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS,
       );
     }
@@ -58,12 +59,12 @@ export class PacketInfo extends BaseInfo {
 
       this.information.addField(
         TOOLTIP_KEYS.SOURCE_IP_ADDRESS,
-        `${framePayload.sourceAddress.toString()}${srcDevice ? " (Device " + srcDevice.id + ")" : ""}`,
+        `${framePayload.sourceAddress.toString()}${srcDevice ? " (" + srcDevice.getIdentifier() + ")" : ""}`,
         TOOLTIP_KEYS.SOURCE_IP_ADDRESS,
       );
       this.information.addField(
         TOOLTIP_KEYS.DESTINATION_IP_ADDRESS,
-        `${framePayload.destinationAddress.toString()}${dstDevice ? " (Device " + dstDevice.id + ")" : ""}`,
+        `${framePayload.destinationAddress.toString()}${dstDevice ? " (" + dstDevice.getIdentifier() + ")" : ""}`,
         TOOLTIP_KEYS.DESTINATION_IP_ADDRESS,
       );
     }
