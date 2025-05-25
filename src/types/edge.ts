@@ -14,7 +14,7 @@ import {
   removeTooltip,
   showTooltip,
 } from "../graphics/renderables/canvas_tooltip_manager";
-import { updateRoutingTableIface } from "./network-modules/routing_table";
+import { updateRoutingTableIface } from "./network-modules/tables/routing_table";
 
 export class Edge extends Graphics {
   private _data: DataEdge;

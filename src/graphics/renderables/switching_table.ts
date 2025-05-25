@@ -5,7 +5,7 @@ import {
   getSwitchingTable,
   removeSwitchingTableEntry,
   saveSwitchingTableManualChange,
-} from "../../types/network-modules/switching_table";
+} from "../../types/network-modules/tables/switching_table";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";

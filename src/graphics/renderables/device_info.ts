@@ -18,10 +18,10 @@ import { ArpTable } from "./arp_table";
 import { Layer } from "../../types/layer";
 import { DataNetworkDevice, DataSwitch } from "../../types/data-devices";
 import { SwitchingTable } from "./switching_table";
-import { getRoutingTable } from "../../types/network-modules/routing_table";
+import { getRoutingTable } from "../../types/network-modules/tables/routing_table";
 import { ToggleInfo } from "../components/toggle_info";
-import { getArpTable } from "../../types/network-modules/arp_table";
-import { getSwitchingTable } from "../../types/network-modules/switching_table";
+import { getArpTable } from "../../types/network-modules/tables/arp_table";
+import { getSwitchingTable } from "../../types/network-modules/tables/switching_table";
 
 export class DeviceInfo extends BaseInfo {
   readonly device: ViewDevice;

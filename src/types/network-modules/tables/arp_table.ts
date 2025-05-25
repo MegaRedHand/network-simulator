@@ -1,5 +1,5 @@
-import { DataNetworkDevice } from "../data-devices/dNetworkDevice";
-import { DataGraph, DeviceId } from "../graphs/datagraph";
+import { DataNetworkDevice } from "../../data-devices/dNetworkDevice";
+import { DataGraph, DeviceId } from "../../graphs/datagraph";
 
 // Obtener la ARP Table en formato [{ ip, mac }]
 export function getArpTable(

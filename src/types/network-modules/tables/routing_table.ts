@@ -1,8 +1,8 @@
-import { showSuccess } from "../../graphics/renderables/alert_manager";
-import { compareIps, IpAddress } from "../../packets/ip";
-import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
-import { DataRouter, DataHost, DataNetworkDevice } from "../data-devices";
-import { DataGraph, DeviceId, RoutingTableEntry } from "../graphs/datagraph";
+import { showSuccess } from "../../../graphics/renderables/alert_manager";
+import { compareIps, IpAddress } from "../../../packets/ip";
+import { ALERT_MESSAGES } from "../../../utils/constants/alert_constants";
+import { DataRouter, DataHost, DataNetworkDevice } from "../../data-devices";
+import { DataGraph, DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
 
 export function regenerateRoutingTableClean(
   dataGraph: DataGraph,

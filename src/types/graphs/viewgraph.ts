@@ -16,7 +16,7 @@ import { Graph } from "./graph";
 import { PacketManager } from "../packetManager";
 import { ViewNetworkDevice } from "../view-devices/vNetworkDevice";
 import { MacAddress } from "../../packets/ethernet";
-import { clearEditedIpsForEdge } from "../network-modules/routing_table";
+import { clearEditedIpsForEdge } from "../network-modules/tables/routing_table";
 
 export type EdgePair = [DeviceId, DeviceId];
 

@@ -13,7 +13,7 @@ import {
 import { GlobalContext } from "../../context";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { showWarning } from "../../graphics/renderables/alert_manager";
-import { regenerateAllRoutingTables } from "../network-modules/routing_table";
+import { regenerateAllRoutingTables } from "../network-modules/tables/routing_table";
 
 export type DeviceId = VertexId;
 

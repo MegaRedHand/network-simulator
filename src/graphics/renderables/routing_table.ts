@@ -13,7 +13,7 @@ import {
   regenerateRoutingTableClean,
   removeRoutingTableRow,
   saveRoutingTableManualChange,
-} from "../../types/network-modules/routing_table";
+} from "../../types/network-modules/tables/routing_table";
 import { DataRouter } from "../../types/data-devices";
 
 export interface RoutingTableProps {

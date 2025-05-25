@@ -1,5 +1,5 @@
-import { DataSwitch } from "../data-devices/dSwitch";
-import { DataGraph, DeviceId } from "../graphs/datagraph";
+import { DataSwitch } from "../../data-devices/dSwitch";
+import { DataGraph, DeviceId } from "../../graphs/datagraph";
 
 /**
  * Retrieves the switching table of a switch.

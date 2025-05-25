@@ -5,7 +5,7 @@ import {
   getArpTable,
   removeArpTableEntry,
   saveARPTManualChange,
-} from "../../types/network-modules/arp_table";
+} from "../../types/network-modules/tables/arp_table";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
