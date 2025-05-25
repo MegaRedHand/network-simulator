@@ -366,10 +366,10 @@ export class ViewGraph {
       console.warn(`Edge ${n1Id},${n2Id} is not in the datagraph`);
       return null;
     }
+    this._removeEdge(n1Id, n2Id);
+
     // Remove connection in DataGraph
     this.datagraph.removeConnection(n1Id, n2Id);
-
-    this._removeEdge(n1Id, n2Id);
     return datagraphEdge;
   }
 
