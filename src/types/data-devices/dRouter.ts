@@ -11,12 +11,13 @@ import { DataNetworkDevice } from "./dNetworkDevice";
 import { ROUTER_CONSTANTS } from "../../utils/constants/router_constants";
 
 export class DataRouter extends DataNetworkDevice {
-  packetQueueSize: number;
+  private packetQueueSize: number;
   private packetQueue: PacketQueue;
-  // Time in ms to process a single byte
-  bytesPerSecond: number;
+  // Number of bytes to process per second
+  private bytesPerSecond: number;
   // Number of bytes processed
   private processingProgress = 0;
+
   routingTable: RoutingTableEntry[];
 
   constructor(graphData: RouterDataNode, datagraph: DataGraph) {
@@ -87,13 +88,12 @@ export class DataRouter extends DataNetworkDevice {
   }
 
   getPacketsToProcess(timeMs: number): IPv4Packet | null {
-    this.processingProgress += timeMs;
+    this.processingProgress += (this.bytesPerSecond * timeMs) / 1000;
     const packetLength = this.packetQueue.getHead()?.totalLength;
-    const progressNeeded = this.bytesPerSecond * packetLength;
-    if (this.processingProgress < progressNeeded) {
+    if (this.processingProgress < packetLength) {
       return null;
     }
-    this.processingProgress -= progressNeeded;
+    this.processingProgress -= packetLength;
     return this.packetQueue.dequeue();
   }
 
