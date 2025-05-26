@@ -22,11 +22,11 @@ export function createViewDevice(
   }
 
   let packetQueueSize: number;
-  let timePerByte: number;
+  let bytesPerSecond: number;
 
   if (isRouter(deviceInfo)) {
     packetQueueSize = deviceInfo.packetQueueSize;
-    timePerByte = deviceInfo.timePerByte;
+    bytesPerSecond = deviceInfo.bytesPerSecond;
   }
   const { id, interfaces, tag } = deviceInfo;
 
@@ -41,7 +41,7 @@ export function createViewDevice(
         tag,
         mask,
         packetQueueSize,
-        timePerByte,
+        bytesPerSecond,
       );
     case DeviceType.Host:
       return new ViewHost(id, viewgraph, ctx, position, interfaces, tag, mask);
