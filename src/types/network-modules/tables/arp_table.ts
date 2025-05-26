@@ -66,6 +66,7 @@ export function clearArpTable(dataGraph: DataGraph, deviceId: DeviceId): void {
   dataGraph.notifyChanges();
 }
 
+// check if this is ok
 export function saveARPTManualChange(
   dataGraph: DataGraph,
   deviceId: DeviceId,
@@ -83,9 +84,14 @@ export function saveARPTManualChange(
     return;
   }
 
-  const prev = device.arpTable.get(ip);
-  if (!prev || prev.mac !== mac || prev.edited !== true) {
-    device.arpTable.set(ip, { mac, edited: true });
-    dataGraph.notifyChanges();
+  const currentEntry = getArpTable(dataGraph, deviceId).find(
+    (e) => e.ip === ip,
+  );
+
+  if (currentEntry && currentEntry.mac === mac) {
+    return;
   }
+
+  device.arpTable.set(ip, { mac, edited: true });
+  dataGraph.notifyChanges();
 }
