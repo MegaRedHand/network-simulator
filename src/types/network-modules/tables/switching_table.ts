@@ -1,4 +1,4 @@
-import { DataSwitch } from "../../data-devices/dSwitch";
+import { DataSwitch, SwitchingEntry } from "../../data-devices/dSwitch";
 import { DataGraph, DeviceId } from "../../graphs/datagraph";
 
 /**
@@ -9,7 +9,7 @@ import { DataGraph, DeviceId } from "../../graphs/datagraph";
 export function getSwitchingTable(
   datagraph: DataGraph,
   deviceId: DeviceId,
-): { mac: string; port: number; edited: boolean }[] {
+): SwitchingEntry[] {
   const device = datagraph.getDevice(deviceId);
   if (!device || !(device instanceof DataSwitch)) {
     console.warn(`Device with ID ${deviceId} is not a switch.`);
@@ -17,13 +17,7 @@ export function getSwitchingTable(
   }
 
   // Convert the Map to an array and map it to a readable format
-  return Array.from(device.switchingTable.entries()).map(
-    ([mac, { port, edited }]) => ({
-      mac,
-      port,
-      edited,
-    }),
-  );
+  return device.switchingTable.all();
 }
 
 /**
@@ -63,19 +57,8 @@ export function removeSwitchingTableEntry(
     console.warn(`Device with ID ${deviceId} is not a switch.`);
     return;
   }
-
-  // Remove the entry from the Map
-  if (device.switchingTable.has(mac)) {
-    device.switchingTable.delete(mac);
-    console.log(
-      `Entry with MAC ${mac} removed from switching table of device ID ${deviceId}.`,
-    );
-    datagraph.notifyChanges();
-  } else {
-    console.warn(
-      `Entry with MAC ${mac} not found in switching table of device ID ${deviceId}.`,
-    );
-  }
+  device.switchingTable.remove(mac);
+  datagraph.notifyChanges();
 }
 
 /**
@@ -98,17 +81,8 @@ export function saveSwitchingTableManualChange(
 
   const entry = device.switchingTable.get(mac);
 
-  let changed = false;
-
-  if (!entry) {
-    device.switchingTable.set(mac, { port: newPort, edited: true });
-    changed = true;
-  } else if (entry.port !== newPort) {
-    device.switchingTable.set(mac, { port: newPort, edited: true });
-    changed = true;
-  }
-
-  if (changed) {
+  if (!entry || entry.port !== newPort) {
+    device.switchingTable.add({ mac, port: newPort, edited: true });
     datagraph.notifyChanges();
   }
 }
