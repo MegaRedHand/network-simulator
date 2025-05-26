@@ -65,24 +65,34 @@ export function removeSwitchingTableEntry(
  * Manually updates an entry in the switching table.
  * @param deviceId - ID of the device (switch).
  * @param mac - MAC address of the entry to update.
- * @param port - New port associated with the MAC address.
+ * @param col - Column index (0 for MAC, 1 for port).
+ * @param newValue - New value for the field.
  */
 export function saveSwitchingTableManualChange(
   datagraph: DataGraph,
   deviceId: DeviceId,
   mac: string,
-  newPort: number,
+  col: number,
+  newValue: string,
 ): void {
   const device = datagraph.getDevice(deviceId);
   if (!device || !(device instanceof DataSwitch)) {
     console.warn(`Device with ID ${deviceId} is not a switch.`);
     return;
   }
-
   const entry = device.switchingTable.get(mac);
-
-  if (!entry || entry.port !== newPort) {
-    device.switchingTable.add({ mac, port: newPort, edited: true });
-    datagraph.notifyChanges();
+  if (col === 0) {
+    // Update MAC (key)
+    if (entry && entry.mac !== newValue) {
+      device.switchingTable.edit(mac, { mac: newValue });
+      datagraph.notifyChanges();
+    }
+  } else if (col === 1) {
+    // Update port
+    const port = parseInt(newValue, 10);
+    if (!entry || entry.port !== port) {
+      device.switchingTable.add({ mac, port, edited: true });
+      datagraph.notifyChanges();
+    }
   }
 }

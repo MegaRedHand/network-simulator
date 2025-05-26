@@ -44,7 +44,7 @@ export class SwitchingTable {
       headers: headers,
       fieldsPerRow: 2, // MAC and Port
       rows: props.rows,
-      editableColumns: [false, true], // Make the Port column editable
+      editableColumns: [true, true],
       onEdit: onEdit,
       onDelete: onDelete,
       onAddRow: onAddRow,
@@ -121,11 +121,23 @@ export class SwitchingTable {
       newValue: string,
       rowHash: Record<string, string>,
     ) => {
-      // Only the port column should be editable
-      if (col !== 1) return false;
+      let isValid = false;
 
-      const isValidPort = isValidPortNumber(newValue);
-      if (!isValidPort) {
+      if (col === 0) {
+        // Validate MAC address
+        isValid = /^[0-9a-fA-F:]{17}$/.test(newValue.trim());
+        if (!isValid) {
+          showError(ALERT_MESSAGES.INVALID_MAC);
+        }
+      } else if (col === 1) {
+        // Validate port
+        isValid = isValidPortNumber(newValue);
+        if (!isValid) {
+          showError(ALERT_MESSAGES.INVALID_PORT);
+        }
+      }
+
+      if (!isValid) {
         console.warn(`Invalid value: ${newValue}`);
         return false;
       }
@@ -140,7 +152,8 @@ export class SwitchingTable {
         dataGraph,
         this.props.deviceId,
         mac,
-        parseInt(newValue, 10),
+        col,
+        newValue.trim(),
       );
 
       this.refreshTable();
@@ -164,7 +177,8 @@ export class SwitchingTable {
         this.props.viewgraph.getDataGraph(),
         this.props.deviceId,
         mac.trim(),
-        port,
+        1,
+        portStr.trim(),
       );
 
       this.refreshTable();
