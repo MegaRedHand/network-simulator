@@ -1,27 +1,26 @@
-import { DataNetworkDevice } from "../../data-devices/dNetworkDevice";
+import { ArpEntry, DataNetworkDevice } from "../../data-devices/dNetworkDevice";
 import { DataGraph, DeviceId } from "../../graphs/datagraph";
+import { Table } from "./table";
 
-// Obtener la ARP Table en formato [{ ip, mac }]
 export function getArpTable(
   dataGraph: DataGraph,
   deviceId: DeviceId,
-): { ip: string; mac: string; edited: boolean }[] {
+): ArpEntry[] {
   const device = dataGraph.getDevice(deviceId);
   if (!device || !(device instanceof DataNetworkDevice)) {
     return [];
   }
 
-  const arpTable: { ip: string; mac: string; edited: boolean }[] = [];
+  const table = new Table<ArpEntry>("ip");
 
   for (const [currId, currDevice] of dataGraph.getDevices()) {
     if (currId === deviceId || !(currDevice instanceof DataNetworkDevice)) {
       continue;
     }
     currDevice.interfaces.forEach((iface) => {
-      // Resolve the MAC address for the current device's IP
       const resolved = device.resolveAddress(iface.ip);
       if (resolved) {
-        arpTable.push({
+        table.add({
           ip: iface.ip?.toString(),
           mac: resolved.mac.toString(),
           edited: resolved.edited,
@@ -29,7 +28,7 @@ export function getArpTable(
       }
     });
   }
-  return arpTable;
+  return table.all();
 }
 
 export function removeArpTableEntry(
@@ -43,14 +42,13 @@ export function removeArpTableEntry(
     return;
   }
 
-  if (!device.arpTable.has(ip)) {
+  const prev = device.arpTable.get(ip);
+  if (!prev) {
     console.warn(
       `IP ${ip} not found in ARP table. Creating a new entry with an empty MAC.`,
     );
-    device.arpTable.set(ip, { mac: "", edited: false });
-  } else {
-    device.arpTable.set(ip, { mac: "", edited: false });
   }
+  device.arpTable.add({ ip, mac: "", edited: false });
   dataGraph.notifyChanges();
 }
 
@@ -61,7 +59,7 @@ export function clearArpTable(dataGraph: DataGraph, deviceId: DeviceId): void {
     return;
   }
 
-  device.arpTable = new Map<string, { mac: string; edited: boolean }>();
+  device.arpTable.clear();
 
   dataGraph.notifyChanges();
 }
@@ -92,6 +90,6 @@ export function saveARPTManualChange(
     return;
   }
 
-  device.arpTable.set(ip, { mac, edited: true });
+  device.arpTable.add({ ip, mac, edited: true });
   dataGraph.notifyChanges();
 }

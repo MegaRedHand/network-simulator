@@ -1,19 +1,26 @@
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DataGraph, NetworkDataNode } from "../graphs/datagraph";
+import { EntryData, Table } from "../network-modules/tables/table";
 import { DataDevice } from "./dDevice";
+
+export interface ArpEntry extends EntryData {
+  ip: string;
+  mac: string;
+}
 
 export abstract class DataNetworkDevice extends DataDevice {
   ipMask: IpAddress;
-  arpTable: Map<string, { mac: string; edited: boolean }>;
+  arpTable: Table<ArpEntry>;
   private arpTableChangeListener: (() => void) | null = null;
 
   constructor(graphData: NetworkDataNode, datagraph: DataGraph) {
     super(graphData, datagraph);
     this.ipMask = IpAddress.parse(graphData.mask);
-    this.arpTable = new Map(
+    this.arpTable = new Table<ArpEntry>(
+      "ip",
       (graphData.arpTable as [string, string, boolean][]).map(
-        ([ip, mac, edited]) => [ip, { mac, edited }],
+        ([ip, mac, edited]) => ({ ip, mac, edited }),
       ),
     );
   }
@@ -24,7 +31,11 @@ export abstract class DataNetworkDevice extends DataDevice {
    * Update the ARP table and notify the listener.
    */
   updateArpTable(mac: MacAddress, ip: IpAddress): void {
-    this.arpTable.set(ip.toString(), { mac: mac.toString(), edited: false });
+    this.arpTable.add({
+      ip: ip.toString(),
+      mac: mac.toString(),
+      edited: false,
+    });
     if (this.arpTableChangeListener) {
       this.arpTableChangeListener();
     }
@@ -60,8 +71,13 @@ export abstract class DataNetworkDevice extends DataDevice {
     return {
       ...super.getDataNode(),
       mask: this.ipMask.toString(),
-      arpTable: Array.from(this.arpTable.entries()).map(
-        ([ip, { mac, edited }]) => [ip, mac, edited],
+      arpTable: this.arpTable.serialize(
+        (entry) =>
+          [entry.ip, entry.mac, entry.edited ?? false] as [
+            string,
+            string,
+            boolean,
+          ],
       ),
     };
   }
