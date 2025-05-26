@@ -30,7 +30,7 @@ export class Table<T extends EntryData> {
   }
 
   // Edits an entry (allows changing the key)
-  edit(key: string, changes: Partial<T>) {
+  edit(key: string, changes: Partial<T>, markEdited = true) {
     const entry = this.dataMap.get(key);
     if (entry) {
       const keyField = this.keyField as string;
@@ -39,13 +39,14 @@ export class Table<T extends EntryData> {
 
       if (newKey !== key) {
         // If the key changes, remove the old one and add the new one
-        const newEntry = { ...entry, ...changes, edited: true };
+        const newEntry = { ...entry, ...changes };
+        if (markEdited) newEntry.edited = true;
         this.dataMap.delete(key);
         this.dataMap.set(newKey, newEntry as T);
       } else {
         // If the key does not change, just update the entry
         Object.assign(entry, changes);
-        entry.edited = true;
+        if (markEdited) entry.edited = true;
         this.dataMap.set(key, entry);
       }
     } else {

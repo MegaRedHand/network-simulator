@@ -306,7 +306,7 @@ export function updateRoutingTableIface(
   router.routingTable.all().forEach((entry) => {
     if (entry.iface === oldIface) {
       entry.iface = newIface;
-      router.routingTable.edit(entry.ip, entry);
+      router.routingTable.edit(entry.ip, entry, false);
       changed = true;
     }
   });
