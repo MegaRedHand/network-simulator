@@ -12,8 +12,12 @@ export interface TableOptions {
   fieldsPerRow: number; // Number of fields per row
   rows: TableRow[]; // Table rows
   editableColumns?: boolean[]; // Array indicating which columns are editable
-  onEdit?: (row: number, col: number, newValue: string) => boolean; // Callback for editing cells
-  onDelete?: (row: number) => boolean; // Callback for deleting rows
+  onEdit?: (
+    col: number,
+    newValue: string,
+    rowHash: Record<string, string>,
+  ) => boolean;
+  onDelete?: (key: string) => boolean; // Callback for deleting rows by key
   onAddRow?: (values: string[]) => boolean; // Callback for adding rows
   tableClasses?: string[]; // Additional CSS classes for the table
 }
@@ -170,7 +174,11 @@ export class Table {
     cellData: string,
     rowIndex: number,
     colIndex: number,
-    onEdit?: (row: number, col: number, newValue: string) => boolean,
+    onEdit?: (
+      col: number,
+      newValue: string,
+      rowHash: Record<string, string>,
+    ) => boolean,
   ): HTMLTableCellElement {
     const td = document.createElement("td");
     td.textContent = cellData;
@@ -187,15 +195,16 @@ export class Table {
 
   private createDeleteCell(
     tr: HTMLTableRowElement,
-    onDelete: (row: number) => boolean,
+    onDelete: (key: string) => boolean,
   ): HTMLTableCellElement {
     const deleteTd = document.createElement("td");
     const deleteButton = new Button({
       text: "🗑️",
       classList: [CSS_CLASSES.TABLE_BUTTON],
       onClick: () => {
-        const index = Array.from(this.tbody.rows).indexOf(tr); // Calculate the index of the row
-        if (index !== -1 && onDelete(index)) {
+        // Obtén la clave de la fila (por ejemplo, la IP)
+        const key = tr.cells[0]?.textContent?.trim() || ""; // Asume que la clave está en la primera columna
+        if (key && onDelete(key)) {
           this.tbody.removeChild(tr);
         }
       },
@@ -208,34 +217,40 @@ export class Table {
     cell: HTMLTableCellElement,
     rowIndex: number,
     colIndex: number,
-    onEdit: (row: number, col: number, newValue: string) => boolean,
+    onEdit: (
+      col: number,
+      newValue: string,
+      rowHash: Record<string, string>,
+    ) => boolean,
   ) {
     cell.classList.add("editable-cell");
     cell.contentEditable = "true";
     const originalContent = cell.textContent;
 
-    // Prevent deleting the row while editing
+    let originalRowHash: Record<string, string> = {};
+
+    cell.addEventListener("focus", () => {
+      originalRowHash = this.getRowHash(rowIndex);
+    });
+
     cell.addEventListener("keydown", (event) => {
       if (event.key === "Delete" || event.key === "Backspace") {
         event.stopPropagation();
       }
     });
 
-    // Handle edits
     cell.addEventListener("blur", () => {
       const newValue = cell.textContent?.trim() || "";
 
-      const isValid = onEdit(rowIndex, colIndex, newValue);
+      const isValid = onEdit(colIndex, newValue, originalRowHash);
 
       if (!isValid) {
         console.warn(`Invalid input for column ${colIndex}: ${newValue}`);
-        cell.textContent = originalContent; // Revert change if invalid
+        cell.textContent = originalContent;
         return;
       }
 
-      console.log(
-        `Updated cell at row ${rowIndex}, column ${colIndex} with value: ${newValue}`,
-      );
+      console.log(`Updated cell at column ${colIndex} with value: ${newValue}`);
     });
   }
 
@@ -253,5 +268,20 @@ export class Table {
 
   toHTML(): HTMLElement {
     return this.tableWrapper;
+  }
+
+  getRowHash(rowIndex: number): Record<string, string> {
+    const row = this.tbody.rows[rowIndex];
+    const hash: Record<string, string> = {};
+    const headerKeys = Object.keys(this.options.headers);
+    if (!row) return hash;
+    Array.from(row.cells).forEach((cell, i) => {
+      // Evita la celda de borrar si existe
+      if (!cell.querySelector("button")) {
+        const key = headerKeys[i] ?? `col${i}`;
+        hash[key] = cell.textContent?.trim() || "";
+      }
+    });
+    return hash;
   }
 }

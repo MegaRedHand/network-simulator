@@ -108,7 +108,7 @@ export class ArpTable {
     // Convert ARP table entries to rows
     const newRows = newTableData.map((entry) => ({
       values: [entry.ip, entry.mac],
-      edited: false,
+      edited: entry.edited ?? false,
     }));
 
     this.updateRows(newRows);
@@ -118,18 +118,9 @@ export class ArpTable {
 
   private setArpTableCallbacks() {
     const dataGraph = this.props.viewgraph.getDataGraph();
-    const onDelete = (row: number) => {
-      const arpTable = getArpTable(dataGraph, this.props.deviceId);
 
-      // Validar que el índice es válido
-      if (row < 0 || row >= arpTable.length) {
-        console.warn(`Invalid row index: ${row}`);
-        return false;
-      }
-      const ip = arpTable[row].ip;
-
+    const onDelete = (ip: string) => {
       removeArpTableEntry(dataGraph, this.props.deviceId, ip);
-
       return true;
     };
 
@@ -138,27 +129,26 @@ export class ArpTable {
       this.OnRegenerate();
     };
 
-    const onEdit = (row: number, _col: number, newValue: string) => {
-      const isValidMac = isValidMAC(newValue);
+    const onEdit = (
+      col: number,
+      newValue: string,
+      rowHash: Record<string, string>,
+    ) => {
+      // Solo la columna MAC debe ser editable (asumiendo col === 1)
+      if (col !== 1) return false;
 
+      const isValidMac = isValidMAC(newValue);
       if (!isValidMac) {
         console.warn(`Invalid value: ${newValue}`);
         return false;
       }
 
-      // Obtener la tabla ARP actual
-      const arpTable = getArpTable(dataGraph, this.props.deviceId);
-
-      // Validar que el índice es válido
-      if (row < 0 || row >= arpTable.length) {
-        console.warn(`Invalid row index: ${row}`);
+      const ip = rowHash[TOOLTIP_KEYS.IP];
+      if (!ip) {
+        console.warn("IP not found in row.");
         return false;
       }
 
-      // Obtener la IP correspondiente a la fila
-      const ip = arpTable[row].ip;
-
-      // Update the ARP table entry
       saveARPTManualChange(dataGraph, this.props.deviceId, ip, newValue);
       this.refreshTable();
 

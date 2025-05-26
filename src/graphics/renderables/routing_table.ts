@@ -81,22 +81,22 @@ export class RoutingTable {
   }
 
   getRoutingTable(): TableRow[] {
-    const routingTable = this.props.viewgraph
+    const router = this.props.viewgraph
       .getDataGraph()
       .getDevice(this.props.deviceId) as DataRouter;
-    if (!routingTable) {
+    if (!router) {
       console.warn("Routing table not found.");
       return [];
     }
-    return routingTable.routingTable.map((entry) => ({
+    return router.routingTable.all().map((entry) => ({
       values: [entry.ip, entry.mask, `eth${entry.iface}`],
-      edited: entry.edited ?? false, // toma el valor de entry.edited si existe
+      edited: entry.edited ?? false,
     }));
   }
 
   updateRows(): void {
     const newTableData = this.getRoutingTable();
-    this.table.updateRows(newTableData); // Use the new method in Table
+    this.table.updateRows(newTableData);
   }
 
   // Function to create the regenerate button
@@ -124,7 +124,11 @@ export class RoutingTable {
   }
 
   private setRoutingTableCallbacks(viewgraph: ViewGraph, deviceId: DeviceId) {
-    const onEdit = (row: number, col: number, newValue: string) => {
+    const onEdit = (
+      col: number,
+      newValue: string,
+      rowHash: Record<string, string>,
+    ) => {
       let isValid = false;
       if (
         col === ROUTER_CONSTANTS.IP_COL_INDEX ||
@@ -133,22 +137,24 @@ export class RoutingTable {
         isValid = isValidIP(newValue);
       else if (col === ROUTER_CONSTANTS.INTERFACE_COL_INDEX)
         isValid = isValidInterface(newValue);
+
       if (isValid) {
+        // Usa la IP actual de la fila como clave
+        const ip = rowHash[TOOLTIP_KEYS.IP];
         saveRoutingTableManualChange(
           viewgraph.getDataGraph(),
           deviceId,
-          row,
+          ip,
           col,
           newValue,
         );
-
         this.updateRows();
       }
       return isValid;
     };
 
-    const onDelete = (row: number) => {
-      removeRoutingTableRow(viewgraph.getDataGraph(), deviceId, row);
+    const onDelete = (key: string) => {
+      removeRoutingTableRow(viewgraph.getDataGraph(), deviceId, key);
       return true;
     };
 

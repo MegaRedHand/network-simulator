@@ -32,14 +32,30 @@ export class Table<T extends EntryData> {
     return entry;
   }
 
-  // Edita una entrada (solo los campos pasados)
+  // Edita una entrada (permite cambiar la key)
   edit(key: string, changes: Partial<T>) {
     const entry = this.dataMap.get(key);
     if (entry) {
-      Object.assign(entry, changes);
-      entry.edited = true;
-      this.dataMap.set(key, entry);
-      console.log(`[Table] Edited entry with key=${key}:`, entry);
+      const keyField = this.keyField as string;
+      const newKey =
+        changes[keyField] !== undefined ? String(changes[keyField]) : key;
+
+      if (newKey !== key) {
+        // Si la key cambia, elimina la vieja y agrega la nueva
+        const newEntry = { ...entry, ...changes, edited: true };
+        this.dataMap.delete(key);
+        this.dataMap.set(newKey, newEntry as T);
+        console.log(
+          `[Table] Edited entry and changed key from ${key} to ${newKey}:`,
+          newEntry,
+        );
+      } else {
+        // Si la key no cambia, solo actualiza la entrada
+        Object.assign(entry, changes);
+        entry.edited = true;
+        this.dataMap.set(key, entry);
+        console.log(`[Table] Edited entry with key=${key}:`, entry);
+      }
     } else {
       console.log(`[Table] Tried to edit non-existent entry with key=${key}`);
     }

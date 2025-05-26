@@ -89,10 +89,9 @@ export class ProgramRunnerInfo implements Renderable {
     runner: ProgramRunner,
     runningPrograms: RunningProgram[],
   ): HTMLElement {
-    const onDelete = (row: number) => {
-      const { pid } = runningPrograms[row];
-      runner.removeRunningProgram(pid);
-      runningPrograms = runningPrograms.filter((p) => p.pid !== pid);
+    const onDelete = (pid: string) => {
+      runner.removeRunningProgram(Number(pid));
+      runningPrograms = runningPrograms.filter((p) => p.pid.toString() !== pid);
       if (runningPrograms.length === 0) {
         this.refreshTable();
       }

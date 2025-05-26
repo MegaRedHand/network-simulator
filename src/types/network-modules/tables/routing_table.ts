@@ -2,7 +2,9 @@ import { showSuccess } from "../../../graphics/renderables/alert_manager";
 import { compareIps, IpAddress } from "../../../packets/ip";
 import { ALERT_MESSAGES } from "../../../utils/constants/alert_constants";
 import { DataRouter, DataHost, DataNetworkDevice } from "../../data-devices";
-import { DataGraph, DeviceId, RoutingTableEntry } from "../../graphs/datagraph";
+import { RoutingEntry } from "../../data-devices/dRouter";
+import { DataGraph, DeviceId } from "../../graphs/datagraph";
+import { Table } from "./table";
 
 export function regenerateRoutingTableClean(
   dataGraph: DataGraph,
@@ -11,7 +13,10 @@ export function regenerateRoutingTableClean(
   const router = dataGraph.getDevice(id);
   if (!(router instanceof DataRouter)) return;
 
-  router.routingTable = generateRoutingTable(dataGraph, id);
+  router.routingTable = new Table<RoutingEntry>(
+    "ip",
+    generateRoutingTable(dataGraph, id),
+  );
   router.routingTableEditedIps = [];
   router.routingTableEdited = false;
   sortRoutingTable(router.routingTable);
@@ -29,17 +34,19 @@ export function regenerateRoutingTable(dataGraph: DataGraph, id: DeviceId) {
   if (router.routingTableEdited) {
     const newEntries = generateRoutingTable(dataGraph, id);
     newEntries.forEach((entry) => {
+      const existing = router.routingTable.get(entry.ip);
       if (
         !router.routingTableEditedIps.includes(entry.ip) &&
-        !router.routingTable.some(
-          (e) => e.ip === entry.ip && e.iface === entry.iface,
-        )
+        (!existing || existing.iface !== entry.iface)
       ) {
-        router.routingTable.push(entry);
+        router.routingTable.add(entry);
       }
     });
   } else {
-    router.routingTable = generateRoutingTable(dataGraph, id);
+    router.routingTable = new Table<RoutingEntry>(
+      "ip",
+      generateRoutingTable(dataGraph, id),
+    );
   }
   sortRoutingTable(router.routingTable);
 }
@@ -53,7 +60,7 @@ export function regenerateAllRoutingTables(dataGraph: DataGraph) {
 export function generateRoutingTable(
   dataGraph: DataGraph,
   id: DeviceId,
-): RoutingTableEntry[] {
+): RoutingEntry[] {
   const router = dataGraph.deviceGraph.getVertex(id);
   if (!(router instanceof DataRouter)) {
     return [];
@@ -76,7 +83,7 @@ export function generateRoutingTable(
     });
   }
 
-  const newTable: RoutingTableEntry[] = [];
+  const newTable: RoutingEntry[] = [];
 
   parents.forEach((currentId, childId) => {
     const dstId = childId;
@@ -126,28 +133,28 @@ export function getRoutingTable(dataGraph: DataGraph, id: DeviceId) {
   if (!device || !(device instanceof DataRouter)) {
     return [];
   }
-  return device.routingTable;
+  return device.routingTable.all();
 }
 
-export function sortRoutingTable(routingTable: RoutingTableEntry[]) {
-  routingTable.sort((a, b) => {
-    const prefixLengthA = IpAddress.getPrefixLength(IpAddress.parse(a.mask)); // ej: 255.255.255.0 → 24
+export function sortRoutingTable(routingTable: Table<RoutingEntry>) {
+  const sorted = routingTable.all().sort((a, b) => {
+    const prefixLengthA = IpAddress.getPrefixLength(IpAddress.parse(a.mask));
     const prefixLengthB = IpAddress.getPrefixLength(IpAddress.parse(b.mask));
-
     if (prefixLengthA !== prefixLengthB) {
       return prefixLengthB - prefixLengthA;
     }
-
     const ipA = IpAddress.parse(a.ip);
     const ipB = IpAddress.parse(b.ip);
     return compareIps(ipA, ipB);
   });
+  routingTable.clear();
+  sorted.forEach((entry) => routingTable.add(entry));
 }
 
 export function saveRoutingTableManualChange(
   dataGraph: DataGraph,
   routerId: DeviceId,
-  rowIndex: number,
+  ip: string,
   colIndex: number,
   newValue: string,
 ) {
@@ -161,21 +168,19 @@ export function saveRoutingTableManualChange(
     router.routingTableEditedIps = [];
   }
 
-  if (rowIndex < 0 || rowIndex >= router.routingTable.length) {
-    console.warn(`Invalid row index: ${rowIndex}`);
+  const entry = router.routingTable.get(ip);
+  if (!entry) {
+    console.warn(`Entry with IP ${ip} not found.`);
     return;
   }
-
-  const entry = router.routingTable[rowIndex];
-  const originalIp = entry.ip;
 
   let changed = false;
 
   switch (colIndex) {
     case 0: // IP
       if (entry.ip !== newValue) {
-        if (!router.routingTableEditedIps.includes(originalIp)) {
-          router.routingTableEditedIps.push(originalIp);
+        if (!router.routingTableEditedIps.includes(entry.ip)) {
+          router.routingTableEditedIps.push(entry.ip);
         }
         entry.ip = newValue;
         changed = true;
@@ -204,9 +209,10 @@ export function saveRoutingTableManualChange(
   }
 
   if (changed) {
+    entry.edited = true;
+    router.routingTable.edit(ip, entry);
     sortRoutingTable(router.routingTable);
     router.routingTableEdited = true;
-    entry.edited = true;
     dataGraph.notifyChanges();
     showSuccess(ALERT_MESSAGES.ROUTING_TABLE_UPDATED);
   }
@@ -215,7 +221,7 @@ export function saveRoutingTableManualChange(
 export function removeRoutingTableRow(
   dataGraph: DataGraph,
   routerId: DeviceId,
-  rowIndex: number,
+  ip: string,
 ) {
   const router = dataGraph.getDevice(routerId);
   if (!router || !(router instanceof DataRouter)) {
@@ -227,18 +233,17 @@ export function removeRoutingTableRow(
     router.routingTableEditedIps = [];
   }
 
-  if (rowIndex < 0 || rowIndex >= router.routingTable.length) {
-    console.warn(`Invalid row index: ${rowIndex}`);
+  const entry = router.routingTable.get(ip);
+  if (!entry) {
+    console.warn(`Entry with IP ${ip} not found.`);
     return;
   }
 
-  const entry = router.routingTable[rowIndex];
-
-  if (!router.routingTableEditedIps.includes(entry.ip)) {
-    router.routingTableEditedIps.push(entry.ip);
+  if (!router.routingTableEditedIps.includes(ip)) {
+    router.routingTableEditedIps.push(ip);
   }
 
-  router.routingTable.splice(rowIndex, 1);
+  router.routingTable.remove(ip);
 
   router.routingTableEdited = true;
   dataGraph.notifyChanges();
@@ -298,9 +303,10 @@ export function updateRoutingTableIface(
   }
 
   let changed = false;
-  router.routingTable.forEach((entry) => {
+  router.routingTable.all().forEach((entry) => {
     if (entry.iface === oldIface) {
       entry.iface = newIface;
+      router.routingTable.edit(entry.ip, entry);
       changed = true;
     }
   });
@@ -313,7 +319,7 @@ export function updateRoutingTableIface(
 export function addRoutingTableEntry(
   dataGraph: DataGraph,
   routerId: DeviceId,
-  entry: RoutingTableEntry,
+  entry: RoutingEntry,
 ) {
   const router = dataGraph.getDevice(routerId);
   if (!router || !(router instanceof DataRouter)) {
@@ -321,7 +327,7 @@ export function addRoutingTableEntry(
     return;
   }
   entry.edited = true;
-  router.routingTable.push(entry);
+  router.routingTable.add(entry);
   sortRoutingTable(router.routingTable);
   router.routingTableEdited = true;
   if (!router.routingTableEditedIps) {

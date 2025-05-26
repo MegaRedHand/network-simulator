@@ -106,22 +106,8 @@ export class SwitchingTable {
 
   private setSwitchingTableCallbacks() {
     const dataGraph = this.props.viewgraph.getDataGraph();
-    const onDelete = (row: number) => {
-      // Get the current switching table
-      const switchingTable = getSwitchingTable(dataGraph, this.props.deviceId);
-
-      // Validate that the index is valid
-      if (row < 0 || row >= switchingTable.length) {
-        console.warn(`Invalid row index: ${row}`);
-        return false;
-      }
-
-      // Get the MAC corresponding to the row
-      const mac = switchingTable[row].mac;
-
-      // Remove the entry from the switching table using the MAC
+    const onDelete = (mac: string) => {
       removeSwitchingTableEntry(dataGraph, this.props.deviceId, mac);
-
       return true;
     };
 
@@ -130,27 +116,26 @@ export class SwitchingTable {
       this.OnRegenerate();
     };
 
-    const onEdit = (row: number, _col: number, newValue: string) => {
-      const isValidPort = isValidPortNumber(newValue);
+    const onEdit = (
+      col: number,
+      newValue: string,
+      rowHash: Record<string, string>,
+    ) => {
+      // Only the port column should be editable
+      if (col !== 1) return false;
 
+      const isValidPort = isValidPortNumber(newValue);
       if (!isValidPort) {
         console.warn(`Invalid value: ${newValue}`);
         return false;
       }
 
-      // Get the current switching table
-      const switchingTable = getSwitchingTable(dataGraph, this.props.deviceId);
-
-      // Validate that the index is valid
-      if (row < 0 || row >= switchingTable.length) {
-        console.warn(`Invalid row index: ${row}`);
+      const mac = rowHash[TOOLTIP_KEYS.MAC_ADDRESS];
+      if (!mac) {
+        console.warn("MAC address not found in row.");
         return false;
       }
 
-      // Get the MAC corresponding to the row
-      const mac = switchingTable[row].mac;
-
-      // Update the Switching Table entry
       saveSwitchingTableManualChange(
         dataGraph,
         this.props.deviceId,
@@ -159,7 +144,6 @@ export class SwitchingTable {
       );
 
       this.refreshTable();
-
       return true;
     };
 

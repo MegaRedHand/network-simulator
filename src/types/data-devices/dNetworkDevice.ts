@@ -19,7 +19,7 @@ export abstract class DataNetworkDevice extends DataDevice {
     this.ipMask = IpAddress.parse(graphData.mask);
     this.arpTable = new Table<ArpEntry>(
       "ip",
-      (graphData.arpTable as [string, string, boolean][]).map(
+      ((graphData.arpTable ?? []) as [string, string, boolean][]).map(
         ([ip, mac, edited]) => ({ ip, mac, edited }),
       ),
     );

@@ -60,7 +60,7 @@ export interface NetworkDataNode extends CommonDataNode {
 
 export interface RouterDataNode extends NetworkDataNode {
   type: DeviceType.Router;
-  routingTable?: RoutingTableEntry[];
+  routingTable: [string, string, number, boolean][]; // [ip, mask, iface, edited]
   packetQueueSize: number;
   timePerByte: number;
   routingTableEdited?: boolean;
