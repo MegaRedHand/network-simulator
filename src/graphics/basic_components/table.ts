@@ -249,8 +249,6 @@ export class Table {
         cell.textContent = originalContent;
         return;
       }
-
-      console.log(`Updated cell at column ${colIndex} with value: ${newValue}`);
     });
   }
 
@@ -258,7 +256,6 @@ export class Table {
   updateRows(newRows: TableRow[]): void {
     this.clearTableRows(); // Clear existing rows
     this.options.rows = newRows; // Update the rows in options
-    console.log("Updated rows:", this.options.rows); // Log the updated rows
     this.createRows();
   }
 
@@ -282,6 +279,7 @@ export class Table {
         hash[key] = cell.textContent?.trim() || "";
       }
     });
+    console.log(`Row ${rowIndex} hash:`, hash);
     return hash;
   }
 }

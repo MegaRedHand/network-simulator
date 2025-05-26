@@ -15,24 +15,21 @@ export class Table<T extends EntryData> {
         this.add(entry);
       });
     }
-    console.log("[Table] Constructor initialized with entries:", this.all());
   }
 
-  // Agrega o edita una entrada (por clave principal)
+  // Adds or edits an entry (by primary key)
   add(entry: T) {
     const key = String(entry[this.keyField]);
     this.dataMap.set(key, entry);
-    console.log(`[Table] Added/Updated entry with key=${key}:`, entry);
   }
 
-  // Obtiene una entrada por clave
+  // Gets an entry by key
   get(key: string): T | undefined {
     const entry = this.dataMap.get(key);
-    console.log(`[Table] Get entry with key=${key}:`, entry);
     return entry;
   }
 
-  // Edita una entrada (permite cambiar la key)
+  // Edits an entry (allows changing the key)
   edit(key: string, changes: Partial<T>) {
     const entry = this.dataMap.get(key);
     if (entry) {
@@ -41,49 +38,40 @@ export class Table<T extends EntryData> {
         changes[keyField] !== undefined ? String(changes[keyField]) : key;
 
       if (newKey !== key) {
-        // Si la key cambia, elimina la vieja y agrega la nueva
+        // If the key changes, remove the old one and add the new one
         const newEntry = { ...entry, ...changes, edited: true };
         this.dataMap.delete(key);
         this.dataMap.set(newKey, newEntry as T);
-        console.log(
-          `[Table] Edited entry and changed key from ${key} to ${newKey}:`,
-          newEntry,
-        );
       } else {
-        // Si la key no cambia, solo actualiza la entrada
+        // If the key does not change, just update the entry
         Object.assign(entry, changes);
         entry.edited = true;
         this.dataMap.set(key, entry);
-        console.log(`[Table] Edited entry with key=${key}:`, entry);
       }
     } else {
       console.log(`[Table] Tried to edit non-existent entry with key=${key}`);
     }
   }
 
-  // Serializa a array para guardar/exportar
+  // Serializes to array for saving/exporting
   serialize<U = T>(mapper: (entry: T) => U): U[] {
     const result = Array.from(this.dataMap.values()).map(mapper);
-    console.log("[Table] Serialized entries:", result);
     return result;
   }
 
-  // Devuelve todas las entradas
+  // Returns all entries
   all(): T[] {
     const allEntries = Array.from(this.dataMap.values());
-    console.log("[Table] All entries:", allEntries);
     return allEntries;
   }
 
-  // Elimina una entrada
+  // Removes an entry
   remove(key: string) {
-    const existed = this.dataMap.delete(key);
-    console.log(`[Table] Removed entry with key=${key}:`, existed);
+    this.dataMap.delete(key);
   }
 
-  // Limpia todas las entradas
+  // Clears all entries
   clear() {
     this.dataMap.clear();
-    console.log("[Table] Cleared all entries");
   }
 }

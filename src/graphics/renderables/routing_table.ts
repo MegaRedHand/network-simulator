@@ -139,7 +139,6 @@ export class RoutingTable {
         isValid = isValidInterface(newValue);
 
       if (isValid) {
-        // Usa la IP actual de la fila como clave
         const ip = rowHash[TOOLTIP_KEYS.IP];
         saveRoutingTableManualChange(
           viewgraph.getDataGraph(),
