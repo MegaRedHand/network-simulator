@@ -5,7 +5,6 @@ import { ViewGraph } from "../../types/graphs/viewgraph";
 import { DeviceId } from "../../types/graphs/datagraph";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
-import { ROUTER_CONSTANTS } from "../../utils/constants/router_constants";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { showError, showSuccess } from "./alert_manager";
 import {
@@ -15,6 +14,12 @@ import {
   saveRoutingTableManualChange,
 } from "../../types/network-modules/tables/routing_table";
 import { DataRouter } from "../../types/data-devices";
+import {
+  InvalidIfaceError,
+  InvalidIpError,
+  InvalidMaskError,
+  ROUTER_TABLE_CONSTANTS,
+} from "../../utils/constants/table_constants";
 
 export interface RoutingTableProps {
   rows: TableRow[]; // Rows for the table
@@ -45,7 +50,7 @@ export class RoutingTable {
 
     this.table = new Table({
       headers: headers,
-      fieldsPerRow: ROUTER_CONSTANTS.TABLE_FIELDS_PER_ROW,
+      fieldsPerRow: ROUTER_TABLE_CONSTANTS.TABLE_FIELDS_PER_ROW,
       rows: props.rows,
       editableColumns: [true, true, true, false], // Make the last column non-editable
       onEdit: onEdit,
@@ -129,27 +134,37 @@ export class RoutingTable {
       newValue: string,
       rowHash: Record<string, string>,
     ) => {
-      let isValid = false;
-      if (
-        col === ROUTER_CONSTANTS.IP_COL_INDEX ||
-        col === ROUTER_CONSTANTS.MASK_COL_INDEX
-      )
-        isValid = isValidIP(newValue);
-      else if (col === ROUTER_CONSTANTS.INTERFACE_COL_INDEX)
-        isValid = isValidInterface(newValue);
+      const ip = rowHash[TOOLTIP_KEYS.IP];
+      if (!ip) {
+        console.warn("IP address not found in row.");
+        return false;
+      }
 
-      if (isValid) {
-        const ip = rowHash[TOOLTIP_KEYS.IP];
-        saveRoutingTableManualChange(
+      try {
+        const changed = saveRoutingTableManualChange(
           viewgraph.getDataGraph(),
           deviceId,
           ip,
           col,
           newValue,
         );
+        if (!changed) {
+          return false;
+        }
         this.updateRows();
+        return true;
+      } catch (e) {
+        if (e instanceof InvalidIpError) {
+          showError(ALERT_MESSAGES.INVALID_IP);
+        } else if (e instanceof InvalidMaskError) {
+          showError(ALERT_MESSAGES.INVALID_MASK);
+        } else if (e instanceof InvalidIfaceError) {
+          showError(ALERT_MESSAGES.INVALID_IFACE);
+        } else {
+          console.warn("Unexpected error during routing table edit:", e);
+        }
+        return false;
       }
-      return isValid;
     };
 
     const onDelete = (key: string) => {
@@ -164,40 +179,31 @@ export class RoutingTable {
 
     const onAddRow = (values: string[]) => {
       const [ip, mask, ifaceStr] = values;
-      if (!isValidIP(ip) || !isValidIP(mask) || !isValidInterface(ifaceStr)) {
+
+      try {
+        addRoutingTableEntry(
+          this.props.viewgraph.getDataGraph(),
+          this.props.deviceId,
+          ip,
+          mask,
+          ifaceStr,
+        );
+        this.updateRows();
+        return true;
+      } catch (e) {
+        if (e instanceof InvalidIpError) {
+          showError(ALERT_MESSAGES.INVALID_IP);
+        } else if (e instanceof InvalidMaskError) {
+          showError(ALERT_MESSAGES.INVALID_MASK);
+        } else if (e instanceof InvalidIfaceError) {
+          showError(ALERT_MESSAGES.INVALID_IFACE);
+        } else {
+          console.warn("Unexpected error during routing table add row:", e);
+        }
         return false;
       }
-      const iface = parseInt(ifaceStr.replace("eth", ""), 10);
-      addRoutingTableEntry(
-        this.props.viewgraph.getDataGraph(),
-        this.props.deviceId,
-        { ip, mask, iface },
-      );
-      this.updateRows();
-      return true;
     };
 
     return { onEdit, onDelete, onRegenerate, onAddRow };
   }
-}
-
-// Function to validate IP format
-function isValidIP(ip: string): boolean {
-  const ipPattern =
-    /^(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|1?[0-9][0-9]?)$/;
-  const result = ipPattern.test(ip);
-  if (!result) {
-    showError(ALERT_MESSAGES.INVALID_IP_MASK);
-  }
-  return result;
-}
-
-// Function to validate Interface format (ethX where X is a number)
-function isValidInterface(interfaceStr: string): boolean {
-  const interfacePattern = /^eth[0-9]+$/;
-  const result = interfacePattern.test(interfaceStr);
-  if (!result) {
-    showError(ALERT_MESSAGES.INVALID_IFACE);
-  }
-  return result;
 }

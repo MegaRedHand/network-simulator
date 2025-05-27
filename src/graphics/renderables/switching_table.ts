@@ -8,6 +8,11 @@ import {
 } from "../../types/network-modules/tables/switching_table";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
+import {
+  InvalidMacError,
+  InvalidPortError,
+  SWITCHING_TABLE_CONSTANTS,
+} from "../../utils/constants/table_constants";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { Button } from "../basic_components/button";
 import { Table, TableRow } from "../basic_components/table";
@@ -121,68 +126,63 @@ export class SwitchingTable {
       newValue: string,
       rowHash: Record<string, string>,
     ) => {
-      let isValid = false;
-
-      if (col === 0) {
-        // Validate MAC address
-        isValid = /^[0-9a-fA-F:]{17}$/.test(newValue.trim());
-        if (!isValid) {
-          showError(ALERT_MESSAGES.INVALID_MAC);
-        }
-      } else if (col === 1) {
-        // Validate port
-        isValid = isValidPortNumber(newValue);
-        if (!isValid) {
-          showError(ALERT_MESSAGES.INVALID_PORT);
-        }
-      }
-
-      if (!isValid) {
-        console.warn(`Invalid value: ${newValue}`);
-        return false;
-      }
-
       const mac = rowHash[TOOLTIP_KEYS.MAC_ADDRESS];
       if (!mac) {
         console.warn("MAC address not found in row.");
         return false;
       }
 
-      saveSwitchingTableManualChange(
-        dataGraph,
-        this.props.deviceId,
-        mac,
-        col,
-        newValue.trim(),
-      );
-
-      this.refreshTable();
-      return true;
+      try {
+        const changed = saveSwitchingTableManualChange(
+          dataGraph,
+          this.props.deviceId,
+          mac,
+          col,
+          newValue.trim(),
+        );
+        if (!changed) {
+          return false;
+        }
+        this.refreshTable();
+        return true;
+      } catch (e) {
+        if (e instanceof InvalidMacError) {
+          showError(ALERT_MESSAGES.INVALID_MAC);
+        } else if (e instanceof InvalidPortError) {
+          showError(ALERT_MESSAGES.INVALID_PORT);
+        } else {
+          console.error("Unexpected error:", e);
+        }
+        return false;
+      }
     };
 
     const onAddRow = (values: string[]) => {
       const [mac, portStr] = values;
 
-      if (!mac || !portStr || !/^[0-9a-fA-F:]{17}$/.test(mac.trim())) {
-        showError(ALERT_MESSAGES.INVALID_MAC);
+      try {
+        const changed = saveSwitchingTableManualChange(
+          this.props.viewgraph.getDataGraph(),
+          this.props.deviceId,
+          mac.trim(),
+          SWITCHING_TABLE_CONSTANTS.PORT_COL_INDEX,
+          portStr.trim(),
+        );
+        if (!changed) {
+          return false;
+        }
+        this.refreshTable();
+        return true;
+      } catch (e) {
+        if (e instanceof InvalidMacError) {
+          showError(ALERT_MESSAGES.INVALID_MAC);
+        } else if (e instanceof InvalidPortError) {
+          showError(ALERT_MESSAGES.INVALID_PORT);
+        } else {
+          showError("Error inesperado");
+        }
         return false;
       }
-      const port = parseInt(portStr, 10);
-      if (isNaN(port) || port <= 0) {
-        showError(ALERT_MESSAGES.INVALID_PORT);
-        return false;
-      }
-
-      saveSwitchingTableManualChange(
-        this.props.viewgraph.getDataGraph(),
-        this.props.deviceId,
-        mac.trim(),
-        1,
-        portStr.trim(),
-      );
-
-      this.refreshTable();
-      return true;
     };
 
     return { onEdit, onRegenerate, onDelete, onAddRow };
@@ -199,16 +199,4 @@ export class SwitchingTable {
 
     this.updateRows(updatedRows);
   }
-}
-
-function isValidPortNumber(port: string): boolean {
-  // verify if the port is a number
-  const portNumber = parseInt(port, 10);
-  const isValid = !isNaN(portNumber);
-
-  if (!isValid) {
-    showError(ALERT_MESSAGES.INVALID_PORT);
-  }
-
-  return isValid;
 }

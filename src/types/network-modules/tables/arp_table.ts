@@ -1,3 +1,10 @@
+import { MacAddress } from "../../../packets/ethernet";
+import { IpAddress } from "../../../packets/ip";
+import {
+  ARP_TABLE_CONSTANTS,
+  InvalidIpError,
+  InvalidMacError,
+} from "../../../utils/constants/table_constants";
 import { ArpEntry, DataNetworkDevice } from "../../data-devices/dNetworkDevice";
 import { DataGraph, DeviceId } from "../../graphs/datagraph";
 import { Table } from "./table";
@@ -28,6 +35,13 @@ export function getArpTable(
       }
     });
   }
+
+  device.arpTable.all().forEach((entry) => {
+    if (!table.get(entry.ip)) {
+      table.add({ ...entry });
+    }
+  });
+
   return table.all();
 }
 
@@ -40,13 +54,6 @@ export function removeArpTableEntry(
   if (!device || !(device instanceof DataNetworkDevice)) {
     console.warn(`Device with ID ${deviceId} is not a network device.`);
     return;
-  }
-
-  const prev = device.arpTable.get(ip);
-  if (!prev) {
-    console.warn(
-      `IP ${ip} not found in ARP table. Creating a new entry with an empty MAC.`,
-    );
   }
   device.arpTable.add({ ip, mac: "", edited: false });
   dataGraph.notifyChanges();
@@ -64,32 +71,62 @@ export function clearArpTable(dataGraph: DataGraph, deviceId: DeviceId): void {
   dataGraph.notifyChanges();
 }
 
-// check if this is ok
 export function saveARPTManualChange(
   dataGraph: DataGraph,
   deviceId: DeviceId,
   ip: string,
-  mac: string,
-): void {
+  col: number,
+  newValue: string,
+): boolean {
   const device = dataGraph.getDevice(deviceId);
   if (!device || !(device instanceof DataNetworkDevice)) {
     console.warn(`Device with ID ${deviceId} is not a network device.`);
-    return;
+    return false;
   }
 
-  if (!ip || !mac) {
-    console.warn("Invalid IP or MAC address provided.");
-    return;
+  if (!ip || !newValue) {
+    console.warn("IP or new value is empty.");
+    return false;
+  }
+
+  // Validations
+  if (col === ARP_TABLE_CONSTANTS.IP_COL_INDEX) {
+    if (!IpAddress.isValidIP(newValue)) {
+      throw new InvalidIpError();
+    }
+  } else if (col === ARP_TABLE_CONSTANTS.MAC_COL_INDEX) {
+    if (!MacAddress.isValidMac(newValue)) {
+      throw new InvalidMacError();
+    }
   }
 
   const currentEntry = getArpTable(dataGraph, deviceId).find(
     (e) => e.ip === ip,
   );
+  const internalEntry = device.arpTable.get(ip);
 
-  if (currentEntry && currentEntry.mac === mac) {
-    return;
+  if (col === ARP_TABLE_CONSTANTS.IP_COL_INDEX) {
+    if (currentEntry && currentEntry.ip === newValue) return false;
+    if (!internalEntry) {
+      device.arpTable.add({
+        ip: newValue,
+        mac: currentEntry?.mac ?? "",
+        edited: true,
+      });
+    } else {
+      device.arpTable.edit(ip, { ip: newValue });
+    }
+    dataGraph.notifyChanges();
+    return true;
+  } else if (col === ARP_TABLE_CONSTANTS.MAC_COL_INDEX) {
+    if (currentEntry && currentEntry.mac === newValue) return false;
+    if (!internalEntry) {
+      device.arpTable.add({ ip, mac: newValue, edited: true });
+    } else {
+      device.arpTable.edit(ip, { mac: newValue });
+    }
+    dataGraph.notifyChanges();
+    return true;
   }
-
-  device.arpTable.add({ ip, mac, edited: true });
-  dataGraph.notifyChanges();
+  throw new Error("Invalid column index.");
 }

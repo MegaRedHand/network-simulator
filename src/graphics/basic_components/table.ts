@@ -245,7 +245,9 @@ export class Table {
       const isValid = onEdit(colIndex, newValue, originalRowHash);
 
       if (!isValid) {
-        console.warn(`Invalid input for column ${colIndex}: ${newValue}`);
+        console.warn(
+          `Invalid or same input for column ${colIndex}: ${newValue}`,
+        );
         cell.textContent = originalContent;
         return;
       }
@@ -279,7 +281,6 @@ export class Table {
         hash[key] = cell.textContent?.trim() || "";
       }
     });
-    console.log(`Row ${rowIndex} hash:`, hash);
     return hash;
   }
 }

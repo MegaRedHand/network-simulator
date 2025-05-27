@@ -8,6 +8,11 @@ import {
 } from "../../types/network-modules/tables/arp_table";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
+import {
+  ARP_TABLE_CONSTANTS,
+  InvalidIpError,
+  InvalidMacError,
+} from "../../utils/constants/table_constants";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { Button } from "../basic_components/button";
 import { Table, TableRow } from "../basic_components/table";
@@ -41,9 +46,9 @@ export class ArpTable {
 
     this.table = new Table({
       headers: headers,
-      fieldsPerRow: 2, // IP and MAC
+      fieldsPerRow: ARP_TABLE_CONSTANTS.TABLE_FIELDS_PER_ROW, // IP and MAC
       rows: props.rows,
-      editableColumns: [false, true], // Make the MAC address column editable
+      editableColumns: [true, true], // Make the MAC address column editable
       onEdit: onEdit,
       onDelete: onDelete,
       tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE],
@@ -134,25 +139,35 @@ export class ArpTable {
       newValue: string,
       rowHash: Record<string, string>,
     ) => {
-      // Solo la columna MAC debe ser editable (asumiendo col === 1)
-      if (col !== 1) return false;
-
-      const isValidMac = isValidMAC(newValue);
-      if (!isValidMac) {
-        console.warn(`Invalid value: ${newValue}`);
-        return false;
-      }
-
       const ip = rowHash[TOOLTIP_KEYS.IP];
       if (!ip) {
         console.warn("IP not found in row.");
         return false;
       }
 
-      saveARPTManualChange(dataGraph, this.props.deviceId, ip, newValue);
-      this.refreshTable();
-
-      return true;
+      try {
+        const changed = saveARPTManualChange(
+          dataGraph,
+          this.props.deviceId,
+          ip,
+          col,
+          newValue,
+        );
+        if (!changed) {
+          return false;
+        }
+        this.refreshTable();
+        return true;
+      } catch (e) {
+        if (e instanceof InvalidIpError) {
+          showError(ALERT_MESSAGES.INVALID_IP);
+        } else if (e instanceof InvalidMacError) {
+          showError(ALERT_MESSAGES.INVALID_MAC);
+        } else {
+          console.warn("Unexpected error:", e);
+        }
+        return false;
+      }
     };
 
     return { onEdit, onRegenerate, onDelete };
@@ -169,17 +184,4 @@ export class ArpTable {
 
     this.updateRows(updatedRows);
   }
-}
-
-function isValidMAC(mac: string): boolean {
-  // Expresión regular para validar direcciones MAC en formato estándar (XX:XX:XX:XX:XX:XX)
-  const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
-
-  const result = macRegex.test(mac);
-  // Verificar si la dirección MAC coincide con el formato esperado
-  if (!result) {
-    showError(ALERT_MESSAGES.INVALID_MAC);
-  }
-
-  return result;
 }

@@ -1,3 +1,9 @@
+import { MacAddress } from "../../../packets/ethernet";
+import {
+  InvalidMacError,
+  InvalidPortError,
+  SWITCHING_TABLE_CONSTANTS,
+} from "../../../utils/constants/table_constants";
 import { DataSwitch, SwitchingEntry } from "../../data-devices/dSwitch";
 import { DataGraph, DeviceId } from "../../graphs/datagraph";
 
@@ -74,25 +80,35 @@ export function saveSwitchingTableManualChange(
   mac: string,
   col: number,
   newValue: string,
-): void {
+): boolean {
   const device = datagraph.getDevice(deviceId);
   if (!device || !(device instanceof DataSwitch)) {
     console.warn(`Device with ID ${deviceId} is not a switch.`);
-    return;
+    return false;
   }
   const entry = device.switchingTable.get(mac);
-  if (col === 0) {
-    // Update MAC (key)
-    if (entry && entry.mac !== newValue) {
-      device.switchingTable.edit(mac, { mac: newValue });
-      datagraph.notifyChanges();
+
+  if (col === SWITCHING_TABLE_CONSTANTS.MAC_COL_INDEX) {
+    // Validate MAC
+    if (!MacAddress.isValidMac(newValue.trim())) {
+      throw new InvalidMacError();
     }
-  } else if (col === 1) {
-    // Update port
+    if (entry && entry.mac === newValue) return false;
+    if (entry) {
+      device.switchingTable.edit(mac, { mac: newValue.trim() });
+      datagraph.notifyChanges();
+      return true;
+    }
+  } else if (col === SWITCHING_TABLE_CONSTANTS.PORT_COL_INDEX) {
+    // Validate port
     const port = parseInt(newValue, 10);
-    if (!entry || entry.port !== port) {
-      device.switchingTable.add({ mac, port, edited: true });
-      datagraph.notifyChanges();
+    if (isNaN(port) || port < 0) {
+      throw new InvalidPortError();
     }
+    if (entry && entry.port === port) return false;
+    device.switchingTable.add({ mac, port, edited: true });
+    datagraph.notifyChanges();
+    return true;
   }
+  console.warn(`Invalid column index: ${col}`);
 }

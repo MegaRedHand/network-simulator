@@ -1,6 +1,10 @@
-import { showSuccess } from "../../../graphics/renderables/alert_manager";
 import { compareIps, IpAddress } from "../../../packets/ip";
-import { ALERT_MESSAGES } from "../../../utils/constants/alert_constants";
+import {
+  InvalidIfaceError,
+  InvalidIpError,
+  InvalidMaskError,
+  ROUTER_TABLE_CONSTANTS,
+} from "../../../utils/constants/table_constants";
 import { DataRouter, DataHost, DataNetworkDevice } from "../../data-devices";
 import { RoutingEntry } from "../../data-devices/dRouter";
 import { DataGraph, DeviceId } from "../../graphs/datagraph";
@@ -157,11 +161,11 @@ export function saveRoutingTableManualChange(
   ip: string,
   colIndex: number,
   newValue: string,
-) {
+): boolean {
   const router = dataGraph.getDevice(routerId);
   if (!router || !(router instanceof DataRouter)) {
     console.warn(`Device with ID ${routerId} is not a router.`);
-    return;
+    return false;
   }
 
   if (!router.routingTableEditedIps) {
@@ -171,51 +175,43 @@ export function saveRoutingTableManualChange(
   const entry = router.routingTable.get(ip);
   if (!entry) {
     console.warn(`Entry with IP ${ip} not found.`);
-    return;
+    return false;
   }
 
-  let changed = false;
-
-  switch (colIndex) {
-    case 0: // IP
-      if (entry.ip !== newValue) {
-        if (!router.routingTableEditedIps.includes(entry.ip)) {
-          router.routingTableEditedIps.push(entry.ip);
-        }
-        entry.ip = newValue;
-        changed = true;
-      }
-      break;
-    case 1: // Mask
-      if (entry.mask !== newValue) {
-        entry.mask = newValue;
-        changed = true;
-      }
-      break;
-    case 2: {
-      // Iface
-      const ifaceValue = newValue.startsWith("eth")
-        ? parseInt(newValue.replace("eth", ""), 10)
-        : parseInt(newValue, 10);
-      if (entry.iface !== ifaceValue) {
-        entry.iface = ifaceValue;
-        changed = true;
-      }
-      break;
+  if (colIndex === ROUTER_TABLE_CONSTANTS.IP_COL_INDEX) {
+    if (!IpAddress.isValidIP(newValue)) {
+      throw new InvalidIpError();
     }
-    default:
-      console.warn(`Invalid column index: ${colIndex}`);
-      return;
+    if (entry.ip === newValue) return false;
+    if (!router.routingTableEditedIps.includes(entry.ip)) {
+      router.routingTableEditedIps.push(entry.ip);
+    }
+    entry.ip = newValue;
+  } else if (colIndex === ROUTER_TABLE_CONSTANTS.MASK_COL_INDEX) {
+    if (!IpAddress.isValidIP(newValue)) {
+      throw new InvalidMaskError();
+    }
+    if (entry.mask === newValue) return false;
+    entry.mask = newValue;
+  } else if (colIndex === ROUTER_TABLE_CONSTANTS.INTERFACE_COL_INDEX) {
+    const ifaceValue = newValue.startsWith("eth")
+      ? parseInt(newValue.replace("eth", ""), 10)
+      : parseInt(newValue, 10);
+    if (isNaN(ifaceValue) || ifaceValue < 0) {
+      throw new InvalidIfaceError();
+    }
+    if (entry.iface === ifaceValue) return false;
+    entry.iface = ifaceValue;
+  } else {
+    console.warn(`Invalid column index ${colIndex} for routing table.`);
+    return false;
   }
 
-  if (changed) {
-    entry.edited = true;
-    router.routingTable.edit(ip, entry);
-    sortRoutingTable(router.routingTable);
-    router.routingTableEdited = true;
-    dataGraph.notifyChanges();
-    showSuccess(ALERT_MESSAGES.ROUTING_TABLE_UPDATED);
-  }
+  router.routingTable.edit(ip, entry);
+  sortRoutingTable(router.routingTable);
+  router.routingTableEdited = true;
+  dataGraph.notifyChanges();
+  return true;
 }
 
 export function removeRoutingTableRow(
@@ -319,22 +315,46 @@ export function updateRoutingTableIface(
 export function addRoutingTableEntry(
   dataGraph: DataGraph,
   routerId: DeviceId,
-  entry: RoutingEntry,
+  ip: string,
+  mask: string,
+  ifaceStr: string,
 ) {
   const router = dataGraph.getDevice(routerId);
   if (!router || !(router instanceof DataRouter)) {
     console.warn(`Device with ID ${routerId} is not a router.`);
     return;
   }
-  entry.edited = true;
+  if (!IpAddress.isValidIP(ip)) {
+    throw new InvalidIpError();
+  }
+  if (!IpAddress.isValidIP(mask)) {
+    throw new InvalidMaskError();
+  }
+
+  const iface = parseIface(ifaceStr);
+
+  const entry: RoutingEntry = { ip, mask, iface, edited: true };
   router.routingTable.add(entry);
   sortRoutingTable(router.routingTable);
   router.routingTableEdited = true;
   if (!router.routingTableEditedIps) {
     router.routingTableEditedIps = [];
   }
-  if (!router.routingTableEditedIps.includes(entry.ip)) {
-    router.routingTableEditedIps.push(entry.ip);
+  if (!router.routingTableEditedIps.includes(ip)) {
+    router.routingTableEditedIps.push(ip);
   }
   dataGraph.notifyChanges?.();
+}
+
+function parseIface(ifaceStr: string): number {
+  let iface: number;
+  if (ifaceStr.startsWith("eth")) {
+    iface = parseInt(ifaceStr.replace("eth", ""), 10);
+  } else {
+    iface = parseInt(ifaceStr, 10);
+  }
+  if (isNaN(iface) || iface < 0) {
+    throw new InvalidIfaceError();
+  }
+  return iface;
 }

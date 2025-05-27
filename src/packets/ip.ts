@@ -48,6 +48,18 @@ export class IpAddress {
     this.octets = octets;
   }
 
+  static isValidIP(ip: string): boolean {
+    // First, check format: four groups of 1-3 digits separated by dots
+    if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) return false;
+    // Then, check each octet is in 0-255
+    const octets = ip.split(".");
+    if (octets.length !== 4) return false;
+    return octets.every((octet) => {
+      const num = parseInt(octet, 10);
+      return !isNaN(num) && num >= 0 && num <= 255;
+    });
+  }
+
   // Parse IP address from a string representation (10.25.34.42)
   static parse(addrString: string): IpAddress | null {
     const octets = new Uint8Array(4);
