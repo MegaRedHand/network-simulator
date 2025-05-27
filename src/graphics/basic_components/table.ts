@@ -1,4 +1,5 @@
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
+import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { attachTooltip } from "../renderables/tooltip_manager";
 import { Button } from "./button";
 
@@ -156,6 +157,7 @@ export class Table {
     const addButton = new Button({
       text: "➕",
       classList: [CSS_CLASSES.TABLE_BUTTON],
+      tooltip: TOOLTIP_KEYS.ADD_ENTRY_BUTTON,
       onClick: () => {
         const values = addCells.map((cell) => cell.textContent?.trim() || "");
         const added = onAddRow(values);
@@ -201,9 +203,9 @@ export class Table {
     const deleteButton = new Button({
       text: "🗑️",
       classList: [CSS_CLASSES.TABLE_BUTTON],
+      tooltip: TOOLTIP_KEYS.DELETE_ENTRY_BUTTON,
       onClick: () => {
-        // Obtén la clave de la fila (por ejemplo, la IP)
-        const key = tr.cells[0]?.textContent?.trim() || ""; // Asume que la clave está en la primera columna
+        const key = tr.cells[0]?.textContent?.trim() || "";
         if (key && onDelete(key)) {
           this.tbody.removeChild(tr);
         }
