@@ -17,10 +17,11 @@ export class DataSwitch extends DataDevice {
     super(graphData, datagraph);
     this.switchingTable = new Table<SwitchingEntry>(
       "mac",
-      graphData.switchingTable.map(([mac, port, edited]) => ({
+      graphData.switchingTable.map(([mac, port, edited, deleted]) => ({
         mac,
         port,
         edited,
+        deleted,
       })),
     );
   }
@@ -33,7 +34,6 @@ export class DataSwitch extends DataDevice {
     this.switchingTable.add({
       mac: mac.toString(),
       port: iface,
-      edited: false,
     });
     if (this.switchingTableChangeListener) {
       this.switchingTableChangeListener();
@@ -49,11 +49,12 @@ export class DataSwitch extends DataDevice {
       ...super.getDataNode(),
       switchingTable: this.switchingTable.serialize(
         (entry) =>
-          [entry.mac, entry.port, entry.edited ?? false] as [
-            string,
-            number,
-            boolean,
-          ],
+          [
+            entry.mac,
+            entry.port,
+            entry.edited ?? false,
+            entry.deleted ?? false,
+          ] as [string, number, boolean, boolean],
       ),
       type: DeviceType.Switch,
     };

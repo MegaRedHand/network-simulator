@@ -20,8 +20,6 @@ export class DataRouter extends DataNetworkDevice {
   // Number of bytes processed
   private processingProgress = 0;
   routingTable: Table<RoutingEntry>;
-  routingTableEdited = false;
-  routingTableEditedIps: string[] = [];
 
   constructor(graphData: RouterDataNode, datagraph: DataGraph) {
     super(graphData, datagraph);
@@ -31,11 +29,21 @@ export class DataRouter extends DataNetworkDevice {
     this.routingTable = new Table<RoutingEntry>(
       "ip",
       (
-        (graphData.routingTable ?? []) as [string, string, number, boolean][]
-      ).map(([ip, mask, iface, edited]) => ({ ip, mask, iface, edited })),
+        (graphData.routingTable ?? []) as [
+          string,
+          string,
+          number,
+          boolean,
+          boolean,
+        ][]
+      ).map(([ip, mask, iface, edited, deleted]) => ({
+        ip,
+        mask,
+        iface,
+        edited,
+        deleted,
+      })),
     );
-    this.routingTableEdited = graphData.routingTableEdited ?? false;
-    this.routingTableEditedIps = graphData.routingTableEditedIps ?? [];
     this.bytesPerSecond =
       graphData.bytesPerSecond ?? ROUTER_CONSTANTS.PROCESSING_SPEED;
   }
@@ -50,21 +58,33 @@ export class DataRouter extends DataNetworkDevice {
   }
 
   getDataNode(): RouterDataNode {
+    console.log(
+      "DataRouter routing table:",
+      this.routingTable.serialize(
+        (entry) =>
+          [
+            entry.ip,
+            entry.mask,
+            entry.iface,
+            entry.edited ?? false,
+            entry.deleted ?? false,
+          ] as [string, string, number, boolean, boolean],
+      ),
+    );
     return {
       ...super.getDataNode(),
       type: DeviceType.Router,
       routingTable: this.routingTable.serialize(
         (entry) =>
-          [entry.ip, entry.mask, entry.iface, entry.edited ?? false] as [
-            string,
-            string,
-            number,
-            boolean,
-          ],
+          [
+            entry.ip,
+            entry.mask,
+            entry.iface,
+            entry.edited ?? false,
+            entry.deleted ?? false,
+          ] as [string, string, number, boolean, boolean],
       ),
       packetQueueSize: this.packetQueue.getMaxQueueSize(),
-      routingTableEdited: this.routingTableEdited,
-      routingTableEditedIps: this.routingTableEditedIps,
       bytesPerSecond: this.bytesPerSecond,
     };
   }
@@ -119,7 +139,7 @@ export class DataRouter extends DataNetworkDevice {
       return;
     }
 
-    const result = this.routingTable.all().find((entry) => {
+    const result = this.routingTable.allActive().find((entry) => {
       const ip = IpAddress.parse(entry.ip);
       const mask = IpAddress.parse(entry.mask);
       return datagram.destinationAddress.isInSubnet(ip, mask);

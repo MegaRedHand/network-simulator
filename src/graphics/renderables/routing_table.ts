@@ -9,11 +9,11 @@ import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { showError, showSuccess } from "./alert_manager";
 import {
   addRoutingTableEntry,
+  getRoutingTable,
   regenerateRoutingTableClean,
   removeRoutingTableRow,
   saveRoutingTableManualChange,
 } from "../../types/network-modules/tables/routing_table";
-import { DataRouter } from "../../types/data-devices";
 import {
   InvalidIfaceError,
   InvalidIpError,
@@ -85,22 +85,13 @@ export class RoutingTable {
     return this.container;
   }
 
-  getRoutingTable(): TableRow[] {
-    const router = this.props.viewgraph
-      .getDataGraph()
-      .getDevice(this.props.deviceId) as DataRouter;
-    if (!router) {
-      console.warn("Routing table not found.");
-      return [];
-    }
-    return router.routingTable.all().map((entry) => ({
-      values: [entry.ip, entry.mask, `eth${entry.iface}`],
-      edited: entry.edited ?? false,
-    }));
-  }
-
   updateRows(): void {
-    const newTableData = this.getRoutingTable();
+    const datagraph = this.props.viewgraph.getDataGraph();
+    const entries = getRoutingTable(datagraph, this.props.deviceId);
+    const newTableData: TableRow[] = entries.map((entry) => ({
+      values: [entry.ip, entry.mask, `eth${entry.iface}`],
+      edited: entry.edited,
+    }));
     this.table.updateRows(newTableData);
   }
 

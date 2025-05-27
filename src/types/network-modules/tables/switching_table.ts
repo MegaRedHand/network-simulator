@@ -22,8 +22,7 @@ export function getSwitchingTable(
     return [];
   }
 
-  // Convert the Map to an array and map it to a readable format
-  return device.switchingTable.all();
+  return device.switchingTable.allActive();
 }
 
 /**
@@ -63,7 +62,7 @@ export function removeSwitchingTableEntry(
     console.warn(`Device with ID ${deviceId} is not a switch.`);
     return;
   }
-  device.switchingTable.remove(mac);
+  device.switchingTable.softRemove(mac);
   datagraph.notifyChanges();
 }
 

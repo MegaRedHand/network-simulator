@@ -1,6 +1,7 @@
 export interface EntryData {
   [key: string]: string | number | boolean | undefined;
   edited?: boolean;
+  deleted?: boolean;
 }
 
 export class Table<T extends EntryData> {
@@ -29,7 +30,7 @@ export class Table<T extends EntryData> {
     return entry;
   }
 
-  // Edits an entry (allows changing the key)
+  // Edits an entry
   edit(key: string, changes: Partial<T>, markEdited = true) {
     const entry = this.dataMap.get(key);
     if (entry) {
@@ -38,13 +39,18 @@ export class Table<T extends EntryData> {
         changes[keyField] !== undefined ? String(changes[keyField]) : key;
 
       if (newKey !== key) {
-        // If the key changes, remove the old one and add the new one
-        const newEntry = { ...entry, ...changes };
-        if (markEdited) newEntry.edited = true;
-        this.dataMap.delete(key);
+        // soft delete
+        const deletedEntry = { ...entry, deleted: true, edited: true };
+        this.dataMap.set(key, deletedEntry as T);
+        console.log(
+          `[Table] Entry with key=${key} changed to new key=${newKey}. Marking old entry as deleted.`,
+        );
+
+        // create a new entry with the new key
+        const newEntry = { ...entry, ...changes, deleted: false, edited: true };
         this.dataMap.set(newKey, newEntry as T);
       } else {
-        // If the key does not change, just update the entry
+        // if the key didn't change, just update the entry
         Object.assign(entry, changes);
         if (markEdited) entry.edited = true;
         this.dataMap.set(key, entry);
@@ -52,6 +58,7 @@ export class Table<T extends EntryData> {
     } else {
       console.log(`[Table] Tried to edit non-existent entry with key=${key}`);
     }
+    console.log("[Table] Current entries:", Array.from(this.dataMap.values()));
   }
 
   // Serializes to array for saving/exporting
@@ -66,9 +73,39 @@ export class Table<T extends EntryData> {
     return allEntries;
   }
 
-  // Removes an entry
-  remove(key: string) {
-    this.dataMap.delete(key);
+  // Returns all entries that are not marked as deleted
+  allActive(): T[] {
+    return Array.from(this.dataMap.values()).filter((entry) => !entry.deleted);
+  }
+
+  // Returns all entries that are marked as deleted or edited
+  allEditedOrDeleted(): T[] {
+    return Array.from(this.dataMap.values()).filter(
+      (entry) => entry.edited || entry.deleted,
+    );
+  }
+
+  // Returns all entries that are marked as edited (but not deleted)
+  allEdited(): T[] {
+    return Array.from(this.dataMap.values()).filter(
+      (entry) => entry.edited && !entry.deleted,
+    );
+  }
+
+  // Returns all entries that are marked as deleted
+  allDeleted(): T[] {
+    return Array.from(this.dataMap.values()).filter((entry) => entry.deleted);
+  }
+
+  // Marks an entry as deleted instead of removing it
+  softRemove(key: string) {
+    const entry = this.dataMap.get(key);
+    if (entry) {
+      entry.deleted = true;
+      entry.edited = true;
+      this.dataMap.set(key, entry);
+    }
+    console.log(`[Table] Marked entry with key=${key} as deleted.`);
   }
 
   // Clears all entries

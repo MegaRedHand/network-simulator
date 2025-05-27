@@ -128,10 +128,10 @@ export class DeviceInfo extends BaseInfo {
 
   addRoutingTable(viewgraph: ViewGraph, deviceId: number): void {
     const entries = getRoutingTable(viewgraph.getDataGraph(), deviceId);
-
+    console.log(`[DeviceInfo] Routing table for device ${deviceId}:`, entries);
     const rows = entries.map((entry) => ({
       values: [entry.ip, entry.mask, `eth${entry.iface}`],
-      edited: entry.edited ?? false,
+      edited: entry.edited,
     }));
 
     const routingTable = new RoutingTable({

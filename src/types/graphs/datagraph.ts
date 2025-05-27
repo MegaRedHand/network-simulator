@@ -48,7 +48,7 @@ export interface NetworkInterfaceData {
 }
 
 export interface SwitchDataNode extends CommonDataNode {
-  switchingTable: [string, number, boolean][]; // [mac, port, edited]
+  switchingTable: [string, number, boolean, boolean][]; // [mac, port, edited, deleted]
   type: DeviceType.Switch;
 }
 
@@ -60,10 +60,8 @@ export interface NetworkDataNode extends CommonDataNode {
 
 export interface RouterDataNode extends NetworkDataNode {
   type: DeviceType.Router;
-  routingTable: [string, string, number, boolean][]; // [ip, mask, iface, edited]
+  routingTable: [string, string, number, boolean, boolean][]; // [ip, mask, iface, edited, deleted]
   packetQueueSize: number;
-  routingTableEdited?: boolean;
-  routingTableEditedIps?: string[];
   bytesPerSecond: number;
 }
 
@@ -196,7 +194,10 @@ export class DataGraph {
     return deviceId;
   }
 
-  reAddEdge(edgeData: DataEdge): DataEdge | null {
+  reAddEdge(
+    edgeData: DataEdge,
+    forcedIps: Set<string> = new Set<string>(),
+  ): DataEdge | null {
     const { from, to } = edgeData;
     const n1Id = from.id;
     const n2Id = to.id;
@@ -255,7 +256,7 @@ export class DataGraph {
     this.deviceGraph.setEdge(n1Id, n2Id, edgeData);
 
     this.notifyChanges();
-    regenerateAllRoutingTables(this);
+    regenerateAllRoutingTables(this, forcedIps);
     return edgeData;
   }
 
@@ -284,7 +285,20 @@ export class DataGraph {
       from: { id: n1Id, iface: n1Iface },
       to: { id: n2Id, iface: n2Iface },
     };
-    return this.reAddEdge(edge);
+
+    const forcedIps = new Set<string>();
+    if (device1.interfaces) {
+      device1.interfaces.forEach(
+        (iface) => iface.ip && forcedIps.add(iface.ip.toString()),
+      );
+    }
+    if (device2.interfaces) {
+      device2.interfaces.forEach(
+        (iface) => iface.ip && forcedIps.add(iface.ip.toString()),
+      );
+    }
+
+    return this.reAddEdge(edge, forcedIps);
   }
 
   // NOTE: May be used in future
@@ -470,8 +484,8 @@ export class DataGraph {
     console.log(
       `Connection removed between devices ID: ${n1Id} and ID: ${n2Id}`,
     );
-    this.notifyChanges();
     regenerateAllRoutingTables(this);
+    this.notifyChanges();
   }
 
   subscribeChanges(callback: () => void) {

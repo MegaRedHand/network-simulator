@@ -130,12 +130,13 @@ export class ViewSwitch extends ViewDevice {
     }
     const switchingTable = dDevice.switchingTable;
     const destEntry = switchingTable.get(frame.destination.toString());
-    const sendingIfaces: DeviceId[] = destEntry
-      ? [destEntry.port]
-      : Array.from(
-          { length: getNumberOfInterfaces(this.getType()) },
-          (_, i) => i,
-        );
+    const sendingIfaces: DeviceId[] =
+      destEntry && !destEntry.deleted
+        ? [destEntry.port]
+        : Array.from(
+            { length: getNumberOfInterfaces(this.getType()) },
+            (_, i) => i,
+          );
     sendingIfaces.forEach((sendingIface) =>
       this.forwardFrame(frame, sendingIface, iface),
     );

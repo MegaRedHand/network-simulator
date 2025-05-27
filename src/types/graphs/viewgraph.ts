@@ -16,7 +16,6 @@ import { Graph } from "./graph";
 import { PacketManager } from "../packetManager";
 import { ViewNetworkDevice } from "../view-devices/vNetworkDevice";
 import { MacAddress } from "../../packets/ethernet";
-import { clearEditedIpsForEdge } from "../network-modules/tables/routing_table";
 
 export type EdgePair = [DeviceId, DeviceId];
 
@@ -368,7 +367,6 @@ export class ViewGraph {
       return null;
     }
 
-    clearEditedIpsForEdge(this.datagraph, datagraphEdge);
     this._removeEdge(n1Id, n2Id);
 
     // Remove connection in DataGraph
