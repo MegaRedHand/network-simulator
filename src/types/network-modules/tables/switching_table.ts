@@ -112,3 +112,36 @@ export function saveSwitchingTableManualChange(
   }
   console.warn(`Invalid column index: ${col}`);
 }
+
+/**
+ * Updates all entries in the switching table that match the old port, setting them to the new port.
+ * @param datagraph - The data graph.
+ * @param deviceId - ID of the switch device.
+ * @param oldPort - The port number to replace.
+ * @param newPort - The new port number to set.
+ */
+export function updateSwitchingTablePort(
+  datagraph: DataGraph,
+  deviceId: DeviceId,
+  oldPort: number,
+  newPort: number,
+): void {
+  const device = datagraph.getDevice(deviceId);
+  if (!device || !(device instanceof DataSwitch)) {
+    console.warn(`Device with ID ${deviceId} is not a switch.`);
+    return;
+  }
+
+  let changed = false;
+  device.switchingTable.all().forEach((entry) => {
+    if (entry.port === oldPort) {
+      entry.port = newPort;
+      device.switchingTable.edit(entry.mac, entry, false);
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    datagraph.notifyChanges?.();
+  }
+}
