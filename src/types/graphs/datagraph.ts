@@ -532,8 +532,7 @@ export class DataGraph {
     parents.forEach((currentId, childId) => {
       const dstId = childId;
       if (dstId === id) return;
-      // Get edge connection both devices
-      console.debug(`currentId: ${currentId}, childId: ${childId}`);
+      // Get edge connecting both devices
       const edge = this.getConnection(currentId, childId);
       // Get childId interface involved in connection
       const receivingIfaceNum =

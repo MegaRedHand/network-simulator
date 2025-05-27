@@ -150,7 +150,7 @@ export abstract class ViewDevice extends Container {
     // Do nothing
   }
 
-  setupTooltip(iface: number) {
+  setupToolTip(iface: number) {
     const currentLayer = this.ctx.getCurrentLayer();
     const tooltipMessage = this.getTooltipDetails(currentLayer, iface);
     this.tooltip = showTooltip(
@@ -164,6 +164,10 @@ export abstract class ViewDevice extends Container {
 
   hideToolTip() {
     hideTooltip(this.tooltip);
+  }
+
+  removeToolTip() {
+    removeTooltip(this, this.tooltip);
   }
 
   setCircleColor(color: number) {
