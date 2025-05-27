@@ -237,6 +237,9 @@ export class Table {
       if (event.key === "Delete" || event.key === "Backspace") {
         event.stopPropagation();
       }
+      if (event.key === "C" || event.key === "c") {
+        event.stopPropagation();
+      }
     });
 
     cell.addEventListener("blur", () => {
@@ -275,7 +278,6 @@ export class Table {
     const headerKeys = Object.keys(this.options.headers);
     if (!row) return hash;
     Array.from(row.cells).forEach((cell, i) => {
-      // Evita la celda de borrar si existe
       if (!cell.querySelector("button")) {
         const key = headerKeys[i] ?? `col${i}`;
         hash[key] = cell.textContent?.trim() || "";
