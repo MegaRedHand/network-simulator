@@ -37,7 +37,7 @@ export function getArpTable(
   }
 
   device.arpTable.all().forEach((entry) => {
-    if (!table.get(entry.ip)) {
+    if (!table.get(entry.ip) && entry.mac) {
       table.add({ ...entry });
     }
   });
@@ -89,6 +89,10 @@ export function saveARPTManualChange(
     return false;
   }
 
+  if (!IpAddress.isValidIP(ip)) {
+    throw new InvalidIpError();
+  }
+
   // Validations
   if (col === ARP_TABLE_CONSTANTS.IP_COL_INDEX) {
     if (!IpAddress.isValidIP(newValue)) {
@@ -107,15 +111,13 @@ export function saveARPTManualChange(
 
   if (col === ARP_TABLE_CONSTANTS.IP_COL_INDEX) {
     if (currentEntry && currentEntry.ip === newValue) return false;
-    if (!internalEntry) {
-      device.arpTable.add({
-        ip: newValue,
-        mac: currentEntry?.mac ?? "",
-        edited: true,
-      });
-    } else {
-      device.arpTable.edit(ip, { ip: newValue });
-    }
+    // Remove the old entry before adding/editing the new one
+    removeArpTableEntry(dataGraph, deviceId, ip);
+    device.arpTable.add({
+      ip: newValue,
+      mac: currentEntry?.mac ?? internalEntry?.mac ?? "",
+      edited: true,
+    });
     dataGraph.notifyChanges();
     return true;
   } else if (col === ARP_TABLE_CONSTANTS.MAC_COL_INDEX) {

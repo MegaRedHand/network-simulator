@@ -33,7 +33,8 @@ export class ArpTable {
   constructor(private props: ArpTableProps) {
     this.container = document.createElement("div");
 
-    const { onEdit, onRegenerate, onDelete } = this.setArpTableCallbacks();
+    const { onEdit, onRegenerate, onDelete, onAddRow } =
+      this.setArpTableCallbacks();
 
     // Create the regenerate button
     const regenerateButton = this.createRegenerateButton(onRegenerate);
@@ -51,6 +52,7 @@ export class ArpTable {
       editableColumns: [true, true], // Make the MAC address column editable
       onEdit: onEdit,
       onDelete: onDelete,
+      onAddRow: onAddRow,
       tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE],
     });
 
@@ -126,6 +128,7 @@ export class ArpTable {
 
     const onDelete = (ip: string) => {
       removeArpTableEntry(dataGraph, this.props.deviceId, ip);
+      showSuccess(ALERT_MESSAGES.ARP_TABLE_ENTRY_DELETED);
       return true;
     };
 
@@ -157,6 +160,7 @@ export class ArpTable {
           return false;
         }
         this.refreshTable();
+        showSuccess(ALERT_MESSAGES.ARP_TABLE_ENTRY_EDITED);
         return true;
       } catch (e) {
         if (e instanceof InvalidIpError) {
@@ -170,7 +174,36 @@ export class ArpTable {
       }
     };
 
-    return { onEdit, onRegenerate, onDelete };
+    const onAddRow = (values: string[]) => {
+      const [ip, mac] = values;
+
+      try {
+        const changed = saveARPTManualChange(
+          this.props.viewgraph.getDataGraph(),
+          this.props.deviceId,
+          ip.trim(),
+          ARP_TABLE_CONSTANTS.MAC_COL_INDEX,
+          mac.trim(),
+        );
+        if (!changed) {
+          return false;
+        }
+        this.refreshTable();
+        showSuccess(ALERT_MESSAGES.ARP_TABLE_ENTRY_ADDED);
+        return true;
+      } catch (e) {
+        if (e instanceof InvalidIpError) {
+          showError(ALERT_MESSAGES.INVALID_IP);
+        } else if (e instanceof InvalidMacError) {
+          showError(ALERT_MESSAGES.INVALID_MAC);
+        } else {
+          console.warn("Unexpected error");
+        }
+        return false;
+      }
+    };
+
+    return { onEdit, onRegenerate, onDelete, onAddRow };
   }
 
   refreshTable(): void {

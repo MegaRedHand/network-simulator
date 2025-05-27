@@ -85,11 +85,15 @@ export function saveSwitchingTableManualChange(
     console.warn(`Device with ID ${deviceId} is not a switch.`);
     return false;
   }
+
+  if (!MacAddress.isValidMac(mac)) {
+    throw new InvalidMacError();
+  }
   const entry = device.switchingTable.get(mac);
 
   if (col === SWITCHING_TABLE_CONSTANTS.MAC_COL_INDEX) {
-    // Validate MAC
-    if (!MacAddress.isValidMac(newValue.trim())) {
+    // Validate MAC address
+    if (!MacAddress.isValidMac(newValue)) {
       throw new InvalidMacError();
     }
     if (entry && entry.mac === newValue) return false;

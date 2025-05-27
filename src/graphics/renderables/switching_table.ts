@@ -144,6 +144,7 @@ export class SwitchingTable {
           return false;
         }
         this.refreshTable();
+        showSuccess(ALERT_MESSAGES.SWITCHING_TABLE_ENTRY_EDITED);
         return true;
       } catch (e) {
         if (e instanceof InvalidMacError) {
@@ -172,6 +173,7 @@ export class SwitchingTable {
           return false;
         }
         this.refreshTable();
+        showSuccess(ALERT_MESSAGES.SWITCHING_TABLE_ENTRY_ADDED);
         return true;
       } catch (e) {
         if (e instanceof InvalidMacError) {
@@ -179,7 +181,7 @@ export class SwitchingTable {
         } else if (e instanceof InvalidPortError) {
           showError(ALERT_MESSAGES.INVALID_PORT);
         } else {
-          showError("Error inesperado");
+          console.warn("Unexpected error:", e);
         }
         return false;
       }
