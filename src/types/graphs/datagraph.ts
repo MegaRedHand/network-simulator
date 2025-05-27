@@ -62,9 +62,9 @@ export interface RouterDataNode extends NetworkDataNode {
   type: DeviceType.Router;
   routingTable: [string, string, number, boolean][]; // [ip, mask, iface, edited]
   packetQueueSize: number;
-  timePerByte: number;
   routingTableEdited?: boolean;
   routingTableEditedIps?: string[];
+  bytesPerSecond: number;
 }
 
 export interface RoutingTableEntry {

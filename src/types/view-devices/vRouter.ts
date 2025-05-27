@@ -21,8 +21,8 @@ export class ViewRouter extends ViewNetworkDevice {
 
   private packetQueueSize: number;
   private packetQueue: PacketQueue;
-  // Time in ms to process a single byte
-  private timePerByte: number;
+  // Number of bytes to process per second
+  private bytesPerSecond: number;
   // Number of bytes processed
   private processingProgress = 0;
 
@@ -42,7 +42,7 @@ export class ViewRouter extends ViewNetworkDevice {
     tag: string,
     mask: IpAddress,
     packetQueueSize: number = ROUTER_CONSTANTS.PACKET_QUEUE_MAX_SIZE,
-    timePerByte: number = ROUTER_CONSTANTS.PROCESSING_SPEED,
+    bytesPerSecond: number = ROUTER_CONSTANTS.PROCESSING_SPEED,
   ) {
     super(
       id,
@@ -56,7 +56,7 @@ export class ViewRouter extends ViewNetworkDevice {
     );
     this.packetQueueSize = packetQueueSize;
     this.packetQueue = new PacketQueue(this.packetQueueSize);
-    this.timePerByte = timePerByte;
+    this.bytesPerSecond = bytesPerSecond;
   }
 
   showInfo(): void {
@@ -90,7 +90,7 @@ export class ViewRouter extends ViewNetworkDevice {
         },
         {
           label: TOOLTIP_KEYS.PROCESSING_SPEED_PARAMETER,
-          initialValue: this.timePerByte,
+          initialValue: this.bytesPerSecond,
           onChange: (newSpeed: number) => {
             this.modifyProcessingSpeed(newSpeed);
           },
@@ -118,8 +118,8 @@ export class ViewRouter extends ViewNetworkDevice {
     this.packetQueueSize = newSize;
   }
 
-  setTimePerByte(newTime: number) {
-    this.timePerByte = newTime;
+  setBytesPerSecond(newTime: number) {
+    this.bytesPerSecond = newTime;
   }
 
   /**
@@ -150,16 +150,16 @@ export class ViewRouter extends ViewNetworkDevice {
    * @param newSpeed - The new processing speed to set, represented as the time per byte.
    *
    * This method updates the internal processing speed of the device by calling
-   * `setTimePerByte` with the provided `newSpeed`. It also ensures that the
+   * `setBytesPerSecond` with the provided `newSpeed`. It also ensures that the
    * corresponding device in the data graph is updated with the same processing speed,
    * but only if the device is an instance of `DataRouter`. If the device is not a
    * `DataRouter`, a warning is logged to the console.
    */
   modifyProcessingSpeed(newSpeed: number): void {
-    this.setTimePerByte(newSpeed);
+    this.setBytesPerSecond(newSpeed);
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
       if (device instanceof DataRouter) {
-        device.setTimePerByte(newSpeed);
+        device.setBytesPerSecond(newSpeed);
       } else {
         console.warn("Device is not a DataRouter, cannot set time per byte");
       }
@@ -200,14 +200,17 @@ export class ViewRouter extends ViewNetworkDevice {
 
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
     // TODO: use arp table here?
-    const { src, dst } = ViewNetworkDevice.getForwardingData(
+    const forwardingData = ViewNetworkDevice.getForwardingData(
       this.id,
-      dstDevice.id,
+      dstDevice?.id,
       this.viewgraph,
     );
+    if (forwardingData && forwardingData.sendingIface === iface) {
+      const { src, dst } = forwardingData;
 
-    const newFrame = new EthernetFrame(src.mac, dst.mac, datagram);
-    sendViewPacket(this.viewgraph, this.id, newFrame, iface);
+      const newFrame = new EthernetFrame(src.mac, dst.mac, datagram);
+      sendViewPacket(this.viewgraph, this.id, newFrame, iface);
+    } else console.debug(`Router ${this.id} could not forward packet.`);
 
     if (this.packetQueue.isEmpty()) {
       this.stopPacketProcessor();
@@ -225,13 +228,12 @@ export class ViewRouter extends ViewNetworkDevice {
   }
 
   getPacketsToProcess(timeMs: number): IPv4Packet | null {
-    this.processingProgress += timeMs;
+    this.processingProgress += (this.bytesPerSecond * timeMs) / 1000;
     const packetLength = this.packetQueue.getHead()?.totalLength;
-    const progressNeeded = this.timePerByte * packetLength;
-    if (this.processingProgress < progressNeeded) {
+    if (this.processingProgress < packetLength) {
       return null;
     }
-    this.processingProgress -= progressNeeded;
+    this.processingProgress -= packetLength;
     return this.packetQueue.dequeue();
   }
 

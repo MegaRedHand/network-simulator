@@ -13,10 +13,10 @@ export interface RoutingEntry extends EntryData {
 }
 
 export class DataRouter extends DataNetworkDevice {
-  packetQueueSize: number;
+  private packetQueueSize: number;
   private packetQueue: PacketQueue;
-  // Time in ms to process a single byte
-  timePerByte: number;
+  // Number of bytes to process per second
+  private bytesPerSecond: number;
   // Number of bytes processed
   private processingProgress = 0;
   routingTable: Table<RoutingEntry>;
@@ -28,8 +28,6 @@ export class DataRouter extends DataNetworkDevice {
     this.packetQueueSize =
       graphData.packetQueueSize ?? ROUTER_CONSTANTS.PACKET_QUEUE_MAX_SIZE;
     this.packetQueue = new PacketQueue(this.packetQueueSize);
-    this.timePerByte =
-      graphData.timePerByte ?? ROUTER_CONSTANTS.PROCESSING_SPEED;
     this.routingTable = new Table<RoutingEntry>(
       "ip",
       (
@@ -38,11 +36,8 @@ export class DataRouter extends DataNetworkDevice {
     );
     this.routingTableEdited = graphData.routingTableEdited ?? false;
     this.routingTableEditedIps = graphData.routingTableEditedIps ?? [];
-
-    console.log(
-      `[DataRouter] routingTableEdited: ${this.routingTableEdited}, routingTableEditedIps:`,
-      this.routingTableEditedIps,
-    );
+    this.bytesPerSecond =
+      graphData.bytesPerSecond ?? ROUTER_CONSTANTS.PROCESSING_SPEED;
   }
 
   setMaxQueueSize(newSize: number) {
@@ -50,8 +45,8 @@ export class DataRouter extends DataNetworkDevice {
     this.packetQueueSize = newSize;
   }
 
-  setTimePerByte(newTime: number) {
-    this.timePerByte = newTime;
+  setBytesPerSecond(newTime: number) {
+    this.bytesPerSecond = newTime;
   }
 
   getDataNode(): RouterDataNode {
@@ -68,9 +63,9 @@ export class DataRouter extends DataNetworkDevice {
           ],
       ),
       packetQueueSize: this.packetQueue.getMaxQueueSize(),
-      timePerByte: this.timePerByte,
       routingTableEdited: this.routingTableEdited,
       routingTableEditedIps: this.routingTableEditedIps,
+      bytesPerSecond: this.bytesPerSecond,
     };
   }
 
@@ -109,13 +104,12 @@ export class DataRouter extends DataNetworkDevice {
   }
 
   getPacketsToProcess(timeMs: number): IPv4Packet | null {
-    this.processingProgress += timeMs;
+    this.processingProgress += (this.bytesPerSecond * timeMs) / 1000;
     const packetLength = this.packetQueue.getHead()?.totalLength;
-    const progressNeeded = this.timePerByte * packetLength;
-    if (this.processingProgress < progressNeeded) {
+    if (this.processingProgress < packetLength) {
       return null;
     }
-    this.processingProgress -= progressNeeded;
+    this.processingProgress -= packetLength;
     return this.packetQueue.dequeue();
   }
 

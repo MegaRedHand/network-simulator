@@ -47,7 +47,7 @@ export const TOOLTIP_KEYS = {
   SWITCH_PARAMETERS: "Switch Parameters",
   HOST_PARAMETERS: "Host Parameters",
   PACKET_QUEUE_SIZE_PARAMETER: "Packet queue size (bytes)",
-  PROCESSING_SPEED_PARAMETER: "Processing speed (ms/byte)",
+  PROCESSING_SPEED_PARAMETER: "Processing speed (bytes/s)",
   REGENERATE: "Regenerate",
   DELETE_EDGE_BUTTON: "Delete Edge",
   CONNECTION: "Connection",

@@ -372,7 +372,6 @@ export class ViewGraph {
 
     // Remove connection in DataGraph
     this.datagraph.removeConnection(n1Id, n2Id);
-
     this._removeEdge(n1Id, n2Id);
     return datagraphEdge;
   }
