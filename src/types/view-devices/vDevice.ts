@@ -192,6 +192,9 @@ export abstract class ViewDevice extends Container {
 
   updateDevicesAspect() {
     if (!this.isVisibleFlag) {
+      for (const iconKey in this.deviceIcons) {
+        this.hideDeviceIcon(iconKey);
+      }
       const edges = this.viewgraph
         .getConnections(this.id)
         .filter((e) => e.isVisible());
@@ -408,6 +411,7 @@ export abstract class ViewDevice extends Container {
     yOffset: number,
     tooltipText?: string,
   ) {
+    if (!this.isVisible()) return;
     if (this.deviceIcons[iconKey]) return;
     const icon = createDeviceIcon(emoji, yOffset);
     this.deviceIcons[iconKey] = icon;
