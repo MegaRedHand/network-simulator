@@ -47,7 +47,6 @@ export abstract class AddRemoveDeviceMove extends BaseMove {
     } else if (wasRemoved(this.state)) {
       // Re-add the removed device
       id = datagraph.reAddDevice(this.state.removedData);
-      datagraph.regenerateAllRoutingTables();
     }
     this.state = { id };
     this.adjustLayer(viewgraph);

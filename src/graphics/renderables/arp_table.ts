@@ -1,15 +1,26 @@
 import { DeviceId } from "../../types/graphs/datagraph";
 import { ViewGraph } from "../../types/graphs/viewgraph";
+import {
+  clearArpTable,
+  getArpTable,
+  removeArpTableEntry,
+  saveARPTManualChange,
+} from "../../types/network-modules/tables/arp_table";
 import { ALERT_MESSAGES } from "../../utils/constants/alert_constants";
 import { CSS_CLASSES } from "../../utils/constants/css_constants";
+import {
+  ARP_TABLE_CONSTANTS,
+  InvalidIpError,
+  InvalidMacError,
+} from "../../utils/constants/table_constants";
 import { TOOLTIP_KEYS } from "../../utils/constants/tooltips_constants";
 import { Button } from "../basic_components/button";
-import { Table } from "../basic_components/table";
+import { Table, TableRow } from "../basic_components/table";
 import { ToggleButton } from "../basic_components/toggle_button";
 import { showError, showSuccess } from "./alert_manager";
 
 export interface ArpTableProps {
-  rows: string[][]; // Rows for the table
+  rows: TableRow[]; // Rows for the table
   viewgraph: ViewGraph; // ViewGraph instance for callbacks
   deviceId: DeviceId; // Device ID for callbacks
 }
@@ -22,7 +33,8 @@ export class ArpTable {
   constructor(private props: ArpTableProps) {
     this.container = document.createElement("div");
 
-    const { onEdit, onRegenerate, onDelete } = this.setArpTableCallbacks();
+    const { onEdit, onRegenerate, onDelete, onAddRow } =
+      this.setArpTableCallbacks();
 
     // Create the regenerate button
     const regenerateButton = this.createRegenerateButton(onRegenerate);
@@ -35,11 +47,12 @@ export class ArpTable {
 
     this.table = new Table({
       headers: headers,
-      fieldsPerRow: 2, // IP and MAC
+      fieldsPerRow: ARP_TABLE_CONSTANTS.TABLE_FIELDS_PER_ROW, // IP and MAC
       rows: props.rows,
-      editableColumns: [false, true], // Make the MAC address column editable
+      editableColumns: [true, true], // Make the MAC address column editable
       onEdit: onEdit,
       onDelete: onDelete,
+      onAddRow: onAddRow,
       tableClasses: [CSS_CLASSES.TABLE, CSS_CLASSES.RIGHT_BAR_TABLE],
     });
 
@@ -69,7 +82,7 @@ export class ArpTable {
     return this.container;
   }
 
-  updateRows(newRows: string[][]): void {
+  updateRows(newRows: TableRow[]): void {
     this.table.updateRows(newRows); // Update the table with new rows
   }
 
@@ -79,7 +92,7 @@ export class ArpTable {
   ): HTMLButtonElement {
     const regenerateButton = new Button({
       text: "🔄",
-      classList: [CSS_CLASSES.REGENERATE_BUTTON],
+      classList: [CSS_CLASSES.TABLE_BUTTON],
       onClick: onRegenerateCallback,
     });
 
@@ -89,9 +102,9 @@ export class ArpTable {
   private OnRegenerate(): void {
     const dataGraph = this.props.viewgraph.getDataGraph();
 
-    dataGraph.clearArpTable(this.props.deviceId);
+    clearArpTable(dataGraph, this.props.deviceId);
 
-    const newTableData = dataGraph.getArpTable(this.props.deviceId);
+    const newTableData = getArpTable(dataGraph, this.props.deviceId);
 
     if (!newTableData || newTableData.length === 0) {
       console.warn("Failed to regenerate ARP table.");
@@ -100,7 +113,10 @@ export class ArpTable {
     }
 
     // Convert ARP table entries to rows
-    const newRows = newTableData.map((entry) => [entry.ip, entry.mac]);
+    const newRows = newTableData.map((entry) => ({
+      values: [entry.ip, entry.mac],
+      edited: entry.edited ?? false,
+    }));
 
     this.updateRows(newRows);
 
@@ -108,26 +124,11 @@ export class ArpTable {
   }
 
   private setArpTableCallbacks() {
-    const onDelete = (row: number) => {
-      // Obtener la tabla ARP actual
-      const arpTable = this.props.viewgraph
-        .getDataGraph()
-        .getArpTable(this.props.deviceId);
+    const dataGraph = this.props.viewgraph.getDataGraph();
 
-      // Validar que el índice es válido
-      if (row < 0 || row >= arpTable.length) {
-        console.warn(`Invalid row index: ${row}`);
-        return false;
-      }
-
-      // Obtener la IP correspondiente a la fila
-      const ip = arpTable[row].ip;
-
-      // Eliminar la entrada de la tabla ARP usando la IP
-      this.props.viewgraph
-        .getDataGraph()
-        .removeArpTableEntry(this.props.deviceId, ip);
-
+    const onDelete = (ip: string) => {
+      removeArpTableEntry(dataGraph, this.props.deviceId, ip);
+      showSuccess(ALERT_MESSAGES.ARP_TABLE_ENTRY_DELETED);
       return true;
     };
 
@@ -136,59 +137,84 @@ export class ArpTable {
       this.OnRegenerate();
     };
 
-    const onEdit = (row: number, _col: number, newValue: string) => {
-      const isValidMac = isValidMAC(newValue);
-
-      if (!isValidMac) {
-        console.warn(`Invalid value: ${newValue}`);
+    const onEdit = (
+      col: number,
+      newValue: string,
+      rowHash: Record<string, string>,
+    ) => {
+      const ip = rowHash[TOOLTIP_KEYS.IP];
+      if (!ip) {
+        console.warn("IP not found in row.");
         return false;
       }
 
-      // Obtener la tabla ARP actual
-      const arpTable = this.props.viewgraph
-        .getDataGraph()
-        .getArpTable(this.props.deviceId);
-
-      // Validar que el índice es válido
-      if (row < 0 || row >= arpTable.length) {
-        console.warn(`Invalid row index: ${row}`);
+      try {
+        const changed = saveARPTManualChange(
+          dataGraph,
+          this.props.deviceId,
+          ip,
+          col,
+          newValue,
+        );
+        if (!changed) {
+          return false;
+        }
+        this.refreshTable();
+        showSuccess(ALERT_MESSAGES.ARP_TABLE_ENTRY_EDITED);
+        return true;
+      } catch (e) {
+        if (e instanceof InvalidIpError) {
+          showError(ALERT_MESSAGES.INVALID_IP);
+        } else if (e instanceof InvalidMacError) {
+          showError(ALERT_MESSAGES.INVALID_MAC);
+        } else {
+          console.warn("Unexpected error:", e);
+        }
         return false;
       }
-
-      // Obtener la IP correspondiente a la fila
-      const ip = arpTable[row].ip;
-
-      // Update the ARP table entry
-      this.props.viewgraph
-        .getDataGraph()
-        .saveARPTManualChange(this.props.deviceId, ip, newValue);
-
-      return true;
     };
 
-    return { onEdit, onRegenerate, onDelete };
+    const onAddRow = (values: string[]) => {
+      const [ip, mac] = values;
+
+      try {
+        const changed = saveARPTManualChange(
+          this.props.viewgraph.getDataGraph(),
+          this.props.deviceId,
+          ip.trim(),
+          ARP_TABLE_CONSTANTS.MAC_COL_INDEX,
+          mac.trim(),
+        );
+        if (!changed) {
+          return false;
+        }
+        this.refreshTable();
+        showSuccess(ALERT_MESSAGES.ARP_TABLE_ENTRY_ADDED);
+        return true;
+      } catch (e) {
+        if (e instanceof InvalidIpError) {
+          showError(ALERT_MESSAGES.INVALID_IP);
+        } else if (e instanceof InvalidMacError) {
+          showError(ALERT_MESSAGES.INVALID_MAC);
+        } else {
+          console.warn("Unexpected error");
+        }
+        return false;
+      }
+    };
+
+    return { onEdit, onRegenerate, onDelete, onAddRow };
   }
 
   refreshTable(): void {
-    const updatedEntries = this.props.viewgraph
-      .getDataGraph()
-      .getArpTable(this.props.deviceId);
+    const dataGraph = this.props.viewgraph.getDataGraph();
+    const updatedEntries = getArpTable(dataGraph, this.props.deviceId);
 
-    const updatedRows = updatedEntries.map((entry) => [entry.ip, entry.mac]);
+    const updatedRows = updatedEntries.map((entry) => ({
+      values: [entry.ip, entry.mac],
+      edited: entry.edited ?? false,
+    }));
 
     this.updateRows(updatedRows);
   }
-}
-
-function isValidMAC(mac: string): boolean {
-  // Expresión regular para validar direcciones MAC en formato estándar (XX:XX:XX:XX:XX:XX)
-  const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
-
-  const result = macRegex.test(mac);
-  // Verificar si la dirección MAC coincide con el formato esperado
-  if (!result) {
-    showError(ALERT_MESSAGES.INVALID_MAC);
-  }
-
-  return result;
 }

@@ -2,14 +2,28 @@ import { DeviceType } from "../view-devices/vDevice";
 import { DataDevice } from "./dDevice";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { DataGraph, DeviceId, SwitchDataNode } from "../graphs/datagraph";
+import { EntryData, Table } from "../network-modules/tables/table";
+
+export interface SwitchingEntry extends EntryData {
+  mac: string;
+  port: number;
+}
 
 export class DataSwitch extends DataDevice {
-  switchingTable: Map<string, number> = new Map<string, number>();
+  switchingTable: Table<SwitchingEntry>;
   private switchingTableChangeListener: (() => void) | null = null;
 
   constructor(graphData: SwitchDataNode, datagraph: DataGraph) {
     super(graphData, datagraph);
-    this.switchingTable = new Map<string, number>(graphData.switchingTable);
+    this.switchingTable = new Table<SwitchingEntry>(
+      "mac",
+      graphData.switchingTable.map(([mac, port, edited, deleted]) => ({
+        mac,
+        port,
+        edited,
+        deleted,
+      })),
+    );
   }
 
   getType(): DeviceType {
@@ -17,10 +31,10 @@ export class DataSwitch extends DataDevice {
   }
 
   updateSwitchingTable(mac: MacAddress, iface: number): void {
-    if (!this.switchingTable.has(mac.toString())) {
-      console.debug(`Adding ${mac.toString()} to the switching table`);
-      this.switchingTable.set(mac.toString(), iface);
-    }
+    this.switchingTable.add({
+      mac: mac.toString(),
+      port: iface,
+    });
     if (this.switchingTableChangeListener) {
       this.switchingTableChangeListener();
     }
@@ -33,7 +47,15 @@ export class DataSwitch extends DataDevice {
   getDataNode(): SwitchDataNode {
     return {
       ...super.getDataNode(),
-      switchingTable: Array.from(this.switchingTable.entries()),
+      switchingTable: this.switchingTable.serialize(
+        (entry) =>
+          [
+            entry.mac,
+            entry.port,
+            entry.edited ?? false,
+            entry.deleted ?? false,
+          ] as [string, number, boolean, boolean],
+      ),
       type: DeviceType.Switch,
     };
   }

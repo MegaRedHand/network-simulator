@@ -49,6 +49,8 @@ export const TOOLTIP_KEYS = {
   PACKET_QUEUE_SIZE_PARAMETER: "Packet queue size (bytes)",
   PROCESSING_SPEED_PARAMETER: "Processing speed (bytes/s)",
   REGENERATE: "Regenerate",
+  ADD_ENTRY_BUTTON: "Add entry",
+  DELETE_ENTRY_BUTTON: "Delete entry",
   DELETE_EDGE_BUTTON: "Delete Edge",
   CONNECTION: "Connection",
   PACKET_TYPE: "Packet Type",
@@ -188,7 +190,10 @@ export const TOOLTIP_CONTENT = {
     "The maximum size of the packet queue in bytes. This parameter determines how many packets can be stored in the queue before they are processed.",
   [TOOLTIP_KEYS.PROCESSING_SPEED_PARAMETER]:
     "The time taken to process a single byte of data. This parameter affects the speed at which packets are processed and sent.",
-  [TOOLTIP_KEYS.REGENERATE]: "Regenerate the routing table.",
+  [TOOLTIP_KEYS.REGENERATE]: "Regenerate the table.",
+  [TOOLTIP_KEYS.DELETE_ENTRY_BUTTON]:
+    "Delete the selected entry from the table.",
+  [TOOLTIP_KEYS.ADD_ENTRY_BUTTON]: "Add a new entry to the table.",
   [TOOLTIP_KEYS.DELETE_EDGE_BUTTON]:
     "Delete the selected edge. This action will remove the connection between two devices.",
   [TOOLTIP_KEYS.CONNECTION]:
