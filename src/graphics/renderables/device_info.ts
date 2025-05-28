@@ -17,11 +17,11 @@ import { LabeledProgressBar } from "../components/labeled_progress_bar";
 import { ArpTable } from "./arp_table";
 import { Layer } from "../../types/layer";
 import { DataNetworkDevice, DataSwitch } from "../../types/data-devices";
-import { SwitchingTable } from "./switching_table";
+import { ForwardingTable } from "./forwarding_table";
 import { getRoutingTable } from "../../types/network-modules/tables/routing_table";
 import { ToggleInfo } from "../components/toggle_info";
 import { getArpTable } from "../../types/network-modules/tables/arp_table";
-import { getSwitchingTable } from "../../types/network-modules/tables/switching_table";
+import { getForwardingTable } from "../../types/network-modules/tables/forwarding_table";
 
 export class DeviceInfo extends BaseInfo {
   readonly device: ViewDevice;
@@ -218,28 +218,28 @@ export class DeviceInfo extends BaseInfo {
     }
   }
 
-  addSwitchingTable(viewgraph: ViewGraph, deviceId: number): void {
+  addForwardingTable(viewgraph: ViewGraph, deviceId: number): void {
     const dataGraph = viewgraph.getDataGraph();
-    const entries = getSwitchingTable(dataGraph, deviceId);
+    const entries = getForwardingTable(dataGraph, deviceId);
 
     const rows = entries.map((entry) => ({
       values: [entry.mac, entry.port.toString()],
       edited: entry.edited ?? false,
     }));
 
-    const switchingTable = new SwitchingTable({
+    const forwardingTable = new ForwardingTable({
       rows,
       viewgraph,
       deviceId,
     });
 
-    this.inputFields.push(switchingTable.toHTML());
+    this.inputFields.push(forwardingTable.toHTML());
 
     const dataDevice = viewgraph.getDataGraph().getDevice(deviceId);
 
     if (dataDevice instanceof DataSwitch) {
-      dataDevice.setSwitchingTableChangeListener(() => {
-        switchingTable.refreshTable();
+      dataDevice.setForwardingTableChangeListener(() => {
+        forwardingTable.refreshTable();
       });
     } else {
       console.warn(`Device with ID ${deviceId} is not a DataNetworkDevice.`);

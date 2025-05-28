@@ -4,20 +4,20 @@ import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { DataGraph, DeviceId, SwitchDataNode } from "../graphs/datagraph";
 import { EntryData, Table } from "../network-modules/tables/table";
 
-export interface SwitchingEntry extends EntryData {
+export interface ForwardingEntry extends EntryData {
   mac: string;
   port: number;
 }
 
 export class DataSwitch extends DataDevice {
-  switchingTable: Table<SwitchingEntry>;
-  private switchingTableChangeListener: (() => void) | null = null;
+  forwardingTable: Table<ForwardingEntry>;
+  private forwardingTableChangeListener: (() => void) | null = null;
 
   constructor(graphData: SwitchDataNode, datagraph: DataGraph) {
     super(graphData, datagraph);
-    this.switchingTable = new Table<SwitchingEntry>(
+    this.forwardingTable = new Table<ForwardingEntry>(
       "mac",
-      graphData.switchingTable.map(([mac, port, edited, deleted]) => ({
+      graphData.forwardingTable.map(([mac, port, edited, deleted]) => ({
         mac,
         port,
         edited,
@@ -30,24 +30,24 @@ export class DataSwitch extends DataDevice {
     return DeviceType.Switch;
   }
 
-  updateSwitchingTable(mac: MacAddress, iface: number): void {
-    this.switchingTable.add({
+  updateForwardingTable(mac: MacAddress, iface: number): void {
+    this.forwardingTable.add({
       mac: mac.toString(),
       port: iface,
     });
-    if (this.switchingTableChangeListener) {
-      this.switchingTableChangeListener();
+    if (this.forwardingTableChangeListener) {
+      this.forwardingTableChangeListener();
     }
   }
 
-  setSwitchingTableChangeListener(listener: () => void): void {
-    this.switchingTableChangeListener = listener;
+  setForwardingTableChangeListener(listener: () => void): void {
+    this.forwardingTableChangeListener = listener;
   }
 
   getDataNode(): SwitchDataNode {
     return {
       ...super.getDataNode(),
-      switchingTable: this.switchingTable.serialize(
+      forwardingTable: this.forwardingTable.serialize(
         (entry) =>
           [
             entry.mac,
