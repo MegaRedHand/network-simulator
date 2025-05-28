@@ -287,15 +287,15 @@ export class DataGraph {
     };
 
     const forcedIps = new Set<string>();
-    if (device1.interfaces) {
-      device1.interfaces.forEach(
-        (iface) => iface.ip && forcedIps.add(iface.ip.toString()),
-      );
+
+    const iface1 = device1.interfaces?.[n1Iface];
+    if (iface1?.ip) {
+      forcedIps.add(iface1.ip.toString());
     }
-    if (device2.interfaces) {
-      device2.interfaces.forEach(
-        (iface) => iface.ip && forcedIps.add(iface.ip.toString()),
-      );
+
+    const iface2 = device2.interfaces?.[n2Iface];
+    if (iface2?.ip) {
+      forcedIps.add(iface2.ip.toString());
     }
 
     return this.reAddEdge(edge, forcedIps);
