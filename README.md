@@ -377,7 +377,7 @@ If you want to stop the program, you can press the Trash can icon on the program
 
 Packets are the data units that travel through the network. They are used to send and receive data between devices. In the simulator, packets are represented as colored circles that travel through the edges of the network.
 Every packet has a different color depending on the type. The colors are as follows:
-                                                                                                                                               
+
 | **Packet Type** | **Color**                                   |
 | --------------- | ------------------------------------------- |
 | HTTP            | ![](./src/assets/packets/http.svg) Burgundy |
