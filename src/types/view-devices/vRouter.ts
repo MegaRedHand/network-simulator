@@ -178,11 +178,16 @@ export class ViewRouter extends ViewNetworkDevice {
     const wasEmpty = this.packetQueue.isEmpty();
     if (!this.packetQueue.enqueue(datagram)) {
       console.debug("Packet queue full, dropping packet");
+      // Mostrar icono de "cola llena"
+      this.showDeviceIcon("queueFull", "❗", -this.height / 2 - 5, "Queue full");
       // dummy values
       const dummyMac = this.interfaces[0].mac;
       const frame = new EthernetFrame(dummyMac, dummyMac, datagram);
       dropPacket(this.viewgraph, this.id, frame);
       return;
+    } else {
+      // Si la cola NO está llena, ocultar el icono (por si se vació antes)
+      this.hideDeviceIcon("queueFull");
     }
     if (wasEmpty) {
       this.startPacketProcessor();
@@ -213,6 +218,7 @@ export class ViewRouter extends ViewNetworkDevice {
     } else console.debug(`Router ${this.id} could not forward packet.`);
 
     if (this.packetQueue.isEmpty()) {
+      this.hideDeviceIcon("queueFull");
       this.stopPacketProcessor();
     }
   }
