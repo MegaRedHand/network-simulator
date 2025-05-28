@@ -405,6 +405,19 @@ export abstract class ViewDevice extends Container {
     RightBar.getInstance().renderInfo(new DeviceInfo(this));
   }
 
+  showDeviceIconFor(
+    iconKey: string,
+    emoji: string,
+    yOffset: number,
+    tooltipText: string | undefined,
+    durationMs: number,
+  ) {
+    this.showDeviceIcon(iconKey, emoji, yOffset, tooltipText);
+    setTimeout(() => {
+      this.hideDeviceIcon(iconKey);
+    }, durationMs);
+  }
+
   showDeviceIcon(
     iconKey: string,
     emoji: string,

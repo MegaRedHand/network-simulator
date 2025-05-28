@@ -105,6 +105,14 @@ export class ViewSwitch extends ViewDevice {
   receiveFrame(frame: EthernetFrame, iface: number): void {
     if (frame.payload instanceof ArpRequest) {
       const { sha, spa, tha, tpa } = frame.payload;
+
+      this.showDeviceIconFor(
+        "broadcast",
+        "📢",
+        -this.height / 2 - 5,
+        "Broadcast",
+        2000,
+      );
       this.interfaces.forEach((sendingIface, idx) => {
         const packet = new ArpRequest(sha, spa, tpa, tha);
         const frame = new EthernetFrame(
@@ -137,6 +145,16 @@ export class ViewSwitch extends ViewDevice {
             { length: getNumberOfInterfaces(this.getType()) },
             (_, i) => i,
           );
+
+    if (sendingIfaces.length > 1) {
+      this.showDeviceIconFor(
+        "broadcast",
+        "📢",
+        -this.height / 2 - 5,
+        "Broadcast",
+        2000,
+      );
+    }
     sendingIfaces.forEach((sendingIface) =>
       this.forwardFrame(frame, sendingIface, iface),
     );
