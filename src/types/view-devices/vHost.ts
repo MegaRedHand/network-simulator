@@ -14,7 +14,7 @@ import {
   Program,
   RunningProgram,
 } from "../../programs";
-import { Texture, Text, TextStyle } from "pixi.js";
+import { Texture } from "pixi.js";
 import { EthernetFrame } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataHost } from "../data-devices";
@@ -26,12 +26,6 @@ import {
   TcpModule,
   TcpSocket,
 } from "../network-modules/tcpModule";
-import {
-  hideTooltip,
-  removeTooltip,
-  showTooltip,
-} from "../../graphics/renderables/canvas_tooltip_manager";
-import { blockPointerEvents } from "../../utils/utils";
 
 export class ViewHost extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -45,8 +39,6 @@ export class ViewHost extends ViewNetworkDevice {
 
   private runningPrograms = new Map<Pid, Program>();
   private lastProgramId = 0;
-  private httpServerIcon?: Text;
-  private httpServerIconTooltip?: Text;
 
   constructor(
     id: DeviceId,
@@ -182,50 +174,16 @@ export class ViewHost extends ViewNetworkDevice {
   }
 
   showHttpServerIcon() {
-    if (this.httpServerIcon) return; // Already shown
-
-    const textStyle = new TextStyle({
-      fontSize: 20,
-    });
-
-    this.httpServerIcon = new Text({ text: "🌐", style: textStyle });
-    this.httpServerIcon.anchor.set(0.5, 1);
-    this.httpServerIcon.x = 0;
-    this.httpServerIcon.y = -this.height / 2 - 5;
-    this.httpServerIcon.zIndex = 100;
-    this.httpServerIcon.eventMode = "static";
-    this.httpServerIcon.interactive = true;
-    this.httpServerIcon.cursor = "pointer";
-
-    // Tooltip Pixi
-    this.httpServerIcon.on("pointerover", () => {
-      this.httpServerIconTooltip = showTooltip(
-        this,
-        "HTTP SERVER",
-        0,
-        -this.height / 2 - 35,
-        this.httpServerIconTooltip,
-      );
-    });
-    this.httpServerIcon.on("pointerout", () => {
-      hideTooltip(this.httpServerIconTooltip);
-    });
-
-    blockPointerEvents(this.httpServerIcon);
-
-    this.addChild(this.httpServerIcon);
+    this.showDeviceIcon(
+      "httpServer",
+      "🌐",
+      -this.height / 2 - 5,
+      "HTTP Server",
+    );
   }
 
   hideHttpServerIcon() {
-    if (this.httpServerIcon) {
-      this.removeChild(this.httpServerIcon);
-      this.httpServerIcon.destroy();
-      this.httpServerIcon = undefined;
-    }
-    if (this.httpServerIconTooltip) {
-      removeTooltip(this, this.httpServerIconTooltip);
-      this.httpServerIconTooltip = undefined;
-    }
+    this.hideDeviceIcon("httpServer");
   }
 
   // TCP
