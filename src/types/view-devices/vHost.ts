@@ -14,7 +14,7 @@ import {
   Program,
   RunningProgram,
 } from "../../programs";
-import { Texture, Text } from "pixi.js";
+import { Texture, Text, TextStyle } from "pixi.js";
 import { EthernetFrame } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataHost } from "../data-devices";
@@ -26,7 +26,12 @@ import {
   TcpModule,
   TcpSocket,
 } from "../network-modules/tcpModule";
-import { hideTooltip, removeTooltip, showTooltip } from "../../graphics/renderables/canvas_tooltip_manager";
+import {
+  hideTooltip,
+  removeTooltip,
+  showTooltip,
+} from "../../graphics/renderables/canvas_tooltip_manager";
+import { blockPointerEvents } from "../../utils/utils";
 
 export class ViewHost extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -179,11 +184,14 @@ export class ViewHost extends ViewNetworkDevice {
   showHttpServerIcon() {
     if (this.httpServerIcon) return; // Already shown
 
-    this.httpServerIcon = new Text("🌐");
-    this.httpServerIcon.style = { fontSize: 20 };
-    this.httpServerIcon.anchor.set(0, 0.5);
-    this.httpServerIcon.x = -13;
-    this.httpServerIcon.y = -this.height / 2 - 20;
+    const textStyle = new TextStyle({
+      fontSize: 20,
+    });
+
+    this.httpServerIcon = new Text({ text: "🌐", style: textStyle });
+    this.httpServerIcon.anchor.set(0.5, 1);
+    this.httpServerIcon.x = 0;
+    this.httpServerIcon.y = -this.height / 2 - 5;
     this.httpServerIcon.zIndex = 100;
     this.httpServerIcon.eventMode = "static";
     this.httpServerIcon.interactive = true;
@@ -191,18 +199,19 @@ export class ViewHost extends ViewNetworkDevice {
 
     // Tooltip Pixi
     this.httpServerIcon.on("pointerover", () => {
-      // Puedes ajustar la posición del tooltip según tu preferencia
       this.httpServerIconTooltip = showTooltip(
         this,
-        "HTTP Server",
-        7,
-        - 60,
-        this.httpServerIconTooltip
+        "HTTP SERVER",
+        0,
+        -this.height / 2 - 35,
+        this.httpServerIconTooltip,
       );
     });
     this.httpServerIcon.on("pointerout", () => {
       hideTooltip(this.httpServerIconTooltip);
     });
+
+    blockPointerEvents(this.httpServerIcon);
 
     this.addChild(this.httpServerIcon);
   }

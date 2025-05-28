@@ -1,4 +1,9 @@
-import { Application, GraphicsContext, RenderTexture } from "pixi.js";
+import {
+  Application,
+  GraphicsContext,
+  RenderTexture,
+  Container,
+} from "pixi.js";
 import { Viewport } from "../graphics/viewport";
 import { ALERT_MESSAGES } from "./constants/alert_constants";
 import { showError } from "../graphics/renderables/alert_manager";
@@ -81,4 +86,13 @@ export function captureAndDownloadViewport(
     link.download = "viewport-snapshot.png";
     link.click();
   }, "image/png");
+}
+
+export function blockPointerEvents(obj: Container) {
+  obj.on("pointerdown", (e) => e.stopPropagation());
+  obj.on("pointerup", (e) => e.stopPropagation());
+  obj.on("pointerupoutside", (e) => e.stopPropagation());
+  obj.on("pointertap", (e) => e.stopPropagation());
+  obj.on("pointermove", (e) => e.stopPropagation());
+  obj.on("click", (e) => e.stopPropagation());
 }
