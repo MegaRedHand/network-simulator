@@ -160,7 +160,7 @@ This introductory information is also shown on the right bar when nothing is sel
 ### Host
 
 <p align="center">
-  <img src="./src/assets/pc.svg" alt="Host" width="25%" style="background-color: white;border-radius: 10px;" />
+  <img src="./img/30_PC.png" alt="Host" />
 </p>
 
 A host is a computer or device that connects to the network. It can send and receive data packets. In the simulator, a host can be used to represent a computer, a server or any other endpoint that connects to the network.
@@ -198,7 +198,7 @@ Hovering on a Host will show the IP address. If the simulator is set on the Link
 ### Router
 
 <p align="center">
-  <img src="./src/assets/router.svg" alt="Router" width="25%" style="background-color: white;border-radius: 10px;" />
+  <img src="./img/31_ROUTER.png" alt="Router" />
 </p>
 
 A router is a device that forwards data packets between computer networks. It is used to connect different networks and route data between them.
@@ -239,7 +239,7 @@ Hovering on a Router will show the IP address. If the simulator is set on the Li
 ### Switch
 
 <p align="center">
-  <img src="./src/assets/switch.svg" alt="Switch" width="25%" style="background-color: white;border-radius: 10px;" />
+  <img src="./img/32_SWITCH.png" alt="Switch" />
 </p>
 
 A switch is a device that connects devices within a single network and uses MAC addresses to forward data to the correct destination. It is used to connect devices on a local area network (LAN) and is responsible for forwarding data packets between those devices.
