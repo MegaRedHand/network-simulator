@@ -18,6 +18,10 @@ import { ArpTable } from "./arp_table";
 import { Layer } from "../../types/layer";
 import { DataNetworkDevice, DataSwitch } from "../../types/data-devices";
 import { SwitchingTable } from "./switching_table";
+import { getRoutingTable } from "../../types/network-modules/tables/routing_table";
+import { ToggleInfo } from "../components/toggle_info";
+import { getArpTable } from "../../types/network-modules/tables/arp_table";
+import { getSwitchingTable } from "../../types/network-modules/tables/switching_table";
 
 export class DeviceInfo extends BaseInfo {
   readonly device: ViewDevice;
@@ -26,6 +30,7 @@ export class DeviceInfo extends BaseInfo {
     super(getTypeName(device) + " Information");
     this.device = device;
     this.addCommonInfoFields();
+    this.addCommonButtons();
   }
 
   protected addCommonInfoFields(): void {
@@ -33,39 +38,23 @@ export class DeviceInfo extends BaseInfo {
     const connections = this.device.viewgraph.getVisibleConnectedDeviceIds(id);
 
     this.information.addField(TOOLTIP_KEYS.ID, id.toString(), TOOLTIP_KEYS.ID);
+    this.information.addField(
+      TOOLTIP_KEYS.TAG,
+      this.device.getTag(),
+      TOOLTIP_KEYS.TAG,
+      true,
+      (newValue: string) => this.device.setTag(newValue),
+    );
     this.information.addListField(
       TOOLTIP_KEYS.CONNECTED_DEVICES,
       connections,
       TOOLTIP_KEYS.CONNECTED_DEVICES,
     );
-
-    const layer = this.device.viewgraph.getLayer();
-    const showIp = this.device.getType() !== DeviceType.Switch;
-    const showMac = layer === Layer.Link;
-
-    if (showIp) {
-      this.device.interfaces.forEach((iface) => {
-        this.information.addField(
-          TOOLTIP_KEYS.IP_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
-          iface.ip.toString(),
-          TOOLTIP_KEYS.IP_ADDRESS,
-        );
-      });
-    }
-
-    if (showMac) {
-      this.device.interfaces.forEach((iface) => {
-        this.information.addField(
-          TOOLTIP_KEYS.MAC_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
-          iface.mac.toString(),
-          TOOLTIP_KEYS.MAC_ADDRESS,
-        );
-      });
-    }
   }
 
   protected addCommonButtons(): void {
     this.addDivider();
+
     const connectButton = new Button({
       text: TOOLTIP_KEYS.CONNECT_DEVICE,
       onClick: () => this.device.selectToConnect(),
@@ -91,7 +80,45 @@ export class DeviceInfo extends BaseInfo {
     });
 
     this.inputFields.push(connectButton.toHTML(), deleteButton.toHTML());
+
+    this.addIfacesToggle();
     this.addDivider();
+  }
+
+  addIfacesToggle(): void {
+    const layer = this.device.viewgraph.getLayer();
+    const showIp = this.device.getType() !== DeviceType.Switch;
+    const showMac = layer === Layer.Link;
+
+    const fields: { key: string; value: string; tooltip: string }[] = [];
+
+    if (showIp) {
+      this.device.interfaces.forEach((iface) => {
+        fields.push({
+          key: TOOLTIP_KEYS.IP_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
+          value: iface.ip.toString(),
+          tooltip: TOOLTIP_KEYS.IP_ADDRESS,
+        });
+      });
+    }
+    if (showMac) {
+      this.device.interfaces.forEach((iface) => {
+        fields.push({
+          key:
+            TOOLTIP_KEYS.MAC_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
+          value: iface.mac.toString(),
+          tooltip: TOOLTIP_KEYS.MAC_ADDRESS,
+        });
+      });
+    }
+
+    const toggleInfo = new ToggleInfo({
+      title: "Interfaces",
+      fields,
+      toggleButtonText: { on: "Hide Interfaces", off: "Show Interfaces" },
+    });
+
+    this.inputFields.push(toggleInfo.toHTML());
   }
 
   addProgramRunner(runner: ProgramRunner, programs: ProgramInfo[]): void {
@@ -100,13 +127,12 @@ export class DeviceInfo extends BaseInfo {
   }
 
   addRoutingTable(viewgraph: ViewGraph, deviceId: number): void {
-    const entries = viewgraph.getRoutingTable(deviceId);
-
-    const rows = entries.map((entry) => [
-      entry.ip,
-      entry.mask,
-      `eth${entry.iface}`,
-    ]);
+    const entries = getRoutingTable(viewgraph.getDataGraph(), deviceId);
+    console.log(`[DeviceInfo] Routing table for device ${deviceId}:`, entries);
+    const rows = entries.map((entry) => ({
+      values: [entry.ip, entry.mask, `eth${entry.iface}`],
+      edited: entry.edited,
+    }));
 
     const routingTable = new RoutingTable({
       rows,
@@ -164,9 +190,12 @@ export class DeviceInfo extends BaseInfo {
   }
 
   addARPTable(viewgraph: ViewGraph, deviceId: number): void {
-    const entries = viewgraph.getArpTable(deviceId);
+    const entries = getArpTable(viewgraph.getDataGraph(), deviceId);
 
-    const rows = entries.map((entry) => [entry.ip, entry.mac]);
+    const rows = entries.map((entry) => ({
+      values: [entry.ip, entry.mac],
+      edited: entry.edited ?? false,
+    }));
 
     const arpTable = new ArpTable({
       rows,
@@ -190,9 +219,13 @@ export class DeviceInfo extends BaseInfo {
   }
 
   addSwitchingTable(viewgraph: ViewGraph, deviceId: number): void {
-    const entries = viewgraph.getDataGraph().getSwitchingTable(deviceId);
+    const dataGraph = viewgraph.getDataGraph();
+    const entries = getSwitchingTable(dataGraph, deviceId);
 
-    const rows = entries.map((entry) => [entry.mac, entry.port.toString()]);
+    const rows = entries.map((entry) => ({
+      values: [entry.mac, entry.port.toString()],
+      edited: entry.edited ?? false,
+    }));
 
     const switchingTable = new SwitchingTable({
       rows,

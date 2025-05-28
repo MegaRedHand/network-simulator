@@ -26,8 +26,7 @@ export const CSS_CLASSES = {
   LAYER_DROPDOWN_CONTAINER: "layer-dropdown-container",
 
   // Buttons
-  TRASH_BUTTON: "trash-button",
-  REGENERATE_BUTTON: "regenerate-button",
+  TABLE_BUTTON: "table-button",
 
   // Parameter Editor
   PARAMETER_EDITOR: "parameter-editor",

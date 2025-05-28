@@ -5,10 +5,11 @@ import { ProgramBase } from "./program_base";
 import { ViewGraph } from "../types/graphs/viewgraph";
 import { ProgramInfo } from "../graphics/renderables/device_info";
 import { EchoRequest } from "../packets/icmp";
-import { IPv4Packet } from "../packets/ip";
+import { IpAddress, IPv4Packet } from "../packets/ip";
 import { ViewNetworkDevice } from "../types/view-devices/vNetworkDevice";
-import { EthernetFrame } from "../packets/ethernet";
+import { EthernetFrame, MacAddress } from "../packets/ethernet";
 import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
+import { Layer } from "../types/layer";
 
 export class SingleEcho extends ProgramBase {
   static readonly PROGRAM_NAME = TOOLTIP_KEYS.SEND_ICMP_ECHO;
@@ -50,11 +51,31 @@ export class SingleEcho extends ProgramBase {
       );
       return;
     }
-    const { src, dst, sendingIface } = ViewNetworkDevice.getForwardingData(
+
+    const forwardingData = ViewNetworkDevice.getForwardingData(
       this.srcId,
       this.dstId,
       this.viewgraph,
     );
+    let src: { ip: IpAddress; mac: MacAddress },
+      dst: { ip: IpAddress; mac: MacAddress },
+      sendingIface: number;
+    if (!forwardingData) {
+      console.warn(
+        `Device ${this.srcId} could not send ping to device ${this.dstId}`,
+      );
+      src = {
+        mac: srcDevice.interfaces[0].mac,
+        ip: srcDevice.interfaces[0].ip,
+      };
+      dst = {
+        mac: dstDevice.interfaces[0].mac,
+        ip: dstDevice.interfaces[0].ip,
+      };
+      sendingIface = 0;
+    } else {
+      ({ src, dst, sendingIface } = forwardingData);
+    }
     const echoRequest = new EchoRequest(0);
     // Wrap in IP datagram
     const ipPacket = new IPv4Packet(src.ip, dst.ip, echoRequest);
@@ -62,7 +83,7 @@ export class SingleEcho extends ProgramBase {
     // Resolve destination MAC address
     const dstMac = srcDevice.resolveAddress(dst.ip);
     if (!dstMac) {
-      console.warn(
+      console.debug(
         `Device ${this.srcId} couldn't resolve MAC address for device with IP ${dst.ip.toString()}. Program cancelled`,
       );
       return;
@@ -75,7 +96,7 @@ export class SingleEcho extends ProgramBase {
 
   static getProgramInfo(viewgraph: ViewGraph, srcId: DeviceId): ProgramInfo {
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);
-    programInfo.withDestinationDropdown(viewgraph, srcId);
+    programInfo.withDestinationDropdown(viewgraph, srcId, Layer.Network);
     return programInfo;
   }
 }
@@ -135,7 +156,7 @@ export class EchoServer extends ProgramBase {
     ];
 
     const programInfo = new ProgramInfo(this.PROGRAM_NAME);
-    programInfo.withDestinationDropdown(viewgraph, srcId);
+    programInfo.withDestinationDropdown(viewgraph, srcId, Layer.Network);
     programInfo.withDropdown("Time between pings", delayOptions);
     return programInfo;
   }

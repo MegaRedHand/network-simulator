@@ -33,8 +33,17 @@ export class ViewSwitch extends ViewDevice {
     ctx: GlobalContext,
     position: Position,
     interfaces: NetworkInterfaceData[],
+    tag: string,
   ) {
-    super(id, ViewSwitch.getTexture(), viewgraph, ctx, position, interfaces);
+    super(
+      id,
+      ViewSwitch.getTexture(),
+      viewgraph,
+      ctx,
+      position,
+      interfaces,
+      tag,
+    );
   }
 
   showInfo(): void {
@@ -120,14 +129,14 @@ export class ViewSwitch extends ViewDevice {
       return;
     }
     const switchingTable = dDevice.switchingTable;
-    const sendingIfaces: DeviceId[] = switchingTable.has(
-      frame.destination.toString(),
-    )
-      ? [switchingTable.get(frame.destination.toString())]
-      : Array.from(
-          { length: getNumberOfInterfaces(this.getType()) },
-          (_, i) => i,
-        );
+    const destEntry = switchingTable.get(frame.destination.toString());
+    const sendingIfaces: DeviceId[] =
+      destEntry && !destEntry.deleted
+        ? [destEntry.port]
+        : Array.from(
+            { length: getNumberOfInterfaces(this.getType()) },
+            (_, i) => i,
+          );
     sendingIfaces.forEach((sendingIface) =>
       this.forwardFrame(frame, sendingIface, iface),
     );

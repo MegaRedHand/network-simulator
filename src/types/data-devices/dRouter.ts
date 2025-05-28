@@ -1,54 +1,91 @@
 import { Ticker } from "pixi.js";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceType } from "../view-devices/vDevice";
-import {
-  DataGraph,
-  DeviceId,
-  RouterDataNode,
-  RoutingTableEntry,
-} from "../graphs/datagraph";
+import { DataGraph, DeviceId, RouterDataNode } from "../graphs/datagraph";
 import { DataNetworkDevice } from "./dNetworkDevice";
 import { ROUTER_CONSTANTS } from "../../utils/constants/router_constants";
+import { EntryData, Table } from "../network-modules/tables/table";
+
+export interface RoutingEntry extends EntryData {
+  ip: string;
+  mask: string;
+  iface: number;
+}
 
 export class DataRouter extends DataNetworkDevice {
-  packetQueueSize: number;
+  private packetQueueSize: number;
   private packetQueue: PacketQueue;
-  // Time in ms to process a single byte
-  timePerByte: number;
+  // Number of bytes to process per second
+  private bytesPerSecond: number;
   // Number of bytes processed
   private processingProgress = 0;
-  routingTable: RoutingTableEntry[];
+  routingTable: Table<RoutingEntry>;
 
   constructor(graphData: RouterDataNode, datagraph: DataGraph) {
     super(graphData, datagraph);
     this.packetQueueSize =
       graphData.packetQueueSize ?? ROUTER_CONSTANTS.PACKET_QUEUE_MAX_SIZE;
     this.packetQueue = new PacketQueue(this.packetQueueSize);
-    this.timePerByte =
-      graphData.timePerByte ?? ROUTER_CONSTANTS.PROCESSING_SPEED;
-    this.routingTable = graphData.routingTable ?? [];
-    console.log("packetQueueSize Dr", this.packetQueueSize);
-    console.log("processingSpeed Dr", this.timePerByte);
+    this.routingTable = new Table<RoutingEntry>(
+      "ip",
+      (
+        (graphData.routingTable ?? []) as [
+          string,
+          string,
+          number,
+          boolean,
+          boolean,
+        ][]
+      ).map(([ip, mask, iface, edited, deleted]) => ({
+        ip,
+        mask,
+        iface,
+        edited,
+        deleted,
+      })),
+    );
+    this.bytesPerSecond =
+      graphData.bytesPerSecond ?? ROUTER_CONSTANTS.PROCESSING_SPEED;
   }
 
   setMaxQueueSize(newSize: number) {
     this.packetQueue.setMaxQueueSize(newSize);
-    console.log("Max queue size set to Dr", newSize);
     this.packetQueueSize = newSize;
   }
 
-  setTimePerByte(newTime: number) {
-    this.timePerByte = newTime;
-    console.log("Time per byte set to Dr", newTime);
+  setBytesPerSecond(newTime: number) {
+    this.bytesPerSecond = newTime;
   }
 
   getDataNode(): RouterDataNode {
+    console.log(
+      "DataRouter routing table:",
+      this.routingTable.serialize(
+        (entry) =>
+          [
+            entry.ip,
+            entry.mask,
+            entry.iface,
+            entry.edited ?? false,
+            entry.deleted ?? false,
+          ] as [string, string, number, boolean, boolean],
+      ),
+    );
     return {
       ...super.getDataNode(),
       type: DeviceType.Router,
-      routingTable: this.routingTable,
+      routingTable: this.routingTable.serialize(
+        (entry) =>
+          [
+            entry.ip,
+            entry.mask,
+            entry.iface,
+            entry.edited ?? false,
+            entry.deleted ?? false,
+          ] as [string, string, number, boolean, boolean],
+      ),
       packetQueueSize: this.packetQueue.getMaxQueueSize(),
-      timePerByte: this.timePerByte,
+      bytesPerSecond: this.bytesPerSecond,
     };
   }
 
@@ -87,13 +124,12 @@ export class DataRouter extends DataNetworkDevice {
   }
 
   getPacketsToProcess(timeMs: number): IPv4Packet | null {
-    this.processingProgress += timeMs;
+    this.processingProgress += (this.bytesPerSecond * timeMs) / 1000;
     const packetLength = this.packetQueue.getHead()?.totalLength;
-    const progressNeeded = this.timePerByte * packetLength;
-    if (this.processingProgress < progressNeeded) {
+    if (this.processingProgress < packetLength) {
       return null;
     }
-    this.processingProgress -= progressNeeded;
+    this.processingProgress -= packetLength;
     return this.packetQueue.dequeue();
   }
 
@@ -103,11 +139,7 @@ export class DataRouter extends DataNetworkDevice {
       return;
     }
 
-    const result = device.routingTable.find((entry) => {
-      if (entry.deleted) {
-        console.debug("Skipping deleted entry:", entry);
-        return false;
-      }
+    const result = this.routingTable.allActive().find((entry) => {
       const ip = IpAddress.parse(entry.ip);
       const mask = IpAddress.parse(entry.mask);
       return datagram.destinationAddress.isInSubnet(ip, mask);

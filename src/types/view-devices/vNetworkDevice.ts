@@ -11,7 +11,11 @@ import { ViewGraph } from "../graphs/viewgraph";
 import { Position } from "../common";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { sendViewPacket, dropPacket } from "../packet";
-import { EchoReply, EchoRequest } from "../../packets/icmp";
+import {
+  EchoReply,
+  EchoRequest,
+  ICMP_REQUEST_TYPE_NUMBER,
+} from "../../packets/icmp";
 import { GlobalContext } from "../../context";
 import {
   ARP_REPLY_CODE,
@@ -44,9 +48,10 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     ctx: GlobalContext,
     position: Position,
     interfaces: NetworkInterfaceData[],
+    tag: string,
     ipMask: IpAddress,
   ) {
-    super(id, texture, viewgraph, ctx, position, interfaces);
+    super(id, texture, viewgraph, ctx, position, interfaces, tag);
     this.ipMask = ipMask;
   }
 
@@ -81,11 +86,7 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     // Get dstMac
     let dstMac: MacAddress = dstIface.mac;
     for (const idx of path.slice(1).keys()) {
-      console.debug(`Iterando en indice: ${idx}`);
       const [sendingId, receivingId] = [path[idx], path[idx + 1]];
-      console.debug(
-        `Se obtienen los devices con ids ${sendingId} y ${receivingId}`,
-      );
       const receivingDevice = viewgraph.getDevice(receivingId);
       if (receivingDevice instanceof ViewNetworkDevice) {
         const edge = viewgraph.getEdge(sendingId, receivingId);
@@ -138,29 +139,28 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     });
   }
 
-  resolveAddress(ip: IpAddress): MacAddress {
+  resolveAddress(
+    ip: IpAddress,
+  ): { mac: MacAddress; edited: boolean } | undefined {
     const dDevice = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!dDevice || !(dDevice instanceof DataNetworkDevice)) {
       console.warn(`Device with id ${this.id} not found in datagraph`);
-      return;
+      return undefined;
     }
     const arpTable = dDevice.arpTable;
-    if (!arpTable.has(ip.toString())) {
-      // As ip addr isn't in the table, then the 'entry' in device table never was modified.
-      // The mac addr of the device that has the ip addr should be returned.
+    const entry = arpTable.get(ip.toString());
+    if (!entry) {
       const device = this.viewgraph.getDeviceByIP(ip);
       if (!device) {
         console.warn(`Device with ip ${ip.toString()} not found in DataGraph`);
         return undefined;
       }
       const iface = device.interfaces.find((iface) => iface.ip?.equals(ip));
-      return iface ? iface.mac : undefined;
+      return iface ? { mac: iface.mac, edited: false } : undefined;
     }
-    // There is an entry with key=ip.
-    // This means either the entry has the address resolution expected or
-    // the entry has "", then the entry was previously deleted.
-    const mac = arpTable.get(ip.toString());
-    return mac != "" ? MacAddress.parse(mac) : undefined;
+    return entry.mac !== ""
+      ? { mac: MacAddress.parse(entry.mac), edited: entry.edited }
+      : undefined;
   }
 
   // TODO: Most probably it will be different for each type of device
@@ -168,12 +168,15 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     console.debug("Packet has reach its destination!");
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.sourceAddress);
     if (!(dstDevice instanceof ViewNetworkDevice)) {
+      console.warn(
+        `Device with IP ${datagram.sourceAddress.toString} was not found or was not a Network Device`,
+      );
       return;
     }
     switch (datagram.payload.protocol()) {
       case ICMP_PROTOCOL_NUMBER: {
         const request: EchoRequest = datagram.payload as EchoRequest;
-        if (dstDevice && request.type) {
+        if (dstDevice && request.type === ICMP_REQUEST_TYPE_NUMBER) {
           const { src, dst } = ViewNetworkDevice.getForwardingData(
             this.id,
             dstDevice.id,

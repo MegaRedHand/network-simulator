@@ -19,6 +19,19 @@ export class MacAddress {
     this.octets = octets;
   }
 
+  // Check if the MAC address is valid
+  static isValidMac(mac: string): boolean {
+    // First, check format: six groups of 2 hexadecimal digits separated by colons
+    if (!/^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$/.test(mac)) return false;
+    // Then, check each octet is in 0-255
+    const octets = mac.split(":");
+    if (octets.length !== 6) return false;
+    return octets.every((octet) => {
+      const num = parseInt(octet, 16);
+      return !isNaN(num) && num >= 0 && num <= 255;
+    });
+  }
+
   // Parse MAC address from a string representation (00:1b:63:84:45:e6)
   static parse(addrString: string): MacAddress {
     const octets = new Uint8Array(6);
