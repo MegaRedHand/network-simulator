@@ -139,29 +139,28 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     });
   }
 
-  resolveAddress(ip: IpAddress): MacAddress {
+  resolveAddress(
+    ip: IpAddress,
+  ): { mac: MacAddress; edited: boolean } | undefined {
     const dDevice = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!dDevice || !(dDevice instanceof DataNetworkDevice)) {
       console.warn(`Device with id ${this.id} not found in datagraph`);
-      return;
+      return undefined;
     }
     const arpTable = dDevice.arpTable;
-    if (!arpTable.has(ip.toString())) {
-      // As ip addr isn't in the table, then the 'entry' in device table never was modified.
-      // The mac addr of the device that has the ip addr should be returned.
+    const entry = arpTable.get(ip.toString());
+    if (!entry) {
       const device = this.viewgraph.getDeviceByIP(ip);
       if (!device) {
         console.warn(`Device with ip ${ip.toString()} not found in DataGraph`);
         return undefined;
       }
       const iface = device.interfaces.find((iface) => iface.ip?.equals(ip));
-      return iface ? iface.mac : undefined;
+      return iface ? { mac: iface.mac, edited: false } : undefined;
     }
-    // There is an entry with key=ip.
-    // This means either the entry has the address resolution expected or
-    // the entry has "", then the entry was previously deleted.
-    const mac = arpTable.get(ip.toString());
-    return mac != "" ? MacAddress.parse(mac) : undefined;
+    return entry.mac !== ""
+      ? { mac: MacAddress.parse(entry.mac), edited: entry.edited }
+      : undefined;
   }
 
   // TODO: Most probably it will be different for each type of device

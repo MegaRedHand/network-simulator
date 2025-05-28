@@ -53,6 +53,11 @@
   background-color: #fff;
 }
 
+.edited-row {
+  background-color: #e0e0e0 !important; /* Gris muy claro */
+  transition: background 0.3s;
+}
+
 /* ROUTER TABLE specific styles */
 .router-table {
   display: block;

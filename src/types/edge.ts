@@ -14,6 +14,8 @@ import {
   removeTooltip,
   showTooltip,
 } from "../graphics/renderables/canvas_tooltip_manager";
+import { updateRoutingTableIface } from "./network-modules/tables/routing_table";
+import { updateSwitchingTablePort } from "./network-modules/tables/switching_table";
 
 export class Edge extends Graphics {
   private _data: DataEdge;
@@ -249,13 +251,29 @@ export class Edge extends Graphics {
     this.drawEdge(newStartPos, newEndPos, Colors.Lightblue);
   }
 
-  setInterface(deviceId: DeviceId, iface: number) {
+  setInterface(deviceId: DeviceId, newIface: number) {
+    let oldIface: number;
     if (this.data.from.id === deviceId) {
-      this.data.from.iface = iface;
+      oldIface = this.data.from.iface;
+      this.data.from.iface = newIface;
     } else {
-      this.data.to.iface = iface;
+      oldIface = this.data.to.iface;
+      this.data.to.iface = newIface;
     }
-    this.viewgraph.getDataGraph().regenerateAllRoutingTables();
+
+    updateRoutingTableIface(
+      this.viewgraph.getDataGraph(),
+      deviceId,
+      oldIface,
+      newIface,
+    );
+
+    updateSwitchingTablePort(
+      this.viewgraph.getDataGraph(),
+      deviceId,
+      oldIface,
+      newIface,
+    );
   }
 
   setInterfaceMac(deviceId: DeviceId, mac: string): void {

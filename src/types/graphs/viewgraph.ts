@@ -366,6 +366,7 @@ export class ViewGraph {
       console.warn(`Edge ${n1Id},${n2Id} is not in the datagraph`);
       return null;
     }
+
     this._removeEdge(n1Id, n2Id);
 
     // Remove connection in DataGraph
@@ -397,14 +398,6 @@ export class ViewGraph {
 
   getViewport() {
     return this.viewport;
-  }
-
-  getRoutingTable(id: DeviceId) {
-    return this.datagraph.getRoutingTable(id);
-  }
-
-  getArpTable(id: DeviceId) {
-    return this.datagraph.getArpTable(id);
   }
 
   getEdge(n1Id: DeviceId, n2Id: DeviceId): Edge | undefined {
