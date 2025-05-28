@@ -14,7 +14,7 @@ import {
   Program,
   RunningProgram,
 } from "../../programs";
-import { Texture } from "pixi.js";
+import { Texture, Text } from "pixi.js";
 import { EthernetFrame } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataHost } from "../data-devices";
@@ -26,6 +26,7 @@ import {
   TcpModule,
   TcpSocket,
 } from "../network-modules/tcpModule";
+import { hideTooltip, removeTooltip, showTooltip } from "../../graphics/renderables/canvas_tooltip_manager";
 
 export class ViewHost extends ViewNetworkDevice {
   static DEVICE_TEXTURE: Texture;
@@ -39,6 +40,8 @@ export class ViewHost extends ViewNetworkDevice {
 
   private runningPrograms = new Map<Pid, Program>();
   private lastProgramId = 0;
+  private httpServerIcon?: Text;
+  private httpServerIconTooltip?: Text;
 
   constructor(
     id: DeviceId,
@@ -171,6 +174,49 @@ export class ViewHost extends ViewNetworkDevice {
     super.destroy();
     this.runningPrograms.forEach((program) => program.stop());
     this.runningPrograms.clear();
+  }
+
+  showHttpServerIcon() {
+    if (this.httpServerIcon) return; // Already shown
+
+    this.httpServerIcon = new Text("🌐");
+    this.httpServerIcon.style = { fontSize: 20 };
+    this.httpServerIcon.anchor.set(0, 0.5);
+    this.httpServerIcon.x = -13;
+    this.httpServerIcon.y = -this.height / 2 - 20;
+    this.httpServerIcon.zIndex = 100;
+    this.httpServerIcon.eventMode = "static";
+    this.httpServerIcon.interactive = true;
+    this.httpServerIcon.cursor = "pointer";
+
+    // Tooltip Pixi
+    this.httpServerIcon.on("pointerover", () => {
+      // Puedes ajustar la posición del tooltip según tu preferencia
+      this.httpServerIconTooltip = showTooltip(
+        this,
+        "HTTP Server",
+        7,
+        - 60,
+        this.httpServerIconTooltip
+      );
+    });
+    this.httpServerIcon.on("pointerout", () => {
+      hideTooltip(this.httpServerIconTooltip);
+    });
+
+    this.addChild(this.httpServerIcon);
+  }
+
+  hideHttpServerIcon() {
+    if (this.httpServerIcon) {
+      this.removeChild(this.httpServerIcon);
+      this.httpServerIcon.destroy();
+      this.httpServerIcon = undefined;
+    }
+    if (this.httpServerIconTooltip) {
+      removeTooltip(this, this.httpServerIconTooltip);
+      this.httpServerIconTooltip = undefined;
+    }
   }
 
   // TCP
