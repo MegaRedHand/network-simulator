@@ -128,7 +128,7 @@ There are also some controls of the packet simulation, which are located on the 
 
 - **Play/Pause**: Start or stop the packet flow on the network.
 - **Undo/Redo**: Undo or redo the last action in case you made a mistake.
-- **Packet Speed Wheel**: Change the speed of the packets on the network. This is a slider that sets a multiplier to the speed of the packets. The default value is 1, which means that the packets will be sent at normal speed. You can set it up to 0.5 to slow down the packets or up to 4 to speed them up.
+- **Simulation Speed Slider**: Changes the speed of the simulation. This is a slider that sets a multiplier to the passage of time inside the simulation, which affects packet and program speed, among other things. The default value is 1, which means everything will happen at normal speed. You can set it up to 0.5 to slow it down or up to 4 to speed it up.
 - **Layer Dropdown**: Change the layer of the network. When selecting a new layer, the network and the simulator functionalities will change as well. Setting a new layer may change:
 
   - The devices that can be added to the network.
@@ -223,8 +223,8 @@ The information shown in the right bar when selecting a router is as follows:
 - **Delete Device Button**: This button allows you to delete the router from the network. This will also delete all edges connected to this router.
 - **Packet Queue Usage Bar**: This bar shows the usage of the packet queue of the router. The packet queue is used to store packets that are waiting to be processed by the router. The bar shows the percentage of the queue that is currently in use. If the queue is full, the router will drop packets until there is space in the queue.
 - **Router Parameters Dropdown**: This dropdown allows you to select the parameters of the router. The parameters are:
-  - **Packet Queue Size [bytes]**: The amount of bytes that the router can store in its queue. This is the maximum size of the queue. The default value is 1024 bytes.
-  - **Packet Processing Speed [ms/byte]**: The time it takes for the router to process a packet. The default value is 8 miliseconds.
+  - **Packet Queue Size [bytes]**: The amount of bytes that the router can store in its queue. This is the maximum size of the queue. The default value is 4096 bytes.
+  - **Packet Processing Speed [bytes/second]**: The time it takes for the router to process a packet. The default value is 1024.
 - **Routing Table**: The routing table is a data structure used by routers to determine the best path for forwarding packets to their destination. It contains the IP, the Nework Mask and the selected interface. You can edit the entries of the table to fit your desired routing scheme. You can also restore the default state of the table by pressing the reset button on the top right corner.
 - **ARP Table**: This table shows the translation of the different IP Adresses translations into MAC Adresses. It also allows to edit and refresh these translations.
 
@@ -283,7 +283,7 @@ If a device stops being visible while changing layers, the respective edges will
   <img src="./img/13_Edge_remove_1.gif" alt="Edge Disappear" />
 </p>
 
-However, if the device that stops being visible in one layer is in the middle of two visible devices, the edges will still be visible and the device will be replaced with a **dot**. This **dot** will not be selectable and will not show any information when hovered. It is just a placeholder to show that there is a connection between the two devices. Besides, it lets you manipulate the network more easily.
+However, if the device that stops being visible in one layer is in the middle of two visible devices, the edges will still be visible and the device will be replaced with a **dot**. This **dot** will not be selectable and will not show any information when hovered. It is just a placeholder to show that there is a connection between the two devices. Besides, you can drag the dot around the canvas in order to maniulate the network more easily.
 
 <p align="center">
   <img src="./img/14_Edge_and_dot.gif" alt="Edge and Dot" />
@@ -318,7 +318,7 @@ see how the devices are connected.
 
 #### Devices Interfaces
 
-When you select an edge that connect two devices, you will see a dropdown menu to select which interface of each device you want to use to connect those devices. Each type of device has a fixed limited amount of interfaces. Hosts have 2 interfaces, Routers have 4 and Switches have 8.
+When you select an edge that connects two devices, you will see a dropdown menu to select which interface of each device you want to use to connect those devices. Each type of device has a fixed limited amount of interfaces. Hosts have 1 interface, Routers have 4 and Switches have 8.
 
 <p align="center">
   <img src="./img/17_Host_Interfaces.png" alt="Host Interfaces" />
@@ -350,7 +350,7 @@ The packet will travel through the network following the current routing scheme.
 
 ### Echo Server
 
-An echo server is a network service that receives data from a client and sends it back to the client. Just as the echo program, it is commonly used to test network connectivity and to measure the round-trip time for packets sent from the client to the server and back.
+An echo server is a network service that sends ICMP echo packets at regular intervals. Just as the echo program, it is commonly used to test network connectivity and to measure the round-trip time for packets sent from the client to the server and back.
 
 In the simulator, the echo server program works similar to the ICMP echo program but it sends multiple ICMP echo request packets to a destination device. The destination device will then send an ICMP echo reply back to the source device for each packet received.
 
@@ -377,14 +377,14 @@ If you want to stop the program, you can press the Trash can icon on the program
 
 Packets are the data units that travel through the network. They are used to send and receive data between devices. In the simulator, packets are represented as colored circles that travel through the edges of the network.
 Every packet has a different color depending on the type. The colors are as follows:
-
-| **Packet Type** | **Color**                                                                                                                                                |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| HTTP            | <span style="color:white;">Burgundy</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#6d071a;"></span> |
-| TCP             | <span style="color:white;">Hazel</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#d99802;"></span>    |
-| ICMP-8          | <span style="color:white;">Red</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#ff0000;"></span>      |
-| ICMP-0          | <span style="color:white;">Yellow</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#ffff00;"></span>   |
-| ARP             | <span style="color:white;">Green</span> <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background-color:#00ff00;"></span>    |
+                                                                                                                                               
+| **Packet Type** | **Color**                                   |
+| --------------- | ------------------------------------------- |
+| HTTP            | ![](./src/assets/packets/http.svg) Burgundy |
+| TCP             | ![](./src/assets/packets/tcp.svg) Hazel     |
+| ICMP-8          | ![](./src/assets/packets/icmp8.svg) Red     |
+| ICMP-0          | ![](./src/assets/packets/icmp0.svg) Yellow  |
+| ARP             | ![](./src/assets/packets/arp.svg) Green     |
 
 You can also see the type of the packets while hovering them.
 
@@ -442,7 +442,7 @@ On the Network Layer, they show the following information:
   <img src="./img/23_ICMP_8_Network.gif" alt="ICMP-8 Network Layer" />
 </p>
 
-On the Link Layer, they only show the EtherType field. This field is used to specify the protocol used in the packet. For ICMP-8 packets, this is always 2048.
+On the Link Layer, they only show the EtherType field. This field is used to specify the protocol used in the packet. For IPv4 packets, this is 2048 (0x0800) in general.
 
 ### ICMP-0 Packet
 
@@ -456,7 +456,7 @@ ICMP-0 packets visible on the same layers as [ICMP-8](#icmp-8-packet) packets. T
   <img src="./img/25_ICMP_0_Network.gif" alt="ICMP-0 Network Layer" />
 </p>
 
-Just like ICMP-8 packets, on the Link Layer, they only show the EtherType field which is always 2048.
+Just like ICMP-8 packets, on the Link Layer, they only show the EtherType field which is 2048 (0x0800) for IPv4.
 
 ### ARP Packet
 
