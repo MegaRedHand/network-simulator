@@ -106,13 +106,14 @@ export class SwitchingTable {
 
     this.updateRows([]);
 
-    showSuccess(ALERT_MESSAGES.SWITCHING_TABLE_CLEARED);
+    showSuccess(ALERT_MESSAGES.SWITCHING_TABLE_REGENERATED);
   }
 
   private setSwitchingTableCallbacks() {
     const dataGraph = this.props.viewgraph.getDataGraph();
     const onDelete = (mac: string) => {
       removeSwitchingTableEntry(dataGraph, this.props.deviceId, mac);
+      showSuccess(ALERT_MESSAGES.SWITCHING_TABLE_ENTRY_DELETED);
       return true;
     };
 

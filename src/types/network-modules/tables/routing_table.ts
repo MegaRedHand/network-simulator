@@ -290,11 +290,11 @@ export function addRoutingTableEntry(
   ip: string,
   mask: string,
   ifaceStr: string,
-) {
+): boolean {
   const router = dataGraph.getDevice(routerId);
   if (!router || !(router instanceof DataRouter)) {
     console.warn(`Device with ID ${routerId} is not a router.`);
-    return;
+    return false;
   }
   if (!IpAddress.isValidIP(ip)) {
     throw new InvalidIpError();
@@ -305,10 +305,22 @@ export function addRoutingTableEntry(
 
   const iface = parseIface(ifaceStr);
 
+  // Check if an identical entry already exists
+  const existing = router.routingTable.get(ip);
+  if (
+    existing &&
+    existing.mask === mask &&
+    existing.iface === iface &&
+    !existing.deleted
+  ) {
+    return false;
+  }
+
   const entry: RoutingEntry = { ip, mask, iface, edited: true, deleted: false };
   router.routingTable.add(entry);
   sortRoutingTable(router.routingTable);
   dataGraph.notifyChanges();
+  return true;
 }
 
 function parseIface(ifaceStr: string): number {

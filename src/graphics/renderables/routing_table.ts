@@ -143,6 +143,7 @@ export class RoutingTable {
           return false;
         }
         this.updateRows();
+        showSuccess(ALERT_MESSAGES.ROUTING_TABLE_ENTRY_EDITED);
         return true;
       } catch (e) {
         if (e instanceof InvalidIpError) {
@@ -160,6 +161,7 @@ export class RoutingTable {
 
     const onDelete = (key: string) => {
       removeRoutingTableRow(viewgraph.getDataGraph(), deviceId, key);
+      showSuccess(ALERT_MESSAGES.ROUTING_TABLE_ENTRY_DELETED);
       return true;
     };
 
@@ -172,14 +174,18 @@ export class RoutingTable {
       const [ip, mask, ifaceStr] = values;
 
       try {
-        addRoutingTableEntry(
+        const changed = addRoutingTableEntry(
           this.props.viewgraph.getDataGraph(),
           this.props.deviceId,
           ip,
           mask,
           ifaceStr,
         );
+        if (!changed) {
+          return false;
+        }
         this.updateRows();
+        showSuccess(ALERT_MESSAGES.ROUTING_TABLE_ENTRY_ADDED);
         return true;
       } catch (e) {
         if (e instanceof InvalidIpError) {
