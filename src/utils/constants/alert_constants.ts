@@ -19,10 +19,11 @@ export const ALERT_MESSAGES = {
   ARP_TABLE_ENTRY_ADDED: "ARP table entry added successfully.",
   ARP_TABLE_ENTRY_DELETED: "ARP table entry deleted successfully.",
   ARP_TABLE_REGENERATED: "ARP table regenerated successfully.",
-  SWITCHING_TABLE_ENTRY_EDITED: "Switching table entry edited successfully.",
-  SWITCHING_TABLE_ENTRY_ADDED: "Switching table entry added successfully.",
-  SWITCHING_TABLE_ENTRY_DELETED: "Switching table entry deleted successfully.",
-  SWITCHING_TABLE_REGENERATED: "Switching table regenerated successfully.",
+  FORWARDING_TABLE_ENTRY_EDITED: "Forwarding table entry edited successfully.",
+  FORWARDING_TABLE_ENTRY_ADDED: "Forwarding table entry added successfully.",
+  FORWARDING_TABLE_ENTRY_DELETED:
+    "Forwarding table entry deleted successfully.",
+  FORWARDING_TABLE_REGENERATED: "Forwarding table regenerated successfully.",
   PARAMETER_UPDATED: "Parameter updated successfully.",
   NO_PROGRAM_SELECTED: "Please select a program to run.",
   LAYER_CHANGED:
@@ -35,7 +36,7 @@ export const ALERT_MESSAGES = {
   INVALID_PORT:
     "Invalid port number. Expected format: XX where XX is a positive number",
   INEXISTENT_PORT: (deviceId: string) =>
-    `Port ${deviceId} does not exist. Please verify the switching table.`,
+    `Port ${deviceId} does not exist. Please verify the forwarding table.`,
   NON_NEIGHBOR_PORT: (deviceId: string) =>
-    `Port ${deviceId} is not a neighbor. Please verify the switching table.`,
+    `Port ${deviceId} is not a neighbor. Please verify the forwarding table.`,
 };

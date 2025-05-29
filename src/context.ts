@@ -83,11 +83,11 @@ export class GlobalContext {
   load(
     datagraph: DataGraph,
     layer: Layer = Layer.Link,
-    speedMultiplier: SpeedMultiplier = new SpeedMultiplier(1),
+    speedMultiplier?: SpeedMultiplier,
   ) {
     this.setNetwork(datagraph, layer);
     this.viewport.restorePosition();
-    this.setSpeedMultiplier(speedMultiplier);
+    if (speedMultiplier) this.setSpeedMultiplier(speedMultiplier);
     this.setupAutoSave();
     this.saveToLocalStorage();
     urManager.reset();

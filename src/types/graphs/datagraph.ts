@@ -48,7 +48,7 @@ export interface NetworkInterfaceData {
 }
 
 export interface SwitchDataNode extends CommonDataNode {
-  switchingTable: [string, number, boolean, boolean][]; // [mac, port, edited, deleted]
+  forwardingTable: [string, number, boolean, boolean][]; // [mac, port, edited, deleted]
   type: DeviceType.Switch;
 }
 

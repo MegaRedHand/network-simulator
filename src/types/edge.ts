@@ -15,7 +15,7 @@ import {
   showTooltip,
 } from "../graphics/renderables/canvas_tooltip_manager";
 import { updateRoutingTableIface } from "./network-modules/tables/routing_table";
-import { updateSwitchingTablePort } from "./network-modules/tables/switching_table";
+import { updateForwardingTablePort } from "./network-modules/tables/forwarding_table";
 
 export class Edge extends Graphics {
   private _data: DataEdge;
@@ -268,7 +268,7 @@ export class Edge extends Graphics {
       newIface,
     );
 
-    updateSwitchingTablePort(
+    updateForwardingTablePort(
       this.viewgraph.getDataGraph(),
       deviceId,
       oldIface,

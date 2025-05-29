@@ -48,7 +48,7 @@ export class ViewSwitch extends ViewDevice {
 
   showInfo(): void {
     const info = new DeviceInfo(this);
-    info.addSwitchingTable(this.viewgraph, this.id);
+    info.addForwardingTable(this.viewgraph, this.id);
     RightBar.getInstance().renderInfo(info);
   }
 
@@ -70,14 +70,14 @@ export class ViewSwitch extends ViewDevice {
     return `MAC: ${this.interfaces[iface].mac.toCompressedString()}`;
   }
 
-  updateSwitchingTable(mac: MacAddress, iface: number): void {
+  updateForwardingTable(mac: MacAddress, iface: number): void {
     this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
       if (!device) {
         console.error(`Switch with id ${this.id} not found in datagraph`);
         return;
       }
       if (device instanceof DataSwitch) {
-        device.updateSwitchingTable(mac, iface);
+        device.updateForwardingTable(mac, iface);
       }
     });
   }
@@ -124,20 +124,20 @@ export class ViewSwitch extends ViewDevice {
       });
       return;
     }
-    // Update the switching table with the source MAC address
-    this.updateSwitchingTable(frame.source, iface);
+    // Update the forwarding table with the source MAC address
+    this.updateForwardingTable(frame.source, iface);
 
-    // If the destination MAC address is in the switching table, send the frame
+    // If the destination MAC address is in the forwarding table, send the frame
     // to the corresponding device
-    // If the destination MAC address is not in the switching table, send the frame
+    // If the destination MAC address is not in the forwarding table, send the frame
     // to all devices connected to the switch
     const dDevice = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!dDevice || !(dDevice instanceof DataSwitch)) {
       console.warn(`Switch with id ${this.id} not found in datagraph`);
       return;
     }
-    const switchingTable = dDevice.switchingTable;
-    const destEntry = switchingTable.get(frame.destination.toString());
+    const forwardingTable = dDevice.forwardingTable;
+    const destEntry = forwardingTable.get(frame.destination.toString());
     const sendingIfaces: DeviceId[] =
       destEntry && !destEntry.deleted
         ? [destEntry.port]
