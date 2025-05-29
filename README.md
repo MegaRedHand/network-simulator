@@ -153,8 +153,6 @@ The available layers are:
   <img src="./img/06_Canvas_Buttons.gif" alt="Canvas Overview" />
 </p>
 
-This introductory information is also shown on the right bar when nothing is selected.
-
 ## Devices and Edges
 
 ### Host
@@ -214,13 +212,13 @@ In the simulator, the routers are visible from the Network layer downward. Route
 The information shown in the right bar when selecting a router is as follows:
 
 - **ID**: The ID of the router. This is a simulated unique identifier for the router in the network.
+- **Tag entry**: The tag of the router. This entry allows you to set a personalized name for the router.
 - **Connected Devices**: The devices that are directly connected to this router through edges.
-- **MAC Address**: The MAC address of the router. This is only visible in the Link Layer.
-- **IP Address**: The IP address of the router. This is always visible.
 - **Connect Device Button**: This button allows you to connect the router to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. You can only connect
   devices if the host and the other device have free interfaces.
   When you connect a router to another device, it will link the first two unused interfaces of each device. You can change the interfaces used to connect the devices by selecting the [edge](#devices-interfaces) that connects them.
 - **Delete Device Button**: This button allows you to delete the router from the network. This will also delete all edges connected to this router.
+- **Show/Hide Interfaces Button**: This button allows you to show or hide the interfaces of the router. When the interfaces are shown, you can see the IP address and the MAC address of each interface. This is useful to understand how the router selects each packet route through the network. MAC addresses are only visible in the Link Layer.
 - **Packet Queue Usage Bar**: This bar shows the usage of the packet queue of the router. The packet queue is used to store packets that are waiting to be processed by the router. The bar shows the percentage of the queue that is currently in use. If the queue is full, the router will drop packets until there is space in the queue.
 - **Router Parameters Dropdown**: This dropdown allows you to select the parameters of the router. The parameters are:
   - **Packet Queue Size [bytes]**: The amount of bytes that the router can store in its queue. This is the maximum size of the queue. The default value is 4096 bytes.
@@ -257,13 +255,14 @@ In the simulator, the switches are only in the Link Layer. As switches are used 
 The information shown in the right bar when selecting a switch is as follows:
 
 - **ID**: The ID of the switch. This is a simulated unique identifier for the switch in the network.
+- **Tag entry**: The tag of the switch. This entry allows you to set a personalized name for the switch.
 - **Connected Devices**: The devices that are directly connected to this switch through edges.
-- **MAC Address**: The MAC address of the switch.
 - **Connect Device Button**: This button allows you to connect the switch to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. You can only connect
   devices if the host and the other device have free interfaces.
   When you connect a switch to another device, it will link the first two unused interfaces of each device. You can change the interfaces used to connect the devices by selecting the [edge](#devices-interfaces) that connects them.
 - **Delete Device Button**: This button allows you to delete the switch from the network. This will also delete all edges connected to this switch.
-- **Switching Table**: This table shows the MAC Address and the port in which that Address is assigned.
+- **Show/Hide Interfaces Button**: This button allows you to show or hide the interfaces of the switch. When the interfaces are shown, you can see the MAC address of each interface. This is useful to understand how the switch forwards packets through the network. Switches only deal with MAC Addresses.
+- **Forwarding Table**: This table shows the MAC Address and the port in which that Address is assigned.
   This table is used by the switch to forward data packets to the correct destination. You can edit the entries of the table to fit your desired switching scheme. You can also restore the default state of the table by pressing the reset button on the top right corner.
 
 #### Switch Hover
