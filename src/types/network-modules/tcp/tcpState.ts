@@ -658,15 +658,18 @@ export class TcpState {
       ]);
 
       if (result === Command.SEND_ACK) {
+        console.debug("[" + this.srcHost.id + "] [TCP] Processing SEND_ACK");
         recheckPromise = this.cmdQueue.pop();
         this.notifiedSendPackets = false;
       } else if (result === Command.ABORT) {
+        console.debug("[" + this.srcHost.id + "] [TCP] Processing ABORT");
         // Send RST and quit
         const segment = this.newSegment(this.sendNext, 0);
         segment.withFlags(new Flags().withRst());
         sendIpPacket(this.srcHost, this.dstHost, segment);
         break;
       } else if ("segment" in result) {
+        console.debug("[" + this.srcHost.id + "] [TCP] Processing segments");
         receivedSegmentPromise = this.tcpQueue.pop();
         let segment = result.segment;
 
@@ -699,6 +702,7 @@ export class TcpState {
         }
         continue;
       } else if ("seqNum" in result) {
+        console.debug("[" + this.srcHost.id + "] [TCP] Processing timeout");
         retransmitPromise = this.retransmissionQueue.pop();
         // Retransmit the segment
         this.resendPacket(result.seqNum, result.size);
@@ -728,6 +732,7 @@ export class TcpState {
         this.sendNext = (this.sendNext + 1) % u32_MODULUS;
         segment.flags.withFin();
       }
+      console.debug("[" + this.srcHost.id + "] [TCP] sending segment", segment);
 
       // Ignore failed sends
       if (sendIpPacket(this.srcHost, this.dstHost, segment)) {
