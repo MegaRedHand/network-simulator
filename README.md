@@ -176,13 +176,13 @@ In the simulator, a host is visible on all layers. Given the fact that hosts are
 The information shown in the right bar when selecting a host is as follows:
 
 - **ID**: The ID of the host. This is a simulated unique identifier for the host in the network.
+- **Tag entry**: The tag of the host. This entry allows you to set a personalized name for the host.
 - **Connected Devices**: The devices that are directly connected to this host through edges.
-- **MAC Address**: The MAC address of the host. This is only visible in the Link Layer.
-- **IP Address**: The IP address of the host. This is always visible.
 - **Connect Device Button**: This button allows you to connect the host to another device. First press the Connect Device button and then click on the device you want to connect to. This will create an edge between the two devices. You can only connect
   devices if the host and the other device have free interfaces.
   When you connect a host to another device, it will link the first two unused interfaces of each device. You can change the interfaces used to connect the devices by selecting the [edge](#devices-interfaces) that connects them.
 - **Delete Device Button**: This button allows you to delete the host from the network. This will also delete all edges connected to this host.
+- **Show/Hide Interfaces Button**: This button allows you to show or hide the interfaces of the host. When the interfaces are shown, you can see the IP address and the MAC address of each interface. This is useful to understand how the host is connected to the network. MAC addresses are only visible in the Link Layer.
 - **Program Runner Section**: This section includes a dropdown to select a program and a second button to start the program after
   selecting the program inputs.
 - **ARP Table**: This table shows the translation of the different IP Adresses translations into MAC Adresses. It also allows to edit and refresh these translations.
@@ -322,7 +322,7 @@ When you select an edge that connects two devices, you will see a dropdown menu 
 
 <p align="center">
   <img src="./img/17_Host_Interfaces.png" alt="Host Interfaces" />
-  <img src="./img/18_Router_Interfaces.png" alt="Router Interfaces" />
+  <img src="./img/18_Router_Interfaces.png" alt="Router Interfaces" />![alt text](image.png)
   <img src="./img/19_Switch_Interfaces.png" alt="Switch Interfaces" />
 </p>
 
@@ -511,7 +511,7 @@ The simulator has a print button that allows you to take a snapshot of the curre
 
 The simulator has some keyboard shortcuts to make it easier to use. The shortcuts are as follows:
 
-- **C**: Connect a device to another device. This is the same as pressing the Connect Device button on the right bar. It will only work if the devices involved hace free interfaces.
+- **C**: Connect a device to another device. This is the same as pressing the Connect Device button on the right bar. It will only work if the devices involved have free interfaces.
 - **H**: Open the help modal. This is the same as pressing the Help button on the top bar.
 - **Delete/Backspace**: Delete the selected device, edge or packet. This is the same as pressing the Delete Device, Delete Edge and Discard Packet buttons on the right bar.
 - **SpaceBar**: Play or pause the simulation. This is the same as pressing the Play/Pause button on the canvas.
