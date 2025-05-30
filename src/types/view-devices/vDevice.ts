@@ -405,28 +405,39 @@ export abstract class ViewDevice extends Container {
     RightBar.getInstance().renderInfo(new DeviceInfo(this));
   }
 
+  private repositionDeviceIcons() {
+    const icons = Object.values(this.deviceIcons).filter(Boolean) as Text[];
+    if (icons.length === 0) return;
+
+    // Espaciado horizontal entre iconos
+    const spacing = 28; // Puedes ajustar el valor para más/menos separación
+    // Todos los iconos a la misma altura, arriba del dispositivo
+    const baseY = -this.height / 2 - 5;
+
+    // Centrar el grupo de iconos
+    const totalWidth = (icons.length - 1) * spacing;
+    icons.forEach((icon, idx) => {
+      icon.x = -totalWidth / 2 + idx * spacing;
+      icon.y = baseY;
+    });
+  }
+
   showDeviceIconFor(
     iconKey: string,
     emoji: string,
-    yOffset: number,
     tooltipText: string | undefined,
     durationMs = 2000,
   ) {
-    this.showDeviceIcon(iconKey, emoji, yOffset, tooltipText);
+    this.showDeviceIcon(iconKey, emoji, tooltipText);
     setTimeout(() => {
       this.hideDeviceIcon(iconKey);
     }, durationMs);
   }
 
-  showDeviceIcon(
-    iconKey: string,
-    emoji: string,
-    yOffset: number,
-    tooltipText?: string,
-  ) {
+  showDeviceIcon(iconKey: string, emoji: string, tooltipText?: string) {
     if (!this.isVisible()) return;
     if (this.deviceIcons[iconKey]) return;
-    const icon = createDeviceIcon(emoji, yOffset);
+    const icon = createDeviceIcon(emoji, 0); // yOffset no se usa aquí
     this.deviceIcons[iconKey] = icon;
 
     if (tooltipText) {
@@ -435,7 +446,7 @@ export abstract class ViewDevice extends Container {
           this,
           tooltipText,
           0,
-          yOffset - 30,
+          icon.y - 30,
           this.deviceTooltips[iconKey],
         );
       });
@@ -445,6 +456,7 @@ export abstract class ViewDevice extends Container {
     }
 
     this.addChild(icon);
+    this.repositionDeviceIcons();
   }
 
   hideDeviceIcon(iconKey: string) {
@@ -453,6 +465,7 @@ export abstract class ViewDevice extends Container {
       this.removeChild(icon);
       icon.destroy();
       this.deviceIcons[iconKey] = undefined;
+      this.repositionDeviceIcons();
     }
     const tooltip = this.deviceTooltips[iconKey];
     if (tooltip) {

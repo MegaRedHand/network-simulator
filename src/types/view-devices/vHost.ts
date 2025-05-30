@@ -174,12 +174,7 @@ export class ViewHost extends ViewNetworkDevice {
   }
 
   showHttpServerIcon() {
-    this.showDeviceIcon(
-      "httpServer",
-      "🌐",
-      -this.height / 2 - 5,
-      "HTTP Server",
-    );
+    this.showDeviceIcon("httpServer", "🌐", "HTTP Server");
   }
 
   hideHttpServerIcon() {

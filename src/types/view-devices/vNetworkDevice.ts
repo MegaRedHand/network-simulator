@@ -211,12 +211,7 @@ export abstract class ViewNetworkDevice extends ViewDevice {
         // drop packet
         const frame = new EthernetFrame(mac, sha, packet);
         dropPacket(this.viewgraph, this.id, frame);
-        this.showDeviceIconFor(
-          "arpDrop",
-          "⛔",
-          -this.height / 2 - 5,
-          "ARP dropped",
-        );
+        this.showDeviceIconFor("arpDrop", "⛔", "ARP dropped");
         return;
       }
       // Send an ARP Reply to the requesting device
