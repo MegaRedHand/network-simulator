@@ -111,7 +111,6 @@ export class ViewSwitch extends ViewDevice {
         "📢",
         -this.height / 2 - 5,
         "Broadcast",
-        2000,
       );
       this.interfaces.forEach((sendingIface, idx) => {
         const packet = new ArpRequest(sha, spa, tpa, tha);
@@ -152,7 +151,6 @@ export class ViewSwitch extends ViewDevice {
         "📢",
         -this.height / 2 - 5,
         "Broadcast",
-        2000,
       );
     }
     sendingIfaces.forEach((sendingIface) =>

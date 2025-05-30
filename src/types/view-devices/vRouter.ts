@@ -184,7 +184,6 @@ export class ViewRouter extends ViewNetworkDevice {
         "❗",
         -this.height / 2 - 5,
         "Queue full",
-        2000,
       );
       // dummy values
       const dummyMac = this.interfaces[0].mac;

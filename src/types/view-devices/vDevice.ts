@@ -410,7 +410,7 @@ export abstract class ViewDevice extends Container {
     emoji: string,
     yOffset: number,
     tooltipText: string | undefined,
-    durationMs: number,
+    durationMs = 2000,
   ) {
     this.showDeviceIcon(iconKey, emoji, yOffset, tooltipText);
     setTimeout(() => {
