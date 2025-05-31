@@ -75,6 +75,7 @@ export const TOOLTIP_KEYS = {
   FORWARDING_TABLE: "Forwarding Table",
   MULTI_EDGE_CONNECTED_DEVICES: "Multi Edge Connected Devices",
   ETHERTYPE: "Ether Type",
+  CRC: "CRC",
   // ARP Details
   HTYPE: "Hardware Type",
   PTYPE: "Protocol Type",
@@ -261,7 +262,9 @@ export const TOOLTIP_CONTENT = {
   [TOOLTIP_KEYS.TPA]:
     "Target protocol address (IP). The IP address of the target.",
   [TOOLTIP_KEYS.ETHERTYPE]:
-    "EtherType field. Specifies the protocol encapsulated in the payload of the frame.",
+    "Ether Type field. Specifies the protocol encapsulated in the payload of the frame.",
+  [TOOLTIP_KEYS.CRC]:
+    "Cyclic Redundancy Check (CRC). A checksum used for error-checking the frame. It helps detect errors in the transmitted data.",
   [TOOLTIP_KEYS.SEQ]:
     "Sequence number. Used to identify the order of packets in a TCP stream.",
   [TOOLTIP_KEYS.ACK]:

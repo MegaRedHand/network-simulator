@@ -10,6 +10,7 @@
   padding: 0; /* Removes default padding */
   margin: 0; /* Removes default margin */
   list-style: none; /* Removes list bullets */
+  overflow-x: auto;
 }
 
 /* Ensures each item takes up the full width */
