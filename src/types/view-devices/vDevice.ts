@@ -409,12 +409,9 @@ export abstract class ViewDevice extends Container {
     const icons = Object.values(this.deviceIcons).filter(Boolean) as Text[];
     if (icons.length === 0) return;
 
-    // Espaciado horizontal entre iconos
-    const spacing = 28; // Puedes ajustar el valor para más/menos separación
-    // Todos los iconos a la misma altura, arriba del dispositivo
+    const spacing = 28;
     const baseY = -this.height / 2 - 5;
 
-    // Centrar el grupo de iconos
     const totalWidth = (icons.length - 1) * spacing;
     icons.forEach((icon, idx) => {
       icon.x = -totalWidth / 2 + idx * spacing;
@@ -437,7 +434,7 @@ export abstract class ViewDevice extends Container {
   showDeviceIcon(iconKey: string, emoji: string, tooltipText?: string) {
     if (!this.isVisible()) return;
     if (this.deviceIcons[iconKey]) return;
-    const icon = createDeviceIcon(emoji, 0); // yOffset no se usa aquí
+    const icon = createDeviceIcon(emoji, 0);
     this.deviceIcons[iconKey] = icon;
 
     if (tooltipText) {
