@@ -173,6 +173,14 @@ export class ViewHost extends ViewNetworkDevice {
     this.runningPrograms.clear();
   }
 
+  showHttpServerIcon() {
+    this.showDeviceIcon("httpServer", "🌐", "HTTP Server");
+  }
+
+  hideHttpServerIcon() {
+    this.hideDeviceIcon("httpServer");
+  }
+
   // TCP
 
   private tcpModule = new TcpModule(this);

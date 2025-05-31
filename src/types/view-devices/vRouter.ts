@@ -178,6 +178,8 @@ export class ViewRouter extends ViewNetworkDevice {
     const wasEmpty = this.packetQueue.isEmpty();
     if (!this.packetQueue.enqueue(datagram)) {
       console.debug("Packet queue full, dropping packet");
+      // Mostrar icono de "cola llena"
+      this.showDeviceIconFor("queueFull", "❗", "Queue full");
       // dummy values
       const dummyMac = this.interfaces[0].mac;
       const frame = new EthernetFrame(dummyMac, dummyMac, datagram);

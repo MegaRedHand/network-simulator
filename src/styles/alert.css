@@ -16,8 +16,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
   max-width: 400px; /* Maximum width */
   line-height: 1.5; /* Line spacing */
-  font-family:
-    "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; /* Font family */
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   opacity: 0; /* Initially transparent */
   transition:
     opacity 0.3s ease-in-out,
