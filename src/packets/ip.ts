@@ -1,5 +1,6 @@
 import { FramePayload, IP_PROTOCOL_TYPE } from "./ethernet";
 import { Layer } from "../types/layer";
+import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 
 // Taken from here: https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
 export const ICMP_PROTOCOL_NUMBER = 1;
@@ -321,6 +322,11 @@ export class IPv4Packet implements FramePayload {
     return IP_PROTOCOL_TYPE;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getPayload(layer: Layer): Record<string, string | number | object> | string {
+    return "Ipv4 Datagram";
+  }
+
   getDetails(layer: Layer) {
     if (layer == Layer.Network) {
       return {
@@ -333,6 +339,9 @@ export class IPv4Packet implements FramePayload {
         "Time to Live": this.timeToLive,
         Protocol: this.protocol,
         "Header Checksum": this.headerChecksum,
+        [TOOLTIP_KEYS.SOURCE_IP_ADDRESS]: this.sourceAddress.toString(),
+        [TOOLTIP_KEYS.DESTINATION_IP_ADDRESS]:
+          this.destinationAddress.toString(),
         Payload: this.payload.getPayload(),
       };
     } else {

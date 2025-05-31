@@ -1,5 +1,6 @@
 import { CRC32 } from "@tsxper/crc32";
 import { Layer } from "../types/layer";
+import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 
 // From https://en.wikipedia.org/wiki/EtherType
 export const IP_PROTOCOL_TYPE = 0x0800;
@@ -176,12 +177,15 @@ export class EthernetFrame {
   getDetails(layer: Layer) {
     if (layer == Layer.Link) {
       const ethernetDetails = {
-        EtherType: this.type.toString(),
+        [TOOLTIP_KEYS.ETHERTYPE]: this.type.toString(),
+        [TOOLTIP_KEYS.SOURCE_MAC_ADDRESS]: this.source.toString(),
+        [TOOLTIP_KEYS.DESTINATION_MAC_ADDRESS]: this.destination.toString(),
+        [TOOLTIP_KEYS.CRC]: this.crc.toString(16).padStart(8, "0"),
       };
       // Merge Ethernet details with payload details
       return {
         ...ethernetDetails,
-        ...this.payload.getDetails(layer),
+        Payload: this.payload.getPayload(layer),
       };
     } else {
       return this.payload.getDetails(layer);
@@ -196,6 +200,8 @@ export interface FramePayload {
   type(): number;
   // Get details of the payload
   getDetails(layer: Layer): Record<string, string | number | object>;
+  // Get payload data for Link layer
+  getPayload(layer: Layer): Record<string, string | number | object> | string;
 }
 
 export function compareMacs(mac1: MacAddress, mac2: MacAddress): number {

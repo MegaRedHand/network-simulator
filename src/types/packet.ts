@@ -143,8 +143,8 @@ export class Packet extends Graphics {
     this.removeHighlight();
   }
 
-  getPacketDetails(layer: Layer, rawPacket: EthernetFrame) {
-    return rawPacket.getDetails(layer);
+  getPacketDetails(layer: Layer) {
+    return this.rawPacket.getDetails(layer);
   }
 
   isVisible(): boolean {

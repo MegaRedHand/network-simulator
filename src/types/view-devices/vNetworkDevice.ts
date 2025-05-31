@@ -1,10 +1,5 @@
 import { Texture } from "pixi.js";
-import {
-  ICMP_PROTOCOL_NUMBER,
-  IpAddress,
-  IPv4Packet,
-  TCP_PROTOCOL_NUMBER,
-} from "../../packets/ip";
+import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { ViewDevice } from "./vDevice";
 import { ViewGraph } from "../graphs/viewgraph";
@@ -169,7 +164,7 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.sourceAddress);
     if (!(dstDevice instanceof ViewNetworkDevice)) {
       console.warn(
-        `Device with IP ${datagram.sourceAddress.toString} was not found or was not a Network Device`,
+        `Network Device with IP ${datagram.sourceAddress.toString()} was not found.`,
       );
       return;
     }
@@ -191,10 +186,6 @@ export abstract class ViewNetworkDevice extends ViewDevice {
           sendViewPacket(this.viewgraph, this.id, frame, iface);
         }
         break;
-      }
-      case TCP_PROTOCOL_NUMBER: {
-        // For the moment
-        return;
       }
       default:
     }

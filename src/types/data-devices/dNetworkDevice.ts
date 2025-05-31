@@ -53,7 +53,7 @@ export abstract class DataNetworkDevice extends DataDevice {
   ): { mac: MacAddress; edited: boolean } | undefined {
     const entry = this.arpTable.get(ip.toString());
     if (!entry) {
-      // Buscar el dispositivo y la MAC real si no está en la tabla
+      // Search for the device and the real MAC if it is not in the table
       const device = this.datagraph.getDeviceByIP(ip);
       if (!device) {
         console.warn(`Device with ip ${ip.toString()} not found in DataGraph`);
@@ -62,8 +62,13 @@ export abstract class DataNetworkDevice extends DataDevice {
       const iface = device.interfaces.find((iface) => iface.ip?.equals(ip));
       return iface ? { mac: iface.mac, edited: false } : undefined;
     }
-    // Si la entrada existe pero la MAC es "", se considera eliminada
-    if (entry.mac === "") return undefined;
+    // If the entry exists but the MAC is "", it is considered deleted
+    if (entry.mac === "") {
+      console.debug(
+        `Interface ${ip.toString()} from device ${this.id} is deleted`,
+      );
+      return undefined;
+    }
     return { mac: MacAddress.parse(entry.mac), edited: entry.edited };
   }
 
