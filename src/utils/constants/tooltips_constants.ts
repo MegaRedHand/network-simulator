@@ -74,7 +74,7 @@ export const TOOLTIP_KEYS = {
   PORT: "Port",
   FORWARDING_TABLE: "Forwarding Table",
   MULTI_EDGE_CONNECTED_DEVICES: "Multi Edge Connected Devices",
-  ETHERTYPE: "EtherType",
+  ETHERTYPE: "Ether Type",
   // ARP Details
   HTYPE: "Hardware Type",
   PTYPE: "Protocol Type",

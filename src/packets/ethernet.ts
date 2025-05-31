@@ -181,7 +181,7 @@ export class EthernetFrame {
       // Merge Ethernet details with payload details
       return {
         ...ethernetDetails,
-        ...this.payload.getDetails(layer),
+        Payload: this.payload.getPayload(layer),
       };
     } else {
       return this.payload.getDetails(layer);
@@ -196,6 +196,8 @@ export interface FramePayload {
   type(): number;
   // Get details of the payload
   getDetails(layer: Layer): Record<string, string | number | object>;
+  // Get payload data for Link layer
+  getPayload(layer: Layer): Record<string, string | number | object> | string;
 }
 
 export function compareMacs(mac1: MacAddress, mac2: MacAddress): number {

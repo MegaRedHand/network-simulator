@@ -321,6 +321,11 @@ export class IPv4Packet implements FramePayload {
     return IP_PROTOCOL_TYPE;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getPayload(layer: Layer): Record<string, string | number | object> | string {
+    return "Ipv4 Datagram";
+  }
+
   getDetails(layer: Layer) {
     if (layer == Layer.Network) {
       return {

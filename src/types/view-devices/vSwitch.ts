@@ -12,7 +12,7 @@ import { RightBar } from "../../graphics/right_bar";
 import { Texture } from "pixi.js";
 import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
-import { dropPacket, sendViewPacket } from "../packet";
+import { sendViewPacket } from "../packet";
 import { DataSwitch } from "../data-devices";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import { ArpRequest } from "../../packets/arp";
