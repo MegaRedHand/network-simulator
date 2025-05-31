@@ -1,10 +1,5 @@
 import { Texture } from "pixi.js";
-import {
-  ICMP_PROTOCOL_NUMBER,
-  IpAddress,
-  IPv4Packet,
-  TCP_PROTOCOL_NUMBER,
-} from "../../packets/ip";
+import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { ViewDevice } from "./vDevice";
 import { ViewGraph } from "../graphs/viewgraph";

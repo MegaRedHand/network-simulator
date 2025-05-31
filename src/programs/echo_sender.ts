@@ -82,7 +82,7 @@ export class SingleEcho extends ProgramBase {
 
     // Resolve destination MAC address
     const dstMac = srcDevice.resolveAddress(dst.ip);
-    if (!dstMac) {
+    if (!dstMac || !dstMac.mac) {
       console.debug(
         `Device ${this.srcId} couldn't resolve MAC address for device with IP ${dst.ip.toString()}. Program cancelled`,
       );
@@ -90,7 +90,7 @@ export class SingleEcho extends ProgramBase {
     }
 
     // Wrap in Ethernet frame
-    const ethernetFrame = new EthernetFrame(src.mac, dst.mac, ipPacket);
+    const ethernetFrame = new EthernetFrame(src.mac, dstMac.mac, ipPacket);
     sendViewPacket(this.viewgraph, this.srcId, ethernetFrame, sendingIface);
   }
 

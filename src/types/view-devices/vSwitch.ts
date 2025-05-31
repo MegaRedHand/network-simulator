@@ -89,7 +89,6 @@ export class ViewSwitch extends ViewDevice {
   ) {
     if (sendingIface === iface || sendingIface >= this.interfaces.length) {
       // Packet would be sent to the interface where it came, discard it
-      dropPacket(this.viewgraph, this.id, frame);
       return;
     }
 
