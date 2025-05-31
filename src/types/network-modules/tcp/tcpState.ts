@@ -100,6 +100,7 @@ export class TcpState {
   // Buffer of data received
   private readBuffer = new BytesBuffer(MAX_BUFFER_SIZE);
   private readChannel = new AsyncQueue<number>();
+  private readClosedSeqnum = -1;
   private readClosed = false;
 
   // Buffer of data to be sent
@@ -443,6 +444,7 @@ export class TcpState {
     }
 
     if (flags.fin) {
+      this.readClosedSeqnum = this.recvNext;
       this.recvNext = (this.recvNext + 1) % u32_MODULUS;
       this.readClosed = true;
       this.readChannel.push(0);
@@ -646,11 +648,18 @@ export class TcpState {
   }
 
   private async mainLoop() {
+    let lastAcked = this.sendUnacknowledged;
+
     let recheckPromise = this.cmdQueue.pop();
     let receivedSegmentPromise = this.tcpQueue.pop();
     let retransmitPromise = this.retransmissionQueue.pop();
 
-    while (!this.readClosed || !this.writeClosed) {
+    while (
+      !this.readClosed ||
+      !this.writeClosed ||
+      // This ensures we send the last ACK
+      lastAcked !== this.readClosedSeqnum + 1
+    ) {
       const result = await Promise.race([
         recheckPromise,
         receivedSegmentPromise,
@@ -658,15 +667,18 @@ export class TcpState {
       ]);
 
       if (result === Command.SEND_ACK) {
+        console.debug("[" + this.srcHost.id + "] [TCP] Processing SEND_ACK");
         recheckPromise = this.cmdQueue.pop();
         this.notifiedSendPackets = false;
       } else if (result === Command.ABORT) {
+        console.debug("[" + this.srcHost.id + "] [TCP] Processing ABORT");
         // Send RST and quit
         const segment = this.newSegment(this.sendNext, 0);
         segment.withFlags(new Flags().withRst());
         sendIpPacket(this.srcHost, this.dstHost, segment);
         break;
       } else if ("segment" in result) {
+        console.debug("[" + this.srcHost.id + "] [TCP] Processing segments");
         receivedSegmentPromise = this.tcpQueue.pop();
         let segment = result.segment;
 
@@ -699,6 +711,7 @@ export class TcpState {
         }
         continue;
       } else if ("seqNum" in result) {
+        console.debug("[" + this.srcHost.id + "] [TCP] Processing timeout");
         retransmitPromise = this.retransmissionQueue.pop();
         // Retransmit the segment
         this.resendPacket(result.seqNum, result.size);
@@ -709,6 +722,7 @@ export class TcpState {
       const segment = this.newSegment(this.sendNext, this.recvNext).withFlags(
         new Flags().withAck(),
       );
+      lastAcked = this.recvNext;
 
       const sendSize = Math.min(this.sendWindowSize(), MAX_SEGMENT_SIZE);
       if (sendSize > 0) {
@@ -728,6 +742,7 @@ export class TcpState {
         this.sendNext = (this.sendNext + 1) % u32_MODULUS;
         segment.flags.withFin();
       }
+      console.debug("[" + this.srcHost.id + "] [TCP] sending segment", segment);
 
       // Ignore failed sends
       if (sendIpPacket(this.srcHost, this.dstHost, segment)) {
