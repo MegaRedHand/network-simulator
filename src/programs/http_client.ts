@@ -23,8 +23,12 @@ const RESOURCE_MAP_SIZES = new Map([
 
 function generateResource(size: number): Uint8Array {
   const resource = new Uint8Array(size);
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   for (let i = 0; i < size; i++) {
-    resource[i] = Math.floor(Math.random() * 256);
+    resource[i] = characters.charCodeAt(
+      Math.floor(Math.random() * characters.length),
+    );
   }
   return resource;
 }
@@ -79,7 +83,7 @@ export class HttpClient extends ProgramBase {
     // Encode HTTP request
     // NOTE: For now, as hosts have just one interface, destination ip is hardcoded
     const httpRequest = getContentRequest(
-      this.runner.interfaces[0].toString(),
+      this.runner.interfaces[0].ip.toString(),
       this.resource,
     );
 
