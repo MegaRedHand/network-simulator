@@ -23,8 +23,12 @@ const RESOURCE_MAP_SIZES = new Map([
 
 function generateResource(size: number): Uint8Array {
   const resource = new Uint8Array(size);
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   for (let i = 0; i < size; i++) {
-    resource[i] = Math.floor(Math.random() * 256);
+    resource[i] = characters.charCodeAt(
+      Math.floor(Math.random() * characters.length),
+    );
   }
   return resource;
 }
