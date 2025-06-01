@@ -87,7 +87,7 @@ export class ViewSwitch extends ViewDevice {
     sendingIface: number,
     iface: number,
   ) {
-    if (sendingIface === iface) {
+    if (sendingIface === iface || sendingIface >= this.interfaces.length) {
       // Packet would be sent to the interface where it came, discard it
       return;
     }
@@ -103,6 +103,8 @@ export class ViewSwitch extends ViewDevice {
   }
 
   receiveFrame(frame: EthernetFrame, iface: number): void {
+    // Update the forwarding table with the source MAC address
+    this.updateForwardingTable(frame.source, iface);
     if (frame.payload instanceof ArpRequest) {
       const { sha, spa, tha, tpa } = frame.payload;
       this.interfaces.forEach((sendingIface, idx) => {
@@ -116,8 +118,6 @@ export class ViewSwitch extends ViewDevice {
       });
       return;
     }
-    // Update the forwarding table with the source MAC address
-    this.updateForwardingTable(frame.source, iface);
 
     // If the destination MAC address is in the forwarding table, send the frame
     // to the corresponding device

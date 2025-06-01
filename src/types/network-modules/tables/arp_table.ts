@@ -52,7 +52,7 @@ export function removeArpTableEntry(
 ): void {
   const device = dataGraph.getDevice(deviceId);
   if (!device || !(device instanceof DataNetworkDevice)) {
-    console.warn(`Device with ID ${deviceId} is not a network device.`);
+    console.error(`Network Device with ID ${deviceId} not found.`);
     return;
   }
   device.arpTable.add({ ip, mac: "", edited: false });

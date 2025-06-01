@@ -25,12 +25,11 @@ describe("TCP module", () => {
     Uint8Array.of(),
   );
   testSegment.window = 0;
-  testSegment.srcIpAddress = IpAddress.parse("127.0.0.1");
-  testSegment.dstIpAddress = IpAddress.parse("127.0.0.1");
+  const ipAddress = IpAddress.parse("127.0.0.1");
 
   test("Checksum works", () => {
     const expectedChecksum = 0x8057;
-    expect(testSegment.checksum).toBe(expectedChecksum);
+    expect(testSegment.checksum(ipAddress, ipAddress)).toBe(expectedChecksum);
   });
 
   test("toBytes works", () => {
@@ -55,6 +54,13 @@ describe("TCP module", () => {
       0x00, 0x00,
       // No data
     ]);
-    expect(testSegment.toBytes().toString()).toBe(bytes.toString());
+    expect(
+      testSegment
+        .toBytes({
+          srcIpAddress: IpAddress.parse("127.0.0.1"),
+          dstIpAddress: IpAddress.parse("127.0.0.1"),
+        })
+        .toString(),
+    ).toBe(bytes.toString());
   });
 });
