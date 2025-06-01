@@ -1,6 +1,7 @@
 import { FramePayload, IP_PROTOCOL_TYPE } from "./ethernet";
 import { Layer } from "../types/layer";
 import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
+import { TcpSegment, TcpSegmentToBytesProps } from "./tcp";
 
 // Taken from here: https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
 export const ICMP_PROTOCOL_NUMBER = 1;
@@ -176,7 +177,7 @@ export interface IpPayload {
   // Length of the payload in bytes
   byteLength(): number;
   // The bytes equivalent of the payload
-  toBytes(): Uint8Array;
+  toBytes(tcpToBytesProps?: TcpSegmentToBytesProps): Uint8Array;
   // The number of the protocol
   protocol(): number;
   // Packet protocol name
@@ -285,7 +286,13 @@ export class IPv4Packet implements FramePayload {
     }
     let payload = new Uint8Array(0);
     if (withPayload) {
-      payload = this.payload.toBytes();
+      payload =
+        this.payload instanceof TcpSegment
+          ? this.payload.toBytes({
+              srcIpAddress: this.sourceAddress,
+              dstIpAddress: this.destinationAddress,
+            })
+          : this.payload.toBytes();
     }
     return Uint8Array.from([
       (this.version << 4) | this.internetHeaderLength,

@@ -71,6 +71,12 @@ function bitSet(value: boolean, bit: number): number {
   return value ? 1 << bit : 0;
 }
 
+export interface TcpSegmentToBytesProps {
+  withChecksum?: boolean;
+  srcIpAddress?: IpAddress;
+  dstIpAddress?: IpAddress;
+}
+
 export class TcpSegment implements IpPayload {
   // Info taken from the original RFC: https://www.ietf.org/rfc/rfc793.txt
   //  0                   1                   2                   3
@@ -129,8 +135,8 @@ export class TcpSegment implements IpPayload {
   public window = 0xffff;
 
   // 2 bytes
-  get checksum(): number {
-    return this.computeChecksum();
+  checksum(srcIpAddress: IpAddress, dstIpAddress: IpAddress): number {
+    return this.computeChecksum(srcIpAddress, dstIpAddress);
   }
 
   // 2 bytes
@@ -178,10 +184,12 @@ export class TcpSegment implements IpPayload {
     return this;
   }
 
-  computeChecksum(): number {
+  computeChecksum(srcIpAddress: IpAddress, dstIpAddress: IpAddress): number {
     const segmentBytes = this.toBytes({ withChecksum: false });
 
     const pseudoHeaderBytes = Uint8Array.from([
+      ...srcIpAddress.octets,
+      ...dstIpAddress.octets,
       0,
       TCP_PROTOCOL_NUMBER,
       ...uintToBytes(segmentBytes.length, 2),
@@ -201,8 +209,12 @@ export class TcpSegment implements IpPayload {
 
   toBytes({
     withChecksum = true,
-  }: { withChecksum?: boolean } = {}): Uint8Array {
-    const checksum = withChecksum ? this.checksum : 0;
+    srcIpAddress,
+    dstIpAddress,
+  }: TcpSegmentToBytesProps = {}): Uint8Array {
+    const checksum = withChecksum
+      ? this.checksum(srcIpAddress, dstIpAddress)
+      : 0;
     return Uint8Array.from([
       ...uintToBytes(this.sourcePort, 2),
       ...uintToBytes(this.destinationPort, 2),
