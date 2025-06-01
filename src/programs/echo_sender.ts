@@ -5,9 +5,9 @@ import { ProgramBase } from "./program_base";
 import { ViewGraph } from "../types/graphs/viewgraph";
 import { ProgramInfo } from "../graphics/renderables/device_info";
 import { EchoRequest } from "../packets/icmp";
-import { IpAddress, IPv4Packet } from "../packets/ip";
+import { IPv4Packet } from "../packets/ip";
 import { ViewNetworkDevice } from "../types/view-devices/vNetworkDevice";
-import { EthernetFrame, MacAddress } from "../packets/ethernet";
+import { EthernetFrame } from "../packets/ethernet";
 import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 import { Layer } from "../types/layer";
 
@@ -63,19 +63,11 @@ export class SingleEcho extends ProgramBase {
       );
       return;
     }
-    let { src, dst, nextHop, sendingIface } = forwardingData;
+    const { src, dst, nextHop, sendingIface } = forwardingData;
     const echoRequest = new EchoRequest(0);
     // Wrap in IP datagram
     const ipPacket = new IPv4Packet(src.ip, dst.ip, echoRequest);
 
-    // Resolve destination MAC address
-    const dstMac = srcDevice.resolveAddress(dst.ip);
-    if (!dstMac || !dstMac.mac) {
-      console.debug(
-        `Device ${this.srcId} couldn't resolve MAC address for device with IP ${dst.ip.toString()}. Program cancelled`,
-      );
-      return;
-    }
     // Resolve next hop MAC address
     const nextHopMac = srcDevice.resolveAddress(nextHop.ip);
     if (!nextHopMac || !nextHopMac.mac) {

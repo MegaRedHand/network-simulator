@@ -64,14 +64,6 @@ function sendIpPacket(
     forwardingData.sendingIface,
   ];
 
-  // Resolve destination MAC address
-  const dstMac = src.resolveAddress(dstData.ip);
-  if (!dstMac) {
-    console.warn(
-      `Device ${src.id} couldn't resolve MAC address for device with IP ${dstData.ip.toString()}. Program cancelled`,
-    );
-    return false;
-  }
   // Resolve next hop MAC address
   const nextHopMac = src.resolveAddress(nextHopData.ip);
   if (!nextHopMac || !nextHopMac.mac) {

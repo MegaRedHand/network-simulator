@@ -182,8 +182,6 @@ export class TcpSegment implements IpPayload {
     const segmentBytes = this.toBytes({ withChecksum: false });
 
     const pseudoHeaderBytes = Uint8Array.from([
-      ...this.srcIpAddress.octets,
-      ...this.dstIpAddress.octets,
       0,
       TCP_PROTOCOL_NUMBER,
       ...uintToBytes(segmentBytes.length, 2),
