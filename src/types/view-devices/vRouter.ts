@@ -206,9 +206,9 @@ export class ViewRouter extends ViewNetworkDevice {
       this.viewgraph,
     );
     if (forwardingData && forwardingData.sendingIface === iface) {
-      const { src, dst } = forwardingData;
+      const { src, nextHop } = forwardingData;
 
-      const newFrame = new EthernetFrame(src.mac, dst.mac, datagram);
+      const newFrame = new EthernetFrame(src.mac, nextHop.mac, datagram);
       sendViewPacket(this.viewgraph, this.id, newFrame, iface);
     } else console.debug(`Router ${this.id} could not forward packet.`);
 

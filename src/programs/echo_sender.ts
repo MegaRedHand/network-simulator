@@ -57,25 +57,13 @@ export class SingleEcho extends ProgramBase {
       this.dstId,
       this.viewgraph,
     );
-    let src: { ip: IpAddress; mac: MacAddress },
-      dst: { ip: IpAddress; mac: MacAddress },
-      sendingIface: number;
     if (!forwardingData) {
       console.warn(
         `Device ${this.srcId} could not send ping to device ${this.dstId}`,
       );
-      src = {
-        mac: srcDevice.interfaces[0].mac,
-        ip: srcDevice.interfaces[0].ip,
-      };
-      dst = {
-        mac: dstDevice.interfaces[0].mac,
-        ip: dstDevice.interfaces[0].ip,
-      };
-      sendingIface = 0;
-    } else {
-      ({ src, dst, sendingIface } = forwardingData);
+      return;
     }
+    let { src, dst, nextHop, sendingIface } = forwardingData;
     const echoRequest = new EchoRequest(0);
     // Wrap in IP datagram
     const ipPacket = new IPv4Packet(src.ip, dst.ip, echoRequest);
@@ -88,9 +76,16 @@ export class SingleEcho extends ProgramBase {
       );
       return;
     }
+    // Resolve next hop MAC address
+    const nextHopMac = srcDevice.resolveAddress(nextHop.ip);
+    if (!nextHopMac || !nextHopMac.mac) {
+      console.debug(
+        `Device ${this.srcId} couldn't resolve next hop MAC address for device with IP ${nextHop.ip.toString()}. Program cancelled`,
+      );
+    }
 
     // Wrap in Ethernet frame
-    const ethernetFrame = new EthernetFrame(src.mac, dstMac.mac, ipPacket);
+    const ethernetFrame = new EthernetFrame(src.mac, nextHopMac.mac, ipPacket);
     sendViewPacket(this.viewgraph, this.srcId, ethernetFrame, sendingIface);
   }
 
