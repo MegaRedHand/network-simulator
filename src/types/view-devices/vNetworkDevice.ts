@@ -35,6 +35,10 @@ interface ForwardingData {
     ip: IpAddress;
     mac: MacAddress;
   };
+  nextHop: {
+    ip: IpAddress;
+    mac: MacAddress;
+  };
   sendingIface: number;
 }
 
@@ -84,20 +88,21 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     const dstDevice = viewgraph.getDevice(dstId);
     const dstIface = dstDevice.interfaces[receivingIface];
     // Get dstMac
-    let dstMac: MacAddress = dstIface.mac;
+    let nextHop = dstIface;
     for (const idx of path.slice(1).keys()) {
       const [sendingId, receivingId] = [path[idx], path[idx + 1]];
       const receivingDevice = viewgraph.getDevice(receivingId);
       if (receivingDevice instanceof ViewNetworkDevice) {
         const edge = viewgraph.getEdge(sendingId, receivingId);
         const receivingIface = edge.getDeviceInterface(receivingId);
-        dstMac = receivingDevice.interfaces[receivingIface].mac;
+        nextHop = receivingDevice.interfaces[receivingIface];
         break;
       }
     }
     const forwardingData = {
       src: { mac: srcIface.mac, ip: srcIface.ip },
-      dst: { mac: dstMac, ip: dstIface.ip },
+      dst: { mac: dstIface.mac, ip: dstIface.ip },
+      nextHop: { mac: nextHop.mac, ip: nextHop.ip },
       sendingIface,
     };
     return forwardingData;
@@ -204,7 +209,7 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     const { sha, spa, tha, tpa } = packet;
     const { mac, ip } = this.interfaces[iface];
     if (packet.op === ARP_REQUEST_CODE) {
-      // NOTE: We don’t take into account htype, ptype, hlen and plen,
+      // NOTE: We don't take into account htype, ptype, hlen and plen,
       // as they always will be MAC Address and IP address
       // Check if tpa is device ip
       if (!tpa.equals(ip)) {

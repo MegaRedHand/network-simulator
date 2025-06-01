@@ -57,23 +57,20 @@ function sendIpPacket(
     console.warn(`Device ${dst.id} is not reachable from device ${src.id}`);
     return false;
   }
-  const [srcData, dstData, sendingIface] = [
-    forwardingData.src,
-    forwardingData.dst,
-    forwardingData.sendingIface,
-  ];
+  const [srcData, dstData] = [forwardingData.src, forwardingData.dst];
+  const {nextHop, sendingIface} = forwardingData;
 
   // Resolve destination MAC address
-  const dstMac = src.resolveAddress(dstData.ip);
+  const dstMac = src.resolveAddress(nextHop.ip);
   if (!dstMac) {
     console.warn(
-      `Device ${src.id} couldn't resolve MAC address for device with IP ${dstData.ip.toString()}. Program cancelled`,
+      `Device ${src.id} couldn't resolve MAC address for device with IP ${nextHop.ip.toString()}. Program cancelled`,
     );
     return false;
   }
 
   const ipPacket = new IPv4Packet(srcData.ip, dstData.ip, payload);
-  const frame = new EthernetFrame(srcData.mac, dstData.mac, ipPacket);
+  const frame = new EthernetFrame(srcData.mac, nextHop.mac, ipPacket);
 
   sendViewPacket(src.viewgraph, src.id, frame, sendingIface);
   return true;
