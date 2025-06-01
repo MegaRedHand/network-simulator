@@ -6,6 +6,7 @@ import {
   TextStyle,
   Text,
   Container,
+  Ticker,
 } from "pixi.js";
 import { ViewGraph } from "../graphs/viewgraph";
 import {
@@ -427,9 +428,15 @@ export abstract class ViewDevice extends Container {
     visibleFromLayer?: Layer,
   ) {
     this.showDeviceIcon(iconKey, emoji, tooltipText, visibleFromLayer);
-    setTimeout(() => {
-      this.hideDeviceIcon(iconKey);
-    }, durationMs);
+    let progress = 0;
+    const tick = (ticker: Ticker) => {
+      progress += ticker.elapsedMS * this.ctx.getCurrentSpeed();
+      if (progress >= durationMs) {
+        Ticker.shared.remove(tick, this);
+        this.hideDeviceIcon(iconKey);
+      }
+    };
+    Ticker.shared.add(tick, this);
   }
 
   showDeviceIcon(
