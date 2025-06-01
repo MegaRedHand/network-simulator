@@ -87,8 +87,18 @@ export class HttpClient extends ProgramBase {
       this.resource,
     );
 
+    srcDevice.showDeviceIcon(
+      "tcp-handshake",
+      "🤝",
+      "TCP handshake in progress",
+      Layer.App,
+    );
+
     // Write request
     const socket = await this.runner.tcpConnect(this.dstId);
+
+    srcDevice.hideDeviceIcon("tcp-handshake");
+
     if (!socket) {
       console.warn("HttpClient failed to connect");
       return;
