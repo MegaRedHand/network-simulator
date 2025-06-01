@@ -331,7 +331,7 @@ export class IPv4Packet implements FramePayload {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getPayload(layer: Layer): Record<string, string | number | object> | string {
-    return "Ipv4 Datagram";
+    return "IPv4 Datagram";
   }
 
   getDetails(layer: Layer) {
