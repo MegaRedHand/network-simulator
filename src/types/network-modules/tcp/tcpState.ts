@@ -61,8 +61,8 @@ function sendIpPacket(
   const {nextHop, sendingIface} = forwardingData;
 
   // Resolve destination MAC address
-  const dstMac = src.resolveAddress(nextHop.ip);
-  if (!dstMac) {
+  const nextHopMac = src.resolveAddress(nextHop.ip);
+  if (!nextHopMac) {
     console.warn(
       `Device ${src.id} couldn't resolve MAC address for device with IP ${nextHop.ip.toString()}. Program cancelled`,
     );
@@ -70,7 +70,7 @@ function sendIpPacket(
   }
 
   const ipPacket = new IPv4Packet(srcData.ip, dstData.ip, payload);
-  const frame = new EthernetFrame(srcData.mac, nextHop.mac, ipPacket);
+  const frame = new EthernetFrame(srcData.mac, nextHopMac.mac, ipPacket);
 
   sendViewPacket(src.viewgraph, src.id, frame, sendingIface);
   return true;

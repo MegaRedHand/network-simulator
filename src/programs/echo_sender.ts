@@ -59,6 +59,7 @@ export class SingleEcho extends ProgramBase {
     );
     let src: { ip: IpAddress; mac: MacAddress },
       dst: { ip: IpAddress; mac: MacAddress },
+      nextHop: { ip: IpAddress; mac: MacAddress },
       sendingIface: number;
     if (!forwardingData) {
       console.warn(
@@ -74,23 +75,23 @@ export class SingleEcho extends ProgramBase {
       };
       sendingIface = 0;
     } else {
-      ({ src, dst, sendingIface } = forwardingData);
+      ({ src, dst, nextHop, sendingIface } = forwardingData);
     }
     const echoRequest = new EchoRequest(0);
     // Wrap in IP datagram
     const ipPacket = new IPv4Packet(src.ip, dst.ip, echoRequest);
 
     // Resolve destination MAC address
-    const dstMac = srcDevice.resolveAddress(dst.ip);
-    if (!dstMac) {
+    const nextHopMac = srcDevice.resolveAddress(nextHop.ip);
+    if (!nextHopMac) {
       console.debug(
-        `Device ${this.srcId} couldn't resolve MAC address for device with IP ${dst.ip.toString()}. Program cancelled`,
+        `Device ${this.srcId} couldn't resolve MAC address for device with IP ${nextHop.ip.toString()}. Program cancelled`,
       );
       return;
     }
 
     // Wrap in Ethernet frame
-    const ethernetFrame = new EthernetFrame(src.mac, dst.mac, ipPacket);
+    const ethernetFrame = new EthernetFrame(src.mac, nextHopMac.mac, ipPacket);
     sendViewPacket(this.viewgraph, this.srcId, ethernetFrame, sendingIface);
   }
 
