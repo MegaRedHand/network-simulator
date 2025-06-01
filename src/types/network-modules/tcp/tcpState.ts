@@ -9,6 +9,7 @@ import { AsyncQueue } from "../asyncQueue";
 import { SegmentWithIp } from "../tcpModule";
 import { GlobalContext } from "../../../context";
 import { CONFIG_SWITCH_KEYS } from "../../../config_menu/switches/switch_factory";
+import { Layer } from "../../layer";
 
 enum TcpStateEnum {
   CLOSED = 0,
@@ -714,6 +715,13 @@ export class TcpState {
         console.debug("[" + this.srcHost.id + "] [TCP] Processing timeout");
         retransmitPromise = this.retransmissionQueue.pop();
         // Retransmit the segment
+        this.srcHost.showDeviceIconFor(
+          "tcp_timeout",
+          "⏰",
+          "TCP Timeout",
+          2000,
+          Layer.Transport,
+        );
         this.resendPacket(result.seqNum, result.size);
         this.congestionControl.notifyTimeout();
         continue;

@@ -424,14 +424,26 @@ export abstract class ViewDevice extends Container {
     emoji: string,
     tooltipText: string | undefined,
     durationMs = 2000,
+    visibleFromLayer?: Layer,
   ) {
-    this.showDeviceIcon(iconKey, emoji, tooltipText);
+    this.showDeviceIcon(iconKey, emoji, tooltipText, visibleFromLayer);
     setTimeout(() => {
       this.hideDeviceIcon(iconKey);
     }, durationMs);
   }
 
-  showDeviceIcon(iconKey: string, emoji: string, tooltipText?: string) {
+  showDeviceIcon(
+    iconKey: string,
+    emoji: string,
+    tooltipText?: string,
+    visibleFromLayer?: Layer,
+  ) {
+    if (
+      visibleFromLayer !== undefined &&
+      this.viewgraph.getLayer() > visibleFromLayer
+    ) {
+      return;
+    }
     if (!this.isVisible()) return;
     if (this.deviceIcons[iconKey]) return;
     const icon = createDeviceIcon(emoji, 0);
