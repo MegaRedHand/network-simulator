@@ -180,6 +180,7 @@ export class ViewRouter extends ViewNetworkDevice {
     if (datagram.timeToLive <= 0) {
       console.debug(`Device ${this.id} dropped packet with TTL 0`);
       this.dropPacket(datagram);
+      return;
     }
     if (!this.packetQueue.enqueue(datagram, iface)) {
       console.debug("Packet queue full, dropping packet");
