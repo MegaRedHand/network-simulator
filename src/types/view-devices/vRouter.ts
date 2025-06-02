@@ -183,6 +183,7 @@ export class ViewRouter extends ViewNetworkDevice {
     }
     if (!this.packetQueue.enqueue(datagram)) {
       console.debug("Packet queue full, dropping packet");
+      this.showDeviceIconFor("queueFull", "❗", "Queue full");
       this.dropPacket(datagram);
       return;
     }
@@ -255,7 +256,7 @@ export class ViewRouter extends ViewNetworkDevice {
       return;
     }
 
-    const result = device.routingTable.all().find((entry) => {
+    const result = device.routingTable.allActive().find((entry) => {
       const ip = IpAddress.parse(entry.ip);
       const mask = IpAddress.parse(entry.mask);
       return datagram.destinationAddress.isInSubnet(ip, mask);

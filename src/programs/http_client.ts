@@ -87,8 +87,18 @@ export class HttpClient extends ProgramBase {
       this.resource,
     );
 
+    srcDevice.showDeviceIcon(
+      "tcp-handshake",
+      "🤝",
+      "TCP handshake in progress",
+      Layer.App,
+    );
+
     // Write request
     const socket = await this.runner.tcpConnect(this.dstId);
+
+    srcDevice.hideDeviceIcon("tcp-handshake");
+
     if (!socket) {
       console.error("HttpClient failed to connect");
       showError(
@@ -185,7 +195,7 @@ export class HttpServer extends ProgramBase {
       );
       return;
     }
-
+    srcDevice.showHttpServerIcon();
     const listener = await this.runner.tcpListenOn(this.port);
     if (!listener) {
       showError(`Port ${this.port} already in use`);
@@ -203,6 +213,7 @@ export class HttpServer extends ProgramBase {
       this.serveClient(socket);
     }
     listener.close();
+    srcDevice.hideHttpServerIcon();
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

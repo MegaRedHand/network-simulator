@@ -1,4 +1,11 @@
-import { Application, GraphicsContext, RenderTexture } from "pixi.js";
+import {
+  Application,
+  GraphicsContext,
+  RenderTexture,
+  Container,
+  TextStyle,
+  Text,
+} from "pixi.js";
 import { Viewport } from "../graphics/viewport";
 import { ALERT_MESSAGES } from "./constants/alert_constants";
 import { showError } from "../graphics/renderables/alert_manager";
@@ -81,4 +88,51 @@ export function captureAndDownloadViewport(
     link.download = "viewport-snapshot.png";
     link.click();
   }, "image/png");
+}
+
+export function blockPointerEvents(obj: Container) {
+  obj.on("pointerdown", (e) => e.stopPropagation());
+  obj.on("pointerup", (e) => e.stopPropagation());
+  obj.on("pointerupoutside", (e) => e.stopPropagation());
+  obj.on("pointertap", (e) => e.stopPropagation());
+  obj.on("pointermove", (e) => e.stopPropagation());
+  obj.on("click", (e) => e.stopPropagation());
+}
+
+/**
+ * Creates a PixiJS emoji icon centered above the device.
+ * @param emoji The emoji or text to display (e.g., "🌐")
+ * @param yOffset Vertical offset from the center of the device (e.g., -this.height / 2 - 5)
+ * @param fontSize Font size (optional, default 20)
+ * @returns A Pixi.Text instance ready to be added as a child
+ */
+export function createDeviceIcon(
+  emoji: string,
+  yOffset: number,
+  fontSize = 20,
+): Text {
+  const textStyle = new TextStyle({
+    fontSize,
+  });
+
+  const icon = new Text({ text: emoji, style: textStyle });
+  icon.anchor.set(0.5, 1);
+  icon.x = 1;
+  icon.y = yOffset;
+  icon.zIndex = 100;
+  icon.eventMode = "static";
+  icon.interactive = true;
+  icon.cursor = "pointer";
+
+  blockPointerEvents(icon);
+  return icon;
+}
+
+/**
+ * Changes the emoji/text of a PixiJS Text icon.
+ * @param icon The Pixi.Text instance.
+ * @param emoji The emoji or text to display.
+ */
+export function setIconEmoji(icon: Text, emoji: string) {
+  icon.text = emoji;
 }

@@ -78,6 +78,7 @@ export class ViewSwitch extends ViewDevice {
       }
       if (device instanceof DataSwitch) {
         device.updateForwardingTable(mac, iface);
+        this.showDeviceIconFor("update-ftable", "🔄", "Table Updated");
       }
     });
   }
@@ -107,6 +108,8 @@ export class ViewSwitch extends ViewDevice {
     this.updateForwardingTable(frame.source, iface);
     if (frame.payload instanceof ArpRequest) {
       const { sha, spa, tha, tpa } = frame.payload;
+
+      this.showDeviceIconFor("broadcast", "📢", "Broadcast");
       this.interfaces.forEach((sendingIface, idx) => {
         const packet = new ArpRequest(sha, spa, tpa, tha);
         const frame = new EthernetFrame(
@@ -137,6 +140,10 @@ export class ViewSwitch extends ViewDevice {
             { length: getNumberOfInterfaces(this.getType()) },
             (_, i) => i,
           );
+
+    if (sendingIfaces.length > 1) {
+      this.showDeviceIconFor("broadcast", "📢", "Broadcast");
+    }
     sendingIfaces.forEach((sendingIface) =>
       this.forwardFrame(frame, sendingIface, iface),
     );

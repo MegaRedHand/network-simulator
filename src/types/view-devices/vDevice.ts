@@ -6,6 +6,7 @@ import {
   TextStyle,
   Text,
   Container,
+  Ticker,
 } from "pixi.js";
 import { ViewGraph } from "../graphs/viewgraph";
 import {
@@ -15,7 +16,7 @@ import {
   urManager,
 } from "../viewportManager";
 import { RightBar } from "../../graphics/right_bar";
-import { Colors, ZIndexLevels } from "../../utils/utils";
+import { Colors, createDeviceIcon, ZIndexLevels } from "../../utils/utils";
 import { Position } from "../common";
 import { DeviceInfo } from "../../graphics/renderables/device_info";
 import {
@@ -68,6 +69,8 @@ export abstract class ViewDevice extends Container {
   private circleGraphic?: Graphics;
   private idLabel?: Text;
   private isVisibleFlag = true; // Flag to track visibility
+  private deviceIcons: Record<string, Text | undefined> = {};
+  private deviceTooltips: Record<string, Text | undefined> = {};
 
   readonly id: DeviceId;
   readonly viewgraph: ViewGraph;
@@ -190,6 +193,9 @@ export abstract class ViewDevice extends Container {
 
   updateDevicesAspect() {
     if (!this.isVisibleFlag) {
+      for (const iconKey in this.deviceIcons) {
+        this.hideDeviceIcon(iconKey);
+      }
       const edges = this.viewgraph
         .getConnections(this.id)
         .filter((e) => e.isVisible());
@@ -398,6 +404,90 @@ export abstract class ViewDevice extends Container {
 
   showInfo(): void {
     RightBar.getInstance().renderInfo(new DeviceInfo(this));
+  }
+
+  private repositionDeviceIcons() {
+    const icons = Object.values(this.deviceIcons).filter(Boolean) as Text[];
+    if (icons.length === 0) return;
+
+    const spacing = 28;
+    const baseY = -this.height / 2 - 5;
+
+    const totalWidth = (icons.length - 1) * spacing;
+    icons.forEach((icon, idx) => {
+      icon.x = -totalWidth / 2 + idx * spacing;
+      icon.y = baseY;
+    });
+  }
+
+  showDeviceIconFor(
+    iconKey: string,
+    emoji: string,
+    tooltipText: string | undefined,
+    durationMs = 2000,
+    visibleFromLayer?: Layer,
+  ) {
+    this.showDeviceIcon(iconKey, emoji, tooltipText, visibleFromLayer);
+    let progress = 0;
+    const tick = (ticker: Ticker) => {
+      progress += ticker.elapsedMS * this.ctx.getCurrentSpeed();
+      if (progress >= durationMs) {
+        Ticker.shared.remove(tick, this);
+        this.hideDeviceIcon(iconKey);
+      }
+    };
+    Ticker.shared.add(tick, this);
+  }
+
+  showDeviceIcon(
+    iconKey: string,
+    emoji: string,
+    tooltipText?: string,
+    visibleFromLayer?: Layer,
+  ) {
+    if (
+      visibleFromLayer !== undefined &&
+      this.viewgraph.getLayer() > visibleFromLayer
+    ) {
+      return;
+    }
+    if (!this.isVisible()) return;
+    if (this.deviceIcons[iconKey]) return;
+    const icon = createDeviceIcon(emoji, 0);
+    this.deviceIcons[iconKey] = icon;
+
+    if (tooltipText) {
+      icon.on("pointerover", () => {
+        this.deviceTooltips[iconKey] = showTooltip(
+          this,
+          tooltipText,
+          0,
+          icon.y - 30,
+          this.deviceTooltips[iconKey],
+        );
+      });
+      icon.on("pointerout", () => {
+        hideTooltip(this.deviceTooltips[iconKey]);
+      });
+    }
+
+    this.addChild(icon);
+    this.repositionDeviceIcons();
+  }
+
+  hideDeviceIcon(iconKey: string) {
+    const icon = this.deviceIcons[iconKey];
+    if (icon) {
+      this.removeChild(icon);
+      icon.destroy();
+      this.deviceIcons[iconKey] = undefined;
+      this.repositionDeviceIcons();
+    }
+    const tooltip = this.deviceTooltips[iconKey];
+    if (tooltip) {
+      removeTooltip(this, tooltip);
+      this.deviceTooltips[iconKey] = undefined;
+    }
   }
 
   select() {
