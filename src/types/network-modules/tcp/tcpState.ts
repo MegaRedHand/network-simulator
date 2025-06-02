@@ -69,7 +69,7 @@ function sendIpPacket(
   const nextHopMac = src.resolveAddress(nextHopData.ip);
   if (!nextHopMac || !nextHopMac.mac) {
     console.debug(
-      `Device ${this.srcId} couldn't resolve next hop MAC address for device with IP ${nextHopData.ip.toString()}. Program cancelled`,
+      `Device ${src.id} couldn't resolve next hop MAC address for device with IP ${nextHopData.ip.toString()}. Program cancelled`,
     );
   }
 
