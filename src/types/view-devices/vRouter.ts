@@ -171,17 +171,17 @@ export class ViewRouter extends ViewNetworkDevice {
       this.handleDatagram(datagram, iface);
       return;
     }
-    this.addPacketToQueue(datagram);
+    this.addPacketToQueue(datagram, iface);
   }
 
-  addPacketToQueue(datagram: IPv4Packet) {
+  addPacketToQueue(datagram: IPv4Packet, iface: number) {
     const wasEmpty = this.packetQueue.isEmpty();
     datagram.timeToLive -= 1;
     if (datagram.timeToLive <= 0) {
       console.debug(`Device ${this.id} dropped packet with TTL 0`);
       this.dropPacket(datagram);
     }
-    if (!this.packetQueue.enqueue(datagram)) {
+    if (!this.packetQueue.enqueue(datagram, iface)) {
       console.debug("Packet queue full, dropping packet");
       this.showDeviceIconFor("queueFull", "❗", "Queue full");
       this.dropPacket(datagram);
@@ -201,12 +201,20 @@ export class ViewRouter extends ViewNetworkDevice {
 
   processPacket(ticker: Ticker) {
     const elapsedTime = ticker.deltaMS * this.viewgraph.getSpeed();
-    const datagram = this.getPacketsToProcess(elapsedTime);
-    if (!datagram) {
+    const packetWithIface = this.getPacketsToProcess(elapsedTime);
+    if (!packetWithIface) {
       return;
     }
+    const datagram = packetWithIface.packet;
 
     const iface = this.routePacket(datagram);
+
+    if (iface === packetWithIface.iface) {
+      console.debug(
+        "Packet dropped, since it was going to be sent back to the same interface.",
+      );
+      return;
+    }
 
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
     // TODO: use arp table here?
@@ -220,7 +228,9 @@ export class ViewRouter extends ViewNetworkDevice {
 
       const newFrame = new EthernetFrame(src.mac, nextHop.mac, datagram);
       sendViewPacket(this.viewgraph, this.id, newFrame, iface);
-    } else console.debug(`Router ${this.id} could not forward packet.`);
+    } else {
+      console.debug(`Router ${this.id} could not forward packet.`);
+    }
 
     if (this.packetQueue.isEmpty()) {
       this.stopPacketProcessor();
@@ -237,9 +247,9 @@ export class ViewRouter extends ViewNetworkDevice {
     Ticker.shared.remove(this.processPacket, this);
   }
 
-  getPacketsToProcess(timeMs: number): IPv4Packet | null {
+  getPacketsToProcess(timeMs: number): PacketWithIface | null {
     this.processingProgress += (this.bytesPerSecond * timeMs) / 1000;
-    const packetLength = this.packetQueue.getHead()?.totalLength;
+    const packetLength = this.packetQueue.getHead().packet?.totalLength;
     if (this.processingProgress < packetLength) {
       return null;
     }
@@ -271,8 +281,14 @@ export class ViewRouter extends ViewNetworkDevice {
   }
 }
 
+interface PacketWithIface {
+  packet: IPv4Packet;
+  iface: number;
+}
+
 class PacketQueue {
-  private queue: IPv4Packet[] = [];
+  // Queue of packets with the interface they were received on
+  private queue: PacketWithIface[] = [];
   private queueSizeBytes = 0;
   private maxQueueSizeBytes: number;
 
@@ -308,27 +324,27 @@ class PacketQueue {
     }
   }
 
-  enqueue(packet: IPv4Packet) {
+  enqueue(packet: IPv4Packet, iface: number) {
     if (this.queueSizeBytes + packet.totalLength > this.maxQueueSizeBytes) {
       return false;
     }
-    this.queue.push(packet);
+    this.queue.push({ packet, iface });
     this.queueSizeBytes += packet.totalLength;
     this.notifyObservers();
     return true;
   }
 
-  dequeue(): IPv4Packet | undefined {
+  dequeue(): PacketWithIface | undefined {
     if (this.queue.length === 0) {
       return;
     }
-    const packet = this.queue.shift();
+    const { packet, iface } = this.queue.shift();
     this.queueSizeBytes -= packet.totalLength;
     this.notifyObservers();
-    return packet;
+    return { packet, iface };
   }
 
-  getHead(): IPv4Packet | undefined {
+  getHead(): PacketWithIface | undefined {
     return this.queue[0];
   }
 
