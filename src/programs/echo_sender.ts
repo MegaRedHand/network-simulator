@@ -5,9 +5,9 @@ import { ProgramBase } from "./program_base";
 import { ViewGraph } from "../types/graphs/viewgraph";
 import { ProgramInfo } from "../graphics/renderables/device_info";
 import { EchoRequest } from "../packets/icmp";
-import { IpAddress, IPv4Packet } from "../packets/ip";
+import { IPv4Packet } from "../packets/ip";
 import { ViewNetworkDevice } from "../types/view-devices/vNetworkDevice";
-import { EthernetFrame, MacAddress } from "../packets/ethernet";
+import { EthernetFrame } from "../packets/ethernet";
 import { TOOLTIP_KEYS } from "../utils/constants/tooltips_constants";
 import { Layer } from "../types/layer";
 
@@ -57,40 +57,27 @@ export class SingleEcho extends ProgramBase {
       this.dstId,
       this.viewgraph,
     );
-    let src: { ip: IpAddress; mac: MacAddress },
-      dst: { ip: IpAddress; mac: MacAddress },
-      sendingIface: number;
     if (!forwardingData) {
       console.warn(
         `Device ${this.srcId} could not send ping to device ${this.dstId}`,
       );
-      src = {
-        mac: srcDevice.interfaces[0].mac,
-        ip: srcDevice.interfaces[0].ip,
-      };
-      dst = {
-        mac: dstDevice.interfaces[0].mac,
-        ip: dstDevice.interfaces[0].ip,
-      };
-      sendingIface = 0;
-    } else {
-      ({ src, dst, sendingIface } = forwardingData);
+      return;
     }
+    const { src, dst, nextHop, sendingIface } = forwardingData;
     const echoRequest = new EchoRequest(0);
     // Wrap in IP datagram
     const ipPacket = new IPv4Packet(src.ip, dst.ip, echoRequest);
 
-    // Resolve destination MAC address
-    const dstMac = srcDevice.resolveAddress(dst.ip);
-    if (!dstMac) {
+    // Resolve next hop MAC address
+    const nextHopMac = srcDevice.resolveAddress(nextHop.ip);
+    if (!nextHopMac || !nextHopMac.mac) {
       console.debug(
-        `Device ${this.srcId} couldn't resolve MAC address for device with IP ${dst.ip.toString()}. Program cancelled`,
+        `Device ${this.srcId} couldn't resolve next hop MAC address for device with IP ${nextHop.ip.toString()}. Program cancelled`,
       );
-      return;
     }
 
     // Wrap in Ethernet frame
-    const ethernetFrame = new EthernetFrame(src.mac, dst.mac, ipPacket);
+    const ethernetFrame = new EthernetFrame(src.mac, nextHopMac.mac, ipPacket);
     sendViewPacket(this.viewgraph, this.srcId, ethernetFrame, sendingIface);
   }
 

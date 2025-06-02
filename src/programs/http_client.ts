@@ -100,7 +100,10 @@ export class HttpClient extends ProgramBase {
     srcDevice.hideDeviceIcon("tcp-handshake");
 
     if (!socket) {
-      console.warn("HttpClient failed to connect");
+      console.error("HttpClient failed to connect");
+      showError(
+        "Failed to connect to HTTP server. Make sure the forwarding table is set up correctly.",
+      );
       return;
     }
     if (this.stopped) {

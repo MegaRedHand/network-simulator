@@ -1,10 +1,5 @@
 import { Texture } from "pixi.js";
-import {
-  ICMP_PROTOCOL_NUMBER,
-  IpAddress,
-  IPv4Packet,
-  TCP_PROTOCOL_NUMBER,
-} from "../../packets/ip";
+import { ICMP_PROTOCOL_NUMBER, IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { ViewDevice } from "./vDevice";
 import { ViewGraph } from "../graphs/viewgraph";
@@ -28,6 +23,10 @@ import { Layer } from "../layer";
 
 interface ForwardingData {
   src: {
+    ip: IpAddress;
+    mac: MacAddress;
+  };
+  nextHop: {
     ip: IpAddress;
     mac: MacAddress;
   };
@@ -83,21 +82,27 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     const receivingIface = lastEdge.getDeviceInterface(dstId);
     const dstDevice = viewgraph.getDevice(dstId);
     const dstIface = dstDevice.interfaces[receivingIface];
-    // Get dstMac
-    let dstMac: MacAddress = dstIface.mac;
+    // Get nextHop
+    let nextHop: { mac: MacAddress; ip: IpAddress } = {
+      mac: dstIface.mac,
+      ip: dstIface.ip,
+    };
     for (const idx of path.slice(1).keys()) {
       const [sendingId, receivingId] = [path[idx], path[idx + 1]];
       const receivingDevice = viewgraph.getDevice(receivingId);
       if (receivingDevice instanceof ViewNetworkDevice) {
         const edge = viewgraph.getEdge(sendingId, receivingId);
         const receivingIface = edge.getDeviceInterface(receivingId);
-        dstMac = receivingDevice.interfaces[receivingIface].mac;
+        // ip should be defined
+        const { mac, ip } = receivingDevice.interfaces[receivingIface];
+        nextHop = { mac, ip };
         break;
       }
     }
     const forwardingData = {
       src: { mac: srcIface.mac, ip: srcIface.ip },
-      dst: { mac: dstMac, ip: dstIface.ip },
+      nextHop: nextHop,
+      dst: { mac: dstIface.mac, ip: dstIface.ip },
       sendingIface,
     };
     return forwardingData;
@@ -169,7 +174,7 @@ export abstract class ViewNetworkDevice extends ViewDevice {
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.sourceAddress);
     if (!(dstDevice instanceof ViewNetworkDevice)) {
       console.warn(
-        `Device with IP ${datagram.sourceAddress.toString} was not found or was not a Network Device`,
+        `Network Device with IP ${datagram.sourceAddress.toString()} was not found.`,
       );
       return;
     }
@@ -177,24 +182,18 @@ export abstract class ViewNetworkDevice extends ViewDevice {
       case ICMP_PROTOCOL_NUMBER: {
         const request: EchoRequest = datagram.payload as EchoRequest;
         if (dstDevice && request.type === ICMP_REQUEST_TYPE_NUMBER) {
-          const { src, dst } = ViewNetworkDevice.getForwardingData(
+          const { src, nextHop, dst } = ViewNetworkDevice.getForwardingData(
             this.id,
             dstDevice.id,
             this.viewgraph,
           );
-          const [srcMac, srcIp] = [src.mac, src.ip];
-          const [dstMac, dstIp] = [dst.mac, dst.ip];
           const echoReply = new EchoReply(0);
-          const ipPacket = new IPv4Packet(srcIp, dstIp, echoReply);
-          const frame = new EthernetFrame(srcMac, dstMac, ipPacket);
+          const ipPacket = new IPv4Packet(src.ip, dst.ip, echoReply);
+          const frame = new EthernetFrame(src.mac, nextHop.mac, ipPacket);
           console.debug(`Sending EchoReply to ${dstDevice}`);
           sendViewPacket(this.viewgraph, this.id, frame, iface);
         }
         break;
-      }
-      case TCP_PROTOCOL_NUMBER: {
-        // For the moment
-        return;
       }
       default:
     }
