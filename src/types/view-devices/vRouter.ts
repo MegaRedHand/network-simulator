@@ -7,7 +7,7 @@ import { Position } from "../common";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { Texture, Ticker } from "pixi.js";
-import { EthernetFrame } from "../../packets/ethernet";
+import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataRouter } from "../data-devices";
 import { dropPacket, sendViewPacket } from "../packet";
@@ -223,10 +223,24 @@ export class ViewRouter extends ViewNetworkDevice {
       dstDevice?.id,
       this.viewgraph,
     );
-    if (forwardingData && forwardingData.sendingIface === iface) {
+    if (forwardingData) {
       const { src, nextHop } = forwardingData;
-
-      const newFrame = new EthernetFrame(src.mac, nextHop.mac, datagram);
+      let nextHopMac: MacAddress;
+      if (forwardingData.sendingIface === iface) {
+        nextHopMac = nextHop.mac;
+      } else {
+        // Try to deduce next hop from the routing table
+        // If the interface connects to a router, just send it
+        const connections = this.viewgraph
+          .getDataGraph()
+          .getConnectionsInInterface(this.id, iface);
+        const nextHopId = connections[0];
+        const edge = this.viewgraph.getEdge(this.id, nextHopId);
+        const nextHopIface = edge.getDeviceInterface(nextHopId);
+        const nextHop = this.viewgraph.getDevice(nextHopId);
+        nextHopMac = nextHop.interfaces[nextHopIface].mac;
+      }
+      const newFrame = new EthernetFrame(src.mac, nextHopMac, datagram);
       sendViewPacket(this.viewgraph, this.id, newFrame, iface);
     } else {
       console.debug(`Router ${this.id} could not forward packet.`);
@@ -249,7 +263,7 @@ export class ViewRouter extends ViewNetworkDevice {
 
   getPacketsToProcess(timeMs: number): PacketWithIface | null {
     this.processingProgress += (this.bytesPerSecond * timeMs) / 1000;
-    const packetLength = this.packetQueue.getHead().packet?.totalLength;
+    const packetLength = this.packetQueue.getHead()?.packet?.totalLength;
     if (this.processingProgress < packetLength) {
       return null;
     }
