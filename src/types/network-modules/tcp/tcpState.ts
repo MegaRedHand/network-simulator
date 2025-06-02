@@ -178,16 +178,9 @@ export class TcpState {
     this.sendUnacknowledged = this.initialSendSeqNum;
 
     // Send a SYN
-    const flags = new Flags().withSyn();
-    const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
-    if (!sendIpPacket(this.srcHost, this.dstHost, segment)) {
-      console.warn(
-        `Device ${this.srcHost.id} couldn't send SYN to device ${this.dstHost.id}.`,
-      );
+    if (!this.sendSynSegment()) {
       return false;
     }
-
-    this.rttEstimator.startMeasurement(this.initialSendSeqNum);
 
     // Move to SYN_SENT state
     this.state = TcpStateEnum.SYN_SENT;
@@ -678,6 +671,13 @@ export class TcpState {
         segment.withFlags(new Flags().withRst());
         sendIpPacket(this.srcHost, this.dstHost, segment);
         break;
+      } else if (result === "SYN") {
+        // Retransmit SYN packet
+        console.debug("[" + this.srcHost.id + "] [TCP] Processing SYN timeout");
+        retransmitPromise = this.retransmissionQueue.pop();
+        this.sendSynSegment();
+        this.showTimeoutIcon();
+        continue;
       } else if ("segment" in result) {
         console.debug("[" + this.srcHost.id + "] [TCP] Processing segments");
         receivedSegmentPromise = this.tcpQueue.pop();
@@ -715,14 +715,8 @@ export class TcpState {
         console.debug("[" + this.srcHost.id + "] [TCP] Processing timeout");
         retransmitPromise = this.retransmissionQueue.pop();
         // Retransmit the segment
-        this.srcHost.showDeviceIconFor(
-          "tcp_timeout",
-          "⏰",
-          "TCP Timeout",
-          2000,
-          Layer.Transport,
-        );
         this.resendPacket(result.seqNum, result.size);
+        this.showTimeoutIcon();
         this.congestionControl.notifyTimeout();
         continue;
       }
@@ -782,7 +776,28 @@ export class TcpState {
     this.tcpQueue.close();
   }
 
+  private sendSynSegment() {
+    const flags = new Flags().withSyn();
+    const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
+    if (!sendIpPacket(this.srcHost, this.dstHost, segment)) {
+      console.warn(
+        `Device ${this.srcHost.id} couldn't send SYN to device ${this.dstHost.id}.`,
+      );
+      return false;
+    }
+
+    // Add the SYN segment to the retransmission queue
+    this.retransmissionQueue.pushSyn();
+
+    // Reset measurement
+    this.rttEstimator.restartMeasurement(this.initialSendSeqNum);
+    return true;
+  }
+
   private resendPacket(seqNum: number, size: number) {
+    if (seqNum === this.initialSendSeqNum && size === 0) {
+      // This is the initial SYN segment
+    }
     const segment = this.newSegment(seqNum, this.recvNext).withFlags(
       new Flags().withAck(),
     );
@@ -813,6 +828,10 @@ export class TcpState {
     if (!item) {
       return;
     }
+    if (item === "SYN") {
+      console.error("SYN segment retransmitted with an established connection");
+      return;
+    }
     // Resend packet
     this.resendPacket(item.seqNum, item.size);
   }
@@ -825,9 +844,20 @@ export class TcpState {
     const bytesInFlight = this.sendNext - this.sendUnacknowledged;
     return (windowSize - bytesInFlight) % u32_MODULUS;
   }
+
+  private showTimeoutIcon() {
+    this.srcHost.showDeviceIconFor(
+      "tcp_timeout",
+      "⏰",
+      "TCP Timeout",
+      2000,
+      Layer.Transport,
+    );
+  }
 }
 
-interface RetransmissionQueueItem {
+type RetransmissionQueueItem = DataSegment | "SYN";
+interface DataSegment {
   seqNum: number;
   size: number;
 }
@@ -845,14 +875,26 @@ class RetransmissionQueue {
     this.rttEstimator = rttEstimator;
   }
 
+  pushSyn() {
+    this.itemQueue.unshift("SYN");
+    this.startTimer();
+  }
+
   push(seqNum: number, size: number) {
     const item = { seqNum, size };
     this.itemQueue.push(item);
-    this.itemQueue.sort((a, b) => a.seqNum - b.seqNum);
+    this.itemQueue.sort((a, b) => {
+      // SYN segments should always be at the front
+      if (a === "SYN") {
+        return -1;
+      }
+      if (b === "SYN") {
+        return 1;
+      }
+      return a.seqNum - b.seqNum;
+    });
 
-    if (!this.timeoutTick) {
-      this.startTimer();
-    }
+    this.startTimer();
   }
 
   /**
@@ -870,6 +912,10 @@ class RetransmissionQueue {
 
   ack(ackNum: number) {
     this.itemQueue = this.itemQueue.filter((item) => {
+      // We treat any valid ACK as a SYN ACK
+      if (item === "SYN") {
+        return false;
+      }
       return !(
         item.seqNum < ackNum ||
         (item.seqNum + item.size) % u32_MODULUS <= ackNum
@@ -884,9 +930,10 @@ class RetransmissionQueue {
     if (this.itemQueue.length === 0) {
       return;
     }
-    const firstSegmentItem = this.itemQueue[0];
-    // Remove the segment from the queue
-    this.ack(firstSegmentItem.seqNum + 1);
+    const firstSegmentItem = this.itemQueue.shift();
+    if (this.itemQueue.length === 0) {
+      this.stopTimer();
+    }
     return firstSegmentItem;
   }
 
@@ -1160,6 +1207,12 @@ class RTTEstimator {
     // Stop measuring the RTT for the segment
     this.measuring = false;
     Ticker.shared.remove(this.measureTick, this);
+  }
+
+  restartMeasurement(seqNum: number) {
+    // Restart the measurement for the segment
+    this.discardMeasurement(seqNum);
+    this.startMeasurement(seqNum);
   }
 
   private measureTick(ticker: Ticker) {
