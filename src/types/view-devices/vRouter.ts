@@ -176,19 +176,27 @@ export class ViewRouter extends ViewNetworkDevice {
 
   addPacketToQueue(datagram: IPv4Packet) {
     const wasEmpty = this.packetQueue.isEmpty();
+    datagram.timeToLive -= 1;
+    if (datagram.timeToLive <= 0) {
+      console.debug(`Device ${this.id} dropped packet with TTL 0`);
+      this.dropPacket(datagram);
+    }
     if (!this.packetQueue.enqueue(datagram)) {
       console.debug("Packet queue full, dropping packet");
-      // Mostrar icono de "cola llena"
       this.showDeviceIconFor("queueFull", "❗", "Queue full");
-      // dummy values
-      const dummyMac = this.interfaces[0].mac;
-      const frame = new EthernetFrame(dummyMac, dummyMac, datagram);
-      dropPacket(this.viewgraph, this.id, frame);
+      this.dropPacket(datagram);
       return;
     }
     if (wasEmpty) {
       this.startPacketProcessor();
     }
+  }
+
+  dropPacket(datagram: IPv4Packet) {
+    // dummy values
+    const dummyMac = this.interfaces[0].mac;
+    const frame = new EthernetFrame(dummyMac, dummyMac, datagram);
+    dropPacket(this.viewgraph, this.id, frame);
   }
 
   processPacket(ticker: Ticker) {
@@ -241,7 +249,7 @@ export class ViewRouter extends ViewNetworkDevice {
 
   routePacket(datagram: IPv4Packet): number {
     console.debug(
-      `Device ${this.id} va a rutear el datagram con origen ${datagram.sourceAddress.toString()} y destino ${datagram.destinationAddress.toString()}`,
+      `Device ${this.id} will route datagram of origin ${datagram.sourceAddress.toString()} and destination ${datagram.destinationAddress.toString()}`,
     );
     const device = this.viewgraph.getDataGraph().getDevice(this.id);
     if (!device || !(device instanceof DataRouter)) {
