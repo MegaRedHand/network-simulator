@@ -168,7 +168,6 @@ export abstract class ViewNetworkDevice extends ViewDevice {
       : undefined;
   }
 
-  // TODO: Most probably it will be different for each type of device
   handleDatagram(datagram: IPv4Packet, iface: number) {
     console.debug("Packet has reach its destination!");
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.sourceAddress);
