@@ -301,12 +301,11 @@ export class TcpState {
         this.initialRecvSeqNum = segment.sequenceNumber;
         if (flags.ack) {
           this.sendUnacknowledged = segment.acknowledgementNumber;
-        }
-        if (flags.ack) {
           // It's a valid SYN-ACK
           // Process the segment normally
           this.state = TcpStateEnum.ESTABLISHED;
           this.connectionQueue.push(true);
+          this.retransmissionQueue.ack(segment.acknowledgementNumber);
           if (this.handleSegmentData(segment) !== ProcessingResult.SUCCESS) {
             console.debug("Segment data processing failed");
             return ProcessingResult.DISCARD;
