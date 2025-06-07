@@ -31,9 +31,15 @@ export class ViewGraph {
     this.ctx = ctx;
     this.datagraph = datagraph;
     this.viewport = ctx.getViewport();
-    this.layer = layer;
+
+    // NOTE: here we initialize on Link layer to avoid weird issues related
+    // to devices hiding themselves due to being on an unfinished viewgraph
+    this.layer = Layer.Link;
     this.packetManager = new PacketManager();
     this.constructView();
+
+    // Change to the specified layer
+    this.changeLayerAndHideDevices(layer);
   }
 
   private constructView() {
@@ -195,7 +201,11 @@ export class ViewGraph {
     return this.layer;
   }
 
-  changeCurrLayer(newLayer: Layer) {
+  /**
+   * Changes the layer of the viewgraph and updates the visibility of devices and edges.
+   * This skips notifying other components about the change.
+   */
+  private changeLayerAndHideDevices(newLayer: Layer) {
     this.layer = newLayer;
 
     for (const [, device] of this.graph.getAllVertices()) {
@@ -227,6 +237,10 @@ export class ViewGraph {
     for (const [, device] of this.graph.getAllVertices()) {
       device.updateDevicesAspect();
     }
+  }
+
+  changeCurrLayer(newLayer: Layer) {
+    this.changeLayerAndHideDevices(newLayer);
 
     // warn Packet Manager that the layer has been changed
     this.packetManager.layerChanged(newLayer);
