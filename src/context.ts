@@ -242,6 +242,7 @@ export class GlobalContext {
     input.accept = ".json";
 
     input.onchange = (event) => {
+      // NOTE: browser takes care of making sure we get a single file here
       const file = (event.target as HTMLInputElement).files[0];
       const reader = new FileReader();
       reader.readAsText(file);
