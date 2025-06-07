@@ -282,7 +282,7 @@ If a device stops being visible while changing layers, the respective edges will
   <img src="./img/13_Edge_remove_1.gif" alt="Edge Disappear" />
 </p>
 
-However, if the device that stops being visible in one layer is in the middle of two visible devices, the edges will still be visible and the device will be replaced with a **dot**. This **dot** will not be selectable and will not show any information when hovered. It is just a placeholder to show that there is a connection between the two devices. Besides, you can drag the dot around the canvas in order to maniulate the network more easily.
+However, if the device that stops being visible in one layer is in the middle of two visible devices, the edges will still be visible and the device will be replaced with a **dot**. This **dot** will not be selectable and will not show any information when hovered. It is just a placeholder to show that there is a connection between the two devices. Besides, you can drag the dot around the canvas in order to manipulate the network more easily.
 
 <p align="center">
   <img src="./img/14_Edge_and_dot.gif" alt="Edge and Dot" />
