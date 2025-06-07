@@ -251,7 +251,6 @@ export class IPv4Packet implements FramePayload {
   protocol: number;
 
   // 16 bits
-  // TODO: compute
   get headerChecksum() {
     return this.computeChecksum();
   }

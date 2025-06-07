@@ -46,7 +46,6 @@ export enum DeviceType {
 export interface NetworkInterface {
   name: string;
   mac: MacAddress;
-  // TODO: add IP address
   ip?: IpAddress;
 }
 
