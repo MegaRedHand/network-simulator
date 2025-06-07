@@ -340,6 +340,12 @@ export class TcpState {
     const segLen = segment.data.length;
     if (!this.isSeqNumValid(segSeq, segLen)) {
       console.debug("Sequence number not valid");
+
+      // RFC 5961 suggests sending a challenge ACK, but here we keep things simple
+      // If RST is not set, send an ACK in response
+      if (!flags.rst) {
+        this.notifySendPackets();
+      }
       return ProcessingResult.DISCARD;
     }
 
