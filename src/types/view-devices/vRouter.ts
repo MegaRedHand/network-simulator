@@ -210,13 +210,6 @@ export class ViewRouter extends ViewNetworkDevice {
 
     const iface = this.routePacket(datagram);
 
-    if (iface === packetWithIface.iface) {
-      console.debug(
-        "Packet dropped, since it was going to be sent back to the same interface.",
-      );
-      return;
-    }
-
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.destinationAddress);
     // TODO: use arp table here?
     const forwardingData = ViewNetworkDevice.getForwardingData(
