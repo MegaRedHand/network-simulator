@@ -232,21 +232,10 @@ export class ViewRouter extends ViewNetworkDevice {
       } else {
         // Try to deduce next hop from the routing table
         // If the interface connects to a router, just send it
-        const connections = this.viewgraph
-          .getDataGraph()
-          .getConnectionsInInterface(this.id, iface);
-        if (connections.length === 0) {
-          console.warn(
-            `Device ${this.id} has no connections in interface ${iface}, dropping packet`,
-          );
-          this.dropPacket(datagram);
+        nextHopMac = this.deduceNextHopMac(datagram, iface);
+        if (!nextHopMac) {
           return;
         }
-        const nextHopId = connections[0];
-        const edge = this.viewgraph.getEdge(this.id, nextHopId);
-        const nextHopIface = edge.getDeviceInterface(nextHopId);
-        const nextHop = this.viewgraph.getDevice(nextHopId);
-        nextHopMac = nextHop.interfaces[nextHopIface].mac;
       }
       const newFrame = new EthernetFrame(src.mac, nextHopMac, datagram);
       sendViewPacket(this.viewgraph, this.id, newFrame, iface);
@@ -257,6 +246,43 @@ export class ViewRouter extends ViewNetworkDevice {
     if (this.packetQueue.isEmpty()) {
       this.stopPacketProcessor();
     }
+  }
+
+  private deduceNextHopMac(datagram: IPv4Packet, iface: number): MacAddress {
+    const connections = this.viewgraph
+      .getDataGraph()
+      .getConnectionsInInterface(this.id, iface);
+    if (connections.length === 0) {
+      console.warn(
+        `Device ${this.id} has no connections in interface ${iface}, dropping packet`,
+      );
+      this.dropPacket(datagram);
+      return;
+    }
+    const nextHopId = connections[0];
+    const edge = this.viewgraph.getEdge(this.id, nextHopId);
+    if (!edge) {
+      console.error(`Edge ${this.id} has no edge to next hop ${nextHopId}`);
+      return;
+    }
+    const nextHopIface = edge.getDeviceInterface(nextHopId);
+    if (nextHopIface === undefined) {
+      console.error(
+        `Edge ${this.id} has no interface for next hop ${nextHopId}`,
+      );
+      return;
+    }
+    const nextHop = this.viewgraph.getDevice(nextHopId);
+    if (!nextHop) {
+      console.error(`Next hop ${nextHopId} not found`);
+      return;
+    }
+    if (!(nextHop instanceof ViewNetworkDevice)) {
+      console.error(`Next hop ${nextHopId} is not a network device`);
+      this.dropPacket(datagram);
+      return;
+    }
+    return nextHop.interfaces[nextHopIface].mac;
   }
 
   startPacketProcessor() {
