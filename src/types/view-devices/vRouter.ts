@@ -329,6 +329,11 @@ export class ViewRouter extends ViewNetworkDevice {
   }
 }
 
+/**
+ * A packet with the interface it was received on.
+ * This is used to keep track of which interface the packet was received on
+ * when it is enqueued in the packet queue.
+ */
 interface PacketWithIface {
   packet: IPv4Packet;
   iface: number;
