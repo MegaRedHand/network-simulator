@@ -235,6 +235,13 @@ export class ViewRouter extends ViewNetworkDevice {
         const connections = this.viewgraph
           .getDataGraph()
           .getConnectionsInInterface(this.id, iface);
+        if (connections.length === 0) {
+          console.warn(
+            `Device ${this.id} has no connections in interface ${iface}, dropping packet`,
+          );
+          this.dropPacket(datagram);
+          return;
+        }
         const nextHopId = connections[0];
         const edge = this.viewgraph.getEdge(this.id, nextHopId);
         const nextHopIface = edge.getDeviceInterface(nextHopId);
