@@ -32,7 +32,6 @@ interface CommonDataNode {
   x: number;
   y: number;
   type: DeviceType;
-  // TODO: remove this
   interfaces: NetworkInterfaceData[];
   tag?: string;
 }
@@ -53,7 +52,6 @@ export interface SwitchDataNode extends CommonDataNode {
 }
 
 export interface NetworkDataNode extends CommonDataNode {
-  // TODO: remove this
   mask: string;
   arpTable: [string, string, boolean][];
 }
