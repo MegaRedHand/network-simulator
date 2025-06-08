@@ -7,7 +7,7 @@ import { Position } from "../common";
 import { IpAddress, IPv4Packet } from "../../packets/ip";
 import { DeviceId, NetworkInterfaceData } from "../graphs/datagraph";
 import { Texture, Ticker } from "pixi.js";
-import { EthernetFrame } from "../../packets/ethernet";
+import { EthernetFrame, MacAddress } from "../../packets/ethernet";
 import { GlobalContext } from "../../context";
 import { DataRouter } from "../data-devices";
 import { dropPacket, sendViewPacket } from "../packet";
@@ -171,17 +171,18 @@ export class ViewRouter extends ViewNetworkDevice {
       this.handleDatagram(datagram, iface);
       return;
     }
-    this.addPacketToQueue(datagram);
+    this.addPacketToQueue(datagram, iface);
   }
 
-  addPacketToQueue(datagram: IPv4Packet) {
+  addPacketToQueue(datagram: IPv4Packet, iface: number) {
     const wasEmpty = this.packetQueue.isEmpty();
     datagram.timeToLive -= 1;
     if (datagram.timeToLive <= 0) {
       console.debug(`Device ${this.id} dropped packet with TTL 0`);
       this.dropPacket(datagram);
+      return;
     }
-    if (!this.packetQueue.enqueue(datagram)) {
+    if (!this.packetQueue.enqueue(datagram, iface)) {
       console.debug("Packet queue full, dropping packet");
       this.showDeviceIconFor("queueFull", "❗", "Queue full");
       this.dropPacket(datagram);
@@ -201,10 +202,11 @@ export class ViewRouter extends ViewNetworkDevice {
 
   processPacket(ticker: Ticker) {
     const elapsedTime = ticker.deltaMS * this.viewgraph.getSpeed();
-    const datagram = this.getPacketsToProcess(elapsedTime);
-    if (!datagram) {
+    const packetWithIface = this.getPacketsToProcess(elapsedTime);
+    if (!packetWithIface) {
       return;
     }
+    const datagram = packetWithIface.packet;
 
     const iface = this.routePacket(datagram);
 
@@ -215,16 +217,65 @@ export class ViewRouter extends ViewNetworkDevice {
       dstDevice?.id,
       this.viewgraph,
     );
-    if (forwardingData && forwardingData.sendingIface === iface) {
+    if (forwardingData) {
       const { src, nextHop } = forwardingData;
-
-      const newFrame = new EthernetFrame(src.mac, nextHop.mac, datagram);
+      let nextHopMac: MacAddress;
+      if (forwardingData.sendingIface === iface) {
+        nextHopMac = nextHop.mac;
+      } else {
+        // Try to deduce next hop from the routing table
+        // If the interface connects to a router, just send it
+        nextHopMac = this.deduceNextHopMac(datagram, iface);
+        if (!nextHopMac) {
+          return;
+        }
+      }
+      const newFrame = new EthernetFrame(src.mac, nextHopMac, datagram);
       sendViewPacket(this.viewgraph, this.id, newFrame, iface);
-    } else console.debug(`Router ${this.id} could not forward packet.`);
+    } else {
+      console.debug(`Router ${this.id} could not forward packet.`);
+    }
 
     if (this.packetQueue.isEmpty()) {
       this.stopPacketProcessor();
     }
+  }
+
+  private deduceNextHopMac(datagram: IPv4Packet, iface: number): MacAddress {
+    const connections = this.viewgraph
+      .getDataGraph()
+      .getConnectionsInInterface(this.id, iface);
+    if (connections.length === 0) {
+      console.warn(
+        `Device ${this.id} has no connections in interface ${iface}, dropping packet`,
+      );
+      this.dropPacket(datagram);
+      return;
+    }
+    const nextHopId = connections[0];
+    const edge = this.viewgraph.getEdge(this.id, nextHopId);
+    if (!edge) {
+      console.error(`Edge ${this.id} has no edge to next hop ${nextHopId}`);
+      return;
+    }
+    const nextHopIface = edge.getDeviceInterface(nextHopId);
+    if (nextHopIface === undefined) {
+      console.error(
+        `Edge ${this.id} has no interface for next hop ${nextHopId}`,
+      );
+      return;
+    }
+    const nextHop = this.viewgraph.getDevice(nextHopId);
+    if (!nextHop) {
+      console.error(`Next hop ${nextHopId} not found`);
+      return;
+    }
+    if (!(nextHop instanceof ViewNetworkDevice)) {
+      console.error(`Next hop ${nextHopId} is not a network device`);
+      this.dropPacket(datagram);
+      return;
+    }
+    return nextHop.interfaces[nextHopIface].mac;
   }
 
   startPacketProcessor() {
@@ -237,9 +288,9 @@ export class ViewRouter extends ViewNetworkDevice {
     Ticker.shared.remove(this.processPacket, this);
   }
 
-  getPacketsToProcess(timeMs: number): IPv4Packet | null {
+  getPacketsToProcess(timeMs: number): PacketWithIface | null {
     this.processingProgress += (this.bytesPerSecond * timeMs) / 1000;
-    const packetLength = this.packetQueue.getHead()?.totalLength;
+    const packetLength = this.packetQueue.getHead()?.packet?.totalLength;
     if (this.processingProgress < packetLength) {
       return null;
     }
@@ -271,8 +322,19 @@ export class ViewRouter extends ViewNetworkDevice {
   }
 }
 
+/**
+ * A packet with the interface it was received on.
+ * This is used to keep track of which interface the packet was received on
+ * when it is enqueued in the packet queue.
+ */
+interface PacketWithIface {
+  packet: IPv4Packet;
+  iface: number;
+}
+
 class PacketQueue {
-  private queue: IPv4Packet[] = [];
+  // Queue of packets with the interface they were received on
+  private queue: PacketWithIface[] = [];
   private queueSizeBytes = 0;
   private maxQueueSizeBytes: number;
 
@@ -308,27 +370,27 @@ class PacketQueue {
     }
   }
 
-  enqueue(packet: IPv4Packet) {
+  enqueue(packet: IPv4Packet, iface: number) {
     if (this.queueSizeBytes + packet.totalLength > this.maxQueueSizeBytes) {
       return false;
     }
-    this.queue.push(packet);
+    this.queue.push({ packet, iface });
     this.queueSizeBytes += packet.totalLength;
     this.notifyObservers();
     return true;
   }
 
-  dequeue(): IPv4Packet | undefined {
+  dequeue(): PacketWithIface | undefined {
     if (this.queue.length === 0) {
       return;
     }
-    const packet = this.queue.shift();
+    const { packet, iface } = this.queue.shift();
     this.queueSizeBytes -= packet.totalLength;
     this.notifyObservers();
-    return packet;
+    return { packet, iface };
   }
 
-  getHead(): IPv4Packet | undefined {
+  getHead(): PacketWithIface | undefined {
     return this.queue[0];
   }
 

@@ -422,14 +422,12 @@ export class ViewGraph {
     return this.datagraph;
   }
 
-  // TODO: This should eventually be changed to use interfaces instead
   getDeviceByIP(ipAddress: IpAddress) {
     return this.getDevices().find((device) => {
       return device instanceof ViewNetworkDevice && device.ownIp(ipAddress);
     });
   }
 
-  // TODO: This should eventually be changed to use interfaces instead
   getDeviceByMac(destination: MacAddress): ViewDevice {
     return this.getDevices().find((device) => {
       return device.ownMac(destination);
