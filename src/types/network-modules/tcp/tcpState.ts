@@ -184,6 +184,9 @@ export class TcpState {
 
     // Move to SYN_SENT state
     this.state = TcpStateEnum.SYN_SENT;
+    // NOTE: according to the RFC, we should return immediately,
+    // but here we wait for the connection to be established.
+    // This is done to make visualizations easier.
     return await this.connectionQueue.pop();
   }
 
@@ -202,10 +205,7 @@ export class TcpState {
     this.initialRecvSeqNum = synSegment.sequenceNumber;
 
     // Send a SYN-ACK
-    const flags = new Flags().withSyn().withAck();
-    const segment = this.newSegment(this.initialSendSeqNum, this.recvNext);
-
-    if (!sendIpPacket(this.srcHost, this.dstHost, segment.withFlags(flags))) {
+    if (!this.sendSynSegment()) {
       return false;
     }
     this.rttEstimator.startMeasurement(this.initialSendSeqNum);
@@ -781,9 +781,21 @@ export class TcpState {
     this.tcpQueue.close();
   }
 
+  /**
+   * Sends a SYN or SYN-ACK segment
+   */
   private sendSynSegment() {
+    let ack = 0;
     const flags = new Flags().withSyn();
-    const segment = this.newSegment(this.initialSendSeqNum, 0).withFlags(flags);
+
+    if (this.recvNext) {
+      // It's a SYN-ACK
+      ack = this.recvNext;
+      flags.withAck();
+    }
+    const segment = this.newSegment(this.initialSendSeqNum, ack);
+    segment.withFlags(flags);
+
     if (!sendIpPacket(this.srcHost, this.dstHost, segment)) {
       console.warn(
         `Device ${this.srcHost.id} couldn't send SYN to device ${this.dstHost.id}.`,
