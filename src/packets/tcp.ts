@@ -254,7 +254,7 @@ export class TcpSegment implements IpPayload {
         Payload: this.data,
       };
     } else if (layer == Layer.App) {
-      return { Request: new TextDecoder("utf-8").decode(this.data) };
+      return { Message: new TextDecoder("utf-8").decode(this.data) };
     }
   }
 
