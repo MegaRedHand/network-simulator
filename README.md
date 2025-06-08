@@ -452,7 +452,7 @@ In the simulator, HTTP packets show different information depending on the curre
 
 HTTP packets are visible on all layers.
 
-On the Application Layer, they show the contents of the HTTP message.
+On the App Layer, they show the contents of the HTTP message.
 
 <!-- TODO: add GIF -->
 
@@ -479,6 +479,40 @@ On the Network Layer, they show information of the IPv4 packet:
 On the Link Layer, they only show the EtherType field. This field is used to specify the protocol used in the packet. For IPv4 packets, this is 2048 (0x0800) in general.
 
 ### TCP Packet
+
+TCP packets contain control information for the Transmission Control Protocol.
+They are used for starting connections via a three-way handshake, terminating it, or for acknowledging the receipt of information.
+When including an application-level payload, they are shown as packets of the given application-level protocol instead.
+
+In the simulator, TCP packets show different information depending on the current layer.
+
+#### Visibility
+
+TCP packets are not visible on the App Layer.
+
+On the Transport Layer, they will show information of the TCP segment that wraps the application content:
+
+- **Seq Number**: sequence number of the TCP segment. These start at 0 and grow with each byte sent through the connection.
+- **Ack Number**: acknowledgment number of the TCP segment. These start at 0 and grow with each byte received through the connection.
+- **Window Size**: the size of the receive window for the sender of the segment. These are fixed at 65535.
+- **TCP Flags**: TCP control flags. The purpose of each of these can be found by hovering them.
+- **Payload**: This is the data that is being sent in the segment, represented as a list of bytes.
+
+<!-- TODO: add GIF -->
+
+On the Network Layer, they show information of the IPv4 packet:
+
+- **IP Version**: The version of the IP protocol used. For now, only IPv4 is supported.
+- **Internet Header Length**: The length of the IP header in 32-bit words.
+- **Type of Service**: The type of service field in the IP header. This field is used to specify the quality of service for the packet.
+- **Total Length**: The total length of the packet in bytes. This includes the IP header and the data.
+- **Identification**: A unique identifier for the packet. This is used to identify the packet in case it is fragmented.
+- **Fragmentation Offset**: The offset of the packet in case it is fragmented. This is used to reassemble the packet at the destination.
+- **Time to Live**: The time to live field in the IP header. This field is used to specify the maximum number of hops that the packet can take before it is discarded.
+- **Protocol**: The protocol used in the packet. For ICMP-8 packets, this is always 1.
+- **Header Checksum**: The checksum of the IP header. This is used to verify the integrity of the packet.
+
+On the Link Layer, they only show the EtherType field. This field is used to specify the protocol used in the packet. For IPv4 packets, this is 2048 (0x0800) in general.
 
 ### ICMP-8 Packet
 
