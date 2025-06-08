@@ -42,6 +42,7 @@ export class Slider {
       if (props.onChange) {
         props.onChange(value);
       }
+      this.sliderInput.blur();
     });
 
     this.container.appendChild(label);
