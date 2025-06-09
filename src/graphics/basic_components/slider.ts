@@ -42,6 +42,15 @@ export class Slider {
       if (props.onChange) {
         props.onChange(value);
       }
+    });
+
+    this.sliderInput.addEventListener("change", () => {
+      this.sliderInput.blur();
+    });
+    this.sliderInput.addEventListener("mouseup", () => {
+      this.sliderInput.blur();
+    });
+    this.sliderInput.addEventListener("touchend", () => {
       this.sliderInput.blur();
     });
 
