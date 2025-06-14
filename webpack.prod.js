@@ -4,7 +4,7 @@ const common = require("./webpack.common.js");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
-const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
+const FaviconsWebpackPlugin = require("favicons-webpack-plugin");
 
 module.exports = merge(common, {
   mode: "production",
@@ -15,7 +15,7 @@ module.exports = merge(common, {
       filename: "[name].css",
       chunkFilename: "[id].css",
     }),
-    new FaviconsWebpackPlugin('./src/assets/logo.png'),
+    new FaviconsWebpackPlugin("./src/assets/logo.png"),
   ],
   module: {
     rules: [
