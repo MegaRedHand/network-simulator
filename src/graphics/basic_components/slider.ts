@@ -44,6 +44,16 @@ export class Slider {
       }
     });
 
+    this.sliderInput.addEventListener("change", () => {
+      this.sliderInput.blur();
+    });
+    this.sliderInput.addEventListener("mouseup", () => {
+      this.sliderInput.blur();
+    });
+    this.sliderInput.addEventListener("touchend", () => {
+      this.sliderInput.blur();
+    });
+
     this.container.appendChild(label);
     this.container.appendChild(this.sliderInput);
     this.container.appendChild(this.valueDisplay);
