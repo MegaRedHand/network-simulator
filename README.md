@@ -593,6 +593,28 @@ A switch will always look up its forwarding table to determine which interface t
 
 ### ARP Table
 
+Routers and hosts maintain **ARP tables** (_Address Resolution Protocol_ tables) to map IP addresses to MAC addresses.\
+These tables are used to determine the correct _link layer_ address (MAC address) for delivering packets to devices.\
+Each ARP table entry contains an IP address and the MAC address to which the _network layer_ address (IP) has to be mapped.
+
+![alt text](image-3.png)
+
+ARP tables are populated through the standard ARP exchange, involving an **ARP Request** broadcast to request the mapping needed, and an **ARP Response** that has the mention mapping. Also, the program give the user the option to populate the table _manually_, by adding a new entry in the table.\
+Whenever a host or router will send a packet to another device in the same network, it will first consult its ARP table to resolve the destination IP address into the corresponding MAC address. If a device needs to send a packet but cannot find the corresponding IP-to-MAC mapping in its ARP table, it will **abort** the program.
+
+> ⚠️ **Disclaimer:** As the simulator does not handle LAN concepts, when a device registers address resolutions, it does so with the addresses of all other devices on the network. This should NOT be considered as representative of how it actually works in real networks.
+
+To provide a smoother experience and not exhaust the user with the need of send many ARP Request or to manually complete all the ARP tables each time a new devices is created, to just send a packet, the program will automatically complete all ARP tables, either for newly added devices and for existing devices on the network that require an entry for the new device. \
+Although, if the user manually deletes or modifies an ARP entry, or if the ARP table is updated through an ARP exchange, these changes will persist in the device's ARP table.
+
+|                 ![alt text](image-4.png)                 |
+| :------------------------------------------------------: |
+| The _modified_ entry corresponds to a deleted _Device 1_ |
+
+In the other hand, any entry added by the simulator will be automatically deleted when the device corresponding to that entry is removed.
+
+> ⚠️ **Note:** While the simulator abstracts certain protocol details for simplicity, the key concepts of ARP operation are preserved to help users understand its role in real-world networks.
+
 ## Misc
 
 ### Settings
