@@ -48,7 +48,7 @@ You can access it [here](https://megaredhand.github.io/network-simulator/).
     - [ARP Packet](#arp-packet)
   - [Tables](#tables)
     - [Routing Table](#routing-table)
-    - [Switch Table](#switch-table)
+    - [Forwarding Table](#forwarding-table)
     - [ARP Table](#arp-table)
   - [Misc](#misc)
     - [Settings](#settings)
@@ -568,7 +568,28 @@ Just like ICMP-8 packets, on the Link Layer, they only show the EtherType field 
 
 ### Routing Table
 
-### Switch Table
+### Forwarding Table
+
+Forwarding tables ara used by switches to decide to which interface should an incoming packet be forwarded (if it should not be dropped). Each switch has its own forwarding table and can be seen at the right bar of the selected switch.
+
+![alt text](image.png)
+
+A forwarding table consists on three fields: the MAC address field storing the address to match with the packet’s destination MAC address, the interface where to forward the packet and the time at which the entry was placed in the table, so that when a certain time have passed, the entry is removed.\
+However, since the time spent in the simulator is not exact to real time, and for learning purposes it was not considered necessary to see the timestamp at which the entry was recorded in the table, the table is shown without the time field, and the function of deleting the entries when they are no longer needed was simply delegated to the user.\
+Switches are _self learning_, this means that forwarding tables are initially empty, and for each frame arriving the switch stores a new entry with the frame’s source MAC address and the interface from which the frame arrived.
+
+#### Switch forwarding
+
+The switch will use the forwarding table to decide where to send an arriving frame. It will search for an entry recording the frame destination MAC address in the MAC address field. \
+If the entry is found, the switch will forward the frame to the interface recorded in the entry.
+
+![alt text](image-1.png)
+
+But if non entry is found with de frame destination MAC address, the switch will continue forwarding copies of the frame to all it interfaces except the one where the frame came from.
+
+![alt text](image-2.png)
+
+A switch will always look up its forwarding table to determine which interface to use to send a packet, so make sure your network switches' forwarding tables are properly configured!
 
 ### ARP Table
 
