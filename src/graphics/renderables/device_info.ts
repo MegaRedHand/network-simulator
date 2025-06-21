@@ -113,7 +113,7 @@ export class DeviceInfo extends BaseInfo {
         fields.push({
           label:
             TOOLTIP_KEYS.MAC_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
-          initialValue: iface.mac.toString(),
+          initialValue: iface.mac.toCompressedString(),
           onChange: (newValue: string) => {
             const mac = MacAddress.parse(newValue);
             iface.mac = mac;

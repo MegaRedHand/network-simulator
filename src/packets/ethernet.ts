@@ -37,6 +37,10 @@ export class MacAddress {
   static parse(addrString: string): MacAddress {
     const octets = new Uint8Array(6);
     addrString.split(":").forEach((octet, i) => {
+      if (octet === "") {
+        octets[i] = 0;
+        return;
+      }
       const octetInt = parseInt(octet, 16);
       if (isNaN(octetInt) || octetInt < 0 || octetInt > 255) {
         throw new Error(`Invalid MAC address: ${addrString}`);
