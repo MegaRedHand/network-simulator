@@ -365,7 +365,7 @@ export function sendViewPacket(
   viewgraph: ViewGraph,
   srcId: DeviceId,
   rawPacket: EthernetFrame,
-  sendingIface?: number,
+  sendingIface: number,
 ) {
   const srcMac = rawPacket.source;
   const dstMac = rawPacket.destination;
