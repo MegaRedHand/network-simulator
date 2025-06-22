@@ -168,6 +168,7 @@ export abstract class ViewNetworkDevice extends ViewDevice {
       : undefined;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleDatagram(datagram: IPv4Packet, iface: number) {
     console.debug("Packet has reach its destination!");
     const dstDevice = this.viewgraph.getDeviceByIP(datagram.sourceAddress);
