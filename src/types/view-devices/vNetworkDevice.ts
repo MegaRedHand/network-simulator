@@ -181,16 +181,17 @@ export abstract class ViewNetworkDevice extends ViewDevice {
       case ICMP_PROTOCOL_NUMBER: {
         const request: EchoRequest = datagram.payload as EchoRequest;
         if (dstDevice && request.type === ICMP_REQUEST_TYPE_NUMBER) {
-          const { src, nextHop, dst } = ViewNetworkDevice.getForwardingData(
-            this.id,
-            dstDevice.id,
-            this.viewgraph,
-          );
+          const { src, nextHop, dst, sendingIface } =
+            ViewNetworkDevice.getForwardingData(
+              this.id,
+              dstDevice.id,
+              this.viewgraph,
+            );
           const echoReply = new EchoReply(0);
           const ipPacket = new IPv4Packet(src.ip, dst.ip, echoReply);
           const frame = new EthernetFrame(src.mac, nextHop.mac, ipPacket);
           console.debug(`Sending EchoReply to ${dstDevice}`);
-          sendViewPacket(this.viewgraph, this.id, frame, iface);
+          sendViewPacket(this.viewgraph, this.id, frame, sendingIface);
         }
         break;
       }
