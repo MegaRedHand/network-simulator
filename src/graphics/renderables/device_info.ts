@@ -19,9 +19,11 @@ import { Layer } from "../../types/layer";
 import { DataNetworkDevice, DataSwitch } from "../../types/data-devices";
 import { ForwardingTable } from "./forwarding_table";
 import { getRoutingTable } from "../../types/network-modules/tables/routing_table";
-import { ToggleInfo } from "../components/toggle_info";
 import { getArpTable } from "../../types/network-modules/tables/arp_table";
 import { getForwardingTable } from "../../types/network-modules/tables/forwarding_table";
+import { EditableParameter } from "../basic_components/parameter_editor";
+import { IpAddress } from "../../packets/ip";
+import { MacAddress } from "../../packets/ethernet";
 
 export class DeviceInfo extends BaseInfo {
   readonly device: ViewDevice;
@@ -90,35 +92,38 @@ export class DeviceInfo extends BaseInfo {
     const showIp = this.device.getType() !== DeviceType.Switch;
     const showMac = layer === Layer.Link;
 
-    const fields: { key: string; value: string; tooltip: string }[] = [];
+    const fields: EditableParameter[] = [];
 
     if (showIp) {
       this.device.interfaces.forEach((iface) => {
         fields.push({
-          key: TOOLTIP_KEYS.IP_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
-          value: iface.ip.toString(),
-          tooltip: TOOLTIP_KEYS.IP_ADDRESS,
+          label:
+            TOOLTIP_KEYS.IP_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
+          initialValue: iface.ip.toString(),
+          onChange: (newValue: string) => {
+            const ip = IpAddress.parse(newValue);
+            iface.ip = ip;
+            this.device.setInterface(iface);
+          },
         });
       });
     }
     if (showMac) {
       this.device.interfaces.forEach((iface) => {
         fields.push({
-          key:
+          label:
             TOOLTIP_KEYS.MAC_ADDRESS + (iface.name ? ` (${iface.name})` : ""),
-          value: iface.mac.toString(),
-          tooltip: TOOLTIP_KEYS.MAC_ADDRESS,
+          initialValue: iface.mac.toCompressedString(),
+          onChange: (newValue: string) => {
+            const mac = MacAddress.parse(newValue);
+            iface.mac = mac;
+            this.device.setInterface(iface);
+          },
         });
       });
     }
 
-    const toggleInfo = new ToggleInfo({
-      title: "Interfaces",
-      fields,
-      toggleButtonText: { on: "Hide Interfaces", off: "Show Interfaces" },
-    });
-
-    this.inputFields.push(toggleInfo.toHTML());
+    this.addParameterGroup("Interfaces", "Show/Hide interfaces", fields);
   }
 
   addProgramRunner(runner: ProgramRunner, programs: ProgramInfo[]): void {
@@ -164,7 +169,6 @@ export class DeviceInfo extends BaseInfo {
       parameters,
     );
     this.inputFields.push(parameterEditor.toHTML());
-    this.addDivider();
   }
 
   /**

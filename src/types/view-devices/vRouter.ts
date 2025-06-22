@@ -97,6 +97,7 @@ export class ViewRouter extends ViewNetworkDevice {
         },
       ],
     );
+    info.addDivider();
 
     info.addRoutingTable(this.viewgraph, this.id);
 

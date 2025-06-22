@@ -31,7 +31,7 @@
   text-align: center;
   font-size: 0.9rem; /* Smaller font size */
   border-radius: 0.5rem;
-  width: 80px; /* Fixed width for the input */
+  width: 120px; /* Fixed width for the input */
   box-sizing: border-box;
   transition:
     background-color 0.3s ease,

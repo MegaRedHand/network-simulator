@@ -304,6 +304,23 @@ export abstract class ViewDevice extends Container {
     return { x: this.x, y: this.y };
   }
 
+  setInterface(setIface: NetworkInterface) {
+    this.viewgraph.getDataGraph().modifyDevice(this.id, (device) => {
+      if (device) {
+        device.interfaces = device.interfaces.map((iface) => {
+          if (iface.name === setIface.name) {
+            return {
+              ...iface,
+              mac: setIface.mac,
+              ip: setIface.ip ? setIface.ip : iface.ip,
+            };
+          }
+          return iface;
+        });
+      }
+    });
+  }
+
   delete(): RemovedNodeData {
     const deviceData = this.viewgraph.removeDevice(this.id);
     console.log(`Device ${this.id} deleted`);
