@@ -568,9 +568,27 @@ Just like ICMP-8 packets, on the Link Layer, they only show the EtherType field 
 
 ### Routing Table
 
+Routing tables are used by routers to determine through which interface a packet should be forwarded in order to reach its destination. Each routing table entry includes the following fields:
+
+- **IP:** The destination IP address.
+- **Mask:** The subnet mask used to match against the destination address in incoming packets.
+- **Interface:** The interface through which the packet should be forwarded.
+
+Other common routing table fields such as _Gateway_ or _Metric_ have been intentionally omitted in the simulator. This design choice aims to simplify the user experience and focus on the **core functionality** of routing tables: forwarding packets toward their destinations. \
+![alt text](image-7.png)
+Routing tables can be constructed in two main ways: dynamically and statically. They are constructed dynamically through routing protocols like OSPF or BGP. While they can also be built statically, as it happens with the simulator, with users defining routes manually by adding entries directly to each router’s table. \
+Since the simulator does not have local networks, and devices are not necessarily grouped by IP address in a hierarchical way, routing tables are initialized with entries where the _IP_ field contains the exact address of each device in the network, and the _Mask_ is set to match the entire IP address (e.g., `255.255.255.255`). \
+This ensures that each device _has its own specific entry_ in every router’s table. While this does not reflect how real-world routing tables are typically structured, it greatly simplifies the initial setup for users and allows immediate packet delivery between devices. Moreover, the design gives users the opportunity to edit and optimize the routing tables themselves, replacing the default entries with more efficient ones by making better use of the _IP_ and _Mask_ fields to define broader routes. \
+This setup provides a helpful **first look** at how routing works, without overwhelming the user with routing protocol configurations or network hierarchy constraints. \
+| ![alt text](image-8.png) |
+| :------------------------------------------------------: |
+| The routing table was modified. Two entries were inserted; the first, with _IP_ `10.0.0.4` and _Mask_ `255.255.255.254`, covering IPs `10.0.0.4` and `10.0.0.5` (_devices 4 and 5_); the second, with _IP_ `10.0.0.1` and _Mask_ `255.255.255.252`, covering IPs `10.0.0.1`, `10.0.0.2` and `10.0.0.3` (_devices 1, 2 and 3_). The table covers the same range of devices, with 3 less entries.
+
+Finally, it is worth clarifying that if a router receives a packet and no routing table entry matches the packet’s destination IP (i.e., no entry matches after applying the subnet mask), the packet is **dropped**.
+
 ### Forwarding Table
 
-Forwarding tables ara used by switches to decide to which interface should an incoming packet be forwarded (if it should not be dropped). Each switch has its own forwarding table and can be seen at the right bar of the selected switch.
+Forwarding tables are used by switches to decide to which interface should an incoming packet be forwarded (if it should not be dropped). Each switch has its own forwarding table and can be seen at the right bar of the selected switch.
 
 ![alt text](image.png)
 
