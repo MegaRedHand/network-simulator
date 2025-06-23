@@ -564,6 +564,39 @@ Just like ICMP-8 packets, on the Link Layer, they only show the EtherType field 
 
 ### ARP Packet
 
+An ARP packet is a message used by devices in a local network to map an **IP address** to a **MAC address**. It is part of the _Address Resolution Protocol_ (ARP). /
+There are two main types of ARP packets:
+
+- **ARP Request:** Broadcast by a device to ask for the address resolution.
+- **ARP Reply:** Sent by the IP targeted device, in response, providing the corresponding MAC address.
+
+#### Visibility
+
+ARP packets are Link Layer frame _payloads_, so they are displayed as such on the _Packet Details_ section. ARP Request packets show the following information:
+
+- **Hardware Type (HTYPE):** Indicates the type of hardware address being used. Most common value: **1** for **Ethernet**.
+
+- **Protocol Type (PTYPE):** Specifies the type of protocol address being resolved.
+  Most common value: **0x0800** for **IPv4**.
+
+- **Hardware Address Length (HLEN):**
+  Length (in bytes) of the hardware address. For Ethernet, this is 6.
+
+- **Protocol Address Length (PLEN):**
+  Length (in bytes) of the protocol address. For IPv4, this is 4.
+
+- **Sender Hardware Address (SHA):** The MAC address of the sender.
+
+- **Sender Protocol Address (SPA):** The IP address of the sender.
+
+- **Target Hardware Address (THA):** The MAC address of the target. In ARP Requests, this field may be empty or padded with the _broadcast_ address (ff:ff:ff:ff:ff:ff).
+
+- **Target Protocol Address (TPA):** The IP address of the target device (the one being queried).
+
+- **Operation (OPER):** Specifies the type of ARP message:
+  - **1 = Request**
+  - **2 = Reply**
+
 ## Tables
 
 ### Routing Table
