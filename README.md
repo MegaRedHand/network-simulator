@@ -47,6 +47,7 @@ You can access it [here](https://megaredhand.github.io/network-simulator/).
       - [Visibility](#visibility-1)
     - [ARP Packet](#arp-packet)
   - [Tables](#tables)
+    - [Tables Overview](#tables-overview)
     - [Routing Table](#routing-table)
     - [Forwarding Table](#forwarding-table)
     - [ARP Table](#arp-table)
@@ -243,8 +244,6 @@ Hovering on a Router will show the IP address. If the simulator is set on the Li
 A switch is a device that connects devices within a single network and uses MAC addresses to forward data to the correct destination. It is used to connect devices on a local area network (LAN) and is responsible for forwarding data packets between those devices.
 
 In the simulator, the switches are only in the Link Layer. As switches are used to connect devices within a single network, they are not involved in the use of endpoints or routing data between different networks.
-
-> ⚠️ Aclaración de la simplificación de LANs en el simulador
 
 #### Switch Information
 
