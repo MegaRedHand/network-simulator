@@ -13,6 +13,7 @@ You can access it [here](https://megaredhand.github.io/network-simulator/).
 - [GEduNet 🌐](#gedunet-)
 - [**GEduNet - User Manual** 📘](#gedunet---user-manual-)
   - [Getting Started](#getting-started)
+  - [User Interface](#user-interface)
     - [Left Bar](#left-bar)
     - [Right Bar](#right-bar)
     - [Top Bar](#top-bar)
@@ -60,6 +61,11 @@ You can access it [here](https://megaredhand.github.io/network-simulator/).
 ## Getting Started
 
 Welcome to the GEduNet simulator! This application is designed to help you visualize and understand computer networks.
+
+This repository includes some examples under `examples/`.
+You can download and load them into the simulator like any other network.
+
+## User Interface
 
 GEduNet consists of 4 main components on screen:
 
