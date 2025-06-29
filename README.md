@@ -679,7 +679,7 @@ If the entry is found, the switch will forward the frame to the interface record
   <img src="./img/36_Forwarding_One_Interface.png" alt="Forwarding one interface" />
 </p>
 
-But if non entry is found with de frame destination MAC address, the switch will continue forwarding copies of the frame to all it interfaces except the one where the frame came from.
+But if no entry is found with the frame destination MAC address, the switch will broadcast copies of the frame in all its interfaces except the one where the frame came from.
 
 <p align="center">
   <img src="./img/37_Forwarding_Multiple_Interfaces.png" alt="Forwarding multiple interfaces" />
