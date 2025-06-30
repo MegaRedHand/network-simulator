@@ -405,7 +405,18 @@ If you want to stop the program, you can press the Trash can icon on the program
 
 ### ARP Request
 
-<!-- TODO: add section -->
+An ARP request is a network protocol operation used to discover the MAC (hardware) address associated with a given IP address on a network. \
+The host wanting to know the MAC address of a specific IP address broadcast an ARP Request for the given IP address, and the device that owns that IP replies with a ARP Reply including its MAC address, if it is reachable on the network.
+
+> ⚠️ **Note:** As simulator’s networks aren’t necessarily divided into local networks, ARP Request packets can propagate throughout the entire network, until they are received by a host or a router, since these devices do not have the functionality to further propagate the packet.
+
+#### Tutorial
+
+1. Select the "Send ARP request" program from the dropdown menu.
+
+2. Select the IP address to query (the device owning the IP will be shown in parentheses).
+
+3. Press the "Start Program" button to broadcast the ARP request.
 
 ## Packets
 
@@ -647,7 +658,7 @@ Other common routing table fields such as _Gateway_ or _Metric_ have been intent
 Routing tables can be constructed in two main ways: dynamically and statically. They are constructed dynamically through routing protocols like OSPF or BGP. While they can also be built statically, as it happens with the simulator, with users defining routes manually by adding entries directly to each router’s table. \
 Since the simulator does not have local networks, and devices are not necessarily grouped by IP address in a hierarchical way, routing tables are initialized with entries where the _IP_ field contains the exact address of each device in the network, and the _Mask_ is set to match the entire IP address (e.g., `255.255.255.255`). \
 This ensures that each device _has its own specific entry_ in every router’s table. While this does not reflect how real-world routing tables are typically structured, it greatly simplifies the initial setup for users and allows immediate packet delivery between devices. Moreover, the design gives users the opportunity to edit and optimize the routing tables themselves, replacing the default entries with more efficient ones by making better use of the _IP_ and _Mask_ fields to define broader routes. \
-This setup provides a helpful **first look** at how routing works, without overwhelming the user with routing protocol configurations or network hierarchy constraints. \
+This setup provides a helpful **first look** at how routing works, without overwhelming the user with routing protocol configurations or network hierarchy constraints.
 
 <!-- Routing table edited example -->
 
