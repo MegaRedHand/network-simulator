@@ -48,8 +48,9 @@ You can access it [here](https://megaredhand.github.io/network-simulator/).
       - [Visibility](#visibility-1)
     - [ARP Packet](#arp-packet)
   - [Tables](#tables)
+    - [Tables Overview](#tables-overview)
     - [Routing Table](#routing-table)
-    - [Switch Table](#switch-table)
+    - [Forwarding Table](#forwarding-table)
     - [ARP Table](#arp-table)
   - [Misc](#misc)
     - [Settings](#settings)
@@ -250,8 +251,6 @@ A switch is a device that connects devices within a single network and uses MAC 
 
 In the simulator, the switches are only in the Link Layer. As switches are used to connect devices within a single network, they are not involved in the use of endpoints or routing data between different networks.
 
-> ⚠️ Aclaración de la simplificación de LANs en el simulador
-
 #### Switch Information
 
 <p align="center">
@@ -327,7 +326,7 @@ When you select an edge that connects two devices, you will see a dropdown menu 
 
 <p align="center">
   <img src="./img/17_Host_Interfaces.png" alt="Host Interfaces" />
-  <img src="./img/18_Router_Interfaces.png" alt="Router Interfaces" />![alt text](image.png)
+  <img src="./img/18_Router_Interfaces.png" alt="Router Interfaces" />
   <img src="./img/19_Switch_Interfaces.png" alt="Switch Interfaces" />
 </p>
 
@@ -412,7 +411,18 @@ If you want to stop the program, you can press the Trash can icon on the program
 
 ### ARP Request
 
-<!-- TODO: add section -->
+An ARP request is a network protocol operation used to discover the MAC (hardware) address associated with a given IP address on a network. \
+The host wanting to know the MAC address of a specific IP address broadcast an ARP Request for the given IP address, and the device that owns that IP replies with a ARP Reply including its MAC address, if it is reachable on the network.
+
+> ⚠️ **Note:** As simulator’s networks aren’t necessarily divided into local networks, ARP Request packets can propagate throughout the entire network, until they are received by a host or a router, since these devices do not have the functionality to further propagate the packet.
+
+#### Tutorial
+
+1. Select the "Send ARP request" program from the dropdown menu.
+
+2. Select the IP address to query (the device owning the IP will be shown in parentheses).
+
+3. Press the "Start Program" button to broadcast the ARP request.
 
 ## Packets
 
@@ -570,13 +580,157 @@ Just like ICMP-8 packets, on the Link Layer, they only show the EtherType field 
 
 ### ARP Packet
 
+An ARP packet is a message used by devices in a local network to map an **IP address** to a **MAC address**. It is part of the _Address Resolution Protocol_ (ARP).
+There are two main types of ARP packets:
+
+- **ARP Request:** Broadcast by a device to ask for the address resolution.
+- **ARP Reply:** Sent by the IP targeted device, in response, providing the corresponding MAC address.
+
+#### Visibility
+
+ARP packets are only visible on the Link Layer. They are Link Layer frame _payloads_, so they are displayed as such on the _Packet Details_ section. ARP Request packets show the following information:
+
+- **Hardware Type (HTYPE):** Indicates the type of hardware address being used. Most common value: **1** for **Ethernet**.
+
+- **Protocol Type (PTYPE):** Specifies the type of protocol address being resolved.
+  Most common value: **0x0800** for **IPv4**.
+
+- **Hardware Address Length (HLEN):**
+  Length (in bytes) of the hardware address. For Ethernet, this is 6.
+
+- **Protocol Address Length (PLEN):**
+  Length (in bytes) of the protocol address. For IPv4, this is 4.
+
+- **Sender Hardware Address (SHA):** The MAC address of the sender.
+
+- **Sender Protocol Address (SPA):** The IP address of the sender.
+
+- **Target Hardware Address (THA):** The MAC address of the target. In ARP Requests, this field may be empty or padded with the _broadcast_ address (ff:ff:ff:ff:ff:ff).
+
+- **Target Protocol Address (TPA):** The IP address of the target device (the one being queried).
+
+- **Operation (OPER):** Specifies the type of ARP message:
+  - **1 = Request**
+  - **2 = Reply**
+
+<p align="center">
+  <img src="./img/33_ARP_Link.gif" alt="ARP Link Layer" />
+</p>
+
 ## Tables
+
+### Tables Overview
+
+Tables are used to store information about the devices and connections in the network. They are displayed in the right bar when selecting a device. The simulator has three types of tables:
+
+- **Routing Table:** Used by routers to determine the best path for forwarding packets to their destination.
+- **Forwarding Table:** Used by switches to determine which interface to use to forward packets.
+- **ARP Table:** Used by routers and hosts to map IP addresses to MAC addresses.
+
+On each of these tables, you can see the entries and their values. You can also edit the entries and add new ones, delete existing ones, or reset the table to its default state.
+
+#### Adding and editing Entries
+
+To add a new entry, you have to fill the fields with the desired values and press the ➕ button located on the down right corner of the table.
+To edit an existing entry, you can click on the field you want to change and modify its value.
+Every modification or new entry will be reflected in the table with a shaded background, indicating that the table has been modified.
+
+#### Deleting Entries
+
+To delete an entry, you can press the 🗑️ icon located on the right side of each entry. This will remove the entry from the table.
+
+#### Resetting Tables
+
+To reset a table to its default state, you can press the 🔄 button located on the top right corner of the table. This will restore the table to its initial state. This means that every edited entry will be replaced and the added entries will be removed.
+
+<p align="center">
+  <img src="./img/34_Tables_Overview.gif" alt="Tables Overview" />
+</p>
 
 ### Routing Table
 
-### Switch Table
+Routing tables are used by routers to determine through which interface a packet should be forwarded in order to reach its destination. Each routing table entry includes the following fields:
+
+- **IP:** The destination IP address.
+- **Mask:** The subnet mask used to match against the destination address in incoming packets.
+- **Interface:** The interface through which the packet should be forwarded.
+
+Other common routing table fields such as _Gateway_ or _Metric_ have been intentionally omitted in the simulator. This design choice aims to simplify the user experience and focus on the **core functionality** of routing tables: forwarding packets toward their destinations.
+
+<p align="center">
+  <img src="./img/40_Routing_Table_Example.png" alt="Routing Table example" />
+</p>
+
+Routing tables can be constructed in two main ways: dynamically and statically. They are constructed dynamically through routing protocols like OSPF or BGP. While they can also be built statically, as it happens with the simulator, with users defining routes manually by adding entries directly to each router’s table. \
+Since the simulator does not have local networks, and devices are not necessarily grouped by IP address in a hierarchical way, routing tables are initialized with entries where the _IP_ field contains the exact address of each device in the network, and the _Mask_ is set to match the entire IP address (e.g., `255.255.255.255`). \
+This ensures that each device _has its own specific entry_ in every router’s table. While this does not reflect how real-world routing tables are typically structured, it greatly simplifies the initial setup for users and allows immediate packet delivery between devices. Moreover, the design gives users the opportunity to edit and optimize the routing tables themselves, replacing the default entries with more efficient ones by making better use of the _IP_ and _Mask_ fields to define broader routes. \
+This setup provides a helpful **first look** at how routing works, without overwhelming the user with routing protocol configurations or network hierarchy constraints.
+
+<!-- Routing table edited example -->
+
+| ![alt text](./img/41_Routing_Table_Edited_Example.png) |
+| :----------------------------------------------------: |
+
+| The routing table was modified. Two entries were inserted; the first, with _IP_ `10.0.0.4` and _Mask_ `255.255.255.254`, covering IPs `10.0.0.4` and `10.0.0.5` (_devices 4 and 5_); the second, with _IP_ `10.0.0.1` and _Mask_ `255.255.255.252`, covering IPs `10.0.0.1`, `10.0.0.2` and `10.0.0.3` (_devices 1, 2 and 3_). The table covers the same range of devices, with 3 less entries.
+
+Finally, it is worth clarifying that if a router receives a packet and no routing table entry matches the packet’s destination IP (i.e., no entry matches after applying the subnet mask), the packet is **dropped**.
+
+### Forwarding Table
+
+Forwarding tables are used by switches to decide to which interface should an incoming packet be forwarded (if it should not be dropped). Each switch has its own forwarding table and can be seen at the right bar of the selected switch.
+
+<p align="center">
+  <img src="./img/35_Forwarding_Table_Example.png" alt="Forwarding Table example" />
+</p>
+
+A forwarding table consists on three fields: the MAC address field storing the address to match with the packet’s destination MAC address, the interface where to forward the packet and the time at which the entry was placed in the table, so that when a certain time have passed, the entry is removed.\
+However, since the time spent in the simulator is not exact to real time, and for learning purposes it was not considered necessary to see the timestamp at which the entry was recorded in the table, the table is shown without the time field, and the function of deleting the entries when they are no longer needed was simply delegated to the user.\
+Switches are _self learning_, this means that forwarding tables are initially empty, and for each frame arriving the switch stores a new entry with the frame’s source MAC address and the interface from which the frame arrived.
+
+#### Switch forwarding
+
+The switch will use the forwarding table to decide where to send an arriving frame. It will search for an entry recording the frame destination MAC address in the MAC address field. \
+If the entry is found, the switch will forward the frame to the interface recorded in the entry.
+
+<p align="center">
+  <img src="./img/36_Forwarding_One_Interface.png" alt="Forwarding one interface" />
+</p>
+
+But if no entry is found with the frame destination MAC address, the switch will broadcast copies of the frame in all its interfaces except the one where the frame came from.
+
+<p align="center">
+  <img src="./img/37_Forwarding_Multiple_Interfaces.png" alt="Forwarding multiple interfaces" />
+</p>
+
+A switch will always look up its forwarding table to determine which interface to use to send a packet, so make sure your network switches' forwarding tables are properly configured!
 
 ### ARP Table
+
+Routers and hosts maintain **ARP tables** (_Address Resolution Protocol_ tables) to map IP addresses to MAC addresses.\
+These tables are used to determine the correct _link layer_ address (MAC address) for delivering packets to devices.\
+Each ARP table entry contains an IP address and the MAC address to which the _network layer_ address (IP) has to be mapped.
+
+<p align="center">
+  <img src="./img/38_ARP_Table_Example.png" alt="ARP table example" />
+</p>
+
+ARP tables are populated through the standard ARP exchange, involving an **ARP Request** broadcast to request the mapping needed, and an **ARP Response** that has the mention mapping. Also, the program give the user the option to populate the table _manually_, by adding a new entry in the table.\
+Whenever a host or router will send a packet to another device in the same network, it will first consult its ARP table to resolve the destination IP address into the corresponding MAC address. If a device needs to send a packet but cannot find the corresponding IP-to-MAC mapping in its ARP table, it will **abort** the program.
+
+> ⚠️ **Disclaimer:** As the simulator does not handle LAN concepts, when a device registers address resolutions, it does so with the addresses of all other devices on the network. This should NOT be considered as representative of how it actually works in real networks.
+
+To provide a smoother experience and not exhaust the user with the need of send many ARP Request or to manually complete all the ARP tables each time a new devices is created, to just send a packet, the program will automatically complete all ARP tables, either for newly added devices and for existing devices on the network that require an entry for the new device. \
+Although, if the user manually deletes or modifies an ARP entry, or if the ARP table is updated through an ARP exchange, these changes will persist in the device's ARP table.
+
+<!-- ARP table edited example -->
+
+|    ![alt text](./img/39_ARP_Table_Edited_Example.png)    |
+| :------------------------------------------------------: |
+| The _modified_ entry corresponds to a deleted _Device 1_ |
+
+In the other hand, any entry added by the simulator will be automatically deleted when the device corresponding to that entry is removed.
+
+> ⚠️ **Note:** While the simulator abstracts certain protocol details for simplicity, the key concepts of ARP operation are preserved to help users understand its role in real-world networks.
 
 ## Misc
 
