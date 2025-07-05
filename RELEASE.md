@@ -12,7 +12,7 @@ To make a release:
 - [ ] Package the artifacts with the readme and license:
 
   ```sh
-  tar -czvf gedusim.tar.gz dist/* README.md LICENSE
+  tar -czvf gedusim.tar.gz examples/* dist/* README.md LICENSE
   ```
 
 - [ ] Create a new GitHub release with the packaged artifacts.
