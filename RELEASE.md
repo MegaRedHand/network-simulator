@@ -8,7 +8,12 @@ To make a release:
   git checkout main && git pull origin main
   ```
 
-- [ ] Build the artifacts with `npm run build`
+- [ ] Build the artifacts with:
+
+  ```sh
+  npm run build
+  ```
+
 - [ ] Package the artifacts with the readme and license:
 
   ```sh
