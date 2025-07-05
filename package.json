@@ -36,7 +36,7 @@
     "test": "jest",
     "start": "webpack serve --open --config webpack.dev.js",
     "start-host": "webpack serve --config webpack.dev.js --host 0.0.0.0",
-    "build": "webpack --config webpack.prod.js",
+    "build": "rm -rf dist/ && webpack --config webpack.prod.js",
     "format": "prettier . --write",
     "lint": "prettier . --check && eslint src/"
   },
