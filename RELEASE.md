@@ -21,7 +21,8 @@ To make a release:
 
   > To serve the files locally:
   >
-  > 1. Extract the artifacts with `tar -xzf gedusim.tar.gz`
-  > 2. Run `python3 -m http.server 8080`
+  > 1. Download the compiled artifacts (`gedusim.tar.gz`).
+  > 2. Extract the artifacts with `tar -xzf gedusim.tar.gz`.
+  > 3. Serve the files under `dist/` through a web server, (i.e. [http-server](https://www.npmjs.com/package/http-server)).
   >
   > You'll now be able to use the simulator locally by going to `http://localhost:8080`
