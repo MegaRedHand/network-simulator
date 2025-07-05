@@ -9,7 +9,7 @@ To make a release:
   ```
 
 - [ ] Build the artifacts with `npm run build`
-- [ ] Package the artifacts:
+- [ ] Package the artifacts with the readme and license:
 
   ```sh
   tar -czvf gedusim.tar.gz dist/* README.md LICENSE
